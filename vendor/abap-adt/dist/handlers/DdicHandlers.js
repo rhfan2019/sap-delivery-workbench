@@ -1,0 +1,181 @@
+import { stringify } from "../lib/results.js";
+import { McpError, ErrorCode } from "../lib/errors.js";
+import { BaseHandler } from "./BaseHandler.js";
+export class DdicHandlers extends BaseHandler {
+    getTools() {
+        return [
+            {
+                name: "annotationDefinitions",
+                description: "Retrieves annotation definitions.",
+                inputSchema: {
+                    type: "object",
+                    properties: {},
+                },
+            },
+            {
+                name: "ddicElement",
+                description: "Retrieves information about a DDIC element.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        path: {
+                            type: "string",
+                            description: "The path to the DDIC element.",
+                        },
+                        getTargetForAssociation: {
+                            type: "boolean",
+                            description: "Whether to get the target for association.",
+                            optional: true,
+                        },
+                        getExtensionViews: {
+                            type: "boolean",
+                            description: "Whether to get extension views.",
+                            optional: true,
+                        },
+                        getSecondaryObjects: {
+                            type: "boolean",
+                            description: "Whether to get secondary objects.",
+                            optional: true,
+                        },
+                    },
+                    required: ["path"],
+                },
+            },
+            {
+                name: "ddicRepositoryAccess",
+                description: "Accesses the DDIC repository.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        path: {
+                            type: "string",
+                            description: "The path to the DDIC element.",
+                        },
+                    },
+                    required: ["path"],
+                },
+            },
+            {
+                name: "packageSearchHelp",
+                description: "Performs a package search help.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        type: {
+                            type: "string",
+                            description: "The package value help type.",
+                        },
+                        name: {
+                            type: "string",
+                            description: "The package name.",
+                            optional: true,
+                        },
+                    },
+                    required: ["type"],
+                },
+            },
+        ];
+    }
+    async handle(toolName, args) {
+        switch (toolName) {
+            case "annotationDefinitions":
+                return this.handleAnnotationDefinitions(args);
+            case "ddicElement":
+                return this.handleDdicElement(args);
+            case "ddicRepositoryAccess":
+                return this.handleDdicRepositoryAccess(args);
+            case "packageSearchHelp":
+                return this.handlePackageSearchHelp(args);
+            default:
+                throw new McpError(ErrorCode.MethodNotFound, `Unknown DDIC tool: ${toolName}`);
+        }
+    }
+    async handleAnnotationDefinitions(args) {
+        const startTime = performance.now();
+        try {
+            const result = await this.adtclient.annotationDefinitions();
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            result,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+    async handleDdicElement(args) {
+        const startTime = performance.now();
+        try {
+            const result = await this.adtclient.ddicElement(args.path, args.getTargetForAssociation, args.getExtensionViews, args.getSecondaryObjects);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            result,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+    async handleDdicRepositoryAccess(args) {
+        const startTime = performance.now();
+        try {
+            const result = await this.adtclient.ddicRepositoryAccess(args.path);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            result,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+    async handlePackageSearchHelp(args) {
+        const startTime = performance.now();
+        try {
+            const result = await this.adtclient.packageSearchHelp(args.type, args.name);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            result,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+}

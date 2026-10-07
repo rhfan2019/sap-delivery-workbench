@@ -1,0 +1,142 @@
+import { stringify } from "../lib/results.js";
+import { McpError, ErrorCode } from "../lib/errors.js";
+import { BaseHandler } from "./BaseHandler.js";
+export class ServiceBindingHandlers extends BaseHandler {
+    getTools() {
+        return [
+            {
+                name: "publishServiceBinding",
+                description: "Publishes a service binding.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        name: {
+                            type: "string",
+                            description: "The name of the service binding.",
+                        },
+                        version: {
+                            type: "string",
+                            description: "The version of the service binding.",
+                        },
+                    },
+                    required: ["name", "version"],
+                },
+            },
+            {
+                name: "unPublishServiceBinding",
+                description: "Unpublishes a service binding.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        name: {
+                            type: "string",
+                            description: "The name of the service binding.",
+                        },
+                        version: {
+                            type: "string",
+                            description: "The version of the service binding.",
+                        },
+                    },
+                    required: ["name", "version"],
+                },
+            },
+            {
+                name: "bindingDetails",
+                description: "Retrieves details of a service binding.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        binding: {
+                            type: "object",
+                            description: "The service binding.",
+                        },
+                        index: {
+                            type: "number",
+                            description: "The index of the service binding.",
+                            optional: true,
+                        },
+                    },
+                    required: ["binding"],
+                },
+            },
+        ];
+    }
+    async handle(toolName, args) {
+        switch (toolName) {
+            case "publishServiceBinding":
+                return this.handlePublishServiceBinding(args);
+            case "unPublishServiceBinding":
+                return this.handleUnPublishServiceBinding(args);
+            case "bindingDetails":
+                return this.handleBindingDetails(args);
+            default:
+                throw new McpError(ErrorCode.MethodNotFound, `Unknown service binding tool: ${toolName}`);
+        }
+    }
+    async handlePublishServiceBinding(args) {
+        const startTime = performance.now();
+        try {
+            const result = await this.adtclient.publishServiceBinding(args.name, args.version);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            result,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+    async handleUnPublishServiceBinding(args) {
+        const startTime = performance.now();
+        try {
+            const result = await this.adtclient.unPublishServiceBinding(args.name, args.version);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            result,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+    async handleBindingDetails(args) {
+        const startTime = performance.now();
+        try {
+            const details = await this.adtclient.bindingDetails(args.binding, args.index);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            details,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+}

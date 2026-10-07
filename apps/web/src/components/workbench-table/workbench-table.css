@@ -1,0 +1,206 @@
+.workbench-table {
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  --vxe-ui-font-family: inherit;
+  --vxe-ui-font-color: var(--text);
+  --vxe-ui-font-primary-color: var(--primary);
+  --vxe-ui-table-border-color: #e3e9ef;
+  --vxe-ui-table-header-background-color: #f5f7fa;
+  --vxe-ui-table-row-hover-background-color: #f3f7fc;
+  --vxe-ui-font-size-small: 14px;
+}
+.workbench-table .vxe-table {
+  font-family: inherit;
+}
+.workbench-table .vxe-header--column {
+  color: #435369;
+  font-weight: 600;
+  height: 44px;
+}
+.workbench-table .vxe-body--column {
+  height: 48px;
+  border-bottom: 1px solid var(--vxe-ui-table-border-color);
+}
+.workbench-table .vxe-cell {
+  padding-inline: 12px;
+}
+.workbench-table .is-current .vxe-body--column {
+  background: #eaf2fb;
+}
+.workbench-table .is-checked .vxe-body--column {
+  background: #f0f6fc;
+}
+.workbench-table input[type='checkbox'] {
+  accent-color: var(--primary);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.workbench-table :is(button, a, input, select):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+.workbench-empty {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  padding: 40px 20px;
+  color: var(--muted);
+}
+.workbench-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  background: #ffffffdf;
+  color: var(--muted);
+}
+.loading-line {
+  width: 120px;
+  height: 3px;
+  background: var(--primary);
+  border-radius: 3px;
+}
+.column-dialog {
+  width: min(480px, calc(100vw - 32px));
+  max-height: 85dvh;
+  border: 1px solid #d5dfe9;
+  border-radius: 12px;
+  padding: 0;
+  color: var(--text);
+  box-shadow: 0 16px 64px #0a224030;
+}
+.column-dialog::backdrop {
+  background: #0a224060;
+}
+.column-dialog header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  border-bottom: 1px solid #e3e9ef;
+}
+.column-dialog h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.column-dialog p {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 8px 0 0;
+}
+.column-options {
+  padding: 8px 20px;
+  max-height: 50dvh;
+  overflow: auto;
+}
+.column-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  border-bottom: 1px solid #edf0f4;
+}
+.column-option label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.column-option small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.column-option span {
+  display: flex;
+  gap: 4px;
+}
+.column-dialog footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-top: 1px solid #e3e9ef;
+}
+
+.workbench-table .column-sort {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #435369;
+  gap: 6px;
+  width: 100%;
+  justify-content: flex-start;
+}
+.column-sort span {
+  color: #7a8b9d;
+  font-size: 14px;
+}
+.workbench-mobile {
+  height: 100%;
+  overflow: auto;
+  background: white;
+}
+.mobile-select-all {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  font-size: 12px;
+  background: #f5f7fa;
+}
+.mobile-select-all > span {
+  margin-left: auto;
+  color: var(--muted);
+}
+.mobile-table-row {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid #e3e9ef;
+}
+.mobile-table-row > input {
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+.mobile-table-row.is-checked {
+  background: #f0f6fc;
+}
+
+.column-dialog button {
+  font: inherit;
+  font-size: 13px;
+  border: 1px solid #c8d2de;
+  border-radius: 5px;
+  padding: 6px 10px;
+  background: white;
+  color: var(--primary);
+  cursor: pointer;
+}
+.column-dialog button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.column-dialog button.primary-button {
+  background: var(--primary);
+  color: white;
+}
+
+.workbench-table .column-sort .sort-inactive {
+  opacity: 0;
+}
+.workbench-table .column-sort:hover .sort-inactive,
+.workbench-table .column-sort:focus-visible .sort-inactive {
+  opacity: 1;
+}
+.workbench-table .field-display:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  border-radius: 3px;
+}

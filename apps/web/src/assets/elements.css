@@ -1,0 +1,167 @@
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import './main.css' layer(base);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import 'tw-animate-css';
+@source '../components';
+@source '../features';
+@theme inline {
+  --color-background: var(--surface);
+  --color-foreground: var(--text);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--text);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--text);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--on-primary);
+  --color-secondary: var(--hover);
+  --color-secondary-foreground: var(--text);
+  --color-muted: var(--bg);
+  --color-muted-foreground: var(--muted);
+  --color-accent: var(--hover);
+  --color-accent-foreground: var(--text);
+  --color-destructive: var(--error-text);
+  --color-border: var(--border);
+  --color-input: var(--control-border);
+  --color-ring: var(--focus);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+@layer base {
+  .assistant-elements,
+  .elements-overlay {
+    --border: #dce3eb;
+    --control-border: #c1cedd;
+  }
+  .assistant-elements *,
+  .elements-overlay *,
+  [data-slot='dialog-overlay'] {
+    border-style: solid;
+    border-width: 0;
+    border-color: var(--border);
+  }
+  .assistant-elements button,
+  .elements-overlay button {
+    font: inherit;
+  }
+  .assistant-elements button:disabled {
+    cursor: not-allowed;
+  }
+  .assistant-elements svg,
+  .elements-overlay svg {
+    display: block;
+    vertical-align: middle;
+  }
+  .assistant-elements [role='log'] {
+    min-height: 0;
+  }
+}
+.assistant-elements .elements-conversation {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.assistant-elements .elements-conversation > div {
+  min-height: 0;
+  flex: 1;
+  /* StickToBottom owns scrolling on its inner scrollRef. */
+  overflow: hidden;
+}
+.assistant-elements .elements-content {
+  width: min(100%, 860px);
+  margin-inline: auto;
+  padding: 16px 24px;
+  gap: 18px;
+}
+.assistant-elements .elements-message {
+  max-width: 100%;
+  flex-direction: column;
+  gap: 6px;
+}
+.assistant-elements .elements-message.is-user {
+  max-width: 85%;
+}
+.assistant-elements .elements-markdown {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+.assistant-elements .elements-markdown pre,
+.assistant-elements .elements-markdown table {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.assistant-elements .elements-markdown table {
+  display: block;
+}
+.assistant-elements .elements-markdown a {
+  color: var(--link);
+  text-decoration: underline;
+}
+.assistant-elements .elements-markdown h1 {
+  font-size: 1.5rem;
+}
+.assistant-elements .elements-markdown h2 {
+  font-size: 1.3rem;
+}
+.assistant-elements .elements-markdown h3 {
+  font-size: 1.15rem;
+}
+.assistant-elements .elements-markdown :is(h1, h2, h3, h4) {
+  margin: 1em 0 0.4em;
+  line-height: 1.4;
+}
+.assistant-elements .elements-markdown p {
+  margin-bottom: 0.5em;
+}
+.assistant-elements .elements-composer {
+  border-radius: 16px;
+  background: var(--surface);
+}
+.assistant-elements .elements-composer textarea {
+  font: inherit;
+  line-height: 1.65;
+  resize: none;
+  border: 0;
+  box-shadow: none;
+  outline: none;
+}
+.assistant-elements .elements-composer [data-slot='input-group']:has(textarea:focus-visible) {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+.assistant-elements .user-message-meta {
+  width: 100%;
+  justify-content: flex-end;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.assistant-elements .user-message-meta time {
+  flex-shrink: 0;
+}
+.assistant-elements .elements-attachment-remove {
+  opacity: 1;
+  min-width: 32px;
+  min-height: 32px;
+}
+.assistant-elements .elements-question {
+  scroll-margin: 16px;
+}
+@media (max-width: 600px) {
+  .assistant-elements .elements-content {
+    padding: 16px 12px;
+  }
+  .assistant-elements .elements-message.is-user {
+    max-width: 94%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .assistant-elements *,
+  .elements-overlay * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

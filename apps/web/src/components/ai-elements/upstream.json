@@ -1,0 +1,1391 @@
+{
+  "repository": "https://github.com/vuepont/ai-elements-vue",
+  "commit": "86c90df1b27cfd7ca05bd7f6c312c46f89c11603",
+  "files": [
+    {
+      "source": "packages/elements/src/conversation/Conversation.vue",
+      "target": "apps/web/src/components/ai-elements/conversation/Conversation.vue",
+      "upstreamSha256": "0caefe1bd90680c868d0a7c26d7c7514d05342a6bbd6cf59ee46e26bda899cee"
+    },
+    {
+      "source": "packages/elements/src/conversation/ConversationContent.vue",
+      "target": "apps/web/src/components/ai-elements/conversation/ConversationContent.vue",
+      "upstreamSha256": "1bcfaf73bb1b57ce5e25881c93d1436fdb687f5be0db78f591d1931e0c97edf2"
+    },
+    {
+      "source": "packages/elements/src/conversation/ConversationEmptyState.vue",
+      "target": "apps/web/src/components/ai-elements/conversation/ConversationEmptyState.vue",
+      "upstreamSha256": "7bd5f8f27d8aa80c11f9b602457fb15521cefcec4d44f98c312b676105502d9d"
+    },
+    {
+      "source": "packages/elements/src/conversation/ConversationScrollButton.vue",
+      "target": "apps/web/src/components/ai-elements/conversation/ConversationScrollButton.vue",
+      "upstreamSha256": "3724def3f85dc3a25b2fe328a763c3a0bc2f5bdd720f6ccb30ae642f95b5d1fd"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/button/Button.vue",
+      "target": "apps/web/src/components/ui/button/Button.vue",
+      "upstreamSha256": "3305c906eb48f14175a1e081d20893340df3731a03826d0562d127abed382070"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/button/index.ts",
+      "target": "apps/web/src/components/ui/button/index.ts",
+      "upstreamSha256": "7293baeed0157889b0dfa393637b821c3dd264aa385c59e20ff6958d2aba2740"
+    },
+    {
+      "source": "packages/elements/src/conversation/index.ts",
+      "target": "apps/web/src/components/ai-elements/conversation/index.ts",
+      "upstreamSha256": "0837b78ce5412b855fe7cd242dffaf82236b46750db9444135a3b114795b48c1"
+    },
+    {
+      "source": "packages/elements/src/message/context.ts",
+      "target": "apps/web/src/components/ai-elements/message/context.ts",
+      "upstreamSha256": "0ea0f242162fcdc4f2c45dcb54871a2975b0725f58f705cc87e890e9b3d0699c"
+    },
+    {
+      "source": "packages/elements/src/message/index.ts",
+      "target": "apps/web/src/components/ai-elements/message/index.ts",
+      "upstreamSha256": "b45bb1e4e415fff0892b0084538a186ee4182e8bbe3fb04f114b603d763eb753"
+    },
+    {
+      "source": "packages/elements/src/message/Message.vue",
+      "target": "apps/web/src/components/ai-elements/message/Message.vue",
+      "upstreamSha256": "063890a391e5a502305b4e00ac208594274c858cc8d8eaa7994cb32a19d8d676"
+    },
+    {
+      "source": "packages/elements/src/message/MessageAction.vue",
+      "target": "apps/web/src/components/ai-elements/message/MessageAction.vue",
+      "upstreamSha256": "a06d441f10a641bd06c4a1b48bdb93bceaef63de6d3b302e60fa58a89f5f9e3a"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/tooltip/index.ts",
+      "target": "apps/web/src/components/ui/tooltip/index.ts",
+      "upstreamSha256": "650df5228e6bb52079e32d0bd1ae35bbac004dfbd2dd8b562c2802025764839b"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/tooltip/Tooltip.vue",
+      "target": "apps/web/src/components/ui/tooltip/Tooltip.vue",
+      "upstreamSha256": "b815be8dde25ff07ca14ea0a81ade6a5e1b58ef54a621750e551896a533e1249"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/tooltip/TooltipContent.vue",
+      "target": "apps/web/src/components/ui/tooltip/TooltipContent.vue",
+      "upstreamSha256": "8611b2546331256f06fd33c90543ba53c23208c6d46ba252553a4088394b487d"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/tooltip/TooltipProvider.vue",
+      "target": "apps/web/src/components/ui/tooltip/TooltipProvider.vue",
+      "upstreamSha256": "b003e499a3eaf35345135686fd2764e0642f7146b1b62ea5f5f19f2d8dde2f60"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/tooltip/TooltipTrigger.vue",
+      "target": "apps/web/src/components/ui/tooltip/TooltipTrigger.vue",
+      "upstreamSha256": "fc3efa049f14522c89902fb2f46d77fa6fc6658ab02d182bedfc44d8500a14cb"
+    },
+    {
+      "source": "packages/elements/src/message/MessageActions.vue",
+      "target": "apps/web/src/components/ai-elements/message/MessageActions.vue",
+      "upstreamSha256": "a5dfa561bf6d1daf90277dc040b52524341f3dd244e3767fd5d1ee511be0a27b"
+    },
+    {
+      "source": "packages/elements/src/message/MessageAvatar.vue",
+      "target": "apps/web/src/components/ai-elements/message/MessageAvatar.vue",
+      "upstreamSha256": "d39ab69d1b2802760cd105261e82347df4e0d8a2a71e4a1a7356a8c93b131f41"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/avatar/Avatar.vue",
+      "target": "apps/web/src/components/ui/avatar/Avatar.vue",
+      "upstreamSha256": "2eebb46396ac9710b9009a41f6eb68265549caf21117cce6562b3866b3e68801"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/avatar/AvatarFallback.vue",
+      "target": "apps/web/src/components/ui/avatar/AvatarFallback.vue",
+      "upstreamSha256": "2ed13cd8c4665195750b20ffe3352e59e39671e42fe2f26cb4d2daf0ffbadaef"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/avatar/AvatarImage.vue",
+      "target": "apps/web/src/components/ui/avatar/AvatarImage.vue",
+      "upstreamSha256": "93ac78fa020226a60dbe6b4ed5eb05c40da6022cc2496ebb69abd73658d52962"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/avatar/index.ts",
+      "target": "apps/web/src/components/ui/avatar/index.ts",
+      "upstreamSha256": "7a769dfa24a76cdd4406a870f6ce33d5434b376a76bbd0502b0ba45e614326ce"
+    },
+    {
+      "source": "packages/elements/src/message/MessageBranch.vue",
+      "target": "apps/web/src/components/ai-elements/message/MessageBranch.vue",
+      "upstreamSha256": "0680c2b9d2bc1a46c907eaf5faaa85b164d243820606088d581830e04ea276ef"
+    },
+    {
+      "source": "packages/elements/src/message/MessageBranchContent.vue",
+      "target": "apps/web/src/components/ai-elements/message/MessageBranchContent.vue",
+      "upstreamSha256": "78598e2a7ef237bcf2152332872173d723bdf7a9067e6f3f40152f55bc60ce87"
+    },
+    {
+      "source": "packages/elements/src/message/MessageBranchNext.vue",
+      "target": "apps/web/src/components/ai-elements/message/MessageBranchNext.vue",
+      "upstreamSha256": "c0ef8e6dc626b325e0e3c3182a5c1d0d131e52775af4ad88480b28605a130e54"
+    },
+    {
+      "source": "packages/elements/src/message/MessageBranchPage.vue",
+      "target": "apps/web/src/components/ai-elements/message/MessageBranchPage.vue",
+      "upstreamSha256": "d71fd98b85e90b4325e7ac64242e58d36d0e7a6f2061f7aad05f7841bdcf0254"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/button-group/ButtonGroup.vue",
+      "target": "apps/web/src/components/ui/button-group/ButtonGroup.vue",
+      "upstreamSha256": "7b2c6fea641c924ff67ada5e196bfe73d97f9a4bd8f62b1afae2afc4069e0c47"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/button-group/ButtonGroupSeparator.vue",
+      "target": "apps/web/src/components/ui/button-group/ButtonGroupSeparator.vue",
+      "upstreamSha256": "83388c54f1945b92a53fc5717f1990ee3d70c8d5f49e5dbc2a48cc5003274d7f"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/separator/index.ts",
+      "target": "apps/web/src/components/ui/separator/index.ts",
+      "upstreamSha256": "5e79dd5256c2212bb1fad479a2c967d5f29746e7f42a364a7fc2107373502cd6"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/separator/Separator.vue",
+      "target": "apps/web/src/components/ui/separator/Separator.vue",
+      "upstreamSha256": "60b3c0b76fc814ed3f8445e8bd01bf2733e77a8e7ad3852e3e89e5d778a7c132"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/button-group/ButtonGroupText.vue",
+      "target": "apps/web/src/components/ui/button-group/ButtonGroupText.vue",
+      "upstreamSha256": "972ae2fc3e2c35e461e9e9f69ba577852039d98203a1c11ab6be34a73bd11922"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/button-group/index.ts",
+      "target": "apps/web/src/components/ui/button-group/index.ts",
+      "upstreamSha256": "e62c5fc970f54c23dad6327ff5f637a4365d550ce4ab534bfc967b76282bb6c8"
+    },
+    {
+      "source": "packages/elements/src/message/MessageBranchPrevious.vue",
+      "target": "apps/web/src/components/ai-elements/message/MessageBranchPrevious.vue",
+      "upstreamSha256": "f3466a1024e364d1457ac47359f31f0aa47bef8ae08a85ad29186b65c2d6b5ec"
+    },
+    {
+      "source": "packages/elements/src/message/MessageBranchSelector.vue",
+      "target": "apps/web/src/components/ai-elements/message/MessageBranchSelector.vue",
+      "upstreamSha256": "c1c421e98001cc2c49a283b49c4e27ab9af7b1b95a7bbbda0608dbdf0361a2f2"
+    },
+    {
+      "source": "packages/elements/src/message/MessageContent.vue",
+      "target": "apps/web/src/components/ai-elements/message/MessageContent.vue",
+      "upstreamSha256": "561311e9bbb417d08dca0dd30f2a094ce1f8b5645f58cfc54a41260ba54c44ff"
+    },
+    {
+      "source": "packages/elements/src/message/MessageResponse.vue",
+      "target": "apps/web/src/components/ai-elements/message/MessageResponse.vue",
+      "upstreamSha256": "7acb5acfc51c2bccabb5c6065ff1e55eb8dd183470657707893fd005183279a9"
+    },
+    {
+      "source": "packages/elements/src/message/MessageToolbar.vue",
+      "target": "apps/web/src/components/ai-elements/message/MessageToolbar.vue",
+      "upstreamSha256": "8c0c85f28e2845158503f7026d4bd1a1ebaccb2daa8d17371a3fe8c3ad2dabb9"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/context.ts",
+      "target": "apps/web/src/components/ai-elements/prompt-input/context.ts",
+      "upstreamSha256": "2b0a8b06366ea00dbe32a618676729362316b24a863d09d9282fcd247e27b15a"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/index.ts",
+      "target": "apps/web/src/components/ai-elements/prompt-input/index.ts",
+      "upstreamSha256": "3359a92ed49e51485771cce585ae2be3d652ee9bbb8723f6c3c99a8bc565612e"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInput.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInput.vue",
+      "upstreamSha256": "c97539442105a077c01a0a025eb7cad081eb727f4a435b7917d44e0b57e9130e"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/input-group/index.ts",
+      "target": "apps/web/src/components/ui/input-group/index.ts",
+      "upstreamSha256": "f10c4d9fc5ee826dc267730f6fc39c0b8fd6b1611ac264e5e6312e068455ea6e"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/input-group/InputGroup.vue",
+      "target": "apps/web/src/components/ui/input-group/InputGroup.vue",
+      "upstreamSha256": "06c9b14e9f906275305af55d3fe3efd2ab49b48b5c3ef6442c7921bd25893464"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/input-group/InputGroupAddon.vue",
+      "target": "apps/web/src/components/ui/input-group/InputGroupAddon.vue",
+      "upstreamSha256": "0c3bb730aa0411313de0e4d63962035f23540830119bcf2b6b62b5b449ace48d"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/input-group/InputGroupButton.vue",
+      "target": "apps/web/src/components/ui/input-group/InputGroupButton.vue",
+      "upstreamSha256": "c5b8f64b4c658b5d6983ea7b89c59ebc870815b411f0b7419d3b7cf6ca943333"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/input-group/InputGroupInput.vue",
+      "target": "apps/web/src/components/ui/input-group/InputGroupInput.vue",
+      "upstreamSha256": "e74c55d7e18c4833ab1fc8a4f0e4e9900f2010f7bf0520e15d64f5776e5bef6c"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/input/index.ts",
+      "target": "apps/web/src/components/ui/input/index.ts",
+      "upstreamSha256": "09ebfb7b7805ec2c311ba2285b6f4ba2592f85244e1abe12c0dc2ac106c10318"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/input/Input.vue",
+      "target": "apps/web/src/components/ui/input/Input.vue",
+      "upstreamSha256": "16823f00aca850b1c4f1e1bf9a005ed152aa353cd7c52d84aa544117331f5e9e"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/input-group/InputGroupText.vue",
+      "target": "apps/web/src/components/ui/input-group/InputGroupText.vue",
+      "upstreamSha256": "892bda646c0ef9040b6a66d380220e606c46215a12f2490461156000729ab2f9"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/input-group/InputGroupTextarea.vue",
+      "target": "apps/web/src/components/ui/input-group/InputGroupTextarea.vue",
+      "upstreamSha256": "f94ba5fb216ef3cd90605d5ab48897296f0c4c5530fd9e6c899d58181473f804"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/textarea/index.ts",
+      "target": "apps/web/src/components/ui/textarea/index.ts",
+      "upstreamSha256": "1b7316231e53ee33c5e1536c24066a28655b9ccfeac9ccba5ff90a531ba07cf6"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/textarea/Textarea.vue",
+      "target": "apps/web/src/components/ui/textarea/Textarea.vue",
+      "upstreamSha256": "9df09c4019a680b0e9d08da88328709d2b5b947160017da36aade7f10696aa30"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputActionAddAttachments.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputActionAddAttachments.vue",
+      "upstreamSha256": "55344a18ffe35e65e33b7d26f9cd34e02d02b5446f1f95febb432ad421d9ac12"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dropdown-menu/DropdownMenu.vue",
+      "target": "apps/web/src/components/ui/dropdown-menu/DropdownMenu.vue",
+      "upstreamSha256": "21ae98b4ab54e56e1ef7600ad7d371a67a7d6eca51a772acadba3ebffa9d5f05"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dropdown-menu/DropdownMenuCheckboxItem.vue",
+      "target": "apps/web/src/components/ui/dropdown-menu/DropdownMenuCheckboxItem.vue",
+      "upstreamSha256": "b78c5aef5ca7812fd9a1d003852ad63baf3ed7953f9e1b0166d7f2ec231789e6"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dropdown-menu/DropdownMenuContent.vue",
+      "target": "apps/web/src/components/ui/dropdown-menu/DropdownMenuContent.vue",
+      "upstreamSha256": "361d8f66e951323745fa3f564b22c8a8efa246cc127d6a6f540ee09464f9c267"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dropdown-menu/DropdownMenuGroup.vue",
+      "target": "apps/web/src/components/ui/dropdown-menu/DropdownMenuGroup.vue",
+      "upstreamSha256": "81b14ec49ce987b3f11d8d506c13eb7b99f4831a1c476af7f5faa16b9af0dad4"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dropdown-menu/DropdownMenuItem.vue",
+      "target": "apps/web/src/components/ui/dropdown-menu/DropdownMenuItem.vue",
+      "upstreamSha256": "f6e33db929a0822bec4814e070cbda288ece3b1057ff41c5dd6cf1f258c61547"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dropdown-menu/DropdownMenuLabel.vue",
+      "target": "apps/web/src/components/ui/dropdown-menu/DropdownMenuLabel.vue",
+      "upstreamSha256": "30f60bc84e4b6fa305479f65c3b0487ba5b090d0d282a78ba08ae80c060f1ae3"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dropdown-menu/DropdownMenuRadioGroup.vue",
+      "target": "apps/web/src/components/ui/dropdown-menu/DropdownMenuRadioGroup.vue",
+      "upstreamSha256": "a412cb84d484ff6fd1bb360fb6f84c1c4d900f1d0d800311fddd93f5f8e4cb7e"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dropdown-menu/DropdownMenuRadioItem.vue",
+      "target": "apps/web/src/components/ui/dropdown-menu/DropdownMenuRadioItem.vue",
+      "upstreamSha256": "9cdfa6e2fd6fa5da99ff28ecd354c2858713c794180852e268df5cee0bba8d71"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dropdown-menu/DropdownMenuSeparator.vue",
+      "target": "apps/web/src/components/ui/dropdown-menu/DropdownMenuSeparator.vue",
+      "upstreamSha256": "19a526992fb86c3f3fd986e415a504696b399d352a1217a259e3b2d69fa3f52b"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dropdown-menu/DropdownMenuShortcut.vue",
+      "target": "apps/web/src/components/ui/dropdown-menu/DropdownMenuShortcut.vue",
+      "upstreamSha256": "68f54fe887693ef2b5b836b9e5a5264a47e079f4716e9ebf22563d6fdc81b105"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dropdown-menu/DropdownMenuSub.vue",
+      "target": "apps/web/src/components/ui/dropdown-menu/DropdownMenuSub.vue",
+      "upstreamSha256": "5d190c2ba0508f6a08e7fa8e61843d8ae1a0615ac90d6c862e68aa9e96b145a2"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dropdown-menu/DropdownMenuSubContent.vue",
+      "target": "apps/web/src/components/ui/dropdown-menu/DropdownMenuSubContent.vue",
+      "upstreamSha256": "3453d26d2defb3057f6372bb59fc25ca2419faa5f0fd43c2f20ec9d190fd4740"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dropdown-menu/DropdownMenuSubTrigger.vue",
+      "target": "apps/web/src/components/ui/dropdown-menu/DropdownMenuSubTrigger.vue",
+      "upstreamSha256": "ed34fd02f18b90530a82635c8459b9eecd639d4aa942ba217bdcca1cecf0ed4a"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dropdown-menu/DropdownMenuTrigger.vue",
+      "target": "apps/web/src/components/ui/dropdown-menu/DropdownMenuTrigger.vue",
+      "upstreamSha256": "26efc7f92bfdf4d185a8288a372ecb25cf2a9442b1fb1f8b47e7bef14ddcccaa"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dropdown-menu/index.ts",
+      "target": "apps/web/src/components/ui/dropdown-menu/index.ts",
+      "upstreamSha256": "ac38993e66061ce6cbf4dc89abf6fa3bfc792c05c1ef00536a4ef2447eb352a2"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputActionMenu.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputActionMenu.vue",
+      "upstreamSha256": "c0e439feb201be56a4fcfe1ff705328818cb6cd6e9500ccf695d400fe7a95e75"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputActionMenuContent.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputActionMenuContent.vue",
+      "upstreamSha256": "1d2f7662e7e444f2d6ca336d7bc765761cc86247288bb326adf4af7ef22b9aff"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputActionMenuItem.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputActionMenuItem.vue",
+      "upstreamSha256": "f4e303abbaceff0af77d51c4e86f7914878e5f4a5f5e447d04bc522e65e54cca"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputActionMenuTrigger.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputActionMenuTrigger.vue",
+      "upstreamSha256": "35b7f0fd36fc03bea14269dd2c7edb3227c339a4d918e5087f9bdfac039665bc"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputBody.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputBody.vue",
+      "upstreamSha256": "c4a92a65d24c6e1d89b451f5f388acaeb17728043118793fbfd1242d1f86f09a"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputButton.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputButton.vue",
+      "upstreamSha256": "f331f42bec5e4162ca9de0634c752d32abd6aa352affae2e527e35d669015c2f"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputCommand.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputCommand.vue",
+      "upstreamSha256": "fef6fd40e751ac72da47a401669a5017ca1a76faf9af7fb7e53efdc505c8d227"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/command/Command.vue",
+      "target": "apps/web/src/components/ui/command/Command.vue",
+      "upstreamSha256": "97de9476cc8bb4b61fbfbd1de3fa17cbef2100c12c74d44a0eb4feee306bd158"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/command/CommandDialog.vue",
+      "target": "apps/web/src/components/ui/command/CommandDialog.vue",
+      "upstreamSha256": "0abb80f32bd2d187206d76cf9fee02c04ce2a0c99dbe72de6762d228c9997461"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dialog/Dialog.vue",
+      "target": "apps/web/src/components/ui/dialog/Dialog.vue",
+      "upstreamSha256": "59ef326fed4fef60691b867c56b089c7a5abf388e6e2eb615dd7d4e7a8dfb60a"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dialog/DialogClose.vue",
+      "target": "apps/web/src/components/ui/dialog/DialogClose.vue",
+      "upstreamSha256": "700eba3b6a116712879437ea0bba89db3bf223caad860470c682ea097ab143ed"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dialog/DialogContent.vue",
+      "target": "apps/web/src/components/ui/dialog/DialogContent.vue",
+      "upstreamSha256": "c3a4157cd5f3a7da729c70ee6454265ae8ae5b65a160459c75972b86e9b0f1cd"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dialog/DialogDescription.vue",
+      "target": "apps/web/src/components/ui/dialog/DialogDescription.vue",
+      "upstreamSha256": "12d24a7bfbbb3f4c0cc59433028dded22ae2ae07d4fb893cc5ce3a3f78cc09b5"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dialog/DialogFooter.vue",
+      "target": "apps/web/src/components/ui/dialog/DialogFooter.vue",
+      "upstreamSha256": "100df82d40d111fde33eec6e93fafcb6f02867ac6e89a4bc4e32ba394fc8c379"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dialog/DialogHeader.vue",
+      "target": "apps/web/src/components/ui/dialog/DialogHeader.vue",
+      "upstreamSha256": "62d2807e4b793109ce00b39ca369e2751e047363a7d44f86cac32df2fdaf18da"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dialog/DialogOverlay.vue",
+      "target": "apps/web/src/components/ui/dialog/DialogOverlay.vue",
+      "upstreamSha256": "3e05cfca1b1c14d89e5e0deee72ab7c0995fc520d91d8c9630b650f5d1a830ee"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dialog/DialogScrollContent.vue",
+      "target": "apps/web/src/components/ui/dialog/DialogScrollContent.vue",
+      "upstreamSha256": "bb97a13f486be40fcf9467663c8a87a844bc20cc70926db499b4f623b8c6b0b6"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dialog/DialogTitle.vue",
+      "target": "apps/web/src/components/ui/dialog/DialogTitle.vue",
+      "upstreamSha256": "9ceb0d1a2087dab0f79d4c4f25a6a949527e74122c3f333ecbfcd801e4d9c393"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dialog/DialogTrigger.vue",
+      "target": "apps/web/src/components/ui/dialog/DialogTrigger.vue",
+      "upstreamSha256": "72ee8fd4b82cb7d5eea9a7896e64323511e0e782554d3931a357221bc89b2f8d"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/dialog/index.ts",
+      "target": "apps/web/src/components/ui/dialog/index.ts",
+      "upstreamSha256": "8a51c81fc89c7b71908f9192875632720d8fa58e3f7fbe9b8e9a6e3a308bdc46"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/command/CommandEmpty.vue",
+      "target": "apps/web/src/components/ui/command/CommandEmpty.vue",
+      "upstreamSha256": "25ddcbd79218992dabfdb58fd1a4f33c4b2eb7b5124b1228ec63fcf1a5c6ddb7"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/command/CommandGroup.vue",
+      "target": "apps/web/src/components/ui/command/CommandGroup.vue",
+      "upstreamSha256": "987b1714e986f3f9da3cb2414fd7a0cda9fc0f5d81d03336bfda7062651b8b91"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/command/CommandInput.vue",
+      "target": "apps/web/src/components/ui/command/CommandInput.vue",
+      "upstreamSha256": "528597ded9db238afa292973051278234a8be32d1f6c6968b7f1e841ea6a8c34"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/command/CommandItem.vue",
+      "target": "apps/web/src/components/ui/command/CommandItem.vue",
+      "upstreamSha256": "34b4d7f155ce1dbd38c4f30c1d9e50728281e46d518d3f05b031a6dfa0926ed2"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/command/CommandList.vue",
+      "target": "apps/web/src/components/ui/command/CommandList.vue",
+      "upstreamSha256": "791ad8b06fce95dd6f5e4fd84468113426c43966e42f3537c8217f3436ea5acb"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/command/CommandSeparator.vue",
+      "target": "apps/web/src/components/ui/command/CommandSeparator.vue",
+      "upstreamSha256": "edea27f2fa9fdb82ee52b6c06b05805bb3dabb23a785d257ceb72c0435932e5a"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/command/CommandShortcut.vue",
+      "target": "apps/web/src/components/ui/command/CommandShortcut.vue",
+      "upstreamSha256": "3081db05dd3a08e8831d599d778f420588999daecc703909842171de7535de3b"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/command/index.ts",
+      "target": "apps/web/src/components/ui/command/index.ts",
+      "upstreamSha256": "e8973b0af85455c3e1f2dbb4e4d32d5c2165a30aedd405611aee2c3bb03f32e0"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputCommandEmpty.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputCommandEmpty.vue",
+      "upstreamSha256": "24a98a74654eefce39026d4a2054a14907ae04684432bcd625d9137c5b42dc7a"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputCommandGroup.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputCommandGroup.vue",
+      "upstreamSha256": "ec0a7b5f4dfaf27ee2e66ee5aa4ede22cf118773ae021dd08320d9939e1bba8a"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputCommandInput.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputCommandInput.vue",
+      "upstreamSha256": "b215fb5dbc931478ff35d6e8210c2a1cba7a776901584fdeb550636ce3d533a3"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputCommandItem.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputCommandItem.vue",
+      "upstreamSha256": "5bd0e97ade2021950ab89f216de7c2e441c75ad7789a502c22f0f8ae7e9ffc01"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputCommandList.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputCommandList.vue",
+      "upstreamSha256": "7eb3eee07188bd27ffc194dc1cfbe202ad205ae6fe7b116ca13ca1fa87e1ce01"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputCommandSeparator.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputCommandSeparator.vue",
+      "upstreamSha256": "e68d5b9d2fc20c9d01e415d64efa0cad96e58919274ca52f8d646548fd0c67e1"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputFooter.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputFooter.vue",
+      "upstreamSha256": "12d22e0ac98e9eba89a36027ea9ab0e22e7a86d96d8eff3acd15684e9856472c"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputHeader.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputHeader.vue",
+      "upstreamSha256": "d9b8bd80aff49e99df72d931060f999bf89047b18e4b7b7b0a493a3e9b08f740"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputHoverCard.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputHoverCard.vue",
+      "upstreamSha256": "9baebb67e26d181826e283a6a29fabcab5b0cfb5d3acd1c1d28a6a9293f61ec5"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/hover-card/HoverCard.vue",
+      "target": "apps/web/src/components/ui/hover-card/HoverCard.vue",
+      "upstreamSha256": "26928b12d7409505f426eec21949b859bc11e38fd30643e2855b0a107ee5accb"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/hover-card/HoverCardContent.vue",
+      "target": "apps/web/src/components/ui/hover-card/HoverCardContent.vue",
+      "upstreamSha256": "bfb5ade7734c509c646d60729424cd411478433e8687274955afb8cf12b7ea4e"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/hover-card/HoverCardTrigger.vue",
+      "target": "apps/web/src/components/ui/hover-card/HoverCardTrigger.vue",
+      "upstreamSha256": "6415781e9862370d2b084f052f4dda966f23f6619b7ee592dd9ee0c93df1cb87"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/hover-card/index.ts",
+      "target": "apps/web/src/components/ui/hover-card/index.ts",
+      "upstreamSha256": "4717e8362b4f8532ce10fe3a4fb5a51529e3042ed08c26c061490d59a865ac76"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputHoverCardContent.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputHoverCardContent.vue",
+      "upstreamSha256": "c0d5aa88775de192114a9238d55b34fafc42a94d05068796e9073f070c5bd29f"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputHoverCardTrigger.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputHoverCardTrigger.vue",
+      "upstreamSha256": "719a9466e76b100bc2b847616127e064b47b529c5524781350d42db37cb2d90a"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputProvider.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputProvider.vue",
+      "upstreamSha256": "a082fe113d0673d878abc3a9b98823f891cdcac2b359a22c45595f9075a5e227"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputSelect.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputSelect.vue",
+      "upstreamSha256": "bb189eff69e81986b9f6db4153d0ba907174e8d7669c49fcb7068b8cb86f9a44"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/select/index.ts",
+      "target": "apps/web/src/components/ui/select/index.ts",
+      "upstreamSha256": "d4473646a10c1d549c6d2ac3ee1b4931bfbed093354ba5fe354db214e563196d"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/select/Select.vue",
+      "target": "apps/web/src/components/ui/select/Select.vue",
+      "upstreamSha256": "0533c93f023062e8fe880282abb62b50ecaabb2592f13c08bd8a7c0b643b3079"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/select/SelectContent.vue",
+      "target": "apps/web/src/components/ui/select/SelectContent.vue",
+      "upstreamSha256": "3fe98f3ac86f547be872489b85a692d0a450cff77de0a33f29da832bdd4ff633"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/select/SelectGroup.vue",
+      "target": "apps/web/src/components/ui/select/SelectGroup.vue",
+      "upstreamSha256": "7a07aa76dd38079e734cf90f7507562d5951be504dd967e5b11dcaf9f94c855f"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/select/SelectItem.vue",
+      "target": "apps/web/src/components/ui/select/SelectItem.vue",
+      "upstreamSha256": "bf64d3155d2d4e2605d1ab09cd7718ea8f7d19ff0caf11923c31f90792231303"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/select/SelectItemText.vue",
+      "target": "apps/web/src/components/ui/select/SelectItemText.vue",
+      "upstreamSha256": "882c840bddfbe2d893ddbb0f06140a748662918e794a0218d7f5a9c4735e4026"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/select/SelectLabel.vue",
+      "target": "apps/web/src/components/ui/select/SelectLabel.vue",
+      "upstreamSha256": "83322f8c03e013c59fa262a0b253763a52adb8043764cc07c0ae67b636982c62"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/select/SelectScrollDownButton.vue",
+      "target": "apps/web/src/components/ui/select/SelectScrollDownButton.vue",
+      "upstreamSha256": "65b6e3a8803778db01c5d27ed3e5fe2d5b385888db27478247e4b5b4621d0023"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/select/SelectScrollUpButton.vue",
+      "target": "apps/web/src/components/ui/select/SelectScrollUpButton.vue",
+      "upstreamSha256": "10d20631125b98b1fc212e3f0040c7b5d308b85e561487548279efa23736642e"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/select/SelectSeparator.vue",
+      "target": "apps/web/src/components/ui/select/SelectSeparator.vue",
+      "upstreamSha256": "7ea43cfac6b2f1b10176f477bcb458d4dc7b54131dbc48ea7f96cbf10abff43d"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/select/SelectTrigger.vue",
+      "target": "apps/web/src/components/ui/select/SelectTrigger.vue",
+      "upstreamSha256": "2607e4ae51bd9f682075015dcac98345ec88780964912cf7cfd568fe39c540c0"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/select/SelectValue.vue",
+      "target": "apps/web/src/components/ui/select/SelectValue.vue",
+      "upstreamSha256": "76d1894c859fc1ad1c423326bebd21c546f9d9a10b8eae29df6820511a9e2f76"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputSelectContent.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputSelectContent.vue",
+      "upstreamSha256": "6233483c22d271f22bb1f40d249387b612d06b93f1827cf536f19fa321061e86"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputSelectItem.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputSelectItem.vue",
+      "upstreamSha256": "7ef48629dcdf0802a116f126ae5fd6f26c6418ee22f78af195d7590a103607f2"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputSelectTrigger.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputSelectTrigger.vue",
+      "upstreamSha256": "ede76305ea22cdbb287bd70914a5da163a98489d87ae4eb5137fa7d7acec5f79"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputSelectValue.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputSelectValue.vue",
+      "upstreamSha256": "6b6c4f7b5b44ab14d88a888618af5ccb5754b338e98b513e893f49aec6c79eee"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputSpeechButton.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputSpeechButton.vue",
+      "upstreamSha256": "b44fbdaeec0d292b39c2bc0192b4841fb09754d39cbf5dedc16352d84f0580e9"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputSubmit.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputSubmit.vue",
+      "upstreamSha256": "4e22a2a4436cc461a1538f2dcd2ab888eab4942fabfa0dbdc868915fc4d4e298"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputTab.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputTab.vue",
+      "upstreamSha256": "baecf4ac7bb0727e2bf981bb319c43c72b0aad1ecc1169240ea3f3758f70076e"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputTabBody.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputTabBody.vue",
+      "upstreamSha256": "60b562f35670f941460506021ad64866d1cac0b4ab26ecb816e065d4f5971f61"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputTabItem.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputTabItem.vue",
+      "upstreamSha256": "4c119cfd4f0b779e938cef40854124198a52248f79a43faeecaf2bf31b3f507b"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputTabLabel.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputTabLabel.vue",
+      "upstreamSha256": "4bdb42d1a936ff91ac6d62132d484be67ea4b27f575e477d14ff54a3bbe37a99"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputTabsList.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputTabsList.vue",
+      "upstreamSha256": "baecf4ac7bb0727e2bf981bb319c43c72b0aad1ecc1169240ea3f3758f70076e"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputTextarea.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputTextarea.vue",
+      "upstreamSha256": "108d412893065967cc74737ea4f06826aefca119642d362b37262455e24002a4"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/PromptInputTools.vue",
+      "target": "apps/web/src/components/ai-elements/prompt-input/PromptInputTools.vue",
+      "upstreamSha256": "8d9192b38f37a08e498b88eb3ada42d1208dc811fb641229a2939e8619aa726f"
+    },
+    {
+      "source": "packages/elements/src/prompt-input/types.ts",
+      "target": "apps/web/src/components/ai-elements/prompt-input/types.ts",
+      "upstreamSha256": "e11e1d53bd0d2776b9c523b25acc9546c8f28192bd9548942305699b98ae38d0"
+    },
+    {
+      "source": "packages/elements/src/model-selector/index.ts",
+      "target": "apps/web/src/components/ai-elements/model-selector/index.ts",
+      "upstreamSha256": "292fa68fc87e86e4a0324c0e4e0e5d779209e198af4913e10eabf9a0d8e679ea"
+    },
+    {
+      "source": "packages/elements/src/model-selector/ModelSelector.vue",
+      "target": "apps/web/src/components/ai-elements/model-selector/ModelSelector.vue",
+      "upstreamSha256": "be85e6a93ea0bda0362d9e378c9013e607b091d06a6f25478c44a48fd85aa86c"
+    },
+    {
+      "source": "packages/elements/src/model-selector/ModelSelectorContent.vue",
+      "target": "apps/web/src/components/ai-elements/model-selector/ModelSelectorContent.vue",
+      "upstreamSha256": "80911ad502afcd8cc3259adfa81218498e62a2853ed9916d3d67f623b7fa2812"
+    },
+    {
+      "source": "packages/elements/src/model-selector/ModelSelectorDialog.vue",
+      "target": "apps/web/src/components/ai-elements/model-selector/ModelSelectorDialog.vue",
+      "upstreamSha256": "e07eb1ff268b476d32ddeb8dcd82ae66a4ef5b7874db9d77457124e6a51b12fb"
+    },
+    {
+      "source": "packages/elements/src/model-selector/ModelSelectorEmpty.vue",
+      "target": "apps/web/src/components/ai-elements/model-selector/ModelSelectorEmpty.vue",
+      "upstreamSha256": "6372e3f5bdf6925b63d13ac35081eaf51b6f37bdca3bf732a108e2f3d2a5756a"
+    },
+    {
+      "source": "packages/elements/src/model-selector/ModelSelectorGroup.vue",
+      "target": "apps/web/src/components/ai-elements/model-selector/ModelSelectorGroup.vue",
+      "upstreamSha256": "a521dfd7503ccc340b3f86e4b5b8a4c6cbaf531ef66794ab1db0b3ad50695cd7"
+    },
+    {
+      "source": "packages/elements/src/model-selector/ModelSelectorInput.vue",
+      "target": "apps/web/src/components/ai-elements/model-selector/ModelSelectorInput.vue",
+      "upstreamSha256": "3904eaf22e81a4387c8d68de98170237c7eb9c12db02f7127b75ccceeab19dc3"
+    },
+    {
+      "source": "packages/elements/src/model-selector/ModelSelectorItem.vue",
+      "target": "apps/web/src/components/ai-elements/model-selector/ModelSelectorItem.vue",
+      "upstreamSha256": "2268029f8ba50b7d1c53d13f68170dc7789d8041c31640c48f507123ad35f7c9"
+    },
+    {
+      "source": "packages/elements/src/model-selector/ModelSelectorList.vue",
+      "target": "apps/web/src/components/ai-elements/model-selector/ModelSelectorList.vue",
+      "upstreamSha256": "6f78048add8e8e464ea97d529b8c6fd409030bdef45210502e5dff6eb178b383"
+    },
+    {
+      "source": "packages/elements/src/model-selector/ModelSelectorLogo.vue",
+      "target": "apps/web/src/components/ai-elements/model-selector/ModelSelectorLogo.vue",
+      "upstreamSha256": "194d422244791a9bf7cef4fe646f9e3d93fcdcb2e7316497eeedb488a5d33977"
+    },
+    {
+      "source": "packages/elements/src/model-selector/ModelSelectorLogoGroup.vue",
+      "target": "apps/web/src/components/ai-elements/model-selector/ModelSelectorLogoGroup.vue",
+      "upstreamSha256": "efa5cc1d690f75443d37ce5d70613ccac27bbaca8fe85fca22c436b228d99b85"
+    },
+    {
+      "source": "packages/elements/src/model-selector/ModelSelectorName.vue",
+      "target": "apps/web/src/components/ai-elements/model-selector/ModelSelectorName.vue",
+      "upstreamSha256": "e88566c582a6d4171caa43467b1008191600ced02ed232c5ea8a324c7aef7f12"
+    },
+    {
+      "source": "packages/elements/src/model-selector/ModelSelectorSeparator.vue",
+      "target": "apps/web/src/components/ai-elements/model-selector/ModelSelectorSeparator.vue",
+      "upstreamSha256": "ff96ae7056a611a820800693cd955aecf6ee18c0d3cf003f6a33fde98da7a187"
+    },
+    {
+      "source": "packages/elements/src/model-selector/ModelSelectorShortcut.vue",
+      "target": "apps/web/src/components/ai-elements/model-selector/ModelSelectorShortcut.vue",
+      "upstreamSha256": "d60b3d8ef4495486b0698d2dcfd897ea8f4c0d2805b513224329bf9436f0a6c8"
+    },
+    {
+      "source": "packages/elements/src/model-selector/ModelSelectorTrigger.vue",
+      "target": "apps/web/src/components/ai-elements/model-selector/ModelSelectorTrigger.vue",
+      "upstreamSha256": "ac10b6e98b5d01e9c2711c9cab1cfcad7ed437479a1496693887d18087330ad5"
+    },
+    {
+      "source": "packages/elements/src/attachments/Attachment.vue",
+      "target": "apps/web/src/components/ai-elements/attachments/Attachment.vue",
+      "upstreamSha256": "c05327eb09facdc6453b0bf59971f385863b274496b58c7494e9b2d6bfbf2340"
+    },
+    {
+      "source": "packages/elements/src/attachments/AttachmentEmpty.vue",
+      "target": "apps/web/src/components/ai-elements/attachments/AttachmentEmpty.vue",
+      "upstreamSha256": "5b2493fc2c17a5c3c2ec0acc3a707afff8d40a716196f7ed84bf468491840adf"
+    },
+    {
+      "source": "packages/elements/src/attachments/AttachmentHoverCard.vue",
+      "target": "apps/web/src/components/ai-elements/attachments/AttachmentHoverCard.vue",
+      "upstreamSha256": "afdb9879378c1ecfe8955bdebd333e689610c9d429e590d953b9db51195fd49c"
+    },
+    {
+      "source": "packages/elements/src/attachments/AttachmentHoverCardContent.vue",
+      "target": "apps/web/src/components/ai-elements/attachments/AttachmentHoverCardContent.vue",
+      "upstreamSha256": "4a7fff2a4987073ec53e43c4147d32d2472969355e9059c2ddc4ef53df5deff5"
+    },
+    {
+      "source": "packages/elements/src/attachments/AttachmentHoverCardTrigger.vue",
+      "target": "apps/web/src/components/ai-elements/attachments/AttachmentHoverCardTrigger.vue",
+      "upstreamSha256": "0b9f20c8a2e71083d64ab63188fc62ad97554c106753cdde7be35dc35a45f7c3"
+    },
+    {
+      "source": "packages/elements/src/attachments/AttachmentInfo.vue",
+      "target": "apps/web/src/components/ai-elements/attachments/AttachmentInfo.vue",
+      "upstreamSha256": "05ec1a38222f1132608ac4b75528c931bc6d2034bcf4295de03d415b9fa2b1d8"
+    },
+    {
+      "source": "packages/elements/src/attachments/AttachmentPreview.vue",
+      "target": "apps/web/src/components/ai-elements/attachments/AttachmentPreview.vue",
+      "upstreamSha256": "2a52375bd6834a8c9ddd30927fbdf416a8618184445de944728e17c0d2a88140"
+    },
+    {
+      "source": "packages/elements/src/attachments/AttachmentRemove.vue",
+      "target": "apps/web/src/components/ai-elements/attachments/AttachmentRemove.vue",
+      "upstreamSha256": "834968050fe9ab1ae419a42022fab880a7f405085a3dd1ed83863f2161aa8d9f"
+    },
+    {
+      "source": "packages/elements/src/attachments/Attachments.vue",
+      "target": "apps/web/src/components/ai-elements/attachments/Attachments.vue",
+      "upstreamSha256": "2b4ee78a6f6dd0e2275388becd849b29dbb65fdafd085058fe2925f96587a791"
+    },
+    {
+      "source": "packages/elements/src/attachments/context.ts",
+      "target": "apps/web/src/components/ai-elements/attachments/context.ts",
+      "upstreamSha256": "c970eb5a501c35e83752b15892e3a758dce7565468a5856d334e0127481eb682"
+    },
+    {
+      "source": "packages/elements/src/attachments/index.ts",
+      "target": "apps/web/src/components/ai-elements/attachments/index.ts",
+      "upstreamSha256": "90a73d7b647e1affee977c36ce13a559be62e12bec3948515983cbef9305b08f"
+    },
+    {
+      "source": "packages/elements/src/attachments/types.ts",
+      "target": "apps/web/src/components/ai-elements/attachments/types.ts",
+      "upstreamSha256": "74758d9662d468da82f215ca332ba4d4c930f50f0c574db2ca10b7175cae7549"
+    },
+    {
+      "source": "packages/elements/src/attachments/utils.ts",
+      "target": "apps/web/src/components/ai-elements/attachments/utils.ts",
+      "upstreamSha256": "fc9485bab9979127b68c3c20ae871a7973c0ebd7787850945acfc3fe2abab69a"
+    },
+    {
+      "source": "packages/elements/src/plan/context.ts",
+      "target": "apps/web/src/components/ai-elements/plan/context.ts",
+      "upstreamSha256": "9d855b81ec5222077598ffd9e6c6829a2db0176820087f92437e197c46b95051"
+    },
+    {
+      "source": "packages/elements/src/plan/index.ts",
+      "target": "apps/web/src/components/ai-elements/plan/index.ts",
+      "upstreamSha256": "d7a65ebd494fdee36da5a8192ec7ab8fa1cc1306a7a686dc88161a01fc051a9e"
+    },
+    {
+      "source": "packages/elements/src/plan/Plan.vue",
+      "target": "apps/web/src/components/ai-elements/plan/Plan.vue",
+      "upstreamSha256": "caba43810df2aeb783bfbb7f1b1f1db9ec89fda12bc77e48c6bb96feec0a312a"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/card/Card.vue",
+      "target": "apps/web/src/components/ui/card/Card.vue",
+      "upstreamSha256": "d122b448d9d03fd5223ad8218f428ac8190f2ca1e51904facdafb7169d132f8c"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/card/CardAction.vue",
+      "target": "apps/web/src/components/ui/card/CardAction.vue",
+      "upstreamSha256": "634e1f4bd07d2bae457aa0f664f3567820dec15df727b97a1f3c300ac1d72a13"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/card/CardContent.vue",
+      "target": "apps/web/src/components/ui/card/CardContent.vue",
+      "upstreamSha256": "1a6c199590c780ceb60c3fdb8e2cf85f52f0ce0a7db908496605c4c3bd4fa19d"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/card/CardDescription.vue",
+      "target": "apps/web/src/components/ui/card/CardDescription.vue",
+      "upstreamSha256": "33a8df2d54861515923220053b5be48ecdb7c3ea609922be55ea39a5968d6571"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/card/CardFooter.vue",
+      "target": "apps/web/src/components/ui/card/CardFooter.vue",
+      "upstreamSha256": "e7530d27b75cab38c649518017c683ca66ab6f7a295fe55be62c3a7052b2a0ba"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/card/CardHeader.vue",
+      "target": "apps/web/src/components/ui/card/CardHeader.vue",
+      "upstreamSha256": "e77dc9d7a028437245c16e862b85d3ba89e10a7d7735f400ba67541f17f9c2e7"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/card/CardTitle.vue",
+      "target": "apps/web/src/components/ui/card/CardTitle.vue",
+      "upstreamSha256": "9aa97e3bc8f0a8c4886fb7c9b8c8c86f5023a6156305581b95f76a5623588ddd"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/card/index.ts",
+      "target": "apps/web/src/components/ui/card/index.ts",
+      "upstreamSha256": "c30265270af4ea825c57d5e445365209c2edd26752ab628abcb8874f880edab0"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/collapsible/Collapsible.vue",
+      "target": "apps/web/src/components/ui/collapsible/Collapsible.vue",
+      "upstreamSha256": "ee14a423493a2912c2899abeb8fb6bc32398443a285768b7a52b8cc91eecc9c7"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/collapsible/CollapsibleContent.vue",
+      "target": "apps/web/src/components/ui/collapsible/CollapsibleContent.vue",
+      "upstreamSha256": "520b2b480babf9345be0671de9b3cfd7f531237ab51cb65ae5e19e90a4d1aa1e"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/collapsible/CollapsibleTrigger.vue",
+      "target": "apps/web/src/components/ui/collapsible/CollapsibleTrigger.vue",
+      "upstreamSha256": "5102f60548a05bbb6c8f6e620ed710625c1b05e0e72cb6597281e175f105c20f"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/collapsible/index.ts",
+      "target": "apps/web/src/components/ui/collapsible/index.ts",
+      "upstreamSha256": "87b267c0032c32a9f55cf75f189ecbb9215fcabebb930e4f5920902dbd545ed2"
+    },
+    {
+      "source": "packages/elements/src/plan/PlanAction.vue",
+      "target": "apps/web/src/components/ai-elements/plan/PlanAction.vue",
+      "upstreamSha256": "b2e8ebbe85ef8fbdbddebeb183134e1a1176da0df04eeaca80b7eee87a8fcef6"
+    },
+    {
+      "source": "packages/elements/src/plan/PlanContent.vue",
+      "target": "apps/web/src/components/ai-elements/plan/PlanContent.vue",
+      "upstreamSha256": "1652e6547f50e8e6a8ebf06ea657c91b4317b558c30d9ec5be9756ba104f0d4f"
+    },
+    {
+      "source": "packages/elements/src/plan/PlanDescription.vue",
+      "target": "apps/web/src/components/ai-elements/plan/PlanDescription.vue",
+      "upstreamSha256": "f1764aefe85387c355a4a7791e9f6fddde9d192c16408aa5054252bdc22de3e9"
+    },
+    {
+      "source": "packages/elements/src/plan/PlanFooter.vue",
+      "target": "apps/web/src/components/ai-elements/plan/PlanFooter.vue",
+      "upstreamSha256": "99201d272794ea7f9db6fbb35e2964bb6e10dcb50566b3bbf1055073e7dd3059"
+    },
+    {
+      "source": "packages/elements/src/plan/PlanHeader.vue",
+      "target": "apps/web/src/components/ai-elements/plan/PlanHeader.vue",
+      "upstreamSha256": "bf63f0c570482b4fdc147d11645c5f4f25973c1dd8e1446200a4db9ab22dbca6"
+    },
+    {
+      "source": "packages/elements/src/plan/PlanTitle.vue",
+      "target": "apps/web/src/components/ai-elements/plan/PlanTitle.vue",
+      "upstreamSha256": "a623fde1454c3358202c0a076f49b7a58aaf8b28e340d557968d7c0cb60b58e8"
+    },
+    {
+      "source": "packages/elements/src/plan/PlanTrigger.vue",
+      "target": "apps/web/src/components/ai-elements/plan/PlanTrigger.vue",
+      "upstreamSha256": "26c4d976df5c58a3d32ab91bf6839325f9e2e02b88397fc8edde079cdf2e940b"
+    },
+    {
+      "source": "packages/elements/src/task/index.ts",
+      "target": "apps/web/src/components/ai-elements/task/index.ts",
+      "upstreamSha256": "583390cd999968ee83ef740d84285cf8e8f484a3f1a214252e79c72bde625ae1"
+    },
+    {
+      "source": "packages/elements/src/task/Task.vue",
+      "target": "apps/web/src/components/ai-elements/task/Task.vue",
+      "upstreamSha256": "1896a139800762707937bfc0e90d782e7d0a6da71342b9bdde8a104ad8751c54"
+    },
+    {
+      "source": "packages/elements/src/task/TaskContent.vue",
+      "target": "apps/web/src/components/ai-elements/task/TaskContent.vue",
+      "upstreamSha256": "80e11506f49cff4832f28e3c64b32c886a4d5eb7f66a304a7163d4bd21ef8ede"
+    },
+    {
+      "source": "packages/elements/src/task/TaskItem.vue",
+      "target": "apps/web/src/components/ai-elements/task/TaskItem.vue",
+      "upstreamSha256": "6f98f667165360f8a22b2b5bc57dee76bce1e44b6a4ca2fa9d04918f71da6ff4"
+    },
+    {
+      "source": "packages/elements/src/task/TaskItemFile.vue",
+      "target": "apps/web/src/components/ai-elements/task/TaskItemFile.vue",
+      "upstreamSha256": "fb8c5ec534f121fb9a398ab3e8ea7320f4d2c6de515df30a2694e98b5ead6c93"
+    },
+    {
+      "source": "packages/elements/src/task/TaskTrigger.vue",
+      "target": "apps/web/src/components/ai-elements/task/TaskTrigger.vue",
+      "upstreamSha256": "1dc95c97d7f7f58a1d12a3890062982599abb3f5a82ffb6a4fc513a9996c831d"
+    },
+    {
+      "source": "packages/elements/src/confirmation/Confirmation.vue",
+      "target": "apps/web/src/components/ai-elements/confirmation/Confirmation.vue",
+      "upstreamSha256": "dc140b8f42e610a61e0c0814b4221c45fac2ac5c24e3ef7945e87f6d93b55179"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/alert/Alert.vue",
+      "target": "apps/web/src/components/ui/alert/Alert.vue",
+      "upstreamSha256": "dfa85cbe889014ded97645103aadaecc82f2bcd203c54cb50eb652db9372df99"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/alert/AlertDescription.vue",
+      "target": "apps/web/src/components/ui/alert/AlertDescription.vue",
+      "upstreamSha256": "89097b76be8e407f5c55a013a45aab2c269637c9b12a18d8f611ee7ae2c59ae1"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/alert/AlertTitle.vue",
+      "target": "apps/web/src/components/ui/alert/AlertTitle.vue",
+      "upstreamSha256": "981e63c53872c334b25335f94df1c4a37d631cfc9f1a7f0fd656a4d2b025619b"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/alert/index.ts",
+      "target": "apps/web/src/components/ui/alert/index.ts",
+      "upstreamSha256": "a5852ad009f47d7ce759fef5d9f8daa1b86bee634cef59a5b8f872f100738227"
+    },
+    {
+      "source": "packages/elements/src/confirmation/ConfirmationAccepted.vue",
+      "target": "apps/web/src/components/ai-elements/confirmation/ConfirmationAccepted.vue",
+      "upstreamSha256": "0f5e973a77ab22fc5f7604485c2d39b6159289108c82c25eda6a2adf9e11a439"
+    },
+    {
+      "source": "packages/elements/src/confirmation/ConfirmationAction.vue",
+      "target": "apps/web/src/components/ai-elements/confirmation/ConfirmationAction.vue",
+      "upstreamSha256": "e453dc103ded44b3a461f75e5689d78610a5753c10e3b6f07361e812f38b4fcd"
+    },
+    {
+      "source": "packages/elements/src/confirmation/ConfirmationActions.vue",
+      "target": "apps/web/src/components/ai-elements/confirmation/ConfirmationActions.vue",
+      "upstreamSha256": "f822ce504c1aa747459075e8125b184a2731e004cd40f40e7d68ccde9b781599"
+    },
+    {
+      "source": "packages/elements/src/confirmation/ConfirmationRejected.vue",
+      "target": "apps/web/src/components/ai-elements/confirmation/ConfirmationRejected.vue",
+      "upstreamSha256": "3cdebb0a547209e4ce8be8d23a28568d5ad8cef6e49eeaa8cfb98a5fbdee63b0"
+    },
+    {
+      "source": "packages/elements/src/confirmation/ConfirmationRequest.vue",
+      "target": "apps/web/src/components/ai-elements/confirmation/ConfirmationRequest.vue",
+      "upstreamSha256": "115383a6567063bdd229782d56e9fcabb869a913d36586ef3717cf1bf716f468"
+    },
+    {
+      "source": "packages/elements/src/confirmation/ConfirmationTitle.vue",
+      "target": "apps/web/src/components/ai-elements/confirmation/ConfirmationTitle.vue",
+      "upstreamSha256": "a729fee023dc508750a5ebb59fcbccffcf2eb5e801a93296df8a84d9eda6a120"
+    },
+    {
+      "source": "packages/elements/src/confirmation/context.ts",
+      "target": "apps/web/src/components/ai-elements/confirmation/context.ts",
+      "upstreamSha256": "93c50f97b68144ba671885b3557685f81a2234b13ccf29bcc0206cc1474a1389"
+    },
+    {
+      "source": "packages/elements/src/confirmation/index.ts",
+      "target": "apps/web/src/components/ai-elements/confirmation/index.ts",
+      "upstreamSha256": "58817fa04525cdd210285037c5a981727303b9ebd29c0c84ff0976d16e27ca2f"
+    },
+    {
+      "source": "packages/elements/src/artifact/Artifact.vue",
+      "target": "apps/web/src/components/ai-elements/artifact/Artifact.vue",
+      "upstreamSha256": "7dd282947c95b0f83b66c4c9c386e3b78dd6ae6b62d20669f98f18e47f58ffb1"
+    },
+    {
+      "source": "packages/elements/src/artifact/ArtifactAction.vue",
+      "target": "apps/web/src/components/ai-elements/artifact/ArtifactAction.vue",
+      "upstreamSha256": "ab36f84593f542be9d046902183107d67bc10298e433101d01cced392a2fd3fc"
+    },
+    {
+      "source": "packages/elements/src/artifact/ArtifactActions.vue",
+      "target": "apps/web/src/components/ai-elements/artifact/ArtifactActions.vue",
+      "upstreamSha256": "03cae01fb6fa2bc2d21e76e239766cfa5f84491ade638f42f13870daa1927467"
+    },
+    {
+      "source": "packages/elements/src/artifact/ArtifactClose.vue",
+      "target": "apps/web/src/components/ai-elements/artifact/ArtifactClose.vue",
+      "upstreamSha256": "0fd08933d97283a27e841260dfbfe274eec91cf0d2b826eaee128b687e3e328a"
+    },
+    {
+      "source": "packages/elements/src/artifact/ArtifactContent.vue",
+      "target": "apps/web/src/components/ai-elements/artifact/ArtifactContent.vue",
+      "upstreamSha256": "944835aa8e1ab3ab94d52848ee409e2e92c6bd7f75752df49142a64e7fed308f"
+    },
+    {
+      "source": "packages/elements/src/artifact/ArtifactDescription.vue",
+      "target": "apps/web/src/components/ai-elements/artifact/ArtifactDescription.vue",
+      "upstreamSha256": "349359ce30d7e1440c5c6d631eda95a05a3c791a4cb4685499b977a152f4e9da"
+    },
+    {
+      "source": "packages/elements/src/artifact/ArtifactHeader.vue",
+      "target": "apps/web/src/components/ai-elements/artifact/ArtifactHeader.vue",
+      "upstreamSha256": "af214434865a9b0dd9fba0e138673550a923520290b191ef860a3b8af13a5202"
+    },
+    {
+      "source": "packages/elements/src/artifact/ArtifactTitle.vue",
+      "target": "apps/web/src/components/ai-elements/artifact/ArtifactTitle.vue",
+      "upstreamSha256": "d9533f3c2b1f9f76cbe2c42a398982dd6872784288bba557e45d18c397a5bc93"
+    },
+    {
+      "source": "packages/elements/src/artifact/index.ts",
+      "target": "apps/web/src/components/ai-elements/artifact/index.ts",
+      "upstreamSha256": "44d7ffc5f276214fd2382c37909a0c7a7b97e1a5d9292b147650fc00bd75e27b"
+    },
+    {
+      "source": "packages/elements/src/suggestion/index.ts",
+      "target": "apps/web/src/components/ai-elements/suggestion/index.ts",
+      "upstreamSha256": "00f539038a6773952d1b2b823a5015d9a7bbb20cb0e3d99938fb6695d6a7d274"
+    },
+    {
+      "source": "packages/elements/src/suggestion/Suggestion.vue",
+      "target": "apps/web/src/components/ai-elements/suggestion/Suggestion.vue",
+      "upstreamSha256": "224aaf6c2cd89a6d2f9fc9041e22330f918b20d9ebbf12d069d897159fb0ac06"
+    },
+    {
+      "source": "packages/elements/src/suggestion/Suggestions.vue",
+      "target": "apps/web/src/components/ai-elements/suggestion/Suggestions.vue",
+      "upstreamSha256": "ab31dbcd341cfd4f445bf1f7e055d2b43db1f4fdeb1017f3874673e7b58a93be"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/scroll-area/index.ts",
+      "target": "apps/web/src/components/ui/scroll-area/index.ts",
+      "upstreamSha256": "af9d746be015cecb54269d2fd4951231d1bc5d8cd7c031c5b77d0e6767ad6ed9"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/scroll-area/ScrollArea.vue",
+      "target": "apps/web/src/components/ui/scroll-area/ScrollArea.vue",
+      "upstreamSha256": "51e429bc0ff9c4ccf0356169883abe7347c465b5f7456406708439e3ed389172"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/scroll-area/ScrollBar.vue",
+      "target": "apps/web/src/components/ui/scroll-area/ScrollBar.vue",
+      "upstreamSha256": "703aeb0fd41a67c862b790e9db02f14d477075b874432533af6d2b0f54a9cad8"
+    },
+    {
+      "source": "packages/elements/src/shimmer/index.ts",
+      "target": "apps/web/src/components/ai-elements/shimmer/index.ts",
+      "upstreamSha256": "93c9afd8689fdc9fc9a827d8431ce91ff877a1bb469552a94bffdfb92463ff9c"
+    },
+    {
+      "source": "packages/elements/src/shimmer/Shimmer.vue",
+      "target": "apps/web/src/components/ai-elements/shimmer/Shimmer.vue",
+      "upstreamSha256": "b0962083da1fbd1ef4a911ea5ff825c8d47dd85c5445a1361b56e8506b58e4c2"
+    },
+    {
+      "source": "packages/elements/src/tool/index.ts",
+      "target": "apps/web/src/components/ai-elements/tool/index.ts",
+      "upstreamSha256": "1d2b83e00120ab5dadebd3c16d47d4111c9e5417aa9032d0bb6450e44e91c94f"
+    },
+    {
+      "source": "packages/elements/src/tool/Tool.vue",
+      "target": "apps/web/src/components/ai-elements/tool/Tool.vue",
+      "upstreamSha256": "f2eec480c73f8c95282f52337bfe04133418dcb7c4e704a87d95a75a5c23d952"
+    },
+    {
+      "source": "packages/elements/src/tool/ToolContent.vue",
+      "target": "apps/web/src/components/ai-elements/tool/ToolContent.vue",
+      "upstreamSha256": "236d82621e253d8d2d746d1737dc5e39aa6c7d9757db3145f76a4125d471b669"
+    },
+    {
+      "source": "packages/elements/src/tool/ToolHeader.vue",
+      "target": "apps/web/src/components/ai-elements/tool/ToolHeader.vue",
+      "upstreamSha256": "3dc9b0c83812b3ab206f97696601cdd1910d4b97e4f07b9a2106a08b81c72ab4"
+    },
+    {
+      "source": "packages/elements/src/tool/ToolInput.vue",
+      "target": "apps/web/src/components/ai-elements/tool/ToolInput.vue",
+      "upstreamSha256": "2a3e082af0ba3521d64759f3c9309b27233984796bac8f812a3b346373d6fb8d"
+    },
+    {
+      "source": "packages/elements/src/tool/ToolOutput.vue",
+      "target": "apps/web/src/components/ai-elements/tool/ToolOutput.vue",
+      "upstreamSha256": "696b6356d7013c79ef77c60ce848887f5e3c0e073c881603fb2a624e1f6b829c"
+    },
+    {
+      "source": "packages/elements/src/tool/ToolStatusBadge.vue",
+      "target": "apps/web/src/components/ai-elements/tool/ToolStatusBadge.vue",
+      "upstreamSha256": "4498b7e50a4a50fd2f8206cec8414af077795a635116095588215ac4e5d38098"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/badge/Badge.vue",
+      "target": "apps/web/src/components/ui/badge/Badge.vue",
+      "upstreamSha256": "713ccea157d987af108d921881b470e6daf0f7090e7c7be17a36c4988b7d2785"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/badge/index.ts",
+      "target": "apps/web/src/components/ui/badge/index.ts",
+      "upstreamSha256": "96c70cfce9611bce5c78728fa2d63dd7fde2d579ca17a0e48a323d62494eed1d"
+    },
+    {
+      "source": "packages/elements/src/code-block/CodeBlock.vue",
+      "target": "apps/web/src/components/ai-elements/code-block/CodeBlock.vue",
+      "upstreamSha256": "48e73fb77b3e03efdf1be9ab2c94a5b66b220c9e9fd01dc835bcaf817ddd7cae"
+    },
+    {
+      "source": "packages/elements/src/code-block/CodeBlockActions.vue",
+      "target": "apps/web/src/components/ai-elements/code-block/CodeBlockActions.vue",
+      "upstreamSha256": "d82e7f6d3727c234b8211b7d11eef3e65200027289d166b18092b3352ca3df5c"
+    },
+    {
+      "source": "packages/elements/src/code-block/CodeBlockContainer.vue",
+      "target": "apps/web/src/components/ai-elements/code-block/CodeBlockContainer.vue",
+      "upstreamSha256": "c6160d26b841477c0353e03f589c249952c0a7679cf31e7a62c716f673d25dd9"
+    },
+    {
+      "source": "packages/elements/src/code-block/CodeBlockContent.vue",
+      "target": "apps/web/src/components/ai-elements/code-block/CodeBlockContent.vue",
+      "upstreamSha256": "60cb4e3497a8d45c41f4a170769f1960efb70018529993749d82d15e2908e3e1"
+    },
+    {
+      "source": "packages/elements/src/code-block/CodeBlockCopyButton.vue",
+      "target": "apps/web/src/components/ai-elements/code-block/CodeBlockCopyButton.vue",
+      "upstreamSha256": "5886e7c7269b8539571ffcc478ca1c124af1d5d05b6f0a23415064f0ea53fc70"
+    },
+    {
+      "source": "packages/elements/src/code-block/CodeBlockFilename.vue",
+      "target": "apps/web/src/components/ai-elements/code-block/CodeBlockFilename.vue",
+      "upstreamSha256": "7059a55860d2731a5c948c8e7b26cdf7d37e32323d92590c0e546a6940c6090d"
+    },
+    {
+      "source": "packages/elements/src/code-block/CodeBlockHeader.vue",
+      "target": "apps/web/src/components/ai-elements/code-block/CodeBlockHeader.vue",
+      "upstreamSha256": "8c85846642cf8d5eed6686a6b04aff84ccaebcf087061dfa9225f6f709405dca"
+    },
+    {
+      "source": "packages/elements/src/code-block/CodeBlockLanguageSelector.vue",
+      "target": "apps/web/src/components/ai-elements/code-block/CodeBlockLanguageSelector.vue",
+      "upstreamSha256": "d4dfbd7ec8929ae94915ecae119a53872fd49b3d67003e24c26723d637a57168"
+    },
+    {
+      "source": "packages/elements/src/code-block/CodeBlockLanguageSelectorContent.vue",
+      "target": "apps/web/src/components/ai-elements/code-block/CodeBlockLanguageSelectorContent.vue",
+      "upstreamSha256": "b2ab41de99db6cf69cf78c1eaee61055db60397d746ee47d917c88fdfd4927d1"
+    },
+    {
+      "source": "packages/elements/src/code-block/CodeBlockLanguageSelectorItem.vue",
+      "target": "apps/web/src/components/ai-elements/code-block/CodeBlockLanguageSelectorItem.vue",
+      "upstreamSha256": "f37314a55a2c3d066722de52f8876043ee7a20ffd44f1b0acdb3e072688cff3b"
+    },
+    {
+      "source": "packages/elements/src/code-block/CodeBlockLanguageSelectorTrigger.vue",
+      "target": "apps/web/src/components/ai-elements/code-block/CodeBlockLanguageSelectorTrigger.vue",
+      "upstreamSha256": "c00d640237fdc5ef0d2ef0c2f902c94b19ce7db56081cb891d21f54281f0840f"
+    },
+    {
+      "source": "packages/elements/src/code-block/CodeBlockLanguageSelectorValue.vue",
+      "target": "apps/web/src/components/ai-elements/code-block/CodeBlockLanguageSelectorValue.vue",
+      "upstreamSha256": "438ffb361b2ab99365c4558370f513bedf9985a9bfb814b240768803ce0f215f"
+    },
+    {
+      "source": "packages/elements/src/code-block/CodeBlockTitle.vue",
+      "target": "apps/web/src/components/ai-elements/code-block/CodeBlockTitle.vue",
+      "upstreamSha256": "af818ce5336e1029505cfc1d92a5b3369cb9c55fafb7fbdb785adb82a119755e"
+    },
+    {
+      "source": "packages/elements/src/code-block/context.ts",
+      "target": "apps/web/src/components/ai-elements/code-block/context.ts",
+      "upstreamSha256": "2ee9382a7d5d026f288aab116d61e5feae3d869964cf4ff5e2a4ce98c8d649ba"
+    },
+    {
+      "source": "packages/elements/src/code-block/index.ts",
+      "target": "apps/web/src/components/ai-elements/code-block/index.ts",
+      "upstreamSha256": "52946db010f2eb23f741f9de3a551a05c41f9cec9442cf480d0f549517a01554"
+    },
+    {
+      "source": "packages/elements/src/code-block/utils.ts",
+      "target": "apps/web/src/components/ai-elements/code-block/utils.ts",
+      "upstreamSha256": "69be8ee47c6f63d05819099c778152f3fec4f161d1519e6782e289f5d8efa20e"
+    },
+    {
+      "source": "packages/elements/src/sources/index.ts",
+      "target": "apps/web/src/components/ai-elements/sources/index.ts",
+      "upstreamSha256": "e5e53dcd39cbb33b29fddd47719287080ec340cdc9a609c90aa4a9819535ba2f"
+    },
+    {
+      "source": "packages/elements/src/sources/Source.vue",
+      "target": "apps/web/src/components/ai-elements/sources/Source.vue",
+      "upstreamSha256": "2f7f74e7a88ba7fa38925a66f82012b9443ddb9e54a93a08fd2346cf3087e904"
+    },
+    {
+      "source": "packages/elements/src/sources/Sources.vue",
+      "target": "apps/web/src/components/ai-elements/sources/Sources.vue",
+      "upstreamSha256": "dad89d00aa84f16a44ff2b22cbf2ed17959a86e67068a7bd47139ec7d5e70e96"
+    },
+    {
+      "source": "packages/elements/src/sources/SourcesContent.vue",
+      "target": "apps/web/src/components/ai-elements/sources/SourcesContent.vue",
+      "upstreamSha256": "e068f36b243fcb654ed59aa8a77989ef1e9a5baea55115970676bcf25406310f"
+    },
+    {
+      "source": "packages/elements/src/sources/SourcesTrigger.vue",
+      "target": "apps/web/src/components/ai-elements/sources/SourcesTrigger.vue",
+      "upstreamSha256": "962c8e6e07376a8804dfa291ad8c0ef6aa3f2a648a4e2882bde1c6b3161336b6"
+    },
+    {
+      "source": "packages/elements/src/inline-citation/index.ts",
+      "target": "apps/web/src/components/ai-elements/inline-citation/index.ts",
+      "upstreamSha256": "c0e9b0ad78cdbbad412073d7f8f173bb227aca4c195c5734f63bd285b58a4784"
+    },
+    {
+      "source": "packages/elements/src/inline-citation/InlineCitation.vue",
+      "target": "apps/web/src/components/ai-elements/inline-citation/InlineCitation.vue",
+      "upstreamSha256": "99a08671f0afcd615e27030303479323e5b3a90f82833bddbda1fa91aa647dc6"
+    },
+    {
+      "source": "packages/elements/src/inline-citation/InlineCitationCard.vue",
+      "target": "apps/web/src/components/ai-elements/inline-citation/InlineCitationCard.vue",
+      "upstreamSha256": "20428e84b8318b83e723dbcc2263f65047d0ef3905453195fc1c2b530d60541e"
+    },
+    {
+      "source": "packages/elements/src/inline-citation/InlineCitationCardBody.vue",
+      "target": "apps/web/src/components/ai-elements/inline-citation/InlineCitationCardBody.vue",
+      "upstreamSha256": "3e1945ea6adb5e878736cd5d73cee287cf283cefdff992b6eb4ec7ee7265ec71"
+    },
+    {
+      "source": "packages/elements/src/inline-citation/InlineCitationCardTrigger.vue",
+      "target": "apps/web/src/components/ai-elements/inline-citation/InlineCitationCardTrigger.vue",
+      "upstreamSha256": "cf1e6d74890fb1ab2c0c81d68dc945632f6c43e4203cc501536c6f5d67978a25"
+    },
+    {
+      "source": "packages/elements/src/inline-citation/InlineCitationCarousel.vue",
+      "target": "apps/web/src/components/ai-elements/inline-citation/InlineCitationCarousel.vue",
+      "upstreamSha256": "2f81e8f2b26ff2998f21013ed1989c427304dece78614ba4fefb39ebda9b0f0e"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/carousel/Carousel.vue",
+      "target": "apps/web/src/components/ui/carousel/Carousel.vue",
+      "upstreamSha256": "a25d2ee7272c2139a9cfb172b9cf7055b25daf5815ee2b80411c0d0426f36ea9"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/carousel/CarouselContent.vue",
+      "target": "apps/web/src/components/ui/carousel/CarouselContent.vue",
+      "upstreamSha256": "0c4d707c3ce41fe42d97dd913c67d7b1fe4054f0a7e03e7006e9dc1888be6c04"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/carousel/CarouselItem.vue",
+      "target": "apps/web/src/components/ui/carousel/CarouselItem.vue",
+      "upstreamSha256": "b5e7dfb8684a8dac943cc0d91784a44dd620e7731d49ab00d79b64df58c54a4c"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/carousel/CarouselNext.vue",
+      "target": "apps/web/src/components/ui/carousel/CarouselNext.vue",
+      "upstreamSha256": "6d558c417f765431ef2132217e74c5d8e2a356494883941a27404ae2e4ef5c5e"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/carousel/CarouselPrevious.vue",
+      "target": "apps/web/src/components/ui/carousel/CarouselPrevious.vue",
+      "upstreamSha256": "5e6146baf317358335681b15dc7351627d8001de35dc9c8d10f1aeef1626eb85"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/carousel/index.ts",
+      "target": "apps/web/src/components/ui/carousel/index.ts",
+      "upstreamSha256": "8b36ee1cc6f4ac368b3220e2b8d95c87da82f435fa5741951ea1b036f07ca80b"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/carousel/interface.ts",
+      "target": "apps/web/src/components/ui/carousel/interface.ts",
+      "upstreamSha256": "1cd7dca2e812c601669c3c14577ec2052101a2c98656e07eb4f5fa811425dd21"
+    },
+    {
+      "source": "packages/shadcn-vue/components/ui/carousel/useCarousel.ts",
+      "target": "apps/web/src/components/ui/carousel/useCarousel.ts",
+      "upstreamSha256": "af1ef110e518c20d10a6c59c5246ee57468d6290b696b1ae303481d39f19696c"
+    },
+    {
+      "source": "packages/elements/src/inline-citation/InlineCitationCarouselContent.vue",
+      "target": "apps/web/src/components/ai-elements/inline-citation/InlineCitationCarouselContent.vue",
+      "upstreamSha256": "b848cb77ef93ab45c8c9514934b74256afac1c67f61059e07c0bc04b82df7059"
+    },
+    {
+      "source": "packages/elements/src/inline-citation/InlineCitationCarouselHeader.vue",
+      "target": "apps/web/src/components/ai-elements/inline-citation/InlineCitationCarouselHeader.vue",
+      "upstreamSha256": "f95d824e40d6dc5fad98fd53eb8c8417a712bf5dba0ee24e1ef9bb767cdb3b40"
+    },
+    {
+      "source": "packages/elements/src/inline-citation/InlineCitationCarouselIndex.vue",
+      "target": "apps/web/src/components/ai-elements/inline-citation/InlineCitationCarouselIndex.vue",
+      "upstreamSha256": "301cd377deb493e668304e2b6b83750c0d0a4e7a35f2177bf4069fd1763a9e5b"
+    },
+    {
+      "source": "packages/elements/src/inline-citation/InlineCitationCarouselItem.vue",
+      "target": "apps/web/src/components/ai-elements/inline-citation/InlineCitationCarouselItem.vue",
+      "upstreamSha256": "65434ba62cbd2334edb14c2562969d5dcb2e6775759505730c61175bbeb8908a"
+    },
+    {
+      "source": "packages/elements/src/inline-citation/InlineCitationCarouselNext.vue",
+      "target": "apps/web/src/components/ai-elements/inline-citation/InlineCitationCarouselNext.vue",
+      "upstreamSha256": "e66fd081bf4426a22b63c939db142c8b561e2eea08c2e3eb58a199a533d81a71"
+    },
+    {
+      "source": "packages/elements/src/inline-citation/InlineCitationCarouselPrev.vue",
+      "target": "apps/web/src/components/ai-elements/inline-citation/InlineCitationCarouselPrev.vue",
+      "upstreamSha256": "8eaff24679c8a8f5c18620d71a18ce017968d81ac391286bb0870305dc97a282"
+    },
+    {
+      "source": "packages/elements/src/inline-citation/InlineCitationQuote.vue",
+      "target": "apps/web/src/components/ai-elements/inline-citation/InlineCitationQuote.vue",
+      "upstreamSha256": "48283b85efde5c7996342f7313318760d22f3931ebfc3a433c93eabdfbe0114c"
+    },
+    {
+      "source": "packages/elements/src/inline-citation/InlineCitationSource.vue",
+      "target": "apps/web/src/components/ai-elements/inline-citation/InlineCitationSource.vue",
+      "upstreamSha256": "5f86f052ee907fb414cd1b11ff8f70e628c02869a1bfea924ae4b460317837f0"
+    },
+    {
+      "source": "packages/elements/src/inline-citation/InlineCitationText.vue",
+      "target": "apps/web/src/components/ai-elements/inline-citation/InlineCitationText.vue",
+      "upstreamSha256": "caffdb2d6a0176c77d16398499f3b3e9c1195be04dfc602b51a29c0ae5179f68"
+    }
+  ]
+}

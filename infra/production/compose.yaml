@@ -1,0 +1,105 @@
+name: sapwb-production
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+x-app: &app
+  NODE_ENV: production
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: '5432'
+  POSTGRES_DB: ${POSTGRES_DB:?required}
+  POSTGRES_SSL_MODE: disable
+  APP_DB_USER: ${APP_DB_USER:?required}
+  APP_DB_PASSWORD: ${APP_DB_PASSWORD:?required}
+  APP_ORIGIN: ${APP_ORIGIN:?required}
+  DEFAULT_ORGANIZATION_ID: ${DEFAULT_ORGANIZATION_ID:-}
+  SAP_CREDENTIAL_KEY: ${SAP_CREDENTIAL_KEY:?required}
+  LLM_CREDENTIAL_KEY: ${LLM_CREDENTIAL_KEY:?required}
+  LLM_ALLOWED_HOSTS: ${LLM_ALLOWED_HOSTS:?required}
+  DELIVERY_FILES_DIR: /data/files
+  TRUST_PROXY: 172.30.80.10
+services:
+  postgres:
+    image: postgres:17.11-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?required}
+      POSTGRES_USER: ${POSTGRES_USER:?required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    networks: [backend]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging: *logging
+  api:
+    image: sapwb-api:${RELEASE:?required}
+    build:
+      context: ../..
+      dockerfile: infra/production/Dockerfile
+      target: runtime
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment: *app
+    volumes:
+      - ./data/files:/data/files
+    networks: [backend]
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3001/api/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+    logging: *logging
+  web:
+    image: sapwb-web:${RELEASE:?required}
+    build:
+      context: ../..
+      dockerfile: infra/production/Dockerfile
+      target: web
+    restart: unless-stopped
+    ports: ['80:80', '443:443']
+    volumes:
+      - ./tls:/etc/nginx/tls:ro
+    networks:
+      backend:
+        ipv4_address: 172.30.80.10
+    depends_on:
+      api: { condition: service_healthy }
+    logging: *logging
+  tooling:
+    image: sapwb-tooling:${RELEASE:?required}
+    build:
+      context: ../..
+      dockerfile: infra/production/Dockerfile
+      target: tooling
+    profiles: [ops]
+    environment:
+      <<: *app
+      POSTGRES_USER: ${POSTGRES_USER:?required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+      BOOTSTRAP_OUTPUT_DIR: /handoff
+    volumes:
+      - ./secrets:/handoff
+    networks: [backend]
+    logging: *logging
+networks:
+  backend:
+    ipam:
+      config:
+        - subnet: 172.30.80.0/24

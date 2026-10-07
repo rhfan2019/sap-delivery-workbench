@@ -1,0 +1,103 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "run_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "node_id": {
+      "type": "string"
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "input_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "output_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      }
+    },
+    "idempotency_receipts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      }
+    },
+    "fencing_token": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "cancel_epoch": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "config_versions": {
+      "type": "object",
+      "properties": {
+        "template_version": {
+          "type": "string"
+        },
+        "schema_version": {
+          "type": "string"
+        },
+        "prompt_version": {
+          "type": "string"
+        },
+        "ruleset_version": {
+          "type": "string"
+        },
+        "model_version_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "template_version",
+        "schema_version",
+        "prompt_version",
+        "ruleset_version",
+        "model_version_id"
+      ],
+      "additionalProperties": false
+    },
+    "last_event_sequence": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "id",
+    "run_id",
+    "node_id",
+    "attempt",
+    "input_hash",
+    "output_refs",
+    "idempotency_receipts",
+    "fencing_token",
+    "cancel_epoch",
+    "config_versions",
+    "last_event_sequence",
+    "created_at"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fs-workspace.example/schemas/RunCheckpoint.schema.json",
+  "title": "RunCheckpoint"
+}

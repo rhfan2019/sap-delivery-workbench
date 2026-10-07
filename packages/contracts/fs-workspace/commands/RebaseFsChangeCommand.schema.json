@@ -1,0 +1,16 @@
+{
+  "type": "object",
+  "properties": {
+    "new_base_document_version": {
+      "type": "string",
+      "format": "uuid"
+    }
+  },
+  "required": [
+    "new_base_document_version"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/RebaseFsChangeCommand.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RebaseFsChangeCommand"
+}

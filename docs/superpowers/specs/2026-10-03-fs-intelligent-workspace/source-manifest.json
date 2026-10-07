@@ -1,0 +1,126 @@
+{
+  "access_date": "2026-10-03",
+  "scope": "Local source files read for design; historical SAP claims not independently reverified.",
+  "files": [
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\AGENTS.md",
+      "bytes": 4884,
+      "sha256": "94c110f65afb0116af8d53067145231aa390005e94401a35adee1a661295cd7b"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\templates\\stage_output_template.md",
+      "bytes": 18867,
+      "sha256": "8bc024680207395cf71770cffe09728d4aa8fafe981bc0358ebb43c26e1bd8ef"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\templates\\abap_fsd_template.md",
+      "bytes": 10022,
+      "sha256": "9ca5a9d089def97fadf22d74c65b61513f22dd80965d476714ffc404655dc0cf"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\references\\mcp_usage_rules.md",
+      "bytes": 13896,
+      "sha256": "341a418f9b89e75d63abf53cd819324dd0b704e0b3ad4ea0ad5ec6694e4e691b"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\references\\mcp_evidence_rules.md",
+      "bytes": 6749,
+      "sha256": "7099fda8c4c0b17a919ce42ac29500da144b76cf86830d3ef9b46fe328f7ba18"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\references\\fsd_review_checklist.md",
+      "bytes": 7920,
+      "sha256": "9305e89619d2a361935bdc747bf3e256a543b035993aa41ba806adfead946e84"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\references\\authority_design_rules.md",
+      "bytes": 375,
+      "sha256": "c6d158ca22aca48c7bf3384c3e4983c94d2effdfe7c0eac2d409c10056846785"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\tests\\regression_cases.md",
+      "bytes": 14626,
+      "sha256": "35b5273719f035c8a63605b0f1a0bd27b647f31f6301c85d9c80d09997152016"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\examples\\input\\ex-001-mm-grir-balance\\requirement.md",
+      "bytes": 1096,
+      "sha256": "cf2cf15b5a3e4eebd4965c7faf0f98d4c4c940589fa99ae093c60c2a334bc6fd"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\examples\\input\\ex-002-sd-sales-order-delivery-exception\\requirement.md",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\examples\\input\\ex-003-fi-vendor-open-item-analysis\\requirement.md",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\examples\\output\\ex-001-mm-grir-balance\\stage-1-business-analysis.md",
+      "bytes": 16917,
+      "sha256": "655693e16a85c0d728a0a434dbc4fe0e9e09e1f1e82e95cbe3d58855ce4b837d"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\examples\\output\\ex-001-mm-grir-balance\\stage-2-technical-design.md",
+      "bytes": 18186,
+      "sha256": "c46ac5d51147d473020b5a35050c69fb3434f82c5ee5eb7ed75b9f7d9fb1d2df"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\examples\\output\\ex-001-mm-grir-balance\\stage-3-fsd.md",
+      "bytes": 21138,
+      "sha256": "1e4ff948193a57fd6963fa192f3ae5caed5c728231d089635872bd1c671039a6"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\examples\\output\\ex-002-sd-sales-order-delivery-exception\\stage-1-business-analysis.md",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\examples\\output\\ex-002-sd-sales-order-delivery-exception\\stage-2-technical-design.md",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\examples\\output\\ex-002-sd-sales-order-delivery-exception\\stage-3-fsd.md",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\examples\\output\\ex-003-fi-vendor-open-item-analysis\\stage-1-business-analysis.md",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\examples\\output\\ex-003-fi-vendor-open-item-analysis\\stage-2-technical-design.md",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "D:\\AI\\Agents\\abap-fsd-agent\\examples\\output\\ex-003-fi-vendor-open-item-analysis\\stage-3-fsd.md",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "D:\\Workspace\\sap-delivery-workbench\\apps\\web\\src\\features\\delivery\\model.ts",
+      "bytes": 3812,
+      "sha256": "fe6d7f074e078226d535d67e9723dee78538c64e901da16ca9ae19777776fb2d"
+    },
+    {
+      "path": "D:\\Workspace\\sap-delivery-workbench\\apps\\web\\src\\features\\delivery\\FsEditor.vue",
+      "bytes": 8959,
+      "sha256": "05639da9297355b9a92b36ebbcf68d2f4478e78c7f0ff025c7fbb70fc3832c23"
+    },
+    {
+      "path": "D:\\Workspace\\sap-delivery-workbench\\apps\\api\\src\\delivery\\fs.mjs",
+      "bytes": 5356,
+      "sha256": "421e7351e38880852568fafc44d9b7eb8d291336d4dbe8e1049dd3e4b6422a19"
+    },
+    {
+      "path": "D:\\Workspace\\sap-delivery-workbench\\apps\\api\\src\\delivery\\validation.mjs",
+      "bytes": 3972,
+      "sha256": "dcd0a2ccb4c1e2ebf069efb892ffc2ab0698d1c82119b2ad1969746da6252c6a"
+    }
+  ]
+}

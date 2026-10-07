@@ -1,0 +1,164 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "context": {
+      "$ref": "#/$defs/Context"
+    },
+    "id": {
+      "type": "string"
+    },
+    "source_kind": {
+      "type": "string",
+      "enum": [
+        "message",
+        "attachment",
+        "sap_tool",
+        "official_document"
+      ]
+    },
+    "source_id": {
+      "type": "string"
+    },
+    "source_revision": {
+      "type": "string"
+    },
+    "content_hash": {
+      "type": "string"
+    },
+    "locator": {
+      "type": "string"
+    },
+    "conclusion": {
+      "type": "string"
+    },
+    "target": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Target"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "scope": {
+      "type": "string"
+    },
+    "collected_at": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tool_receipt_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "access_scope_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "context",
+    "id",
+    "source_kind",
+    "source_id",
+    "source_revision",
+    "content_hash",
+    "locator",
+    "conclusion",
+    "target",
+    "scope",
+    "collected_at",
+    "expires_at",
+    "limitations",
+    "tool_receipt_id",
+    "access_scope_id"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fs-workspace.example/schemas/EvidenceRecord.schema.json",
+  "title": "EvidenceRecord",
+  "description": "server persisted domain",
+  "$defs": {
+    "Context": {
+      "type": "object",
+      "properties": {
+        "workspace_id": {
+          "type": "string"
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "document_id": {
+          "type": "string"
+        },
+        "base_document_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "context_snapshot_id": {
+          "type": "string"
+        },
+        "template_id": {
+          "type": "string"
+        },
+        "template_version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "session_id",
+        "run_id",
+        "document_id",
+        "base_document_version",
+        "context_snapshot_id",
+        "template_id",
+        "template_version"
+      ],
+      "additionalProperties": false
+    },
+    "Target": {
+      "type": "object",
+      "properties": {
+        "system_id": {
+          "type": "string"
+        },
+        "client": {
+          "type": "string"
+        },
+        "release": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "system_id",
+        "client",
+        "release"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

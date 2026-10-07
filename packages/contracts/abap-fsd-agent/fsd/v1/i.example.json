@@ -1,0 +1,258 @@
+{
+  "schemaVersion": "1.0.0",
+  "specId": "SPEC-001",
+  "revision": 1,
+  "riceType": "I",
+  "title": "接口契约示例（非真实FSD）",
+  "purpose": "演示字段合同与未核验状态，不作为项目交付依据",
+  "systemContext": {
+    "selectionId": null,
+    "discoveryStatus": "not_selected",
+    "product": {
+      "status": "open",
+      "value": null,
+      "issueIds": ["ISSUE-001"]
+    },
+    "productVersion": {
+      "status": "open",
+      "value": null,
+      "issueIds": ["ISSUE-001"]
+    },
+    "deployment": {
+      "status": "open",
+      "value": null,
+      "issueIds": ["ISSUE-001"]
+    },
+    "abapVersion": {
+      "status": "open",
+      "value": null,
+      "issueIds": ["ISSUE-001"]
+    },
+    "identificationSource": "unknown",
+    "evidenceIds": [],
+    "limitations": "尚未选择系统；需主动询问后端产品与版本"
+  },
+  "scope": {
+    "included": ["本类型最小功能契约"],
+    "excluded": ["Form", "权限专项设计", "完整ABAP代码"]
+  },
+  "sources": [
+    {
+      "id": "SRC-001",
+      "kind": "user_message",
+      "label": "合成示例需求",
+      "reference": "example-only"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "description": "按确认的业务规则处理输入并给出可复核结果",
+      "acceptanceCriterion": "结果符合已确认规则，失败可解释",
+      "sourceIds": ["SRC-001"]
+    }
+  ],
+  "rules": [
+    {
+      "id": "RULE-001",
+      "requirementIds": ["REQ-001"],
+      "description": "保留输入的业务标识并按功能规则输出",
+      "decision": {
+        "status": "proposed",
+        "value": "不静默忽略不合法输入",
+        "issueIds": []
+      }
+    }
+  ],
+  "fields": [
+    {
+      "id": "FIELD-001",
+      "name": "business_id",
+      "businessMeaning": "示例业务字段，待顾问确认",
+      "direction": "input",
+      "logicalType": "string",
+      "required": true,
+      "cardinality": "1",
+      "sourcePath": "business_id",
+      "targetPath": "business_id",
+      "format": {
+        "status": "proposed",
+        "value": "字符串；长度以核验结果为准",
+        "issueIds": []
+      },
+      "defaultRule": {
+        "status": "proposed",
+        "value": "不自动默认",
+        "issueIds": []
+      },
+      "validationRule": {
+        "status": "proposed",
+        "value": "不能为空",
+        "issueIds": []
+      },
+      "mappingRule": {
+        "status": "proposed",
+        "value": "按同名业务含义映射",
+        "issueIds": []
+      },
+      "unitCurrencyRule": {
+        "status": "proposed",
+        "value": "标识字段，不适用单位币种",
+        "issueIds": []
+      },
+      "sapObjectIds": []
+    },
+    {
+      "id": "FIELD-002",
+      "name": "result_id",
+      "businessMeaning": "示例业务字段，待顾问确认",
+      "direction": "output",
+      "logicalType": "string",
+      "required": true,
+      "cardinality": "1",
+      "sourcePath": "result_id",
+      "targetPath": "result_id",
+      "format": {
+        "status": "proposed",
+        "value": "字符串；长度以核验结果为准",
+        "issueIds": []
+      },
+      "defaultRule": {
+        "status": "proposed",
+        "value": "不自动默认",
+        "issueIds": []
+      },
+      "validationRule": {
+        "status": "proposed",
+        "value": "不能为空",
+        "issueIds": []
+      },
+      "mappingRule": {
+        "status": "proposed",
+        "value": "按同名业务含义映射",
+        "issueIds": []
+      },
+      "unitCurrencyRule": {
+        "status": "proposed",
+        "value": "标识字段，不适用单位币种",
+        "issueIds": []
+      },
+      "sapObjectIds": []
+    }
+  ],
+  "sapObjects": [
+    {
+      "id": "OBJ-001",
+      "kind": "structure",
+      "name": "候选对象尚未确定",
+      "purpose": "核验当前功能所依赖的对象",
+      "verificationStatus": "unverified",
+      "verificationScope": "无系统证据",
+      "evidenceIds": [],
+      "issueIds": ["ISSUE-001"]
+    }
+  ],
+  "evidence": [],
+  "issues": [
+    {
+      "id": "ISSUE-001",
+      "category": "system",
+      "description": "后端产品、版本和候选对象未核验",
+      "impact": "对象可用性和平台能力尚不确定",
+      "priority": "high",
+      "status": "open",
+      "suggestion": "选择SAP系统或提供后端产品版本",
+      "owner": "当前SAP顾问",
+      "followUp": "补充系统信息后重新核验",
+      "relatedIds": ["OBJ-001"],
+      "resolution": null
+    }
+  ],
+  "tests": [
+    {
+      "id": "TEST-001",
+      "requirementIds": ["REQ-001"],
+      "ruleIds": ["RULE-001"],
+      "scenario": "合法业务输入",
+      "preconditions": "系统与对象已核验且顾问已确认规则",
+      "input": "有效业务标识",
+      "expectedResult": "输出可追溯业务结果",
+      "verificationMethod": "顾问按实例复核；此处未执行测试"
+    }
+  ],
+  "contract": {
+    "direction": "inbound",
+    "sender": "外部业务系统",
+    "receiver": "SAP目标系统待识别",
+    "interaction": "asynchronous",
+    "trigger": {
+      "status": "proposed",
+      "value": "外部系统发送业务请求",
+      "issueIds": []
+    },
+    "protocolAndFormat": {
+      "status": "proposed",
+      "value": "JSON；传输协议待顾问确认",
+      "issueIds": []
+    },
+    "contractVersion": "example-v1",
+    "messageStructure": [
+      {
+        "path": "request",
+        "cardinality": "1",
+        "fieldIds": ["FIELD-001"]
+      },
+      {
+        "path": "response",
+        "cardinality": "1",
+        "fieldIds": ["FIELD-002"]
+      }
+    ],
+    "mappingRuleIds": ["RULE-001"],
+    "successDefinition": {
+      "status": "proposed",
+      "value": "区分已接收与业务处理成功",
+      "issueIds": []
+    },
+    "transactionBoundary": {
+      "status": "proposed",
+      "value": "一业务请求作为处理单元",
+      "issueIds": []
+    },
+    "idempotency": {
+      "status": "proposed",
+      "value": "业务标识用于候选去重键，作用域和保留期需确认",
+      "issueIds": []
+    },
+    "ordering": {
+      "status": "proposed",
+      "value": "同一业务标识按约定顺序处理",
+      "issueIds": []
+    },
+    "timeoutRetry": {
+      "status": "proposed",
+      "value": "超时先查结果；确认未处理才重试",
+      "issueIds": []
+    },
+    "partialFailureRecovery": {
+      "status": "proposed",
+      "value": "记录失败业务标识并允许针对性重处理",
+      "issueIds": []
+    },
+    "errorContract": {
+      "status": "proposed",
+      "value": "返回错误类别、业务标识与可理解原因",
+      "issueIds": []
+    },
+    "monitoringAndReconciliation": {
+      "status": "proposed",
+      "value": "按请求标识核对接收与处理结果",
+      "issueIds": []
+    },
+    "volumeAndLatencyTarget": {
+      "status": "proposed",
+      "value": "由顾问补充峰值与处理时限",
+      "issueIds": []
+    }
+  }
+}

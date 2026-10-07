@@ -1,0 +1,337 @@
+{
+  "version": "1.1.0",
+  "proposals": {
+    "RequirementAnalysis": "https://fs-workspace.example/schemas/RequirementAnalysis.schema.json",
+    "Clarification": "https://fs-workspace.example/schemas/Clarification.schema.json",
+    "ChangeSet": "https://fs-workspace.example/schemas/ChangeSet.schema.json",
+    "ReviewResult": "https://fs-workspace.example/schemas/ReviewResult.schema.json",
+    "FsProposal": "https://fs-workspace.example/schemas/FsProposal.schema.json",
+    "VerificationProposal": "https://fs-workspace.example/schemas/VerificationProposal.schema.json",
+    "OrchestratorPlan": "https://fs-workspace.example/schemas/OrchestratorPlan.schema.json"
+  },
+  "commands": {
+    "createFsWorkspace": "https://fs-workspace.example/http/WorkspaceCreate.schema.json",
+    "createFsSession": "https://fs-workspace.example/http/SessionCreate.schema.json",
+    "sendFsMessage": "https://fs-workspace.example/http/MessageCreate.schema.json",
+    "cancelFsRun": "https://fs-workspace.example/http/Empty.schema.json",
+    "resumeFsRun": "https://fs-workspace.example/http/Resume.schema.json",
+    "retryFsParse": "https://fs-workspace.example/http/RetryFsParseCommand.schema.json",
+    "requestFsVerification": "https://fs-workspace.example/http/RequestFsVerificationCommand.schema.json",
+    "acceptFsChange": "https://fs-workspace.example/http/AcceptChange.schema.json",
+    "rejectFsChange": "https://fs-workspace.example/http/RejectFsChangeCommand.schema.json",
+    "proposeFsManualEdit": "https://fs-workspace.example/http/ManualEdit.schema.json",
+    "confirmFsDecision": "https://fs-workspace.example/http/Confirm.schema.json",
+    "snapshotFsVersion": "https://fs-workspace.example/http/SnapshotCreate.schema.json",
+    "restoreFsVersion": "https://fs-workspace.example/http/Restore.schema.json",
+    "submitFsReview": "https://fs-workspace.example/http/ReviewCreate.schema.json",
+    "recordFsApproval": "https://fs-workspace.example/http/ApprovalCreate.schema.json",
+    "publishFsBaseline": "https://fs-workspace.example/http/PublicationCreate.schema.json",
+    "createFsExport": "https://fs-workspace.example/http/ExportCreate.schema.json",
+    "setFsProjectRoles": "https://fs-workspace.example/http/SetFsProjectRolesCommand.schema.json",
+    "rebaseFsChange": "https://fs-workspace.example/http/RebaseFsChangeCommand.schema.json",
+    "withdrawFsBaseline": "https://fs-workspace.example/http/WithdrawFsBaselineCommand.schema.json",
+    "assessFsVerification": "https://fs-workspace.example/http/AssessFsVerificationCommand.schema.json"
+  },
+  "schemas": [
+    {
+      "name": "ApprovalRecord",
+      "path": "domain/ApprovalRecord.schema.json",
+      "id": "https://fs-workspace.example/schemas/ApprovalRecord.schema.json"
+    },
+    {
+      "name": "ChangeSet",
+      "path": "proposals/ChangeSet.schema.json",
+      "id": "https://fs-workspace.example/schemas/ChangeSet.schema.json"
+    },
+    {
+      "name": "Clarification",
+      "path": "proposals/Clarification.schema.json",
+      "id": "https://fs-workspace.example/schemas/Clarification.schema.json"
+    },
+    {
+      "name": "DecisionRecord",
+      "path": "domain/DecisionRecord.schema.json",
+      "id": "https://fs-workspace.example/schemas/DecisionRecord.schema.json"
+    },
+    {
+      "name": "EvidenceRecord",
+      "path": "domain/EvidenceRecord.schema.json",
+      "id": "https://fs-workspace.example/schemas/EvidenceRecord.schema.json"
+    },
+    {
+      "name": "FsDocument",
+      "path": "domain/FsDocument.schema.json",
+      "id": "https://fs-workspace.example/schemas/FsDocument.schema.json"
+    },
+    {
+      "name": "FsProposal",
+      "path": "proposals/FsProposal.schema.json",
+      "id": "https://fs-workspace.example/schemas/FsProposal.schema.json"
+    },
+    {
+      "name": "OrchestratorPlan",
+      "path": "proposals/OrchestratorPlan.schema.json",
+      "id": "https://fs-workspace.example/schemas/OrchestratorPlan.schema.json"
+    },
+    {
+      "name": "RequirementAnalysis",
+      "path": "proposals/RequirementAnalysis.schema.json",
+      "id": "https://fs-workspace.example/schemas/RequirementAnalysis.schema.json"
+    },
+    {
+      "name": "RequirementRecord",
+      "path": "domain/RequirementRecord.schema.json",
+      "id": "https://fs-workspace.example/schemas/RequirementRecord.schema.json"
+    },
+    {
+      "name": "ReviewResult",
+      "path": "proposals/ReviewResult.schema.json",
+      "id": "https://fs-workspace.example/schemas/ReviewResult.schema.json"
+    },
+    {
+      "name": "RunEvent",
+      "path": "events/RunEvent.schema.json",
+      "id": "https://fs-workspace.example/schemas/RunEvent.schema.json"
+    },
+    {
+      "name": "VerificationProposal",
+      "path": "proposals/VerificationProposal.schema.json",
+      "id": "https://fs-workspace.example/schemas/VerificationProposal.schema.json"
+    },
+    {
+      "name": "Meta",
+      "path": "domain/Meta.schema.json",
+      "id": "https://fs-workspace.example/http/Meta.schema.json"
+    },
+    {
+      "name": "Error",
+      "path": "domain/Error.schema.json",
+      "id": "https://fs-workspace.example/http/Error.schema.json"
+    },
+    {
+      "name": "Capabilities",
+      "path": "domain/Capabilities.schema.json",
+      "id": "https://fs-workspace.example/http/Capabilities.schema.json"
+    },
+    {
+      "name": "Head",
+      "path": "domain/Head.schema.json",
+      "id": "https://fs-workspace.example/http/Head.schema.json"
+    },
+    {
+      "name": "Workspace",
+      "path": "domain/Workspace.schema.json",
+      "id": "https://fs-workspace.example/http/Workspace.schema.json"
+    },
+    {
+      "name": "Session",
+      "path": "domain/Session.schema.json",
+      "id": "https://fs-workspace.example/http/Session.schema.json"
+    },
+    {
+      "name": "Selection",
+      "path": "domain/Selection.schema.json",
+      "id": "https://fs-workspace.example/http/Selection.schema.json"
+    },
+    {
+      "name": "Message",
+      "path": "domain/Message.schema.json",
+      "id": "https://fs-workspace.example/http/Message.schema.json"
+    },
+    {
+      "name": "Run",
+      "path": "domain/Run.schema.json",
+      "id": "https://fs-workspace.example/http/Run.schema.json"
+    },
+    {
+      "name": "SourceRegion",
+      "path": "domain/SourceRegion.schema.json",
+      "id": "https://fs-workspace.example/http/SourceRegion.schema.json"
+    },
+    {
+      "name": "ParseResult",
+      "path": "domain/ParseResult.schema.json",
+      "id": "https://fs-workspace.example/http/ParseResult.schema.json"
+    },
+    {
+      "name": "Attachment",
+      "path": "domain/Attachment.schema.json",
+      "id": "https://fs-workspace.example/http/Attachment.schema.json"
+    },
+    {
+      "name": "ManifestEntry",
+      "path": "domain/ManifestEntry.schema.json",
+      "id": "https://fs-workspace.example/http/ManifestEntry.schema.json"
+    },
+    {
+      "name": "ContextSnapshot",
+      "path": "domain/ContextSnapshot.schema.json",
+      "id": "https://fs-workspace.example/http/ContextSnapshot.schema.json"
+    },
+    {
+      "name": "RuleDetail",
+      "path": "domain/RuleDetail.schema.json",
+      "id": "https://fs-workspace.example/http/RuleDetail.schema.json"
+    },
+    {
+      "name": "Issue",
+      "path": "domain/Issue.schema.json",
+      "id": "https://fs-workspace.example/http/Issue.schema.json"
+    },
+    {
+      "name": "Gate",
+      "path": "domain/Gate.schema.json",
+      "id": "https://fs-workspace.example/http/Gate.schema.json"
+    },
+    {
+      "name": "ReviewRequest",
+      "path": "domain/ReviewRequest.schema.json",
+      "id": "https://fs-workspace.example/http/ReviewRequest.schema.json"
+    },
+    {
+      "name": "Export",
+      "path": "domain/Export.schema.json",
+      "id": "https://fs-workspace.example/http/Export.schema.json"
+    },
+    {
+      "name": "WorkspaceCreate",
+      "path": "commands/WorkspaceCreate.schema.json",
+      "id": "https://fs-workspace.example/http/WorkspaceCreate.schema.json"
+    },
+    {
+      "name": "SessionCreate",
+      "path": "commands/SessionCreate.schema.json",
+      "id": "https://fs-workspace.example/http/SessionCreate.schema.json"
+    },
+    {
+      "name": "MessageCreate",
+      "path": "commands/MessageCreate.schema.json",
+      "id": "https://fs-workspace.example/http/MessageCreate.schema.json"
+    },
+    {
+      "name": "AcceptChange",
+      "path": "commands/AcceptChange.schema.json",
+      "id": "https://fs-workspace.example/http/AcceptChange.schema.json"
+    },
+    {
+      "name": "ManualEdit",
+      "path": "commands/ManualEdit.schema.json",
+      "id": "https://fs-workspace.example/http/ManualEdit.schema.json"
+    },
+    {
+      "name": "Confirm",
+      "path": "commands/Confirm.schema.json",
+      "id": "https://fs-workspace.example/http/Confirm.schema.json"
+    },
+    {
+      "name": "SnapshotCreate",
+      "path": "commands/SnapshotCreate.schema.json",
+      "id": "https://fs-workspace.example/http/SnapshotCreate.schema.json"
+    },
+    {
+      "name": "Restore",
+      "path": "commands/Restore.schema.json",
+      "id": "https://fs-workspace.example/http/Restore.schema.json"
+    },
+    {
+      "name": "ReviewCreate",
+      "path": "commands/ReviewCreate.schema.json",
+      "id": "https://fs-workspace.example/http/ReviewCreate.schema.json"
+    },
+    {
+      "name": "ApprovalCreate",
+      "path": "commands/ApprovalCreate.schema.json",
+      "id": "https://fs-workspace.example/http/ApprovalCreate.schema.json"
+    },
+    {
+      "name": "PublicationCreate",
+      "path": "commands/PublicationCreate.schema.json",
+      "id": "https://fs-workspace.example/http/PublicationCreate.schema.json"
+    },
+    {
+      "name": "ExportCreate",
+      "path": "commands/ExportCreate.schema.json",
+      "id": "https://fs-workspace.example/http/ExportCreate.schema.json"
+    },
+    {
+      "name": "Resume",
+      "path": "commands/Resume.schema.json",
+      "id": "https://fs-workspace.example/http/Resume.schema.json"
+    },
+    {
+      "name": "Empty",
+      "path": "commands/Empty.schema.json",
+      "id": "https://fs-workspace.example/http/Empty.schema.json"
+    },
+    {
+      "name": "CommandReceipt",
+      "path": "domain/CommandReceipt.schema.json",
+      "id": "https://fs-workspace.example/http/CommandReceipt.schema.json"
+    },
+    {
+      "name": "Snapshot",
+      "path": "domain/Snapshot.schema.json",
+      "id": "https://fs-workspace.example/http/Snapshot.schema.json"
+    },
+    {
+      "name": "RetryFsParseCommand",
+      "path": "commands/RetryFsParseCommand.schema.json",
+      "id": "https://fs-workspace.example/http/RetryFsParseCommand.schema.json"
+    },
+    {
+      "name": "RequestFsVerificationCommand",
+      "path": "commands/RequestFsVerificationCommand.schema.json",
+      "id": "https://fs-workspace.example/http/RequestFsVerificationCommand.schema.json"
+    },
+    {
+      "name": "RejectFsChangeCommand",
+      "path": "commands/RejectFsChangeCommand.schema.json",
+      "id": "https://fs-workspace.example/http/RejectFsChangeCommand.schema.json"
+    },
+    {
+      "name": "SetFsProjectRolesCommand",
+      "path": "commands/SetFsProjectRolesCommand.schema.json",
+      "id": "https://fs-workspace.example/http/SetFsProjectRolesCommand.schema.json"
+    },
+    {
+      "name": "RebaseFsChangeCommand",
+      "path": "commands/RebaseFsChangeCommand.schema.json",
+      "id": "https://fs-workspace.example/http/RebaseFsChangeCommand.schema.json"
+    },
+    {
+      "name": "WithdrawFsBaselineCommand",
+      "path": "commands/WithdrawFsBaselineCommand.schema.json",
+      "id": "https://fs-workspace.example/http/WithdrawFsBaselineCommand.schema.json"
+    },
+    {
+      "name": "AssessFsVerificationCommand",
+      "path": "commands/AssessFsVerificationCommand.schema.json",
+      "id": "https://fs-workspace.example/http/AssessFsVerificationCommand.schema.json"
+    },
+    {
+      "name": "UploadReceipt",
+      "path": "domain/UploadReceipt.schema.json",
+      "id": "https://fs-workspace.example/schemas/UploadReceipt.schema.json"
+    },
+    {
+      "name": "RunCheckpoint",
+      "path": "domain/RunCheckpoint.schema.json",
+      "id": "https://fs-workspace.example/schemas/RunCheckpoint.schema.json"
+    },
+    {
+      "name": "ExportManifest",
+      "path": "domain/ExportManifest.schema.json",
+      "id": "https://fs-workspace.example/schemas/ExportManifest.schema.json"
+    },
+    {
+      "name": "FsProjectRoleAssignment",
+      "path": "domain/FsProjectRoleAssignment.schema.json",
+      "id": "https://fs-workspace.example/http/FsProjectRoleAssignment.schema.json"
+    },
+    {
+      "name": "AgentArtifact",
+      "path": "domain/AgentArtifact.schema.json",
+      "id": "https://fs-workspace.example/http/AgentArtifact.schema.json"
+    }
+  ]
+}

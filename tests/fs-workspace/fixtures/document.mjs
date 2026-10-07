@@ -1,0 +1,63 @@
+export const template = {
+  template_key: 'traditional-abap-five',
+  version: '1.0.0',
+  hash: 'template-fixture',
+  renderer_version: '1.0.0',
+  slots: ['overview', 'io', 'logic', 'authorization', 'validation'].map((stable_slot) => ({
+    stable_slot,
+    title: stable_slot,
+    required: true,
+    allowed_block_kinds: ['paragraph', 'table', 'callout'],
+  })),
+};
+export const block = (id = 'b1') => ({
+  id,
+  kind: 'paragraph',
+  text: '中文业务说明',
+  columns: [],
+  rows: [],
+  classification: 'recommendation',
+  requirement_ids: [],
+  rule_ids: [],
+  decision_ids: [],
+  evidence_refs: [],
+});
+export function document() {
+  return {
+    schema_version: '1.0.0',
+    context: {
+      workspace_id: 'ws',
+      session_id: 's',
+      run_id: 'r',
+      document_id: 'd',
+      base_document_version: null,
+      context_snapshot_id: 'ctx',
+      template_id: template.template_key,
+      template_version: '1.0.0',
+    },
+    id: 'd',
+    revision: 1,
+    version_number: 0,
+    title: '讨论稿',
+    content_hash: 'old',
+    lifecycle: 'draft',
+    sections: template.slots.map((s, i) => ({
+      id: 'section-' + i,
+      template_slot: s.stable_slot,
+      title: s.title,
+      blocks: [block('b' + i)],
+    })),
+    tests: [],
+    requirement_refs: [],
+    rule_refs: [],
+    decision_refs: [],
+    open_issue_ids: [],
+    verifications: [],
+    confirmation_refs: [],
+    review_refs: [],
+    approval_refs: [],
+    evidence_manifest_ids: [],
+    created_at: '2026-10-03T00:00:00Z',
+    created_by: 'u',
+  };
+}

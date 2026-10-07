@@ -1,0 +1,116 @@
+import { stringify } from "../lib/results.js";
+import { McpError, ErrorCode } from "../lib/errors.js";
+import { BaseHandler } from "./BaseHandler.js";
+export class NodeHandlers extends BaseHandler {
+    getTools() {
+        return [
+            {
+                name: "nodeContents",
+                description: "Retrieves the contents of a node in the ABAP repository tree.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        parent_type: {
+                            type: "string",
+                            description: "The type of the parent node.",
+                        },
+                        parent_name: {
+                            type: "string",
+                            description: "The name of the parent node.",
+                            optional: true,
+                        },
+                        user_name: {
+                            type: "string",
+                            description: "The user name.",
+                            optional: true,
+                        },
+                        parent_tech_name: {
+                            type: "string",
+                            description: "The technical name of the parent node.",
+                            optional: true,
+                        },
+                        rebuild_tree: {
+                            type: "boolean",
+                            description: "Whether to rebuild the tree.",
+                            optional: true,
+                        },
+                        parentnodes: {
+                            type: "array",
+                            description: "An array of parent node IDs.",
+                            optional: true,
+                        },
+                    },
+                    required: ["parent_type"],
+                },
+            },
+            {
+                name: "mainPrograms",
+                description: "Retrieves the main programs for a given include.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        includeUrl: {
+                            type: "string",
+                            description: "The URL of the include.",
+                        },
+                    },
+                    required: ["includeUrl"],
+                },
+            },
+        ];
+    }
+    async handle(toolName, args) {
+        switch (toolName) {
+            case "nodeContents":
+                return this.handleNodeContents(args);
+            case "mainPrograms":
+                return this.handleMainPrograms(args);
+            default:
+                throw new McpError(ErrorCode.MethodNotFound, `Unknown node tool: ${toolName}`);
+        }
+    }
+    async handleNodeContents(args) {
+        const startTime = performance.now();
+        try {
+            const nodeContents = await this.adtclient.nodeContents(args.parent_type, args.parent_name, args.user_name, args.parent_tech_name, args.rebuild_tree, args.parentnodes);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            nodeContents,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+    async handleMainPrograms(args) {
+        const startTime = performance.now();
+        try {
+            const mainPrograms = await this.adtclient.mainPrograms(args.includeUrl);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            mainPrograms,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+}

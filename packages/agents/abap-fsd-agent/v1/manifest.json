@@ -1,0 +1,101 @@
+{
+  "id": "abap-fsd-agent",
+  "version": "2.0.0",
+  "contractVersion": "1.0.0",
+  "common": ["主提示词.md", "任务/讨论.md"],
+  "types": {
+    "R": "类型/报表功能规则.md",
+    "I": "类型/接口功能规则.md",
+    "C": "类型/转换迁移功能规则.md",
+    "E": "类型/增强功能规则.md"
+  },
+  "profiles": {
+    "dialogue": ["主提示词.md", "任务/讨论.md"],
+    "clarification": ["主提示词.md", "任务/澄清.md"],
+    "draft": ["主提示词.md", "任务/起草.md"],
+    "plan": ["主提示词.md", "任务/设计计划.md"],
+    "review": ["主提示词.md", "任务/质量审查.md"],
+    "revise": ["主提示词.md", "任务/起草.md", "任务/证据修订.md"],
+    "verify": ["主提示词.md", "任务/证据修订.md"]
+  },
+  "practices": {
+    "editable_batch": "实践/可编辑批处理与并发.md",
+    "object_feedback": "实践/逐对象结果与重试反馈.md"
+  },
+  "runtime": {
+    "structuredTypes": ["R"],
+    "analysisTypes": ["R", "I", "C", "E"],
+    "objectVerification": true,
+    "attachmentTransfer": true,
+    "persistentConfirmation": true
+  },
+  "modules": [
+    {
+      "id": "rule-1",
+      "file": "主提示词.md",
+      "loadable": true
+    },
+    {
+      "id": "rule-2",
+      "file": "任务/讨论.md",
+      "loadable": true
+    },
+    {
+      "id": "rule-3",
+      "file": "任务/澄清.md",
+      "loadable": true
+    },
+    {
+      "id": "rule-4",
+      "file": "任务/起草.md",
+      "loadable": true
+    },
+    {
+      "id": "rule-5",
+      "file": "任务/设计计划.md",
+      "loadable": true
+    },
+    {
+      "id": "rule-6",
+      "file": "任务/质量审查.md",
+      "loadable": true
+    },
+    {
+      "id": "rule-7",
+      "file": "任务/证据修订.md",
+      "loadable": true
+    },
+    {
+      "id": "rule-8",
+      "file": "类型/报表功能规则.md",
+      "loadable": true
+    },
+    {
+      "id": "rule-9",
+      "file": "类型/接口功能规则.md",
+      "loadable": true
+    },
+    {
+      "id": "rule-10",
+      "file": "类型/转换迁移功能规则.md",
+      "loadable": true
+    },
+    {
+      "id": "rule-11",
+      "file": "类型/增强功能规则.md",
+      "loadable": true
+    },
+    {
+      "id": "rule-12",
+      "file": "实践/可编辑批处理与并发.md",
+      "loadable": true
+    },
+    {
+      "id": "rule-13",
+      "file": "实践/逐对象结果与重试反馈.md",
+      "loadable": true
+    }
+  ],
+  "integrity": "runtime-sha256",
+  "protocolFile": "运行协议.md"
+}

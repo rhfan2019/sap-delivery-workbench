@@ -1,0 +1,127 @@
+import { stringify } from "../lib/results.js";
+import { McpError, ErrorCode } from "../lib/errors.js";
+import { BaseHandler } from "./BaseHandler.js";
+export class PrettyPrinterHandlers extends BaseHandler {
+    getTools() {
+        return [
+            {
+                name: "prettyPrinterSetting",
+                description: "Retrieves the pretty printer settings.",
+                inputSchema: {
+                    type: "object",
+                    properties: {},
+                },
+            },
+            {
+                name: "setPrettyPrinterSetting",
+                description: "Sets the pretty printer settings.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        indent: {
+                            type: "boolean",
+                            description: "Whether to indent the code.",
+                        },
+                        style: {
+                            type: "string",
+                            description: "The pretty printer style.",
+                        },
+                    },
+                    required: ["indent", "style"],
+                },
+            },
+            {
+                name: "prettyPrinter",
+                description: "Formats ABAP code using the pretty printer.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        source: {
+                            type: "string",
+                            description: "The ABAP source code to format.",
+                        },
+                    },
+                    required: ["source"],
+                },
+            },
+        ];
+    }
+    async handle(toolName, args) {
+        switch (toolName) {
+            case "prettyPrinterSetting":
+                return this.handlePrettyPrinterSetting(args);
+            case "setPrettyPrinterSetting":
+                return this.handleSetPrettyPrinterSetting(args);
+            case "prettyPrinter":
+                return this.handlePrettyPrinter(args);
+            default:
+                throw new McpError(ErrorCode.MethodNotFound, `Unknown pretty printer tool: ${toolName}`);
+        }
+    }
+    async handlePrettyPrinterSetting(args) {
+        const startTime = performance.now();
+        try {
+            const settings = await this.adtclient.prettyPrinterSetting();
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            settings,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+    async handleSetPrettyPrinterSetting(args) {
+        const startTime = performance.now();
+        try {
+            const result = await this.adtclient.setPrettyPrinterSetting(args.indent, args.style);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            result,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+    async handlePrettyPrinter(args) {
+        const startTime = performance.now();
+        try {
+            const source = await this.adtclient.prettyPrinter(args.source);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            source,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+}

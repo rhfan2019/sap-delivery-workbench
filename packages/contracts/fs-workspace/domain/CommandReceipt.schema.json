@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "properties": {
+    "action": {
+      "type": "string"
+    },
+    "key": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "committed",
+        "not_found"
+      ]
+    },
+    "result_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      }
+    },
+    "request_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "action",
+    "key",
+    "state",
+    "result_ids",
+    "request_hash"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/CommandReceipt.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CommandReceipt"
+}

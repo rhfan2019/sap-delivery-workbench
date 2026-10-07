@@ -1,0 +1,9 @@
+{
+  "openapi": "3.1.0",
+  "paths": 34,
+  "operations": 41,
+  "schemas": 40,
+  "references_checked": 150,
+  "errors": [],
+  "scope": "Static OpenAPI 3.1 structure, local references and unique operation IDs only; no running API validation."
+}

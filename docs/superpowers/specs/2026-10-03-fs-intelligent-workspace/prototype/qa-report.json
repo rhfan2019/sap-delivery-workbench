@@ -1,0 +1,19 @@
+{
+  "passed": 12,
+  "checks": [
+    "management loads",
+    "workspace loads",
+    "version-bound business decision shown",
+    "accept updates draft and invalidates confirmation",
+    "conflict rebase keeps candidate",
+    "cancel suppresses late candidate",
+    "separate technical business approval and publish",
+    "versions baseline state",
+    "read-only action disabled",
+    "390px tabs no outer overflow",
+    "first-entry generated candidate",
+    "no browser javascript errors"
+  ],
+  "errors": [],
+  "scope": "Standalone synthetic prototype only, not product implementation"
+}

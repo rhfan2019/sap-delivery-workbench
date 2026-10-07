@@ -1,0 +1,65 @@
+{
+  "name": "sap-delivery-workbench",
+  "version": "0.1.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=10"
+  },
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "generate:fs": "node scripts/generate-fs-contracts.mjs",
+    "check:fs-contracts": "node scripts/generate-fs-contracts.mjs --check",
+    "test:fs": "node scripts/test-fs.mjs",
+    "test:elements:ui": "playwright test --config playwright.fs.config.mjs elements.spec.ts",
+    "test:elements:integration": "node scripts/test-elements-e2e.mjs tests/fs-workspace/e2e/elements-item.mjs",
+    "start": "node scripts/components.mjs start",
+    "stop": "node scripts/components.mjs stop",
+    "setup:env": "node scripts/setup-env.mjs",
+    "db:up": "docker compose up -d --wait postgres",
+    "db:stop": "docker compose stop postgres",
+    "db:status": "node --env-file=.env scripts/db-status.mjs",
+    "db:migrate": "node --env-file=.env scripts/db-migrate.mjs",
+    "db:provision": "node --env-file=.env scripts/db-provision.mjs",
+    "db:test": "node --env-file=.env --test tests/database/*.test.mjs",
+    "dev": "node scripts/dev.mjs",
+    "build": "npm run build --workspace @sap-delivery-workbench/web",
+    "typecheck": "npm run typecheck --workspace @sap-delivery-workbench/web",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run format:check && npm run typecheck && npm run build",
+    "bootstrap": "node --env-file=.env scripts/bootstrap.mjs",
+    "test": "node --env-file=.env --test tests/*.test.mjs",
+    "verify:sap": "node --env-file=.env scripts/verify-sap-mcp.mjs",
+    "setup:sap": "node scripts/setup-sap-mcp.mjs",
+    "test:sap": "node --env-file=.env --test tests/sap-config.test.mjs tests/sap-api.test.mjs tests/sap-verification.test.mjs",
+    "predev": "node scripts/setup-sap-mcp.mjs",
+    "serve": "node scripts/serve.mjs"
+  },
+  "devDependencies": {
+    "@napi-rs/canvas": "1.0.10",
+    "@playwright/test": "1.63.0",
+    "json-schema-to-typescript": "15.0.4",
+    "node-pg-migrate": "9.0.0",
+    "prettier": "3.9.9"
+  },
+  "dependencies": {
+    "@fastify/multipart": "10.1.2",
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "argon2": "^0.45.1",
+    "docx": "9.8.1",
+    "fast-xml-parser": "^5.11.1",
+    "fastify": "^5.12.5",
+    "jszip": "3.10.2",
+    "pdfjs-dist": "6.3.289",
+    "pg": "^8.23.1",
+    "playwright": "1.63.0",
+    "sanitize-html": "^2.18.0"
+  }
+}

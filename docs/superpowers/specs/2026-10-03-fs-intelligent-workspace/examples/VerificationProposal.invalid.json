@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "context": {
+    "workspace_id": "ws-demo",
+    "session_id": "session-demo",
+    "run_id": "run-demo",
+    "document_id": "fs-demo",
+    "base_document_version": "dv-7",
+    "context_snapshot_id": "ctx-7",
+    "template_id": "traditional-abap-five",
+    "template_version": "1.0.0"
+  },
+  "request_id": "verify-1",
+  "evidence_refs": [],
+  "candidate_conclusion": "未取得技术证据，不能判断可行性",
+  "applicability_reason": "目标系统尚未选择",
+  "unresolved": [
+    {
+      "id": "tmp:technical-gap",
+      "question": "是否允许非零容差？",
+      "impact": "影响差额处理、审批与验收",
+      "owner_role": "technical",
+      "blocking": "release",
+      "entity_ids": [
+        "tmp:rule-1"
+      ],
+      "status": "open",
+      "resolution_ref": null
+    }
+  ],
+  "next_queries": [
+    {
+      "id": "tmp:verify-1",
+      "target": {
+        "system_id": "target-unselected",
+        "client": "unknown",
+        "release": "unknown"
+      },
+      "claim": "目标系统支持所需清账与事务控制",
+      "object_type": "interface",
+      "candidate_name": null,
+      "scope": "签名、模拟、锁定、提交语义",
+      "required_evidence": "目标系统元数据与受控测试记录",
+      "blocking": "release",
+      "related_ids": [
+        "tmp:req-1"
+      ]
+    }
+  ],
+  "unexpected_authority": "approved"
+}

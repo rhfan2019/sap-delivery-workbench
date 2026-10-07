@@ -1,0 +1,42 @@
+[
+  {
+    "foreground": "text",
+    "background": "bg",
+    "ratio": 14.61
+  },
+  {
+    "foreground": "muted",
+    "background": "surface",
+    "ratio": 7.76
+  },
+  {
+    "foreground": "muted",
+    "background": "hover",
+    "ratio": 6.64
+  },
+  {
+    "foreground": "nav-muted",
+    "background": "nav-bg",
+    "ratio": 12.02
+  },
+  {
+    "foreground": "nav-text",
+    "background": "nav-active",
+    "ratio": 7.14
+  },
+  {
+    "foreground": "on-primary",
+    "background": "primary",
+    "ratio": 9.04
+  },
+  {
+    "foreground": "control-border",
+    "background": "bg",
+    "ratio": 3.42
+  },
+  {
+    "foreground": "error-text",
+    "background": "error-bg",
+    "ratio": 7.29
+  }
+]

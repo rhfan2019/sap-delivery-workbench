@@ -1,0 +1,82 @@
+import { createRouter, createWebHistory } from 'vue-router';
+import { identity, restoreSession } from '../services/session';
+import LoginView from '../views/LoginView.vue';
+import PasswordView from '../views/PasswordView.vue';
+import AppLayout from '../components/AppLayout.vue';
+import WorkspaceView from '../views/WorkspaceView.vue';
+export const router = createRouter({
+  history: createWebHistory(),
+  scrollBehavior: () => ({ top: 0, left: 0 }),
+  routes: [
+    { path: '/login', component: LoginView },
+    { path: '/password', component: PasswordView },
+    {
+      path: '/',
+      component: AppLayout,
+      children: [
+        { path: '', redirect: '/home' },
+        { path: 'home', component: WorkspaceView },
+        { path: 'projects/:id?', component: WorkspaceView },
+        {
+          path: 'projects/:projectId/development-items/:itemId/:stage(design|development)',
+          component: () => import('../features/item-workspace/ItemWorkspaceRoute.vue'),
+        },
+        {
+          path: 'projects/:projectId/development-items/:itemId/fs/:page?',
+          redirect: (to) =>
+            `/projects/${to.params.projectId}/development-items/${to.params.itemId}/design`,
+        },
+        {
+          path: 'workspace/organization',
+          component: () => import('../features/admin/OrganizationView.vue'),
+        },
+        {
+          path: 'workspace/organization-profile',
+          component: () => import('../features/admin/OrganizationProfileView.vue'),
+        },
+        { path: 'workspace/members', component: () => import('../features/admin/MembersView.vue') },
+        { path: 'workspace/models', component: () => import('../features/models/ModelsView.vue') },
+        {
+          path: 'workspace/assistant-runs/:runId',
+          component: () => import('../features/fs-assistant-test/RunDiagnosticsView.vue'),
+        },
+        {
+          path: 'workspace/fs-assistant-test',
+          component: () => import('../features/fs-assistant-test/FsAssistantTestView.vue'),
+        },
+        {
+          path: 'workspace/connections',
+          component: () => import('../features/sap/SapSystemsView.vue'),
+        },
+        {
+          path: 'workspace/technical-verification',
+          component: () => import('../features/admin/TechnicalVerificationView.vue'),
+        },
+        {
+          path: 'workspace/development-items',
+          component: () => import('../features/delivery/DeliveryView.vue'),
+        },
+        { path: 'workspace/:module', component: WorkspaceView },
+        { path: 'settings', component: () => import('../views/SettingsView.vue') },
+        { path: ':pathMatch(.*)*', component: WorkspaceView },
+      ],
+    },
+  ],
+});
+router.beforeEach(async (to) => {
+  if (!identity.value && to.path !== '/login') {
+    try {
+      await restoreSession();
+    } catch {
+      return { path: '/login', query: { unavailable: '1' } };
+    }
+  }
+  if (!identity.value && to.path !== '/login') return '/login';
+  if (identity.value?.mustChangePassword && to.path !== '/password') return '/password';
+  if (
+    identity.value &&
+    !identity.value.mustChangePassword &&
+    ['/login', '/password'].includes(to.path)
+  )
+    return '/home';
+});

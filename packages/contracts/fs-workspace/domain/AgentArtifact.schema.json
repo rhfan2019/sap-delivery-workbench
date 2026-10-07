@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fs-workspace.example/http/AgentArtifact.schema.json",
+  "title": "AgentArtifact",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "run_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "orchestrate",
+        "analyze",
+        "clarify",
+        "generate",
+        "revise",
+        "review"
+      ]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "change_set_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid"
+    }
+  },
+  "required": [
+    "id",
+    "run_id",
+    "stage",
+    "summary",
+    "change_set_id"
+  ]
+}

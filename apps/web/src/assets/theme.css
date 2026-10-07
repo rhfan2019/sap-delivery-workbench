@@ -1,0 +1,43 @@
+/* Default palette: 海军蓝 · 双区聚焦. Shared by authenticated and public routes. */
+:root {
+  color-scheme: light;
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --text: #0a2240;
+  --muted: #42546a;
+  --border: #b3c0cf;
+  --control-border: #73869d;
+  --hover: #e8eef5;
+  --active: #dce9f6;
+  --link: #174b7a;
+  --primary: #174b7a;
+  --primary-hover: #0a2240;
+  --focus: #255b8a;
+  --on-primary: #ffffff;
+  --nav-bg: #0a2240;
+  --nav-text: #ffffff;
+  --nav-muted: #d4e1ef;
+  --nav-border: #385471;
+  --nav-hover: #163b60;
+  --nav-active: #255b8a;
+  --nav-focus: #b8d8ff;
+  --error-bg: #fff1f1;
+  --error-text: #922c2c;
+  --error-border: #c77575;
+  --success-bg: #edf7f3;
+  --success-text: #276650;
+  --scrim: #0a224070;
+}
+
+/* Scoped inverse surfaces never change the light workspace or native dialogs. */
+.sidebar,
+.login-story {
+  --text: var(--nav-text);
+  --muted: var(--nav-muted);
+  --border: var(--nav-border);
+  --hover: var(--nav-hover);
+  --active: var(--nav-active);
+  --link: var(--nav-muted);
+  --focus: var(--nav-focus);
+  color: var(--text);
+}

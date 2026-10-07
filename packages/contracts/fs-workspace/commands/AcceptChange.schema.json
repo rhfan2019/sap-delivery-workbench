@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "properties": {
+    "base_document_version": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "accepted_group_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "base_document_version",
+    "accepted_group_ids"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/AcceptChange.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AcceptChange"
+}

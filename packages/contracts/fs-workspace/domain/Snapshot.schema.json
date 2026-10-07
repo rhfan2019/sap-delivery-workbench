@@ -1,0 +1,58 @@
+{
+  "type": "object",
+  "properties": {
+    "workspace": {
+      "anyOf": [
+        {
+          "$ref": "https://fs-workspace.example/http/Workspace.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "capabilities": {
+      "$ref": "https://fs-workspace.example/http/Capabilities.schema.json"
+    },
+    "legacy_available": {
+      "type": "boolean"
+    },
+    "sessions": {
+      "type": "array",
+      "items": {
+        "$ref": "https://fs-workspace.example/http/Session.schema.json"
+      }
+    },
+    "active_runs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://fs-workspace.example/http/Run.schema.json"
+      }
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "$ref": "https://fs-workspace.example/http/Attachment.schema.json"
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "$ref": "https://fs-workspace.example/http/Issue.schema.json"
+      }
+    }
+  },
+  "required": [
+    "workspace",
+    "capabilities",
+    "legacy_available",
+    "sessions",
+    "active_runs",
+    "attachments",
+    "issues"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/Snapshot.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Snapshot"
+}

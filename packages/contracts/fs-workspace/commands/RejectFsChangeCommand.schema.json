@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "properties": {
+    "reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "reason"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/RejectFsChangeCommand.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RejectFsChangeCommand"
+}

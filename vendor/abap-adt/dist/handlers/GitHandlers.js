@@ -1,0 +1,506 @@
+import { stringify } from "../lib/results.js";
+import { McpError, ErrorCode } from "../lib/errors.js";
+import { BaseHandler } from "./BaseHandler.js";
+export class GitHandlers extends BaseHandler {
+    getTools() {
+        return [
+            {
+                name: "gitRepos",
+                description: "Retrieves a list of Git repositories.",
+                inputSchema: {
+                    type: "object",
+                    properties: {},
+                },
+            },
+            {
+                name: "gitExternalRepoInfo",
+                description: "Retrieves information about an external Git repository.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        repourl: {
+                            type: "string",
+                            description: "The URL of the repository.",
+                        },
+                        user: {
+                            type: "string",
+                            description: "The username.",
+                            optional: true,
+                        },
+                        password: {
+                            type: "string",
+                            description: "The password.",
+                            optional: true,
+                        },
+                    },
+                    required: ["repourl"],
+                },
+            },
+            {
+                name: "gitCreateRepo",
+                description: "Creates a new Git repository.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        packageName: {
+                            type: "string",
+                            description: "The name of the package.",
+                        },
+                        repourl: {
+                            type: "string",
+                            description: "The URL of the repository.",
+                        },
+                        branch: {
+                            type: "string",
+                            description: "The branch name.",
+                            optional: true,
+                        },
+                        transport: {
+                            type: "string",
+                            description: "The transport.",
+                            optional: true,
+                        },
+                        user: {
+                            type: "string",
+                            description: "The username.",
+                            optional: true,
+                        },
+                        password: {
+                            type: "string",
+                            description: "The password.",
+                            optional: true,
+                        },
+                    },
+                    required: ["packageName", "repourl"],
+                },
+            },
+            {
+                name: "gitPullRepo",
+                description: "Pulls changes from a Git repository.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        repoId: {
+                            type: "string",
+                            description: "The ID of the repository.",
+                        },
+                        branch: {
+                            type: "string",
+                            description: "The branch name.",
+                            optional: true,
+                        },
+                        transport: {
+                            type: "string",
+                            description: "The transport.",
+                            optional: true,
+                        },
+                        user: {
+                            type: "string",
+                            description: "The username.",
+                            optional: true,
+                        },
+                        password: {
+                            type: "string",
+                            description: "The password.",
+                            optional: true,
+                        },
+                    },
+                    required: ["repoId"],
+                },
+            },
+            {
+                name: "gitUnlinkRepo",
+                description: "Unlinks a Git repository.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        repoId: {
+                            type: "string",
+                            description: "The ID of the repository.",
+                        },
+                    },
+                    required: ["repoId"],
+                },
+            },
+            {
+                name: "stageRepo",
+                description: "Stages changes in a Git repository.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        repo: {
+                            type: "object",
+                            description: "The Git repository object.",
+                        },
+                        user: {
+                            type: "string",
+                            description: "The username.",
+                            optional: true,
+                        },
+                        password: {
+                            type: "string",
+                            description: "The password.",
+                            optional: true,
+                        },
+                    },
+                    required: ["repo"],
+                },
+            },
+            {
+                name: "pushRepo",
+                description: "Pushes changes to a Git repository.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        repo: {
+                            type: "object",
+                            description: "The Git repository object.",
+                        },
+                        staging: {
+                            type: "object",
+                            description: "The staging information object.",
+                        },
+                        user: {
+                            type: "string",
+                            description: "The username.",
+                            optional: true,
+                        },
+                        password: {
+                            type: "string",
+                            description: "The password.",
+                            optional: true,
+                        },
+                    },
+                    required: ["repo", "staging"],
+                },
+            },
+            {
+                name: "checkRepo",
+                description: "Checks a Git repository.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        repo: {
+                            type: "string",
+                            description: "The Git repository.",
+                        },
+                        user: {
+                            type: "string",
+                            description: "The username.",
+                            optional: true,
+                        },
+                        password: {
+                            type: "string",
+                            description: "The password.",
+                            optional: true,
+                        },
+                    },
+                    required: ["repo"],
+                },
+            },
+            {
+                name: "remoteRepoInfo",
+                description: "Retrieves information about a remote Git repository.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        repo: {
+                            type: "string",
+                            description: "The Git repository.",
+                        },
+                        user: {
+                            type: "string",
+                            description: "The username.",
+                            optional: true,
+                        },
+                        password: {
+                            type: "string",
+                            description: "The password.",
+                            optional: true,
+                        },
+                    },
+                    required: ["repo"],
+                },
+            },
+            {
+                name: "switchRepoBranch",
+                description: "Switches the branch of a Git repository.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        repo: {
+                            type: "string",
+                            description: "The Git repository.",
+                        },
+                        branch: {
+                            type: "string",
+                            description: "The branch name.",
+                        },
+                        create: {
+                            type: "boolean",
+                            description: "Whether to create the branch if it doesn't exist.",
+                            optional: true,
+                        },
+                        user: {
+                            type: "string",
+                            description: "The username.",
+                            optional: true,
+                        },
+                        password: {
+                            type: "string",
+                            description: "The password.",
+                            optional: true,
+                        },
+                    },
+                    required: ["repo", "branch"],
+                },
+            },
+        ];
+    }
+    async handle(toolName, args) {
+        switch (toolName) {
+            case "gitRepos":
+                return this.handleGitRepos(args);
+            case "gitExternalRepoInfo":
+                return this.handleGitExternalRepoInfo(args);
+            case "gitCreateRepo":
+                return this.handleGitCreateRepo(args);
+            case "gitPullRepo":
+                return this.handleGitPullRepo(args);
+            case "gitUnlinkRepo":
+                return this.handleGitUnlinkRepo(args);
+            case "stageRepo":
+                return this.handleStageRepo(args);
+            case "pushRepo":
+                return this.handlePushRepo(args);
+            case "checkRepo":
+                return this.handleCheckRepo(args);
+            case "remoteRepoInfo":
+                return this.handleRemoteRepoInfo(args);
+            case "switchRepoBranch":
+                return this.handleSwitchRepoBranch(args);
+            default:
+                throw new McpError(ErrorCode.MethodNotFound, `Unknown git tool: ${toolName}`);
+        }
+    }
+    async handleGitRepos(args) {
+        const startTime = performance.now();
+        try {
+            const repos = await this.adtclient.gitRepos();
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            repos,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+    async handleGitExternalRepoInfo(args) {
+        const startTime = performance.now();
+        try {
+            const repoInfo = await this.adtclient.gitExternalRepoInfo(args.repourl, args.user, args.password);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            repoInfo,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+    async handleGitCreateRepo(args) {
+        const startTime = performance.now();
+        try {
+            const result = await this.adtclient.gitCreateRepo(args.packageName, args.repourl, args.branch, args.transport, args.user, args.password);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            result,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+    async handleGitPullRepo(args) {
+        const startTime = performance.now();
+        try {
+            const result = await this.adtclient.gitPullRepo(args.repoId, args.branch, args.transport, args.user, args.password);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            result,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+    async handleGitUnlinkRepo(args) {
+        const startTime = performance.now();
+        try {
+            const result = await this.adtclient.gitUnlinkRepo(args.repoId);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            result,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+    async handleStageRepo(args) {
+        const startTime = performance.now();
+        try {
+            const result = await this.adtclient.stageRepo(args.repo, args.user, args.password);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            result,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+    async handlePushRepo(args) {
+        const startTime = performance.now();
+        try {
+            const result = await this.adtclient.pushRepo(args.repo, args.staging, args.user, args.password);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            result,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+    async handleCheckRepo(args) {
+        const startTime = performance.now();
+        try {
+            const result = await this.adtclient.checkRepo(args.repo, args.user, args.password);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            result,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+    async handleRemoteRepoInfo(args) {
+        const startTime = performance.now();
+        try {
+            const repoInfo = await this.adtclient.remoteRepoInfo(args.repo, args.user, args.password);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            repoInfo,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+    async handleSwitchRepoBranch(args) {
+        const startTime = performance.now();
+        try {
+            const result = await this.adtclient.switchRepoBranch(args.repo, args.branch, args.create, args.user, args.password);
+            this.trackRequest(startTime, true);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: stringify({
+                            status: "success",
+                            result,
+                        }),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            this.trackRequest(startTime, false);
+            throw error;
+        }
+    }
+}

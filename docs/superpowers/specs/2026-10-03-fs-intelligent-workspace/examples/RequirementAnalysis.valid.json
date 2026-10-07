@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0.0",
+  "context": {
+    "workspace_id": "ws-demo",
+    "session_id": "session-demo",
+    "run_id": "run-demo",
+    "document_id": "fs-demo",
+    "base_document_version": "dv-7",
+    "context_snapshot_id": "ctx-7",
+    "template_id": "traditional-abap-five",
+    "template_version": "1.0.0"
+  },
+  "summary": "提取需求，保留容差与执行对象缺口",
+  "requirements": [
+    {
+      "id": "tmp:req-1",
+      "revision": 0,
+      "text": "在同公司代码、供应商及币种边界内建议进行精确匹配。",
+      "classification": "recommendation",
+      "source_refs": [
+        {
+          "evidence_id": "ev-message-1",
+          "locator": "message:msg-1#chars=0-20",
+          "conclusion": "用户要求供应商未清项批量处理"
+        }
+      ],
+      "depends_on": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "tmp:rule-1",
+      "revision": 0,
+      "text": "在同公司代码、供应商及币种边界内建议进行精确匹配。",
+      "classification": "recommendation",
+      "source_refs": [
+        {
+          "evidence_id": "ev-message-1",
+          "locator": "message:msg-1#chars=0-20",
+          "conclusion": "用户要求供应商未清项批量处理"
+        }
+      ],
+      "depends_on": []
+    }
+  ],
+  "issues": [
+    {
+      "id": "tmp:issue-1",
+      "question": "是否允许非零容差？",
+      "impact": "影响差额处理、审批与验收",
+      "owner_role": "business",
+      "blocking": "release",
+      "entity_ids": [
+        "tmp:rule-1"
+      ],
+      "status": "open",
+      "resolution_ref": null
+    }
+  ],
+  "verification_requests": [
+    {
+      "id": "tmp:verify-1",
+      "target": {
+        "system_id": "target-unselected",
+        "client": "unknown",
+        "release": "unknown"
+      },
+      "claim": "目标系统支持所需清账与事务控制",
+      "object_type": "interface",
+      "candidate_name": null,
+      "scope": "签名、模拟、锁定、提交语义",
+      "required_evidence": "目标系统元数据与受控测试记录",
+      "blocking": "release",
+      "related_ids": [
+        "tmp:req-1"
+      ]
+    }
+  ],
+  "source_coverage": [
+    {
+      "evidence_id": "ev-message-1",
+      "covered_locators": [
+        "message:msg-1#chars=0-20"
+      ],
+      "unread_locators": [],
+      "limitations": [
+        "需求描述不包含完整财务口径"
+      ]
+    }
+  ]
+}

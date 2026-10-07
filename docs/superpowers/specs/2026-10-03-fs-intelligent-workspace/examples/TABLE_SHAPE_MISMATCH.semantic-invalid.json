@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0.0",
+  "context": {
+    "workspace_id": "ws-demo",
+    "session_id": "session-demo",
+    "run_id": "run-demo",
+    "document_id": "fs-demo",
+    "base_document_version": "dv-7",
+    "context_snapshot_id": "ctx-7",
+    "template_id": "traditional-abap-five",
+    "template_version": "1.0.0"
+  },
+  "title": "供应商未清项批量处理讨论稿",
+  "sections": [
+    {
+      "id": "section-1",
+      "template_slot": "overview",
+      "title": "开发概述与范围",
+      "blocks": [
+        {
+          "id": "block-1",
+          "kind": "table",
+          "text": null,
+          "columns": [
+            "a",
+            "b"
+          ],
+          "rows": [
+            {
+              "id": "row1",
+              "cells": [
+                "a",
+                "b",
+                "c"
+              ]
+            }
+          ],
+          "classification": "pending",
+          "requirement_ids": [
+            "req-1"
+          ],
+          "rule_ids": [
+            "rule-1"
+          ],
+          "decision_ids": [],
+          "evidence_refs": [
+            {
+              "evidence_id": "ev-message-1",
+              "locator": "message:msg-1#chars=0-20",
+              "conclusion": "用户要求供应商未清项批量处理"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "id": "test-1",
+      "title": "跨币种候选隔离",
+      "preconditions": [
+        "同供应商存在 CNY 与 USD 项目"
+      ],
+      "steps": [
+        "生成匹配候选"
+      ],
+      "expected": [
+        "不跨币种匹配或合计"
+      ],
+      "requirement_ids": [
+        "req-1"
+      ],
+      "rule_ids": [
+        "rule-1"
+      ],
+      "section_ids": [
+        "section-1"
+      ],
+      "evidence_refs": []
+    }
+  ],
+  "open_issue_ids": [
+    "issue-1"
+  ],
+  "decision_refs": [],
+  "verification_refs": [
+    "verify-1"
+  ],
+  "mode": "discussion"
+}

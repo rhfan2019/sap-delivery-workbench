@@ -1,0 +1,209 @@
+[
+  {
+    "heading": "你好，配色验收。",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/home",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "我的项目",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/projects",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "开发交付项",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/deliverables",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "需求与 FS",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/fs",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "技术设计 TS",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/ts",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "开发工作台",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/development",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "测试管理",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/tests",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "缺陷管理",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/defects",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "评审与验收",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/reviews",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "知识问答",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/qa",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "知识库",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/knowledge",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "代码资产",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/assets",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "文档模板",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/templates",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "企业与客户",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/organization",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "用户与成员",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/members",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "角色与权限",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/permissions",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "SAP / MCP 连接",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/connections",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "大模型配置",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/models",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "提示词与流程",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/workflows",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "运行任务",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/tasks",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "审计日志",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/workspace/audit",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "修改登录密码",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/settings",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  },
+  {
+    "heading": "SAP S/4HANA 实施项目",
+    "nav": "rgb(10, 34, 64)",
+    "overflow": false,
+    "page": "rgb(243, 245, 248)",
+    "path": "/projects/54974c23-ab56-458b-b0d5-abcc49fff364",
+    "text": "rgb(10, 34, 64)",
+    "themeControls": 0
+  }
+]

@@ -1,0 +1,347 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "enum": [
+        "1.0.0"
+      ]
+    },
+    "context": {
+      "$ref": "#/$defs/Context"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Proposal"
+      }
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Proposal"
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Issue"
+      }
+    },
+    "verification_requests": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/VerificationRequest"
+      }
+    },
+    "source_coverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "evidence_id": {
+            "type": "string"
+          },
+          "covered_locators": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unread_locators": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "evidence_id",
+          "covered_locators",
+          "unread_locators",
+          "limitations"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "context",
+    "summary",
+    "requirements",
+    "rules",
+    "issues",
+    "verification_requests",
+    "source_coverage"
+  ],
+  "additionalProperties": false,
+  "title": "RequirementAnalysis",
+  "description": "llm proposal only",
+  "$defs": {
+    "Context": {
+      "type": "object",
+      "properties": {
+        "workspace_id": {
+          "type": "string"
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "document_id": {
+          "type": "string"
+        },
+        "base_document_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "context_snapshot_id": {
+          "type": "string"
+        },
+        "template_id": {
+          "type": "string"
+        },
+        "template_version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "session_id",
+        "run_id",
+        "document_id",
+        "base_document_version",
+        "context_snapshot_id",
+        "template_id",
+        "template_version"
+      ],
+      "additionalProperties": false
+    },
+    "Issue": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "question": {
+          "type": "string"
+        },
+        "impact": {
+          "type": "string"
+        },
+        "owner_role": {
+          "type": "string",
+          "enum": [
+            "business",
+            "technical",
+            "security",
+            "product"
+          ]
+        },
+        "blocking": {
+          "type": "string",
+          "enum": [
+            "release",
+            "review",
+            "none"
+          ]
+        },
+        "entity_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "resolved",
+            "superseded"
+          ]
+        },
+        "resolution_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "question",
+        "impact",
+        "owner_role",
+        "blocking",
+        "entity_ids",
+        "status",
+        "resolution_ref"
+      ],
+      "additionalProperties": false
+    },
+    "Link": {
+      "type": "object",
+      "properties": {
+        "evidence_id": {
+          "type": "string"
+        },
+        "locator": {
+          "type": "string"
+        },
+        "conclusion": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "locator",
+        "conclusion"
+      ],
+      "additionalProperties": false
+    },
+    "Proposal": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "text": {
+          "type": "string"
+        },
+        "classification": {
+          "type": "string",
+          "enum": [
+            "source_fact",
+            "assumption",
+            "recommendation",
+            "pending"
+          ]
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Link"
+          }
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "text",
+        "classification",
+        "source_refs",
+        "depends_on"
+      ],
+      "additionalProperties": false
+    },
+    "Target": {
+      "type": "object",
+      "properties": {
+        "system_id": {
+          "type": "string"
+        },
+        "client": {
+          "type": "string"
+        },
+        "release": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "system_id",
+        "client",
+        "release"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/Target"
+        },
+        "claim": {
+          "type": "string"
+        },
+        "object_type": {
+          "type": "string",
+          "enum": [
+            "table",
+            "field",
+            "domain",
+            "transaction",
+            "interface",
+            "enhancement",
+            "authorization",
+            "behavior"
+          ]
+        },
+        "candidate_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "scope": {
+          "type": "string"
+        },
+        "required_evidence": {
+          "type": "string"
+        },
+        "blocking": {
+          "type": "string",
+          "enum": [
+            "release",
+            "review",
+            "none"
+          ]
+        },
+        "related_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "target",
+        "claim",
+        "object_type",
+        "candidate_name",
+        "scope",
+        "required_evidence",
+        "blocking",
+        "related_ids"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

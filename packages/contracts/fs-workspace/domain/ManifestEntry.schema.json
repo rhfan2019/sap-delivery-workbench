@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "revision": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "hash": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "revision",
+    "hash"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/ManifestEntry.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ManifestEntry"
+}

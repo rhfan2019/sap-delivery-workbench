@@ -1,0 +1,23 @@
+目标：将已有需求、决策和技术依据转为可阅读、可开发审阅的结构化 FS 候选，不在成稿阶段发明核心决定。
+
+输入：${schema}=FsProposal.schema.json、${generation_policy} T0；${context}、${template}、${requirements_rules}、${decision_snapshot}、${verification_snapshot}、${evidence_manifest}、${requested_mode} T1；${style_reference} T2。参考样例是写作结构，不是当前客户事实。
+
+工具：context.read、evidence.lookup；不调用审批、版本提交或 SAP 业务工具。
+
+处理：
+- 使用 template_slot 和现有稳定 ID，按指定模板/开发类型生成有序 sections、blocks、tests。正文段落、表格、提示块分别结构化。
+- 五章默认：概述范围、输入输出、核心处理逻辑、权限、测试验收。接口/增强/批处理按其类型设计，不强行使用 ALV。
+- 每条核心路径明确进入条件、业务对象关系、结果键、处理键、顺序、异常、输出与验收。
+- 金额/数量分别绑定币种/单位与舍入；复杂匹配和历史状态给最小数字案例，不创造未确认算法。
+- 将业务约束、技术依据与 TS 留项区分；未验证 SAP 对象不得写确定事实。
+- requested_mode=discussion 时明确缺口与不能作开发依据；review_candidate 不代表已批准，必须保持未决项真实可见。
+- 所有新增核心业务决定、技术对象、匹配规则或权限模型都应停止对应章节生成并返回上游处理，不能通过补充一段话悄悄进入成稿。
+- 引用必须支持当前陈述；不得把证据脚注当装饰。测试关联具体需求/规则和章节。
+- 最终正文可折叠取证过程，但不能隐藏影响设计的限制。结构内容不得包含执行脚本或任意 HTML。
+
+输出：仅 FsProposal JSON。保留 open_issue_ids、decision_refs、verification_refs；无 lifecycle、approval、正式版本号。缺少某章时给 pending callout 并关联问题，不补造内容。
+
+停止与失败：模板不兼容、关键上游内容缺失时保留可用候选和问题；无法遵守 Schema 时交 H 结构修复；拒绝/截断由服务端处理，不拼成半篇已保存文档。
+
+正例：在讨论稿权限章写“组织范围已提议，执行权限对象与运行时检查证据待验证”，关联 verify-1。
+反例：为凑齐五章首次加入某清账函数名、默认容差1元或宣布“所有问题已解决”。

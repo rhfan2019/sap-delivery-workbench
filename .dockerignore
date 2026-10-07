@@ -1,0 +1,12 @@
+**/node_modules
+**/.env
+**/.env.*
+.runtime
+backups
+.git
+.superpowers
+apps/web/dist
+infra/production/secrets
+infra/production/data
+infra/production/tls
+infra/production/production.env

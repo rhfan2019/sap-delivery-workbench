@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "properties": {
+    "review_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "document_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "expected_baseline_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "review_id",
+    "document_version_id",
+    "expected_baseline_id"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/PublicationCreate.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PublicationCreate"
+}
