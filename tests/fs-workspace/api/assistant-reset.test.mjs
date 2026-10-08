@@ -46,7 +46,7 @@ test('reset removes both stage versions and conversations without changing item 
       f.scope.itemId,
       otherOwner,
     ]);
-    assert.equal((await req('POST', 'design/agent/reset', {})).statusCode, 403);
+    assert.equal((await req('POST', 'development/agent/reset', {})).statusCode, 403);
     assert.equal((await req('GET', 'design')).json().head.id, d.head.id);
     await f.db.query('UPDATE app.development_item SET developer_id=$2 WHERE id=$1', [
       f.scope.itemId,
@@ -57,8 +57,8 @@ test('reset removes both stage versions and conversations without changing item 
       designVersionId: d.head.id,
       document: { ...v.head.document, code: 'REPORT zold.' },
     });
-    const s = (await req('POST', 'design/agent/conversations', { selection: {} })).json();
-    const reset = await req('POST', 'design/agent/reset', {});
+    const s = (await req('POST', 'development/agent/conversations', { selection: {} })).json();
+    const reset = await req('POST', 'development/agent/reset', {});
     assert.equal(reset.statusCode, 200, reset.body);
     for (const stage of ['design', 'development']) {
       const state = (await req('GET', stage)).json();
@@ -145,103 +145,10 @@ test('reset cancels active work and prevents delayed output from recreating a ve
     ).json();
     assert.equal(live.state, 'running');
     assert.equal(live.plan.steps.find((s) => s.stepId === 'generate').status, 'running');
-    const reset = await req('POST', 'design/agent/reset', {});
+    const reset = await req('POST', 'development/agent/reset', {});
     assert.equal(reset.statusCode, 200, reset.body);
-    assert.equal((await req('GET', 'design/agent/runs/' + r.json().runId)).statusCode, 404);
+    assert.equal((await req('GET', 'development/agent/runs/' + r.json().runId)).statusCode, 404);
     assert.equal((await req('GET', 'design')).json().head, null);
-  } finally {
-    await f.close();
-  }
-});
-
-test('numbered confirmations persist and JSON-to-MD skips provider and preflight with authorized diagnostics', async () => {
-  let calls = 0;
-  const f = await apiFixture({
-    agentStream: async (_c, _k, _p, o) => {
-      calls++;
-      o.onDelta(
-        calls === 1
-          ? '1. **审批方式：**\n建议标准方式\n2. **合并规则：**\n依据系统配置'
-          : '```json\n{"title":"采购申请点检","scope":{"inScope":["数量和采购组可编辑"]}}\n```',
-      );
-      return { finishReason: 'stop' };
-    },
-  });
-  const base = f.base.replace('/fs-workspace', '/work/');
-  const req = (method, path, payload) =>
-    f.app.inject({ method, url: base + path, payload, headers: f.headers });
-  try {
-    await req('POST', 'design', {});
-    const model = await saveModel(f.db, f.scope.organizationId, f.scope.actorId, {
-      name: 'Feedback fixture',
-      provider: 'test',
-      protocol: 'openai_chat',
-      baseUrl: 'https://api.example.com/v1',
-      modelId: 'synthetic',
-      apiKey: 'synthetic',
-      maxOutputTokens: 20000,
-      temperature: null,
-      timeoutSeconds: 30,
-    });
-    let conversationId;
-    let run;
-    for (const prompt of [
-      '采购申请点检需求',
-      '问题1：不考虑工作流；\n问题2：依据SAP配置。',
-      '请基于JSON生成Markdown格式的FSD',
-    ]) {
-      const r = await req('POST', 'design/agent/runs', {
-        modelId: model.id,
-        rowVersion: model.rowVersion,
-        requestId: randomUUID(),
-        prompt,
-        action: 'auto',
-        ...(conversationId ? { conversationId } : {}),
-      });
-      assert.equal(r.statusCode, 202, r.body);
-      run = r.json();
-      conversationId = run.conversationId;
-      await req('GET', 'design/agent/runs/' + run.runId + '/events');
-    }
-    assert.equal(calls, 2, 'format conversion must never call model');
-    const result = (await req('GET', 'design/agent/runs/' + run.runId)).json();
-    assert.equal(result.state, 'completed');
-    assert.equal(result.snapshot.decisions.length, 2);
-    assert.match(JSON.stringify(result.snapshot.decisions), /不考虑工作流/);
-    assert.match(result.snapshot.rendered.markdown, /数量和采购组/);
-    const md = await req('GET', 'design/agent/runs/' + run.runId + '/markdown');
-    assert.equal(md.statusCode, 200);
-    assert.match(md.headers['content-type'], /text\/markdown/);
-    // Older completed discussion runs have JSON but no persisted reading projection.
-    await f.db.query(
-      "UPDATE app.fsd_agent_run SET snapshot=(snapshot-'rendered') || jsonb_build_object('text',$2::text) WHERE id=$1",
-      [run.runId, JSON.stringify({ title: '历史需求', rules: ['按计划交货日计算'] })],
-    );
-    const legacyMd = await req('GET', 'design/agent/runs/' + run.runId + '/markdown');
-    assert.equal(legacyMd.statusCode, 200, legacyMd.body);
-    assert.match(legacyMd.body, /按计划交货日计算/);
-    const log = await req('GET', 'design/agent/runs/' + run.runId + '/diagnostics');
-    assert.equal(log.statusCode, 200);
-    assert.equal(log.json().context.decisions.length, 2);
-    assert.equal(
-      (await req('GET', 'development/agent/runs/' + run.runId + '/diagnostics')).statusCode,
-      404,
-    );
-    assert.equal(
-      (
-        await f.app.inject({
-          method: 'GET',
-          url: base + 'design/agent/runs/' + run.runId + '/diagnostics',
-        })
-      ).statusCode,
-      401,
-    );
-    const reset = await req('POST', 'design/agent/reset', {});
-    assert.equal(reset.statusCode, 200, reset.body);
-    assert.equal(
-      (await req('GET', 'design/agent/runs/' + run.runId + '/diagnostics')).statusCode,
-      404,
-    );
   } finally {
     await f.close();
   }

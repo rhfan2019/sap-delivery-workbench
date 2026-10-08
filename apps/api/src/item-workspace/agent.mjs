@@ -1,7 +1,6 @@
-import { renderPrompt } from '../abap-fsd-agent/prompts.mjs';
+import { renderPrompt } from './development-prompts.mjs';
 import { readFileSync } from 'node:fs';
 import { registerAbapFsdAgentRoutes } from '../abap-fsd-agent/routes.mjs';
-import { executor } from '../abap-fsd-agent/executor.mjs';
 import { parseDraft } from '../abap-fsd-agent/specification.mjs';
 import { failure } from '../auth.mjs';
 import { modelDecision } from '../abap-fsd-agent/decisions.mjs';
@@ -128,75 +127,79 @@ function developmentExecutor({ action, context, persist, save, plan }) {
   };
 }
 export function registerWorkAgent(app, pool, org, requireSession, generate, origin, agentConnect) {
-  const c = createWorkContext(pool, org, requireSession);
-  registerAbapFsdAgentRoutes(app, pool, org, requireSession, generate, origin, agentConnect, {
-    prefix: workBase + '/agent',
-    context: c,
-    conversationContext: (db, req) => prepareConversationContext(db, req, c),
-    resolveAction: (_req, prompt) => resolveWorkAction(prompt),
-    riceType: (req) =>
-      ({ report: 'R', interface: 'I', conversion: 'C', enhancement: 'E' })[req.work.item.kind] ??
-      null,
-    decoratePlan: (req, plan) => {
-      if (req.params.stage !== 'development') return;
-      plan.steps = plan.steps.filter((s) => s.stepId !== 'verify');
-      const labels = {
-        understand: '读取开发稿与设计依据',
-        generate: '模型生成开发内容',
-        validate: '校验开发合同',
-        save: '本地脚本转换 Markdown 并保存开发候选',
-      };
-      plan.steps.forEach((s, i) => {
-        s.label = labels[s.stepId];
-        s.dependencies = i ? [plan.steps[i - 1].stepId] : [];
-      });
-    },
-    loadWork: async (req) => {
-      const s = await snapshot(
-        pool,
-        req.work.scope,
-        req.params.stage,
-        req.work.item,
-        req.work.canEdit,
-      );
-      if (!s.head) throw failure(409, '请先启用并保存当前阶段草稿。');
-      if (req.params.stage === 'development' && !s.designBasis)
-        throw failure(409, '请先选择并保存一个明确的设计依据版本。');
-      return {
-        stage: s.stage,
-        draftVersionId: s.head.id,
-        draft: s.head.document,
-        designVersionId: s.designBasis?.id ?? null,
-        design: s.designBasis?.document ?? null,
-        handoff: req.conversationContext ?? null,
-      };
-    },
-    decorateContext: (req, context, work, action) => {
-      if (req.params.stage === 'development') {
-        context.messages[0].content =
-          developmentPrompt +
-          '\n' +
-          (action === 'draft'
-            ? renderPrompt('development-draft', { schema: JSON.stringify(schema.oneOf[1]) })
-            : renderPrompt('development-dialogue')) +
-          renderPrompt('context-background', { background: JSON.stringify(context.background) });
-        context.manifest.task = 'development';
-        context.manifest.rules = [
-          {
-            file: 'item-development/v1/system.md',
-            version: '1.0.0',
-            sha256: createHash('sha256').update(developmentPrompt).digest('hex'),
-          },
-        ];
-        delete context.preflight;
-      }
-      const bytes = Buffer.byteLength(JSON.stringify(context.messages));
-      if (bytes > 700000) throw failure(413, '阶段资料过大，请精简工作稿后重试，内容未被截断。');
-      context.manifest.bytes = bytes;
-    },
-    executor: (req, args) =>
-      req.params.stage === 'development' ? developmentExecutor(args) : executor(args),
-    saveOptions: (req) =>
-      req.params.stage === 'development' ? { render: renderDocument, decorate: false } : {},
+  app.register(async (app) => {
+    app.addHook('onRequest', async (req) => {
+      req.params.stage = 'development';
+    });
+    const c = createWorkContext(pool, org, requireSession);
+    registerAbapFsdAgentRoutes(app, pool, org, requireSession, generate, origin, agentConnect, {
+      prefix: workBase.replace(':stage', 'development') + '/agent',
+      context: c,
+      conversationContext: (db, req) => prepareConversationContext(db, req, c),
+      resolveAction: (_req, prompt) => resolveWorkAction(prompt),
+      riceType: (req) =>
+        ({ report: 'R', interface: 'I', conversion: 'C', enhancement: 'E' })[req.work.item.kind] ??
+        null,
+      decoratePlan: (req, plan) => {
+        if (req.params.stage !== 'development') return;
+        plan.steps = plan.steps.filter((s) => s.stepId !== 'verify');
+        const labels = {
+          understand: '读取开发稿与设计依据',
+          generate: '模型生成开发内容',
+          validate: '校验开发合同',
+          save: '本地脚本转换 Markdown 并保存开发候选',
+        };
+        plan.steps.forEach((s, i) => {
+          s.label = labels[s.stepId];
+          s.dependencies = i ? [plan.steps[i - 1].stepId] : [];
+        });
+      },
+      loadWork: async (req) => {
+        const s = await snapshot(
+          pool,
+          req.work.scope,
+          req.params.stage,
+          req.work.item,
+          req.work.canEdit,
+        );
+        if (!s.head) throw failure(409, '请先启用并保存当前阶段草稿。');
+        if (req.params.stage === 'development' && !s.designBasis)
+          throw failure(409, '请先选择并保存一个明确的设计依据版本。');
+        return {
+          stage: s.stage,
+          draftVersionId: s.head.id,
+          draft: s.head.document,
+          designVersionId: s.designBasis?.id ?? null,
+          design: s.designBasis?.document ?? null,
+          handoff: req.conversationContext ?? null,
+        };
+      },
+      decorateContext: (req, context, work, action) => {
+        if (req.params.stage === 'development') {
+          context.messages[0].content =
+            developmentPrompt +
+            '\n' +
+            (action === 'draft'
+              ? renderPrompt('development-draft', { schema: JSON.stringify(schema.oneOf[1]) })
+              : renderPrompt('development-dialogue')) +
+            renderPrompt('context-background', { background: JSON.stringify(context.background) });
+          context.manifest.task = 'development';
+          context.manifest.rules = [
+            {
+              file: 'item-development/v1/system.md',
+              version: '1.0.0',
+              sha256: createHash('sha256').update(developmentPrompt).digest('hex'),
+            },
+          ];
+          delete context.preflight;
+        }
+        const bytes = Buffer.byteLength(JSON.stringify(context.messages));
+        if (bytes > 700000) throw failure(413, '阶段资料过大，请精简工作稿后重试，内容未被截断。');
+        context.manifest.bytes = bytes;
+      },
+      executor: (req, args) => developmentExecutor(args),
+      saveOptions: (req) =>
+        req.params.stage === 'development' ? { render: renderDocument, decorate: false } : {},
+    });
   });
 }

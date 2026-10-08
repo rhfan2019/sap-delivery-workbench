@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRunStore } from '../../../apps/api/src/abap-fsd-agent/runs.mjs';
 import { streamText } from '../../../apps/api/src/abap-fsd-agent/model-stream.mjs';
 import { createProfileResolver } from '../../../apps/api/src/abap-fsd-agent/selection.mjs';
-import { buildContext } from '../../../apps/api/src/abap-fsd-agent/context.mjs';
+import { buildContext } from '../../../apps/api/src/item-workspace/development-context.mjs';
 test('assistant invocation does not require model timeout parameters', async () => {
   let config;
   const store = createRunStore({

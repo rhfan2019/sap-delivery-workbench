@@ -5,7 +5,7 @@ import { apiFixture } from '../fixtures/api.mjs';
 
 test('workbench sessions expose scoped files and bounded handoff without copying history', async () => {
   const f = await apiFixture();
-  const base = f.base.replace('/fs-workspace', '/work/design');
+  const base = f.base.replace('/fs-workspace', '/work/development');
   const req = (method, path, payload) =>
     f.app.inject({ method, url: base + path, payload, headers: f.headers });
   try {

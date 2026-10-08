@@ -1,6 +1,5 @@
 import Fastify from 'fastify';
-import { registerGemFsdV2 } from './gem-fsd-v2.mjs';
-import { registerAbapFsdAgentRoutes } from './abap-fsd-agent/routes.mjs';
+import { registerDesignUnavailable } from './design-assistant/unavailable.mjs';
 import { registerItemWorkspaceRoutes } from './item-workspace/routes.mjs';
 import { registerWorkAgent } from './item-workspace/agent.mjs';
 import pg from 'pg';
@@ -33,6 +32,7 @@ export async function createApp({
         ? process.env.TRUST_PROXY.split(',')
         : false,
   });
+  registerDesignUnavailable(app);
   const secure = origin.startsWith('https://');
   const cookieName = secure ? '__Host-sapwb_session' : 'sapwb_local_session';
   const getToken = (req) =>
@@ -172,19 +172,10 @@ export async function createApp({
   registerAdminRoutes(app, pool, organizationId, requireSession);
   registerDeliveryRoutes(app, pool, organizationId, requireSession);
   registerItemWorkspaceRoutes(app, pool, organizationId, requireSession);
-  registerGemFsdV2(app, pool, organizationId, requireSession, agentStream);
+
   registerTechnicalRoutes(app, pool, organizationId, requireSession);
   registerSapRoutes(app, pool, organizationId, requireSession);
   registerModelRoutes(app, pool, organizationId, requireSession, modelProbe);
-  registerAbapFsdAgentRoutes(
-    app,
-    pool,
-    organizationId,
-    requireSession,
-    agentStream,
-    origin,
-    agentConnect,
-  );
   registerFsWorkspaceRoutes(app, pool, organizationId, requireSession);
   registerWorkAgent(app, pool, organizationId, requireSession, agentStream, origin, agentConnect);
   return app;

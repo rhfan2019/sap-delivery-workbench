@@ -1,7 +1,4 @@
-import { renderPrompt } from './prompts.mjs';
-import { loadRules } from './ruleset.mjs';
 import { parseResponseObject } from './response-json.mjs';
-import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { validateSpecContract } from '../../../../packages/contracts/abap-fsd-agent/fsd/v1/validate.mjs';
 export function canonical(value) {
@@ -58,29 +55,4 @@ export function validateDraft(spec, { sources } = {}) {
     errors.push({ code: 'untrusted_system_profile' });
   return { ...result, errors, valid: errors.length === 0 };
 }
-export function draftInstructions() {
-  const schema = JSON.parse(
-    readFileSync(
-      new URL(
-        '../../../../packages/contracts/abap-fsd-agent/fsd/v1/r.schema.json',
-        import.meta.url,
-      ),
-      'utf8',
-    ),
-  );
-  // Generation cannot mint trusted workflow states. Storage still supports them.
-  schema.$defs.decision.properties.status.enum = ['proposed', 'open'];
-  if (schema.$defs.issue?.properties.status?.enum)
-    schema.$defs.issue.properties.status.enum = schema.$defs.issue.properties.status.enum.filter(
-      (s) => s !== 'accepted',
-    );
-  return renderPrompt('schema', { schema: JSON.stringify(schema) });
-}
 export { renderConsultantMarkdown as renderMarkdown } from './consultant-renderer.mjs';
-
-export function clarificationInstructions() {
-  return loadRules({ task: 'clarification' })
-    .rules.filter((r) => r.file !== '主提示词.md')
-    .map((r) => r.text)
-    .join('\n');
-}

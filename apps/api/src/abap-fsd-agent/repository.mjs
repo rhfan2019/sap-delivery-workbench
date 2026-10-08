@@ -1,4 +1,4 @@
-import { lockWorkflow, isFsdSession, initialWorkflow, assertGenerationState } from './workflow.mjs';
+import { lockSession } from './session-lock.mjs';
 import { randomUUID } from 'node:crypto';
 import { failure } from '../auth.mjs';
 import { sha256, renderMarkdown } from './specification.mjs';
@@ -46,19 +46,9 @@ export async function saveRevision(
     completionSnapshot,
   },
 ) {
-  const session = await lockWorkflow(db, org, actor, conversationId);
-  const workflow = isFsdSession(session) ? { ...initialWorkflow(), ...session.workflow } : null;
-  if (workflow) {
-    assertGenerationState(workflow, manifest?.workflow);
-    const {
-      rows: [run],
-    } = await db.query(
-      'SELECT state FROM app.fsd_agent_run WHERE id=$1 AND conversation_id=$2 AND lease_until>clock_timestamp() FOR UPDATE',
-      [runId, conversationId],
-    );
-    if (!run || !['queued', 'running'].includes(run.state))
-      throw failure(409, '运行已结束，结果未保存。');
-  }
+  const session = await lockSession(db, org, actor, conversationId);
+  if (session.selection?.workspaceStage !== 'development')
+    throw failure(410, '设计助手旧后端已清理。');
   signal?.throwIfAborted();
   const {
     rows: [r],
@@ -98,25 +88,6 @@ export async function saveRevision(
       manifest,
     ],
   );
-  if (workflow) {
-    const kind = workflow.phase === 'refining' ? 'final' : 'draft';
-    await db.query('UPDATE app.fsd_agent_revision SET kind=$2 WHERE id=$1', [id, kind]);
-    await db.query('UPDATE app.fsd_agent_session SET workflow=$2 WHERE id=$1', [
-      conversationId,
-      {
-        ...workflow,
-        phase: kind === 'final' ? 'final_review' : 'draft_review',
-        version: String(BigInt(workflow.version) + 1n),
-        activeRevisionId: id,
-        activeRevision: r.n,
-        activeContentHash: contentHash,
-        finalApproval: null,
-        ...(kind === 'draft' ? { draftApproval: null } : {}),
-        updatedAt: new Date().toISOString(),
-        updatedBy: actor,
-      },
-    ]);
-  }
   signal?.throwIfAborted();
   if (completionSnapshot) {
     await db.query(

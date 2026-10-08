@@ -1,29 +1,19 @@
-import { renderPrompt } from './prompts.mjs';
+import { renderPrompt } from '../item-workspace/development-prompts.mjs';
 import { createRecorder, readTrace } from '../../../../tools/fsd-batch/lib/recorder.mjs';
 import { analyzeRun } from '../../../../tools/fsd-batch/lib/analyzer.mjs';
-import {
-  lockWorkflow,
-  readWorkflow,
-  applyWorkflow,
-  assertIdle,
-  initialWorkflow,
-  isFsdSession,
-  recoverInterruptedRuns,
-} from './workflow.mjs';
+import { lockSession, recoverInterruptedRuns } from './session-lock.mjs';
 import { registerAgentAttachments, readyAttachments } from './attachments.mjs';
 import { randomUUID } from 'node:crypto';
 import { answerDecision } from './decisions.mjs';
 import { readSessionState, isReviewContinuation, readingForRun } from './session-state.mjs';
 import { planRun } from './coordinator.mjs';
-import { draftInstructions, clarificationInstructions } from './specification.mjs';
 import { conversation, createConversation, saveRevision } from './repository.mjs';
-import { executor } from './executor.mjs';
 import { connectSelected, resolveTargetSelection } from './selection.mjs';
 import { readFileSync } from 'node:fs';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { deliveryContext } from '../delivery/context.mjs';
-import { buildContext } from './context.mjs';
+import { buildContext } from '../item-workspace/development-context.mjs';
 import { pinAssociation, createProfileResolver } from './selection.mjs';
 const runtimeSchema = JSON.parse(
   readFileSync(
@@ -67,6 +57,8 @@ export function registerAbapFsdAgentRoutes(
   agentConnect,
   options = {},
 ) {
+  if (!options.executor || !options.context || !options.prefix?.includes('/work/development/'))
+    throw new Error('Only the development assistant can register this shared runtime');
   const leaseOwner = randomUUID();
   const leaseTimer = setInterval(
     () =>
@@ -268,32 +260,6 @@ export function registerAbapFsdAgentRoutes(
       return { subjectId: id, data: { conversationId: id } };
     });
   });
-  async function workflowSession(req, db, lock = false) {
-    const current = await c.authorize(req, db);
-    if (!uuid.test(req.params.id)) throw failure(400, '会话ID无效');
-    const session = lock
-      ? await lockWorkflow(db, organizationId, current.user.id, req.params.id)
-      : await conversation(db, organizationId, current.user.id, req.params.id);
-    c.assertConversation?.(req, session);
-    if (session.selection.projectId)
-      await delivery.access(db, current, session.selection.projectId, lock);
-    return { current, session };
-  }
-  app.get(prefix + '/conversations/:id/workflow', async (req) => {
-    const { session } = await workflowSession(req, pool);
-    return readWorkflow(pool, session);
-  });
-  app.post(prefix + '/conversations/:id/workflow', async (req) =>
-    coordinator.withAdmission(() =>
-      c.write(req, 'abap_fsd_agent.workflow', 'fsd_agent_session', async (db) => {
-        const { current, session } = await workflowSession(req, db, true);
-        return {
-          subjectId: session.id,
-          data: await applyWorkflow(db, session, req.body, current.user.id),
-        };
-      }),
-    ),
-  );
   app.get(prefix + '/artifacts/:id', async (req, reply) => {
     const current = await c.authorize(req);
     if (!uuid.test(req.params.id)) throw failure(400, '版本ID无效');
@@ -652,9 +618,7 @@ export function registerAbapFsdAgentRoutes(
     const action = reviewContinuation
       ? 'dialogue'
       : body.action === 'auto'
-        ? sessionState?.workflow?.phase === 'refining'
-          ? 'draft'
-          : (options.resolveAction?.(req, body.prompt) ?? 'dialogue')
+        ? (options.resolveAction?.(req, body.prompt) ?? 'dialogue')
         : (body.action ?? 'dialogue');
     const plan = planRun({
       request: body.prompt + ' ' + JSON.stringify(pinned.association?.requirement ?? {}),
@@ -680,9 +644,6 @@ export function registerAbapFsdAgentRoutes(
               spec: JSON.stringify(sessionState.latestArtifact.spec),
             })
           : '',
-        action === 'draft' && plan.type.riceType === 'R'
-          ? draftInstructions()
-          : renderPrompt('context-type', { type: JSON.stringify(plan.type) }),
       ].join('\n'),
       messages: body.messages ?? [],
       currentMessage: body.prompt,
@@ -690,33 +651,7 @@ export function registerAbapFsdAgentRoutes(
       systemTargets,
       association: workContext ? { ...pinned.association, workContext } : pinned.association,
     });
-    if (action === 'draft' && plan.type.riceType === 'R') {
-      context.preflight = buildContext({
-        attachments,
-        existingSources: sessionState?.latestArtifact?.spec?.sources ?? [],
-        activeSpecification: sessionState?.latestArtifact?.spec ?? null,
-        consultantDecisions: decisions,
-        task: 'dialogue',
-        budget: workContext ? 700000 : 180000,
-        extraInstructions: clarificationInstructions(),
-        outputMode: 'clarification',
-        messages: body.messages ?? [],
-        currentMessage: body.prompt,
-        systemProfile,
-        systemTargets,
-        association: workContext ? { ...pinned.association, workContext } : pinned.association,
-      });
-      context.preflight.manifest.task = 'clarification';
-    }
     options.decorateContext?.(req, context, workContext, action);
-    const frozenWorkflow =
-      selection.workspaceStage === 'development'
-        ? null
-        : { ...initialWorkflow(), ...sessionState?.workflow };
-    if (frozenWorkflow) {
-      context.manifest.workflow = frozenWorkflow;
-      if (context.preflight) context.preflight.manifest.workflow = frozenWorkflow;
-    }
     if (isRenderRequest(body.prompt)) {
       const source = selectRenderSource(sessionState);
       if (!source) throw failure(422, '当前会话没有可转换的完整JSON，请先生成结构化内容。');
@@ -766,29 +701,8 @@ export function registerAbapFsdAgentRoutes(
           const id =
             body.conversationId ??
             (await createConversation(db, organizationId, current.user.id, selection));
-          const lockedSession = await lockWorkflow(db, organizationId, current.user.id, id);
+          await lockSession(db, organizationId, current.user.id, id);
           await conversation(db, organizationId, current.user.id, id, selection);
-          if (isFsdSession(lockedSession)) {
-            await assertIdle(db, id);
-            const fresh = { ...initialWorkflow(), ...lockedSession.workflow };
-            if (
-              fresh.version !== frozenWorkflow.version ||
-              fresh.activeRevisionId !== frozenWorkflow.activeRevisionId
-            )
-              throw failure(409, '阶段已变化，请刷新后重试。');
-            if (
-              action === 'draft' &&
-              !context.rendered &&
-              !['analysis', 'refining'].includes(fresh.phase)
-            )
-              throw failure(409, '请先确认当前版本或选择修订。');
-            if (
-              (resumed || retried) &&
-              ((resumed || retried).snapshot.manifest?.workflow?.baselineId ?? null) !==
-                fresh.baselineId
-            )
-              throw failure(409, '此问题属于回退前版本，请重新开始分析。');
-          }
           if (workContext && options.loadWork) {
             const fresh = await options.loadWork(req);
             if (fresh.draftVersionId !== workContext.draftVersionId)
@@ -883,7 +797,7 @@ export function registerAbapFsdAgentRoutes(
         owner,
         runId,
         persistTerminal: persist,
-        execute: (options.executor ? (args) => options.executor(req, args) : executor)({
+        execute: options.executor(req, {
           plan,
           action,
           persist,

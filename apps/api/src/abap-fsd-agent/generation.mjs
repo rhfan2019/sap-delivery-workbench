@@ -1,29 +1,13 @@
 import { streamText, streamPayload } from './model-stream.mjs';
 import { failure } from '../auth.mjs';
-import { renderPrompt, withPromptMessages } from './prompts.mjs';
 // Independent implementation informed by Open WebUI's separate completion and continuation lifecycle.
 // A continuation is never a published document until the executor validates the whole JSON.
 export async function streamAssistant(config, key, prompt, options = {}) {
-  const draft = options.context?.manifest?.task === 'draft';
   const attempts = [];
   let text = '';
-  for (let attempt = 1; attempt <= (draft ? 3 : 1); attempt++) {
+  for (let attempt = 1; attempt <= 1; attempt++) {
     options.signal?.throwIfAborted();
-    const context =
-      attempt === 1
-        ? options.context
-        : withPromptMessages(
-            options.context,
-            [
-              ...options.context.messages,
-              { role: 'assistant', content: text },
-              {
-                role: 'user',
-                content: renderPrompt('continuation'),
-              },
-            ],
-            ['continuation'],
-          );
+    const context = options.context;
     let attemptText = '';
     options.onAttempt?.('started', { attempt, payload: streamPayload(config, prompt, context) });
     try {
@@ -57,13 +41,7 @@ export async function streamAssistant(config, key, prompt, options = {}) {
       });
       error.attempts = attempts;
       options.onAttempt?.('failed', { attempt, output: attemptText, error: attempts.at(-1) });
-      if (error.code !== 'OUTPUT_LIMIT' || !draft || attempt === 3 || !text) throw error;
-      await options.onProgress?.({
-        attempt: attempt + 1,
-        message: '达到单次输出额度，正在继续生成（' + attempt + '/2）',
-        finishReason: error.finishReason,
-        outputLimit: null,
-      });
+      throw error;
     }
   }
 }

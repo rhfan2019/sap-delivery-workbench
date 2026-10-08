@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildContext } from '../../../apps/api/src/abap-fsd-agent/context.mjs';
+import { buildContext } from '../../../apps/api/src/item-workspace/development-context.mjs';
 import { modelDecision } from '../../../apps/api/src/abap-fsd-agent/decisions.mjs';
 test('submitted decisions are the latest user turn with provenance, not only background', () => {
   const c = buildContext({

@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildContext } from '../../../apps/api/src/abap-fsd-agent/context.mjs';
 import { sessionDecisions } from '../../../apps/api/src/abap-fsd-agent/session-state.mjs';
 test('legacy natural answers are recovered without rewriting stored conversation rows', () => {
   const rows = [
@@ -24,20 +23,6 @@ test('legacy natural answers are recovered without rewriting stored conversation
   assert.equal(answers[0].label, '不考虑工作流');
   assert.equal(answers[0].sourceRunId, 'legacy');
   assert.equal(rows[0].snapshot.decisions.length, 0);
-});
-test('clarification excludes past protocol bodies but retains user confirmations and explicit output contract', () => {
-  const c = buildContext({
-    messages: [
-      { id: 'u', role: 'user', status: 'completed', content: '不考虑工作流' },
-      { id: 'a', role: 'assistant', status: 'completed', content: '{"title":"旧规格"}' },
-    ],
-    currentMessage: '生成FSD',
-    outputMode: 'clarification',
-  });
-  assert.deepEqual(c.manifest.included, ['u']);
-  assert.equal(c.manifest.excluded[0].id, 'a');
-  assert.match(c.messages.at(-1).content, /(?:不得|严禁)输出.*FSD/);
-  assert.ok(c.messages.some((m) => m.content === '不考虑工作流'));
 });
 import {
   renderTechnicalOutput,
