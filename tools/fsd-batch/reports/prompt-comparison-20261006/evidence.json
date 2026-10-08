@@ -101,35 +101,35 @@
       "lines": 559
     },
     {
-      "path": "apps/api/src/abap-fsd-agent/generation.mjs",
+      "path": "apps/api/src/modules/agent-runtime/generation.mjs",
       "sha256": "0126101f4ee94caf788cd423c36c272742a0c11a1798ca90a5f7832e9a1fb89c",
       "characters": 2550,
       "bytes": 2618,
       "lines": 70
     },
     {
-      "path": "apps/api/src/abap-fsd-agent/model-stream.mjs",
+      "path": "apps/api/src/modules/agent-runtime/model-stream.mjs",
       "sha256": "f5c9e79b5fbc5f556b8dafc3157a6700ad9c44bb7f656f891372035fb0029cf5",
       "characters": 9354,
       "bytes": 10236,
       "lines": 247
     },
     {
-      "path": "apps/api/src/abap-fsd-agent/specification.mjs",
+      "path": "apps/api/src/modules/agent-runtime/specification.mjs",
       "sha256": "addf5e48f31b823249505c02398c925e741a8670d3be5daebf6e04350aa8c548",
       "characters": 3154,
       "bytes": 3162,
       "lines": 87
     },
     {
-      "path": "apps/api/src/abap-fsd-agent/routes.mjs",
+      "path": "apps/api/src/modules/agent-runtime/routes.mjs",
       "sha256": "d28324ef939c4b2aede48100a2280a8b1ef73d8a20300b5420df127fd8be95ea",
       "characters": 40829,
       "bytes": 41801,
       "lines": 1040
     },
     {
-      "path": "packages/contracts/abap-fsd-agent/fsd/v1/r.schema.json",
+      "path": "packages/contracts/agent-runtime/fsd/v1/r.schema.json",
       "sha256": "22f54b38301c198a6936c1138a8ca7c5de5d37aec02c00d6028171c2703bc3af",
       "characters": 19071,
       "bytes": 19537,

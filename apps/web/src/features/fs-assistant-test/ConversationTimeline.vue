@@ -27,7 +27,7 @@ import RunSteps from './RunSteps.vue';
 import type {
   AgentMessage,
   AgentArtifact,
-} from '../../../../../packages/contracts/abap-fsd-agent/types';
+} from '@sap-delivery-workbench/contracts/agent-runtime/types';
 defineProps<{
   messages: AgentMessage[];
   busy: boolean;

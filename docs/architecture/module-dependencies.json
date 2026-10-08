@@ -1,0 +1,25 @@
+{
+  "description": "Existing module dependencies retained; new edges require contract review.",
+  "allowedEdges": [
+    "agent-runtime->admin",
+    "agent-runtime->delivery",
+    "agent-runtime->fs-workspace",
+    "agent-runtime->item-workspace",
+    "agent-runtime->models",
+    "agent-runtime->sap",
+    "agent-runtime->technical",
+    "delivery->admin",
+    "fs-workspace->delivery",
+    "fs-workspace->models",
+    "item-workspace->agent-runtime",
+    "item-workspace->delivery",
+    "item-workspace->fs-workspace",
+    "item-workspace->models",
+    "models->admin",
+    "models->sap",
+    "sap->admin",
+    "sap->delivery",
+    "sap->technical",
+    "technical->admin"
+  ]
+}

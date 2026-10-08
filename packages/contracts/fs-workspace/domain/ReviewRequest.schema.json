@@ -1,0 +1,54 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "document_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "document_hash": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "open",
+        "returned",
+        "approved",
+        "closed"
+      ]
+    },
+    "policy_version": {
+      "type": "string"
+    },
+    "gates": {
+      "type": "array",
+      "items": {
+        "$ref": "https://fs-workspace.example/http/Gate.schema.json"
+      }
+    },
+    "technical_approved": {
+      "type": "boolean"
+    },
+    "business_approved": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "document_version_id",
+    "document_hash",
+    "state",
+    "policy_version",
+    "gates",
+    "technical_approved",
+    "business_approved"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/ReviewRequest.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ReviewRequest"
+}

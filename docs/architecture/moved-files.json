@@ -1,0 +1,1927 @@
+[
+  {
+    "from": "packages/agents/item-development/v1/system.md",
+    "to": "apps/api/src/modules/item-workspace/prompts/system.md",
+    "sha256": "8cc7c388f2505ed6aa658f9daeb318c2e089f111c242ee3cdf6e0b39089849e8"
+  },
+  {
+    "from": "tests/startup-import.test.mjs",
+    "to": "tests/unit/api/startup-import.test.mjs",
+    "sha256": "fbbc43eb415078a0e629406d332db7d7bf35f27a6aab56c3ac69f8e107d9c85d"
+  },
+  {
+    "from": ".workbuddy/memory/2026-10-04.md",
+    "to": ".runtime/archive/assistant-memory/memory/2026-10-04.md",
+    "sha256": "ce28e06762c23916c96d34c21f66f99d2366a19caf6b08f190d558fe664a3718"
+  },
+  {
+    "from": ".workbuddy/memory/2026-10-07.md",
+    "to": ".runtime/archive/assistant-memory/memory/2026-10-07.md",
+    "sha256": "f05974231946b3767230d05c5c99f17a5a51cb2450f105c028a375fb161e7489"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/attachment-parser.mjs",
+    "to": "apps/api/src/modules/agent-runtime/attachment-parser.mjs",
+    "sha256": "9ffdefc82a015ebf0890223e78128e153564413342a1143d25f988de68391181"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/attachments.mjs",
+    "to": "apps/api/src/modules/agent-runtime/attachments.mjs",
+    "sha256": "b010fd5acb2998156758b10035c05dada5aa55a8e15eb66379071af29a57a12b"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/cancellation.mjs",
+    "to": "apps/api/src/modules/agent-runtime/cancellation.mjs",
+    "sha256": "179c74eb9cb0827ad03f445e4dc76d1c9fb3ff084b643604a2627abebf7dd76e"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/consultant-renderer.mjs",
+    "to": "apps/api/src/modules/agent-runtime/consultant-renderer.mjs",
+    "sha256": "011da3cdc6ed5fcf2aa39bc62ec67875c3c107273ddf4f01f2fa9e802f5c5d40"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/coordinator.mjs",
+    "to": "apps/api/src/modules/agent-runtime/coordinator.mjs",
+    "sha256": "72a65d2b8e6ab644c864c9b9d683f31cb3a191c80afaa2cd97dc16eb880b4287"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/decisions.mjs",
+    "to": "apps/api/src/modules/agent-runtime/decisions.mjs",
+    "sha256": "87601db4819db8a0297639f1a148782310a4153f2bb7c2d735e4909f01c8d21f"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/errors.mjs",
+    "to": "apps/api/src/modules/agent-runtime/errors.mjs",
+    "sha256": "55f9365bea5c04f875fd8137fc695d7a8f24e1a52f35785d39903e01ca108cd3"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/feedback.mjs",
+    "to": "apps/api/src/modules/agent-runtime/feedback.mjs",
+    "sha256": "731ed13d4bf68eaad31eb2e205f3be3aeb975692183fec24d30f008959dc77fa"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/generation.mjs",
+    "to": "apps/api/src/modules/agent-runtime/generation.mjs",
+    "sha256": "e48ec647473be8c410f9b227181c5d383218bb1549dd1114eb2fb2a4b6fa837e"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/model-stream.mjs",
+    "to": "apps/api/src/modules/agent-runtime/model-stream.mjs",
+    "sha256": "f5c9e79b5fbc5f556b8dafc3157a6700ad9c44bb7f656f891372035fb0029cf5"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/repository.mjs",
+    "to": "apps/api/src/modules/agent-runtime/repository.mjs",
+    "sha256": "813aaab25ec355331a3c94ae0c940ffe9612eec91d64aeda895b6b2b80e0b000"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/response-json.mjs",
+    "to": "apps/api/src/modules/agent-runtime/response-json.mjs",
+    "sha256": "301d8185ccfa56c15315779a028ac141de3087f2867f5dc8bbaa2afedb67dd6e"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/routes.mjs",
+    "to": "apps/api/src/modules/agent-runtime/routes.mjs",
+    "sha256": "09fbb6c4fc8d0aaa88e7f7be322f9bb9372ddd5b78ec9997d83e31013305b45d"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/runs.mjs",
+    "to": "apps/api/src/modules/agent-runtime/runs.mjs",
+    "sha256": "795a57defac8afd5fbd4c287476a326eabca645c7b8a0c3423e10f5ef43e662b"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/sap-profile.mjs",
+    "to": "apps/api/src/modules/agent-runtime/sap-profile.mjs",
+    "sha256": "4b8fd7ce3b455b08c0c99bc63ac37005d4f19674e63bf8f8a14425d8cf7d1561"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/selection.mjs",
+    "to": "apps/api/src/modules/agent-runtime/selection.mjs",
+    "sha256": "cf1d569f2be752d70c6d9ed1b34acb5800fc7ecba01eedef87402dbfa016d326"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/session-lock.mjs",
+    "to": "apps/api/src/modules/agent-runtime/session-lock.mjs",
+    "sha256": "b0716250d2d89890e5621e7141d58c7e51f283b746ce2eace2b4404d0db3b21e"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/session-state.mjs",
+    "to": "apps/api/src/modules/agent-runtime/session-state.mjs",
+    "sha256": "aac495d1933b8999dd743975e9bcd8fff46b296165998678ddde2b8ea28a62e0"
+  },
+  {
+    "from": "apps/api/src/abap-fsd-agent/specification.mjs",
+    "to": "apps/api/src/modules/agent-runtime/specification.mjs",
+    "sha256": "0d952879daa6f1aa70b35034abb59f278062a7a5a85eb2322c164b139a396b0a"
+  },
+  {
+    "from": "apps/api/src/admin/context.mjs",
+    "to": "apps/api/src/modules/admin/context.mjs",
+    "sha256": "6a157ac2bf468953ddd1e8dec666a20b4e0f3acb0a01463fdf137f68c5ad0177"
+  },
+  {
+    "from": "apps/api/src/admin/members.mjs",
+    "to": "apps/api/src/modules/admin/members.mjs",
+    "sha256": "20eb1cadb3c025b80af78a1c772104b582b3b2246072b1178a8cb10b7495bc90"
+  },
+  {
+    "from": "apps/api/src/admin/organizations.mjs",
+    "to": "apps/api/src/modules/admin/organizations.mjs",
+    "sha256": "3b5609f3534987b601034daff9e31f2ffef8276f4e7d60bb214e9c9f37eb1deb"
+  },
+  {
+    "from": "apps/api/src/admin/routes.mjs",
+    "to": "apps/api/src/modules/admin/routes.mjs",
+    "sha256": "917bc9c3bfad04d49b11fa0d55963db6c42f226fd9c665c5d26ec51a8c59d8dc"
+  },
+  {
+    "from": "apps/api/src/admin/validation.mjs",
+    "to": "apps/api/src/modules/admin/validation.mjs",
+    "sha256": "0f7b87c6525371020473b89dee646d085136b5cdccf00a6fca726e44feba8516"
+  },
+  {
+    "from": "apps/api/src/auth.mjs",
+    "to": "apps/api/src/platform/auth.mjs",
+    "sha256": "fb9d902e17e5da9984e2536be0918cd07a3e4bfa29e7be5a8f5c9355c95015fd"
+  },
+  {
+    "from": "apps/api/src/delivery/context.mjs",
+    "to": "apps/api/src/modules/delivery/context.mjs",
+    "sha256": "baf276dc17f099c60905f87f799f924cc3d02524d829f4372afe8028f566c94c"
+  },
+  {
+    "from": "apps/api/src/delivery/files.mjs",
+    "to": "apps/api/src/modules/delivery/files.mjs",
+    "sha256": "c573f12ad60410f0c8aac517c1742596c5d3cc1d1d2bfb5fd2ec83c639e1cbd8"
+  },
+  {
+    "from": "apps/api/src/delivery/fs.mjs",
+    "to": "apps/api/src/modules/delivery/fs.mjs",
+    "sha256": "1497068dfd40597382eb8436eb0fbf10d66c1010cd2a84902f3985d750a77778"
+  },
+  {
+    "from": "apps/api/src/delivery/items.mjs",
+    "to": "apps/api/src/modules/delivery/items.mjs",
+    "sha256": "a6a2c29ddf0133032a7914ad0c45da7cfd38ac6f9d77cb686e611fd0e211a4a1"
+  },
+  {
+    "from": "apps/api/src/delivery/routes.mjs",
+    "to": "apps/api/src/modules/delivery/routes.mjs",
+    "sha256": "0a9a7161221d78d9f8ad9e6ce680d265b010c4fffe2935d747bc9061ceb7edce"
+  },
+  {
+    "from": "apps/api/src/delivery/validation.mjs",
+    "to": "apps/api/src/modules/delivery/validation.mjs",
+    "sha256": "dcd0a2ccb4c1e2ebf069efb892ffc2ab0698d1c82119b2ad1969746da6252c6a"
+  },
+  {
+    "from": "apps/api/src/design-assistant/unavailable.mjs",
+    "to": "apps/api/src/modules/design-assistant/unavailable.mjs",
+    "sha256": "d51fc4056587dcc5b303ba733d3e7fb81bed1ee62a92020a80cf55ee6828a531"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/access.mjs",
+    "to": "apps/api/src/modules/fs-workspace/access.mjs",
+    "sha256": "71690fb9f3a922228de18501c2bd1c86728b54783f200d5f72463d846869877e"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/agent/candidates.mjs",
+    "to": "apps/api/src/modules/fs-workspace/agent/candidates.mjs",
+    "sha256": "80ece1cfe09c3920fc79eaf3547cb945a68d47fa75d0efc210ba1fb42e630f7d"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/agent/context.mjs",
+    "to": "apps/api/src/modules/fs-workspace/agent/context.mjs",
+    "sha256": "72d5c217160e0a202fc7f4ba76036f554bd658d00b730538f1746a75fea6b260"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/agent/executor.mjs",
+    "to": "apps/api/src/modules/fs-workspace/agent/executor.mjs",
+    "sha256": "3cf376a87626e32bfd9e22637927f737483bab3330e8b077b8d2c73ec5c52821"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/agent/prompts/v1/A.txt",
+    "to": "apps/api/src/modules/fs-workspace/agent/prompts/v1/A.txt",
+    "sha256": "dfc97564adf6d23638ac6447aeb78e610957af1bc84db63d462b21acbd2c25fd"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/agent/prompts/v1/B.txt",
+    "to": "apps/api/src/modules/fs-workspace/agent/prompts/v1/B.txt",
+    "sha256": "fdf64d9373ea1192ca97d2c8368fc9642fa5dd363bf65807c20c61a4804e7601"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/agent/prompts/v1/C.txt",
+    "to": "apps/api/src/modules/fs-workspace/agent/prompts/v1/C.txt",
+    "sha256": "3f96ad04f496bbbe0bdea9dc70bee7f03760c798888d056ccd969c5c3322f010"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/agent/prompts/v1/D.txt",
+    "to": "apps/api/src/modules/fs-workspace/agent/prompts/v1/D.txt",
+    "sha256": "9b36b7a72293c05edb532823ada47d4412d3da29f74facf8e501e96aecdf3871"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/agent/prompts/v1/E.txt",
+    "to": "apps/api/src/modules/fs-workspace/agent/prompts/v1/E.txt",
+    "sha256": "508f75d295a6e5a7f080e6a3e6a68afde567debe0126aafcd464d6915a330cf3"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/agent/prompts/v1/F.txt",
+    "to": "apps/api/src/modules/fs-workspace/agent/prompts/v1/F.txt",
+    "sha256": "4cf7505fc87caa37dea7c2a0b7a7252e7fbf4b9d0354a58edacb0b1d6248f8a6"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/agent/prompts/v1/G.txt",
+    "to": "apps/api/src/modules/fs-workspace/agent/prompts/v1/G.txt",
+    "sha256": "87871d36e8c2c535eb3f31292fc5dd88c70906509579b6747239f68cd3f093f9"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/agent/prompts/v1/H.txt",
+    "to": "apps/api/src/modules/fs-workspace/agent/prompts/v1/H.txt",
+    "sha256": "21e6e543d3f5be0c3aa56f752dad0798b1ba3ed824154df689408f6ea78f8c5e"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/agent/validate.mjs",
+    "to": "apps/api/src/modules/fs-workspace/agent/validate.mjs",
+    "sha256": "1b0b20ddea63c3cdd1acf2d4c38eee6876e015efa12476d20910fe5fae0d9571"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/agent/worker.mjs",
+    "to": "apps/api/src/modules/fs-workspace/agent/worker.mjs",
+    "sha256": "cd00125eaa53b7c128f17df3c4f79742eb722c3fa0b59cda966a49786732af6c"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/attachments/parser.mjs",
+    "to": "apps/api/src/modules/fs-workspace/attachments/parser.mjs",
+    "sha256": "053cef0bdd9721b3c8e678bb1044124b1040dd2211f8961dcfc86ba07ebe7cf5"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/attachments/repository.mjs",
+    "to": "apps/api/src/modules/fs-workspace/attachments/repository.mjs",
+    "sha256": "2987ee169933474f5e1ccf02ddb5e7af4eb40735a67143ad4fc014bdfd5b3828"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/attachments/routes.mjs",
+    "to": "apps/api/src/modules/fs-workspace/attachments/routes.mjs",
+    "sha256": "77bfd69b7dcf4b909448c2882c2764254b7d9a089141e73aeeea4f503d531676"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/attachments/scanner.mjs",
+    "to": "apps/api/src/modules/fs-workspace/attachments/scanner.mjs",
+    "sha256": "d3ed24176ec295849c494305d1ab0f0b7f4ea739b8d256764f21b64dca545500"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/attachments/storage.mjs",
+    "to": "apps/api/src/modules/fs-workspace/attachments/storage.mjs",
+    "sha256": "15276dcf0f6239c96952e3918aa4c60dd63443719d8bbfd013bdf6ed38acbd48"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/changes/entities.mjs",
+    "to": "apps/api/src/modules/fs-workspace/changes/entities.mjs",
+    "sha256": "11f36208b65d53c4a3ac5c260ea3040116c57c9aadc42d415a6d341b983518f0"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/changes/impact.mjs",
+    "to": "apps/api/src/modules/fs-workspace/changes/impact.mjs",
+    "sha256": "0380f02a9e3f74e6bd4737acadc55bfd244990d805038c188c3ec105374c7787"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/changes/rebase.mjs",
+    "to": "apps/api/src/modules/fs-workspace/changes/rebase.mjs",
+    "sha256": "d856e07b63d47b5c0dfcbcebe18cce85492de554bb049159cc075bfabdfb1683"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/changes/restore.mjs",
+    "to": "apps/api/src/modules/fs-workspace/changes/restore.mjs",
+    "sha256": "4dc2b00272ba46930a59ccf46cec8d5b706dc0ceef13eb8912eb672f0bf73a70"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/changes/routes.mjs",
+    "to": "apps/api/src/modules/fs-workspace/changes/routes.mjs",
+    "sha256": "0c6f9df8dc76e6668e70b144e10b721fe8ee942ad71304c7eb1170b24090350a"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/changes/service.mjs",
+    "to": "apps/api/src/modules/fs-workspace/changes/service.mjs",
+    "sha256": "bc06078c2edc62a5ac7b381671a8f37deedf257c41bb83389d2e46b5643b1e81"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/conversation/routes.mjs",
+    "to": "apps/api/src/modules/fs-workspace/conversation/routes.mjs",
+    "sha256": "9ee5dc027e452e5dd5267831e67b817341e8454d95a8ccff1cdb30ced71f125b"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/conversation/service.mjs",
+    "to": "apps/api/src/modules/fs-workspace/conversation/service.mjs",
+    "sha256": "da98293e28dc01cdd67517f85d25b17f550564a375d565528ede473df50df371"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/document/ast.mjs",
+    "to": "apps/api/src/modules/fs-workspace/document/ast.mjs",
+    "sha256": "a5e8d065a0a703bb0e00fb731e8ca736d0796b98f811834441292a46a1ff44eb"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/document/confirmations.mjs",
+    "to": "apps/api/src/modules/fs-workspace/document/confirmations.mjs",
+    "sha256": "17920e94c9a9aace3d37db683f76a1a31f44a3c0a1c2e3cdb76f0fe908215b95"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/document/repository.mjs",
+    "to": "apps/api/src/modules/fs-workspace/document/repository.mjs",
+    "sha256": "bcf5ad43e0e01f6e1fdb13e2e691c0e0954a5be4378c7587a2c0851f7cce498c"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/document/routes.mjs",
+    "to": "apps/api/src/modules/fs-workspace/document/routes.mjs",
+    "sha256": "9cf4be0080114321933bbb3c95d862e2dc365051d83a51ac2e05412e43a447e3"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/document/service.mjs",
+    "to": "apps/api/src/modules/fs-workspace/document/service.mjs",
+    "sha256": "2fd5da5342ec26d1f027dd961298c8bc1bc3bb839977a57730d747149e060d3d"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/evidence/bind-candidate.mjs",
+    "to": "apps/api/src/modules/fs-workspace/evidence/bind-candidate.mjs",
+    "sha256": "cc0cb305f0a2f8fb4db9c6d754e4a3a2ff767a1b7b3206039a62c703c4fd70de"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/export/docx.mjs",
+    "to": "apps/api/src/modules/fs-workspace/export/docx.mjs",
+    "sha256": "b665f05b6cde3fc666ff79b001d49f359dd39bafc1eee57d3d6e75e64c20f164"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/export/html.mjs",
+    "to": "apps/api/src/modules/fs-workspace/export/html.mjs",
+    "sha256": "b241c2494fde10d0ac7661a6bb3dca430961d9dde5590212315abf9749aa9a5b"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/export/pdf.mjs",
+    "to": "apps/api/src/modules/fs-workspace/export/pdf.mjs",
+    "sha256": "d33644acec08ae867719c433a6b6ac8c37c79e0a2de6d84c634830f0d6c262c6"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/export/render-model.mjs",
+    "to": "apps/api/src/modules/fs-workspace/export/render-model.mjs",
+    "sha256": "2ae39636faae1c67b73af07fc5ac54ff97dafd292dd9c00e85148943a2db32e8"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/export/routes.mjs",
+    "to": "apps/api/src/modules/fs-workspace/export/routes.mjs",
+    "sha256": "361bb683f9512fd040f4e33cb24d73d106921812f6e80de9ac9b2521e125be1b"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/export/service.mjs",
+    "to": "apps/api/src/modules/fs-workspace/export/service.mjs",
+    "sha256": "890422d729f559d24eaea6be8c10a076ef4fea4461ab9b43e6e7082f7f69ac77"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/export/storage.mjs",
+    "to": "apps/api/src/modules/fs-workspace/export/storage.mjs",
+    "sha256": "d222a74d6bb2106bd737cef90cdf8e277f9e074b7a05631a96b3b3693bbc8bc0"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/export/worker.mjs",
+    "to": "apps/api/src/modules/fs-workspace/export/worker.mjs",
+    "sha256": "3e5ddd0e560e320adb0f83a03444a6492b3bea4f032cf7d8052c2b54d18a7d61"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/review/decisions.mjs",
+    "to": "apps/api/src/modules/fs-workspace/review/decisions.mjs",
+    "sha256": "f9b0cfb199d88dbc041959c3e0b8e0109846fd89322dfc151c18eccb6c9c50e9"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/review/gates.mjs",
+    "to": "apps/api/src/modules/fs-workspace/review/gates.mjs",
+    "sha256": "ad98b9ac8922d5e30efb333f27f07b1f8edc3a4a4e3e43b6382beb4ac0cf3bfe"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/review/publication.mjs",
+    "to": "apps/api/src/modules/fs-workspace/review/publication.mjs",
+    "sha256": "d3bb3c36954e5ebc5e1b1e56f40074725a7d5289611beb2950789cf32de9bc6f"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/review/roles.mjs",
+    "to": "apps/api/src/modules/fs-workspace/review/roles.mjs",
+    "sha256": "f84236ce976654df59f271841e5e6ba85f4bedc5eff5fbc445609523b5215e56"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/review/routes.mjs",
+    "to": "apps/api/src/modules/fs-workspace/review/routes.mjs",
+    "sha256": "40b0db541c0ef50bb31712ec08c1992c4e90dc77163fc51d321f04420544a3aa"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/review/service.mjs",
+    "to": "apps/api/src/modules/fs-workspace/review/service.mjs",
+    "sha256": "6fc7c7e01f4cb9f5e22db18e3d9fe9722695ebc4682eb546c64ca2836ec4654a"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/routes.mjs",
+    "to": "apps/api/src/modules/fs-workspace/routes.mjs",
+    "sha256": "bee0ae0666b4c47226a63ca46150ee112be0d2b154b42cd040d1036febb82e8a"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/workspace/commands.mjs",
+    "to": "apps/api/src/modules/fs-workspace/workspace/commands.mjs",
+    "sha256": "121b14f2faf2d649cf883a627356cfa0c0160c82e05ac03129ca5cee50fd6ce9"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/workspace/legacy.mjs",
+    "to": "apps/api/src/modules/fs-workspace/workspace/legacy.mjs",
+    "sha256": "76774d1fffc223e0680370b7908dad02c74fbdbe34d4a04103f66cfc783db851"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/workspace/repository.mjs",
+    "to": "apps/api/src/modules/fs-workspace/workspace/repository.mjs",
+    "sha256": "ce6e9a9bf9fb573f7d967c8bcb58c66461bbcb31bdc0c2e41a804208ac0f74dc"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/workspace/routes.mjs",
+    "to": "apps/api/src/modules/fs-workspace/workspace/routes.mjs",
+    "sha256": "30936616922e45dd00f21ab4ea26d255ef85bb0b235ab21169b18cdca7492be3"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/workspace/service.mjs",
+    "to": "apps/api/src/modules/fs-workspace/workspace/service.mjs",
+    "sha256": "56fc337bdcf374872671d5b21d14438bfc63baf67461b5ff85f5e1f27b6383a1"
+  },
+  {
+    "from": "apps/api/src/item-workspace/agent.mjs",
+    "to": "apps/api/src/modules/item-workspace/agent.mjs",
+    "sha256": "944f669b22a0d68c52c2110a235003cdac3beea861dde6cef0e6f5cd8a39486f"
+  },
+  {
+    "from": "apps/api/src/item-workspace/clear-sandbox.mjs",
+    "to": "apps/api/src/modules/item-workspace/clear-sandbox.mjs",
+    "sha256": "6914c956fdbc7af52cdbed524b26f14b7e270418832782137e718e04ca3e82d1"
+  },
+  {
+    "from": "apps/api/src/item-workspace/conversations.mjs",
+    "to": "apps/api/src/modules/item-workspace/conversations.mjs",
+    "sha256": "56da016cfe715d9a9512e14793c08abb0ea039ac3c2acbb4a6540b54944d4d49"
+  },
+  {
+    "from": "apps/api/src/item-workspace/development-context.mjs",
+    "to": "apps/api/src/modules/item-workspace/development-context.mjs",
+    "sha256": "73a0cef3e4e098eb08bfff69d87dc8d331c797cb1ff6314b8b8d876d363e883c"
+  },
+  {
+    "from": "apps/api/src/item-workspace/development-prompts.mjs",
+    "to": "apps/api/src/modules/item-workspace/development-prompts.mjs",
+    "sha256": "7267cfca195b8727baf46658675182c08fb966a68b96748978d76289cbb9f0aa"
+  },
+  {
+    "from": "apps/api/src/item-workspace/routes.mjs",
+    "to": "apps/api/src/modules/item-workspace/routes.mjs",
+    "sha256": "1f530a8f1187bbe6430e418cc7a15a23ac584dc16b140cd6e01fd071299243b3"
+  },
+  {
+    "from": "apps/api/src/item-workspace/service.mjs",
+    "to": "apps/api/src/modules/item-workspace/service.mjs",
+    "sha256": "eaa25dc96508f43a1e49acc91229a397733cfcf098f47bca4ebb75d8af7c559c"
+  },
+  {
+    "from": "apps/api/src/models/capabilities.mjs",
+    "to": "apps/api/src/modules/models/capabilities.mjs",
+    "sha256": "b06f30a2c29f7a54f65e3229a63ad94e3da560de5183eb5020097c3612453960"
+  },
+  {
+    "from": "apps/api/src/models/crypto.mjs",
+    "to": "apps/api/src/modules/models/crypto.mjs",
+    "sha256": "29ab8b25355b22a39f9d419303aad10debfb4b5362c0a3203b10758b595899be"
+  },
+  {
+    "from": "apps/api/src/models/inference.mjs",
+    "to": "apps/api/src/modules/models/inference.mjs",
+    "sha256": "8f67dac4ffa6ed22baec1ca0d57d0130480b022bfaf0c59bdc8caa6a23abe351"
+  },
+  {
+    "from": "apps/api/src/models/routes.mjs",
+    "to": "apps/api/src/modules/models/routes.mjs",
+    "sha256": "6b256133f42e5a517fcbbc59e42814f89ab52409ddd922a192a457c9bfbee387"
+  },
+  {
+    "from": "apps/api/src/models/runtime.mjs",
+    "to": "apps/api/src/modules/models/runtime.mjs",
+    "sha256": "73906f43c8ec9938d27bda39a1c48a20275a4555473e79d5c147b5bb68beb15e"
+  },
+  {
+    "from": "apps/api/src/models/store.mjs",
+    "to": "apps/api/src/modules/models/store.mjs",
+    "sha256": "138a6dd4fee499476f1ab95922c0ad494ba3f35b2eed5608e3f5fc8ac0aafb5a"
+  },
+  {
+    "from": "apps/api/src/models/text-route.mjs",
+    "to": "apps/api/src/modules/models/text-route.mjs",
+    "sha256": "0de29bf72378a803cdf375937682ef18103dcb7be81152f74bea909d70c4d18f"
+  },
+  {
+    "from": "apps/api/src/models/text.mjs",
+    "to": "apps/api/src/modules/models/text.mjs",
+    "sha256": "2a92f3dfba70c17101a8075d619a2ea7e292316a52cbbeaf4ce8217f665d5fa2"
+  },
+  {
+    "from": "apps/api/src/models/transport.mjs",
+    "to": "apps/api/src/modules/models/transport.mjs",
+    "sha256": "2d09265e4b67ab83f8e0f32d283f1e64012cfba075073fbeb8d09f7c4409af68"
+  },
+  {
+    "from": "apps/api/src/models/validation.mjs",
+    "to": "apps/api/src/modules/models/validation.mjs",
+    "sha256": "7d9ba1538c790f98e0c565d4970f01f3cfd47a25af02a4043d55469be1374c16"
+  },
+  {
+    "from": "apps/api/src/password.mjs",
+    "to": "apps/api/src/platform/password.mjs",
+    "sha256": "acc61751f3ce751652de4cbd67183236a0c6d7055ce28e587b3443da970494cc"
+  },
+  {
+    "from": "apps/api/src/sap/crypto.mjs",
+    "to": "apps/api/src/modules/sap/crypto.mjs",
+    "sha256": "843746bb152b44141ccad77b340bcf5192de968de0acfb12b09fcb85addcf853"
+  },
+  {
+    "from": "apps/api/src/sap/probe.mjs",
+    "to": "apps/api/src/modules/sap/probe.mjs",
+    "sha256": "6176117c61d788aa3b10dc740253a50a1d08c8f09557ca5995301786c9c7d192"
+  },
+  {
+    "from": "apps/api/src/sap/resolve.mjs",
+    "to": "apps/api/src/modules/sap/resolve.mjs",
+    "sha256": "504bec5a477d22db1dfa9f2e204357fd7799cbe9b3b731a014c844e119d50cab"
+  },
+  {
+    "from": "apps/api/src/sap/routes.mjs",
+    "to": "apps/api/src/modules/sap/routes.mjs",
+    "sha256": "aa77635786aab4983cf51fb4302b40f2a81dc84fc611b81dd207ff18ce2fbb32"
+  },
+  {
+    "from": "apps/api/src/sap/store.mjs",
+    "to": "apps/api/src/modules/sap/store.mjs",
+    "sha256": "fd705ad61cc23d9624265456c77051c0961cfbba6650f3dcb104272a092e5543"
+  },
+  {
+    "from": "apps/api/src/sap/validation.mjs",
+    "to": "apps/api/src/modules/sap/validation.mjs",
+    "sha256": "ea6341af4b21040f612acf25562af6e3162612b8123c155da683f09434177217"
+  },
+  {
+    "from": "apps/api/src/technical/routes.mjs",
+    "to": "apps/api/src/modules/technical/routes.mjs",
+    "sha256": "2aebc361e31c752df1c84bb4cc1f4b2fc93ee2e63f3cc031eeca1315772de4ee"
+  },
+  {
+    "from": "apps/api/src/technical/sap-mcp.mjs",
+    "to": "apps/api/src/modules/technical/sap-mcp.mjs",
+    "sha256": "4b66eaadc5951e3fada3d86b093fde284a3862134bede4c20dc3d4cbeafdfb94"
+  },
+  {
+    "from": "design-qa.md",
+    "to": "docs/archive/design-qa.md",
+    "sha256": "21662bc2988b8b3be741735093d1923cbc6887ec5deb4de7345bde7e266fb27b"
+  },
+  {
+    "from": "docs/design-assistant-cleanup.md",
+    "to": "docs/archive/design-assistant-cleanup.md",
+    "sha256": "185e87cc41fa2f41b3dcc4e4c507375b1f1d0d023d39965cf7a6254ba4c604e5"
+  },
+  {
+    "from": "docs/design-qa-palette-2026-10-02.md",
+    "to": "docs/archive/design-qa-palette-2026-10-02.md",
+    "sha256": "25077d69ecd612272c9bc9f89b62330ad64eaf2b472920a8de5a4a54d425962a"
+  },
+  {
+    "from": "docs/elements-integration-acceptance.md",
+    "to": "docs/archive/elements-integration-acceptance.md",
+    "sha256": "91b75cefeb7aee5eda48156e8ccac3a88f1db4f39d604bebb35f9d032c65c8b8"
+  },
+  {
+    "from": "docs/fs-workspace-operations.md",
+    "to": "docs/guides/fs-workspace-operations.md",
+    "sha256": "6e0f688eef9fb46166c4348a6c7da68d300081da162b1ae1f1a764bb4a855536"
+  },
+  {
+    "from": "docs/fsd-issue-fixes-2026-10-06.md",
+    "to": "docs/archive/fsd-issue-fixes-2026-10-06.md",
+    "sha256": "c6b3c0d4a014c96b1713141f2e38be7285c865be1bfd5b41617c4a4a1b423035"
+  },
+  {
+    "from": "docs/pending-items-2026-10-04.md",
+    "to": "docs/archive/pending-items-2026-10-04.md",
+    "sha256": "e1bc9ba7d824b4daf70874901e75f426eb58cd82020cf984c0b4bdcb8836b632"
+  },
+  {
+    "from": "docs/superpowers/plans/2026-10-03-fs-intelligent-workspace.md",
+    "to": "docs/plans/2026-10-03-fs-intelligent-workspace.md",
+    "sha256": "8cac2b260bff4316d17920563d2e0533c60cfb121f48eefa0e1c069333056d15"
+  },
+  {
+    "from": "docs/superpowers/plans/2026-10-03-model-registry-and-pending.md",
+    "to": "docs/plans/2026-10-03-model-registry-and-pending.md",
+    "sha256": "f4434be86153b9c2ce7462abd37bcfceaa40586688f0e2a961d84387f8685545"
+  },
+  {
+    "from": "docs/superpowers/plans/2026-10-04-功能说明书助手实施计划与状态清单.md",
+    "to": "docs/plans/2026-10-04-功能说明书助手实施计划与状态清单.md",
+    "sha256": "ad609c909710cdf015f411c3473681fd45c18d1f176cf3feed46573a9940d7cc"
+  },
+  {
+    "from": "docs/superpowers/plans/2026-10-05-assistant-feedback-execution.md",
+    "to": "docs/plans/2026-10-05-assistant-feedback-execution.md",
+    "sha256": "9335e6fe28bd410dd368b5d2c7e36fc77d203a22ba9970a2336b1ea003651c45"
+  },
+  {
+    "from": "docs/superpowers/plans/2026-10-05-assistant-round2-execution.md",
+    "to": "docs/plans/2026-10-05-assistant-round2-execution.md",
+    "sha256": "7aafdd0c0101b28d3ccaa08ef01f5b3d53287c20202ff9563227a2d082036bce"
+  },
+  {
+    "from": "docs/superpowers/plans/2026-10-05-elements-integration.md",
+    "to": "docs/plans/2026-10-05-elements-integration.md",
+    "sha256": "a5b8c60b7a530c1edb875f09a66980a36d8a1ac245436c1c1b41876865cb1e16"
+  },
+  {
+    "from": "docs/superpowers/plans/2026-10-06-fsd-prompt-engineering.md",
+    "to": "docs/plans/2026-10-06-fsd-prompt-engineering.md",
+    "sha256": "169478f37ff1c280171a616f9b12ad5c3c6399478a23ac3707097adc4b8e5446"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/README.md",
+    "to": "docs/specs/2026-10-03-fs-intelligent-workspace/README.md",
+    "sha256": "438bbbda0db98962de7c89b5309c64b5f2de0e29e7d1d9b4bea579e240d1565c"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/acceptance.md",
+    "to": "docs/specs/2026-10-03-fs-intelligent-workspace/acceptance.md",
+    "sha256": "896671762cacffea6f4b2fe424978fc2a748e5d602bb99704bc73ad86047eb92"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/api-validation-report.json",
+    "to": "docs/specs/2026-10-03-fs-intelligent-workspace/api-validation-report.json",
+    "sha256": "f73c0b56cb220b00b6b63071d937f6d6e5818dfa18f8cecff9dd5c6dceae0b7d"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/api.openapi.json",
+    "to": "tests/fixtures/fs-workspace/specification/api.openapi.json",
+    "sha256": "74a945c3df2f99f337a7075b586dde5b21c50412f0a6763d979202a308b13ff5"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/build_api_contract.py",
+    "to": "tools/contract-audit/build_api_contract.py",
+    "sha256": "9f06ff000cb911fe4eb1a1463a7a79c069e1c50b953b3f090dd3c8b8318de82f"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/build_contracts.py",
+    "to": "tools/contract-audit/build_contracts.py",
+    "sha256": "f66f37da818bc1d2412eb40c99c34a8a16760c44f1783975238359507431d0a0"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/contracts.md",
+    "to": "docs/specs/2026-10-03-fs-intelligent-workspace/contracts.md",
+    "sha256": "43f52914403cae2ad378053d144154e3a3c0a4995d13678e9692d9a9a952494a"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/design.md",
+    "to": "docs/specs/2026-10-03-fs-intelligent-workspace/design.md",
+    "sha256": "74049f6f6236e5e181bb3a48fb82a90401c163b26509fc1af8208f007786ccf1"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/development-start-prompt.md",
+    "to": "docs/specs/2026-10-03-fs-intelligent-workspace/development-start-prompt.md",
+    "sha256": "0dbd2af2325a9647c034ec44db08ddd5ec74bf190756ab714ecf69dd1ca66743"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/engineering-design.md",
+    "to": "docs/specs/2026-10-03-fs-intelligent-workspace/engineering-design.md",
+    "sha256": "5bbc6f2992f3d16a3a55b61d33fa9ec01ea414dcbb907246b6e1c1aeb31e309e"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/APPROVAL_REQUIRED.semantic-invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/APPROVAL_REQUIRED.semantic-invalid.json",
+    "sha256": "e44ad09cfdaf7e5101033d8c802326601ef787af0759971b401fc5d9a3fda121"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/ApprovalRecord.invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/ApprovalRecord.invalid.json",
+    "sha256": "024554a26c810f243aae7bf1832117f32590e7169913cf061fd51ef6b91bd63a"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/ApprovalRecord.valid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/ApprovalRecord.valid.json",
+    "sha256": "1d035c10b1f815c62e823b9948c29ba80e0e5917974640a6b0635c61c9c2cdd0"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/ChangeSet.invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/ChangeSet.invalid.json",
+    "sha256": "e5cb169d70c273fbcd9f9233035151b7b2add82543b686dac5e421bbc7f675f4"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/ChangeSet.valid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/ChangeSet.valid.json",
+    "sha256": "34ccac554e96bd6f834ea41e1b2695f5e0230853a43f7d626bcdbe107bf12049"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/Clarification.invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/Clarification.invalid.json",
+    "sha256": "3fe4eff1dbbebf0a703f01a6ef19177fc483cf6cc8c5a16ebbbacf9f2bd33032"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/Clarification.valid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/Clarification.valid.json",
+    "sha256": "9ae88e3a56e8b54e50a9f71cbb6023e7aafdac7d91836bb96764704ea326cac0"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/DecisionRecord.invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/DecisionRecord.invalid.json",
+    "sha256": "d3260e3a9a2fe0e614c181ee125d3570e1b9edb8a47eed6c39ab57c5c7d9ead8"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/DecisionRecord.valid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/DecisionRecord.valid.json",
+    "sha256": "8368b90af0443b4bb2907a94195a811f1aaf0bda42490a2745c057453b194d79"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/EvidenceRecord.invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/EvidenceRecord.invalid.json",
+    "sha256": "40a71944e54034bd1417c9c2cff0c5c7a091ea6342df97d1b3001b03164e667a"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/EvidenceRecord.valid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/EvidenceRecord.valid.json",
+    "sha256": "f43031298aa6ef7df213359c1405d60af3a74ea836642edbf430f5bfa58cff4c"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/ExportManifest.invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/ExportManifest.invalid.json",
+    "sha256": "3c640d9662ac1181196314e1f434c6d2227e2693da6761ff699387dc12715a9a"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/ExportManifest.valid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/ExportManifest.valid.json",
+    "sha256": "08171e75f542775e3b2e8815d0fe4ca8da2a817d113a1ed27b1f61ba894ad2c8"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/FsDocument.invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/FsDocument.invalid.json",
+    "sha256": "8c5777ba2eeecb438d0404c01cc4dbb9e8b7d0a7b29aff3f5f07416a4e51521f"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/FsDocument.valid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/FsDocument.valid.json",
+    "sha256": "ff19c81618d9473440cd66dea6ae98faf4bccaaa9d8fa81d9c367073909fe9df"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/FsProposal.invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/FsProposal.invalid.json",
+    "sha256": "6c7dd6eb7d20d5fae24b206e38fb3fc2e43d999245091f4505b3cc94fc64bfb7"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/FsProposal.valid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/FsProposal.valid.json",
+    "sha256": "c5113a16033a4152dc76f3d47dbc5e045b7f5e0c7b357f04deed6ebc8227a879"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/INVALID_OPERATION_VALUE.semantic-invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/INVALID_OPERATION_VALUE.semantic-invalid.json",
+    "sha256": "0ff4d71e504540f6243a9e82cdc21502982430c1e2f91c61c3be2000cf94d52c"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/OrchestratorPlan.invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/OrchestratorPlan.invalid.json",
+    "sha256": "754ab418134c21396e54f78bcc34201ac33bfd517ca7761f29da392bec757b36"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/OrchestratorPlan.valid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/OrchestratorPlan.valid.json",
+    "sha256": "4555173e23b43fbeb2807f54fc76a516970f15b936d0592b78aa197d47b6560a"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/REF_NOT_FOUND.semantic-invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/REF_NOT_FOUND.semantic-invalid.json",
+    "sha256": "55da1defef24960bafdfe8463590ba32562a087d6a5cb5b820923ad9c0400207"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/RequirementAnalysis.invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/RequirementAnalysis.invalid.json",
+    "sha256": "2fc3ca11eb8fba74708cb2a8232535a136308a4bb544055ea1e1ee839ea4b7e6"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/RequirementAnalysis.valid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/RequirementAnalysis.valid.json",
+    "sha256": "21da7a70d73c0c5fc13c9a61b431df2efa571c58b5fb2ce1912fe425b73f64b1"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/RequirementRecord.invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/RequirementRecord.invalid.json",
+    "sha256": "fad5a3fa864c82c32e76391b8c353a9eff3cd1fc4e0eb4ac9aa37b2c8118a2c3"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/RequirementRecord.valid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/RequirementRecord.valid.json",
+    "sha256": "7d286a55ba2ae4c13edc2f6a1c4b93d1268ac257234148e3d906591719fdc6e2"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/ReviewResult.invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/ReviewResult.invalid.json",
+    "sha256": "d99581eebb3a6ab7efde98c424aa635904c86d5b1ed4cf2dce9c899bb2c6ad2c"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/ReviewResult.valid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/ReviewResult.valid.json",
+    "sha256": "2c95ba83ce64d05e59dbd7f88ab21d62bdd0e65d88af044018bff1599c8f8031"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/RunCheckpoint.invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/RunCheckpoint.invalid.json",
+    "sha256": "3c5013806ac5ff15feddfe0d31197c97e6a5a24da830f4d2d9b303d39fb48190"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/RunCheckpoint.valid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/RunCheckpoint.valid.json",
+    "sha256": "f6f4c1ceda766875d41dde96c028b4763d487f06696f4f29d8fb0544bb0ecb44"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/RunEvent.invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/RunEvent.invalid.json",
+    "sha256": "333dd037c6b9168423e578abde4427afa18878e82889c95474b3be45db3eca0a"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/RunEvent.valid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/RunEvent.valid.json",
+    "sha256": "cf1a87821ff7e32cb8c1af96ace7426322a98d1900a0f3ad4349b025e1132d6c"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/TABLE_SHAPE_MISMATCH.semantic-invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/TABLE_SHAPE_MISMATCH.semantic-invalid.json",
+    "sha256": "fecedf823cf3e5c3c1caa56bdac75767e67148fdb221a979fac1c8f15dd59ae7"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/TARGET_VALUE_MISMATCH.semantic-invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/TARGET_VALUE_MISMATCH.semantic-invalid.json",
+    "sha256": "4d03e2e61a0367fd35475abf339ad1b371f70a329e6c536edc3629c527aabb0f"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/UploadReceipt.invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/UploadReceipt.invalid.json",
+    "sha256": "642377e632add33bc4fb1bb6e295717bfb729041d94df85983fbe0b345d9ad1d"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/UploadReceipt.valid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/UploadReceipt.valid.json",
+    "sha256": "485d8524e485c315527a898d0d44e14a6a38d0787e26b7c4c87f7864d449ad68"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/VERSION_CONFLICT.semantic-invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/VERSION_CONFLICT.semantic-invalid.json",
+    "sha256": "f4cafa770e8c6db0f1af6b3961d248395285af191e597a022b973960ca4d6373"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/VerificationProposal.invalid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/VerificationProposal.invalid.json",
+    "sha256": "a7a2726a03d2fdf8100839d9d0d08be2ac2bdeb120c1d63d7935f666c95b8c2b"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/VerificationProposal.valid.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/VerificationProposal.valid.json",
+    "sha256": "d38703b015c5314fe19740a6321e2ee2ab721c9bb5df0ca40cbf7879ffa1a1ed"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/examples/agent-artifact.json",
+    "to": "tests/fixtures/fs-workspace/specification/examples/agent-artifact.json",
+    "sha256": "da8c7a07bd3383e53302e68d7d71ad62f8af2ddb76e155c1114c00452225aaac"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/frontend-design.md",
+    "to": "docs/specs/2026-10-03-fs-intelligent-workspace/frontend-design.md",
+    "sha256": "507963a240abc63949ce7252c9efbe8f895ecc04d68139a3c5eb28740d9b249a"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/prompts/agent-prompts.md",
+    "to": "docs/specs/2026-10-03-fs-intelligent-workspace/prompts/agent-prompts.md",
+    "sha256": "d3b7f1c68d4c2369bab2af7cb2192939a3028c3b89b65619953ae2d1f8132cf4"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/prototype/app.js",
+    "to": "docs/archive/fs-workspace-prototype/app.js",
+    "sha256": "47f2e64dd72bed1abbcaccb03cb44cb2cbc8bab809a6e3498f7ea18e89ea7214"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/prototype/index.html",
+    "to": "docs/archive/fs-workspace-prototype/index.html",
+    "sha256": "657435109e7de2debb2e463c72875df21deb1f1e899025a0d541b6fd1cc8a242"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/prototype/qa-report.json",
+    "to": "docs/archive/fs-workspace-prototype/qa-report.json",
+    "sha256": "6285928dbff9e4c158972d28175c78397242bf108151a7e91152f5dd2461f4f7"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/prototype/qa.cjs",
+    "to": "docs/archive/fs-workspace-prototype/qa.cjs",
+    "sha256": "2bb0a1578be7ab5b5e37cbd8cf230a235c6ad89e660156bc6d3f704bc2cb61b4"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/prototype/screenshots/01-management.png",
+    "to": "docs/archive/fs-workspace-prototype/screenshots/01-management.png",
+    "sha256": "4ecc129abcf4fa317eea4df292e6a5058890cf89f1b8c1370d41dcb5ceae4b7c"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/prototype/screenshots/02-workspace.png",
+    "to": "docs/archive/fs-workspace-prototype/screenshots/02-workspace.png",
+    "sha256": "f98a6d6613cd435515f2f589ee7d9d1d43a29678152ba8be02ea280ade97b673"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/prototype/screenshots/03-change-review.png",
+    "to": "docs/archive/fs-workspace-prototype/screenshots/03-change-review.png",
+    "sha256": "fb2e19a774abc6ab6c417a4cb6f62f4419ac91a056dc9e34ba349e4fb1c766c9"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/prototype/screenshots/04-conflict.png",
+    "to": "docs/archive/fs-workspace-prototype/screenshots/04-conflict.png",
+    "sha256": "63531474a77cf408c10e623249b641a4e0cdbb5e6f94cff5e71c66214e3746ac"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/prototype/screenshots/05-review.png",
+    "to": "docs/archive/fs-workspace-prototype/screenshots/05-review.png",
+    "sha256": "b60716a0fa48987ac6c721124f6ffb1ae7ff157652c64a45204bd905d8b8e0f3"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/prototype/screenshots/06-versions.png",
+    "to": "docs/archive/fs-workspace-prototype/screenshots/06-versions.png",
+    "sha256": "b22ebfdf48b895fe0d66aad00c2a263d14729d1b653d78f9a099d34e96f30ce0"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/prototype/screenshots/07-mobile.png",
+    "to": "docs/archive/fs-workspace-prototype/screenshots/07-mobile.png",
+    "sha256": "a290d5fe3211c4ed60b4ffc2e29cbcd784acdf1d28f616313d397aa7456f0d06"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/prototype/styles.css",
+    "to": "docs/archive/fs-workspace-prototype/styles.css",
+    "sha256": "819e71a180bc4f64c154758e11a0adc60381bec0ec9e4e7223b594737ef68811"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/AgentArtifact.schema.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/AgentArtifact.schema.json",
+    "sha256": "aed07d58d7f1b5e10175e9b86acf27c9d00c1ce1f52ffe40635743af5eaede8c"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/ApprovalRecord.schema.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/ApprovalRecord.schema.json",
+    "sha256": "a82f4fc3d56c8b46eb81eb0dbb42a153336765f9af156c523298773134ff7c7d"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/ChangeSet.openai.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/ChangeSet.openai.json",
+    "sha256": "5b1fa7ae0364b055bb451d27c6c9541075e009e3f11340413a8195a11c28a912"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/ChangeSet.schema.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/ChangeSet.schema.json",
+    "sha256": "bf93b5a3e42bd6f8334aaf1f8283048eedc75ed5d49d1eec3c6379a367065a5a"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/Clarification.openai.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/Clarification.openai.json",
+    "sha256": "829cd248f82c4c54a578c8c2352ffda13ebb90fcf422ab79bbea3005cd0014ef"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/Clarification.schema.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/Clarification.schema.json",
+    "sha256": "af7d309814a9d338f3baf8623c0c26c3f5b9676e95fec3110a9557413ad8b320"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/DecisionRecord.schema.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/DecisionRecord.schema.json",
+    "sha256": "e1fd6ba8b0badee86bf598630f4b59bcfbff61d4ae6d564babb901bfc30a5016"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/EvidenceRecord.schema.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/EvidenceRecord.schema.json",
+    "sha256": "6caf1b374602ec39a72fe9aaf4d7c4615d4b71ea83434a0b34e976289740b63d"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/ExportManifest.schema.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/ExportManifest.schema.json",
+    "sha256": "6b8798ffb5c6c9078deb1970e948466c042a580b0b4448a710b1bb0a3fe7b451"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/FsDocument.schema.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/FsDocument.schema.json",
+    "sha256": "6245ada37c56326a4c0b9f745cec65859f54190982996d69269e3d3151a5b0b1"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/FsProposal.openai.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/FsProposal.openai.json",
+    "sha256": "9294fd2e0b5db54e2ff319672f3235f1d02a0e87ce0be1817cea2576f472557a"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/FsProposal.schema.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/FsProposal.schema.json",
+    "sha256": "3288cc237991b7b0b5ab7c25e95aab5c6858d3c020f15d3c909b57a0104addd5"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/OrchestratorPlan.openai.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/OrchestratorPlan.openai.json",
+    "sha256": "0640ad8dfb704af1302bc247d6112d7339bddf31a0a51e2ac2e8c75cb30c3954"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/OrchestratorPlan.schema.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/OrchestratorPlan.schema.json",
+    "sha256": "1f702e92c00588e506b9e5f4e820f6a05ee1cc6b4e910c95865e9b7222474f7c"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/RequirementAnalysis.openai.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/RequirementAnalysis.openai.json",
+    "sha256": "725d119aab83d24cceea002342164dc8ab5ffdbf51ad351612c1dd39c269d31c"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/RequirementAnalysis.schema.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/RequirementAnalysis.schema.json",
+    "sha256": "406b95b9d1c4e8ac2abb7c50ab8b697b5fd6525b5046fe86fc6d145c66147869"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/RequirementRecord.schema.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/RequirementRecord.schema.json",
+    "sha256": "2dc5df82ac1b2d8044304756710d91c550cbbd02a4ca0604c208f0c6b7480614"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/ReviewResult.openai.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/ReviewResult.openai.json",
+    "sha256": "f95afd1b0e5869c14bb3b90320b1896276a30c49f4776763dae0c79877087011"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/ReviewResult.schema.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/ReviewResult.schema.json",
+    "sha256": "f895a1b2fced5534e37533bb6af31b7557a319439e688d925a3b002223fb5916"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/RunCheckpoint.schema.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/RunCheckpoint.schema.json",
+    "sha256": "0998c3b40c8c1c80ab45f96da90c565d4839be9536c35053f83fc6d9153d736c"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/RunEvent.schema.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/RunEvent.schema.json",
+    "sha256": "515ca84667feba1e7e66047e7e3c418306200fe83ad5b7f1feed0c3785577a45"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/UploadReceipt.schema.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/UploadReceipt.schema.json",
+    "sha256": "a1b4b027c8a3fbf185a813d924c8416c94275a92ae2b2ace19c2c144744c7732"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/VerificationProposal.openai.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/VerificationProposal.openai.json",
+    "sha256": "70014637a4eec0c1820a72b761ffc4c27626d3ceb4d397bc7fce80204ab6f71f"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/schemas/VerificationProposal.schema.json",
+    "to": "tests/fixtures/fs-workspace/specification/schemas/VerificationProposal.schema.json",
+    "sha256": "6d428e8a134b64a42e06e45c62b34b196e5c0d257305aacc0476cc582bf3a7e9"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/source-manifest.json",
+    "to": "tests/fixtures/fs-workspace/specification/source-manifest.json",
+    "sha256": "11d1d2d3396a6aed6f2738e977d4adc7be05421f63f91574ee0878ab7e66ea9b"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/validate_api.py",
+    "to": "tools/contract-audit/validate_api.py",
+    "sha256": "964b710d7563ee249a73798d234b69835d7a7cca15bb00a17c8b15047775a1cf"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/validate_contracts.py",
+    "to": "tools/contract-audit/validate_contracts.py",
+    "sha256": "12264c1b81ba9ec2e2e5e5494b5be568122e0a0f578a417598f8a72c9e37862d"
+  },
+  {
+    "from": "docs/superpowers/specs/2026-10-03-fs-intelligent-workspace/validation-report.json",
+    "to": "docs/specs/2026-10-03-fs-intelligent-workspace/validation-report.json",
+    "sha256": "ae9b31ffed928457ee5cf778694b7a44b3de93a7d0fafe3cf7eeaa515ed328ad"
+  },
+  {
+    "from": "docs/table-page-template.md",
+    "to": "docs/guides/table-page-template.md",
+    "sha256": "e89690892eb6fbc7bbc149842bc6f83079fbcf3ea6f978615f3bbc50795dbae1"
+  },
+  {
+    "from": "docs/项目目录归属与资料导航.md",
+    "to": "docs/guides/项目目录归属与资料导航.md",
+    "sha256": "aaaaaf02ed6966cdaf433d3381799a464269e3f640562006a028159a8e0921ce"
+  },
+  {
+    "from": "scripts/bootstrap.mjs",
+    "to": "scripts/database/bootstrap.mjs",
+    "sha256": "c4822dc57174da6a88afb48de18fa59f7925362ff1e059e316d3efaa752410da"
+  },
+  {
+    "from": "scripts/components.mjs",
+    "to": "scripts/dev/components.mjs",
+    "sha256": "42c6022b6a4e0e8763624216ee4274886e692ef491e6e924cd67927a7ea31efa"
+  },
+  {
+    "from": "scripts/configure-organization.mjs",
+    "to": "scripts/database/configure-organization.mjs",
+    "sha256": "7e5d4277fbce4401fb92b3a1ba6a6187df673431d706bc690d27ddd45204062d"
+  },
+  {
+    "from": "scripts/db-migrate.mjs",
+    "to": "scripts/database/migrate.mjs",
+    "sha256": "71661d09fac2fff88c5c24777eab549e54e1ce968525cb2797657d0783e81863"
+  },
+  {
+    "from": "scripts/db-provision.mjs",
+    "to": "scripts/database/provision.mjs",
+    "sha256": "97081799a364d48d803c4045cd9b32ff9334b526d3b567c88bd3bafac4b35114"
+  },
+  {
+    "from": "scripts/db-status.mjs",
+    "to": "scripts/database/status.mjs",
+    "sha256": "6a7e3ff0dee8589aa858c20355a04a9fa2593372c564e649b01ca8453f688f80"
+  },
+  {
+    "from": "scripts/delivery-ui-sandbox-control.mjs",
+    "to": "scripts/testing/delivery-ui-sandbox-control.mjs",
+    "sha256": "6015820d3fd84bca1c7ead7db2577ab7c2c45e128b3a9edb9a6b728a7d61a917"
+  },
+  {
+    "from": "scripts/delivery-ui-sandbox.mjs",
+    "to": "scripts/testing/delivery-ui-sandbox.mjs",
+    "sha256": "758a75857d4c747e84a16857eea5a2bc7b272204cc9dc3faf288ad93a3304ab2"
+  },
+  {
+    "from": "scripts/dev.mjs",
+    "to": "scripts/dev/dev.mjs",
+    "sha256": "b8746ac8fdb9135d904c5c5e3e32f33148b00ff6172103c307592d038eebe642"
+  },
+  {
+    "from": "scripts/fs-worker.mjs",
+    "to": "apps/api/src/worker.mjs",
+    "sha256": "b51535a047dacc3fe6acd07247c446142ad7ed15983d8d486cc0207c75704e59"
+  },
+  {
+    "from": "scripts/generate-fs-contracts.mjs",
+    "to": "scripts/contracts/generate-fs.mjs",
+    "sha256": "37fa62a8fb2359235c378b4f7163aaf5ef67cbf4c4fce7653010e004cea06255"
+  },
+  {
+    "from": "scripts/import-legacy-fs.mjs",
+    "to": "scripts/maintenance/import-legacy-fs.mjs",
+    "sha256": "3bed3f48a42665b3cdb452fff5e91001bd9aabbfbe6ae03226232adac78c6825"
+  },
+  {
+    "from": "scripts/import-report-cases.mjs",
+    "to": "scripts/maintenance/import-report-cases.mjs",
+    "sha256": "99419d824710d514278aa44df7d3b731111f951603bdb05350469b7265b6e937"
+  },
+  {
+    "from": "scripts/lib/database.mjs",
+    "to": "apps/api/src/platform/database.mjs",
+    "sha256": "8b4c9430621dc1e5758e7051c535cdae04a3dd88cd03b34e2102bb77ecc0e8f4"
+  },
+  {
+    "from": "scripts/lib/production.mjs",
+    "to": "apps/api/src/platform/production.mjs",
+    "sha256": "9a614832d2f1e20aaedf7a2c822361a457b0441026adf7f69a9dae98dbc6e79f"
+  },
+  {
+    "from": "scripts/lib/report-cases.mjs",
+    "to": "scripts/maintenance/report-cases.mjs",
+    "sha256": "9748608f90714c9b7c8572f1849ad9f79c13a105314acc040caca4ccfebe447e"
+  },
+  {
+    "from": "scripts/render-assistant-artifact.mjs",
+    "to": "scripts/maintenance/render-assistant-artifact.mjs",
+    "sha256": "0b48f4e05b00ad0e22d34468d29a8a38c4842c79865e65b47252802215722bdc"
+  },
+  {
+    "from": "scripts/serve.mjs",
+    "to": "apps/api/src/server.mjs",
+    "sha256": "664fe45a99d02569706fd16f6ae425e417375aa2f830d703d9bc1e483959dc2c"
+  },
+  {
+    "from": "scripts/setup-env.mjs",
+    "to": "scripts/dev/setup-env.mjs",
+    "sha256": "70492bcb2124d83dc66d352d478ac2f20af8cc0fb9db834e863a114eb22a8156"
+  },
+  {
+    "from": "scripts/setup-fs-tests.mjs",
+    "to": "scripts/testing/setup-fs-tests.mjs",
+    "sha256": "6da2dc5bd09384c0c5c13b62c0efe65b305df49c27642558efb70f1d2bc2dc98"
+  },
+  {
+    "from": "scripts/setup-sap-mcp.mjs",
+    "to": "scripts/vendor/setup-sap-mcp.mjs",
+    "sha256": "196407e35f5a24cdd9d8ca801ecddcab806b0c7f226b8574a95124744cf552fb"
+  },
+  {
+    "from": "scripts/test-elements-e2e.mjs",
+    "to": "scripts/testing/test-elements-e2e.mjs",
+    "sha256": "6b9cb39cbcb5a652e7b54aef618489164b3ee4ff1952d3fd0801a07caa9021a4"
+  },
+  {
+    "from": "scripts/test-fs.mjs",
+    "to": "scripts/testing/test-fs.mjs",
+    "sha256": "fe9a00a51cf975cfd7c236f8aa8ab9aa56933f9a5d8e807b98524e4d6b16d143"
+  },
+  {
+    "from": "scripts/vendor-ai-elements.mjs",
+    "to": "scripts/vendor/vendor-ai-elements.mjs",
+    "sha256": "6f716dcc5ead0badc6f13a410686105690d6e497dcc12f85e91b95a4f3fd4255"
+  },
+  {
+    "from": "scripts/verify-sap-mcp.mjs",
+    "to": "scripts/checks/verify-sap-mcp.mjs",
+    "sha256": "84b33af5a3e16b123bd4a92659e2eaa6233c9d11a6615e43034cd1415b3e1edc"
+  },
+  {
+    "from": "scripts/web-server.mjs",
+    "to": "scripts/dev/web-server.mjs",
+    "sha256": "ff66410ac7a65bd8a90c30ed61f879ec0e0d02184555f2825321662f797d0645"
+  },
+  {
+    "from": "tests/admin.test.mjs",
+    "to": "tests/integration/api/admin.test.mjs",
+    "sha256": "3555f7eb1c0d67b496c2fbac8e12e2722e0c9cc775ea37c1c98662085720ee20"
+  },
+  {
+    "from": "tests/auth.test.mjs",
+    "to": "tests/integration/api/auth.test.mjs",
+    "sha256": "21b2b0f5f3d2eb32280c6e831f0bb3920a262e857b3c32d594dd3027450935dc"
+  },
+  {
+    "from": "tests/customer-project-ui.test.mjs",
+    "to": "tests/unit/web/customer-project-ui.test.mjs",
+    "sha256": "c01ea251dc7455fe0d433e3783008bdc3336c3815544b3ded666fb2fe35819a3"
+  },
+  {
+    "from": "tests/database/runtime.test.mjs",
+    "to": "tests/integration/database/runtime.test.mjs",
+    "sha256": "2c7532373b2a846e4ccf1587d1b49974bfc728242378c2a164e801ebe0ed071a"
+  },
+  {
+    "from": "tests/database/schema.test.mjs",
+    "to": "tests/integration/database/schema.test.mjs",
+    "sha256": "2621aa7b54edec2c7bd86d6278c5b6279fe689a136205b42a35daab4b3fa221c"
+  },
+  {
+    "from": "tests/delivery-column-layout.test.mjs",
+    "to": "tests/unit/web/delivery-column-layout.test.mjs",
+    "sha256": "247a107886fc9027f1d92298fa94de5dcce323544d343e4c9818ac5f1e61ff71"
+  },
+  {
+    "from": "tests/delivery-table-ui.test.mjs",
+    "to": "tests/e2e/delivery-table-ui.test.mjs",
+    "sha256": "fdc1541814c4fe7fdf06a81a08275491a0b39a7244c0bf4a79b09a8f52bf6cd1"
+  },
+  {
+    "from": "tests/delivery-ui.test.mjs",
+    "to": "tests/unit/web/delivery-ui.test.mjs",
+    "sha256": "da3a7b6abf85da762358b45e91f755bbaad12b7f41bea750217d2c035a6c3b25"
+  },
+  {
+    "from": "tests/delivery.test.mjs",
+    "to": "tests/integration/api/delivery.test.mjs",
+    "sha256": "5c82ea185d4d129bb6f6df0cd4220ea3cf82d1aba14325ff10fa584ef774ec41"
+  },
+  {
+    "from": "tests/deployment.test.mjs",
+    "to": "tests/unit/tooling/deployment.test.mjs",
+    "sha256": "5e745e1148fc8f9487feea6b176181aa3695ac9e6b16f74bceb54029bf37fa49"
+  },
+  {
+    "from": "tests/design-assistant-cleanup.test.mjs",
+    "to": "tests/unit/api/design-assistant-cleanup.test.mjs",
+    "sha256": "6cf43eeac6eed87b008ac65ea1c9ccbb0f63ffacc9b90ab9990eb1756dd69c1d"
+  },
+  {
+    "from": "tests/dev.test.mjs",
+    "to": "tests/unit/web/dev.test.mjs",
+    "sha256": "95de497676077387cdf8af183cb1ffb764b7f4e234351c4fa9c539d5e3ce9d6e"
+  },
+  {
+    "from": "tests/fs-workspace/api/access.test.mjs",
+    "to": "tests/integration/api/fs-workspace/api/access.test.mjs",
+    "sha256": "431dc047805ecd0b32e3a5bdf4960b1f630e7b954d6b41b14693e1f6b19f80e4"
+  },
+  {
+    "from": "tests/fs-workspace/api/assistant-reset.test.mjs",
+    "to": "tests/integration/api/fs-workspace/api/assistant-reset.test.mjs",
+    "sha256": "615cb3be105a46f08e5eb7ef58a702f79cfda4d5c618cddc55b52b492c01cc50"
+  },
+  {
+    "from": "tests/fs-workspace/api/assistant-save-budget.test.mjs",
+    "to": "tests/integration/api/fs-workspace/api/assistant-save-budget.test.mjs",
+    "sha256": "26e94d002e477d93516bf91328892a002939943cc15425d83c4cd7c47c344b38"
+  },
+  {
+    "from": "tests/fs-workspace/api/attachments.test.mjs",
+    "to": "tests/integration/api/fs-workspace/api/attachments.test.mjs",
+    "sha256": "e331fdcbb0369c8157c1e12f7005e2a430d7dc2cf929e52d831118f0e1259b32"
+  },
+  {
+    "from": "tests/fs-workspace/api/changes.test.mjs",
+    "to": "tests/integration/api/fs-workspace/api/changes.test.mjs",
+    "sha256": "e6a8685657211490859b9b387e27e2567e0a69ddec791ecf10c7204411f6caf5"
+  },
+  {
+    "from": "tests/fs-workspace/api/confirmations.test.mjs",
+    "to": "tests/integration/api/fs-workspace/api/confirmations.test.mjs",
+    "sha256": "227e8cf9d4a67c47dae25385d40fe490d30ebec0a6886582eaeec886670fd680"
+  },
+  {
+    "from": "tests/fs-workspace/api/conversation.test.mjs",
+    "to": "tests/integration/api/fs-workspace/api/conversation.test.mjs",
+    "sha256": "3566a4275b6fe26e161d5a992f9bad1c4939645c8de4ca0032f51d3ad060502e"
+  },
+  {
+    "from": "tests/fs-workspace/api/document.test.mjs",
+    "to": "tests/integration/api/fs-workspace/api/document.test.mjs",
+    "sha256": "160e2c6bb18b060145d49041c7b44503f90075c659cd036d23a75082ba1816c4"
+  },
+  {
+    "from": "tests/fs-workspace/api/events.test.mjs",
+    "to": "tests/integration/api/fs-workspace/api/events.test.mjs",
+    "sha256": "4baef7323efeedea77a6f2ea7a17bccca3519b1cbe396be299b3cf4c0019ecd3"
+  },
+  {
+    "from": "tests/fs-workspace/api/export.test.mjs",
+    "to": "tests/integration/api/fs-workspace/api/export.test.mjs",
+    "sha256": "9fbbf003a88487d87ce9b7d1441e529f22592d4061dbbb66dc3acd909df7e072"
+  },
+  {
+    "from": "tests/fs-workspace/api/item-workspace.test.mjs",
+    "to": "tests/integration/api/fs-workspace/api/item-workspace.test.mjs",
+    "sha256": "93b0cc3320ba440a631c22ff07d40b7121dd290026d361917c2775c8d3df08b3"
+  },
+  {
+    "from": "tests/fs-workspace/api/model-text.test.mjs",
+    "to": "tests/integration/api/fs-workspace/api/model-text.test.mjs",
+    "sha256": "fbcfe70635391f8675245f19937adde893393677ac0def2cad3f6ae679a32a4e"
+  },
+  {
+    "from": "tests/fs-workspace/api/rebase.test.mjs",
+    "to": "tests/integration/api/fs-workspace/api/rebase.test.mjs",
+    "sha256": "17eec0affab18363c0cb2ae66416bf1cdb46c0b7315e8b30f7c533ec23d422e0"
+  },
+  {
+    "from": "tests/fs-workspace/api/review.test.mjs",
+    "to": "tests/integration/api/fs-workspace/api/review.test.mjs",
+    "sha256": "9f93071d1988d33a87e0810283a53fec5d402ba6078e4c2a5ac8b364fe9235f8"
+  },
+  {
+    "from": "tests/fs-workspace/api/sandbox-cleanup.test.mjs",
+    "to": "tests/integration/api/fs-workspace/api/sandbox-cleanup.test.mjs",
+    "sha256": "5b0efced27cd4d2c390d31cad0a242ccea255f5e528be1f14a98c32ef35be58a"
+  },
+  {
+    "from": "tests/fs-workspace/api/workbench-sessions.test.mjs",
+    "to": "tests/integration/api/fs-workspace/api/workbench-sessions.test.mjs",
+    "sha256": "a32e2425843d3f30816e0e5998d647dfcba4252cd64a27aba27ae55eb655119f"
+  },
+  {
+    "from": "tests/fs-workspace/database/legacy.test.mjs",
+    "to": "tests/integration/api/fs-workspace/database/legacy.test.mjs",
+    "sha256": "3538138f32f8588cc151e813b8c850deaad53db5cf42aac18e2c71022ef691d7"
+  },
+  {
+    "from": "tests/fs-workspace/database/schema.test.mjs",
+    "to": "tests/integration/api/fs-workspace/database/schema.test.mjs",
+    "sha256": "90f00e684f02335b80fe5efb1aa83fad977322a0cd596ea22012d9b9fbb5d2ff"
+  },
+  {
+    "from": "tests/fs-workspace/e2e/elements-item.mjs",
+    "to": "tests/e2e/fs-workspace/elements-item.mjs",
+    "sha256": "ba76a174f847d58228c96dbfda4fe7d7d3b518072b7e3077f681bee4d651215e"
+  },
+  {
+    "from": "tests/fs-workspace/e2e/elements.spec.ts",
+    "to": "tests/e2e/fs-workspace/elements.spec.ts",
+    "sha256": "e14be2af4e91e7cab80ec2c498058b2be0979079f59400333d253696a1a1a334"
+  },
+  {
+    "from": "tests/fs-workspace/e2e/fsd-issues.mjs",
+    "to": "tests/e2e/fs-workspace/fsd-issues.mjs",
+    "sha256": "8b56409fedf8c90cde7314a701f8e1d55d2f21cd5195bdec25929823bf198787"
+  },
+  {
+    "from": "tests/fs-workspace/e2e/workspace.spec.ts",
+    "to": "tests/e2e/fs-workspace/workspace.spec.ts",
+    "sha256": "00b4d7552fe77311dbcd935334bec7f44f55f815feb2ff8e375b879763ba6d3b"
+  },
+  {
+    "from": "tests/fs-workspace/fixtures/api.mjs",
+    "to": "tests/fixtures/fs-workspace/api.mjs",
+    "sha256": "e85e8af0d7ed4cbe8d16177427a1b134433a7b8a6434b68490864d915a56aee1"
+  },
+  {
+    "from": "tests/fs-workspace/fixtures/change.mjs",
+    "to": "tests/fixtures/fs-workspace/change.mjs",
+    "sha256": "731651b1b5afdab9e276b729de765b13471a0b46576fcf051dc2ae726b991166"
+  },
+  {
+    "from": "tests/fs-workspace/fixtures/clarification-with-preamble.txt",
+    "to": "tests/fixtures/fs-workspace/clarification-with-preamble.txt",
+    "sha256": "cf8deb3453b93e29c14c0755c44761ed5582ac521848fdf708d07819c7334043"
+  },
+  {
+    "from": "tests/fs-workspace/fixtures/database.mjs",
+    "to": "tests/fixtures/fs-workspace/database.mjs",
+    "sha256": "ded95f5f24843a38d65dd8bffe38ef79955933de45396fe059e78b66ea44d641"
+  },
+  {
+    "from": "tests/fs-workspace/fixtures/document.mjs",
+    "to": "tests/fixtures/fs-workspace/document.mjs",
+    "sha256": "90486ba6f796dd0bf4ff6c4a7d8524e8541981a0ac0ff352bdd9f3811854a271"
+  },
+  {
+    "from": "tests/fs-workspace/fixtures/pdf.mjs",
+    "to": "tests/fixtures/fs-workspace/pdf.mjs",
+    "sha256": "1eeff63626752af1aa6887dda5bdb91c505401b89b9543d1b85b9c14f78f6539"
+  },
+  {
+    "from": "tests/fs-workspace/unit/agent.test.mjs",
+    "to": "tests/unit/api/fs-workspace/agent.test.mjs",
+    "sha256": "91a92cae3b720b58b13073e2633c79c8e9624749e155644571f49d4f0470f208"
+  },
+  {
+    "from": "tests/fs-workspace/unit/approval-projection.test.mjs",
+    "to": "tests/unit/api/fs-workspace/approval-projection.test.mjs",
+    "sha256": "1d3d846319938cd602894c2249133ae588f61accab8def2fbb900b7d6fbf83b7"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-answered-decisions.test.mjs",
+    "to": "tests/unit/api/fs-workspace/assistant-answered-decisions.test.mjs",
+    "sha256": "d351068e5a351364a442950ed406d5ea240cef014c0821f6f866182b7a0d10f2"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-attachments.test.mjs",
+    "to": "tests/unit/api/fs-workspace/assistant-attachments.test.mjs",
+    "sha256": "792901edbab86594f9042e6d28dda90bb0d71a673b39215566a22ee30e9c6554"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-coordinator.test.mjs",
+    "to": "tests/unit/api/fs-workspace/assistant-coordinator.test.mjs",
+    "sha256": "e5ff02a153095f21f46c075e38f1c9752d6869b1b3cd9d4c86073cc4f599a753"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-deadline.test.mjs",
+    "to": "tests/unit/api/fs-workspace/assistant-deadline.test.mjs",
+    "sha256": "20c53cbc0ac1c9a06671a46820fa74566ffe4759c6aa3e6b112fcf4a9d8da041"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-decisions.test.mjs",
+    "to": "tests/unit/api/fs-workspace/assistant-decisions.test.mjs",
+    "sha256": "264787ace61f57a99a470b8376db2139378391f34d57bfed944531805a3737b9"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-feedback.test.mjs",
+    "to": "tests/unit/api/fs-workspace/assistant-feedback.test.mjs",
+    "sha256": "557227d55a747f41aea13ed3ba9d71154c4c7e479295d1dc08d97417c279b981"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-generation.test.mjs",
+    "to": "tests/unit/api/fs-workspace/assistant-generation.test.mjs",
+    "sha256": "4b6ecf1b6f13fe43ed4430214b701ac334ecfcc20cf0ff8ac796932a05475b35"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-no-deadline.test.mjs",
+    "to": "tests/unit/api/fs-workspace/assistant-no-deadline.test.mjs",
+    "sha256": "eb11e5202d72a9ae8c4e5833a832282e6ac1f30da4e5e07afcfdd1fcf4e7996f"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-outline.test.mjs",
+    "to": "tests/unit/web/fs-workspace/assistant-outline.test.mjs",
+    "sha256": "e25f088650d80f7f0cdd3f1df699df18250393b90484c1c24783df92abc0cabf"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-purchase-case.test.mjs",
+    "to": "tests/unit/api/fs-workspace/assistant-purchase-case.test.mjs",
+    "sha256": "6e20098b7aed5d742b9e8b6d4ad4ed038cb5690bbb96d9b685c09b12c848247b"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-response-json.test.mjs",
+    "to": "tests/unit/api/fs-workspace/assistant-response-json.test.mjs",
+    "sha256": "b25383b3cf532f62a8e037131fa33c035b42edb36f6d36803895ccdde2e28d8d"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-review.test.mjs",
+    "to": "tests/unit/api/fs-workspace/assistant-review.test.mjs",
+    "sha256": "205407716085209bc351428a9ffb699d8b1c9cfbf703edb081e608a6c987ba5d"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-runs.test.mjs",
+    "to": "tests/unit/api/fs-workspace/assistant-runs.test.mjs",
+    "sha256": "09460611947efb6e3e6f3f82d4c5f8a856788c0d5332b184c4b695bea1087e0e"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-session-history.test.mjs",
+    "to": "tests/unit/api/fs-workspace/assistant-session-history.test.mjs",
+    "sha256": "d162663f678d508741d7c480898c30e0b060de9cb118337d4d62f33f14bef7e5"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-specification.test.mjs",
+    "to": "tests/unit/api/fs-workspace/assistant-specification.test.mjs",
+    "sha256": "9a3b5d943f10837e861fa364ae836098075427223a640d7ea840623cc4e29e1c"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-stream-budget.test.mjs",
+    "to": "tests/unit/api/fs-workspace/assistant-stream-budget.test.mjs",
+    "sha256": "bf4e579d963d73102a1285b77893d2497e4948e21e945652e35ea3cdbb51c6ba"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-stream.test.mjs",
+    "to": "tests/unit/api/fs-workspace/assistant-stream.test.mjs",
+    "sha256": "d7a7debd6ebcbee40c8c4d0bddcfa0e22b4531d1b159bd75951e713bbc78cc2b"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-targets-timeout.test.mjs",
+    "to": "tests/unit/api/fs-workspace/assistant-targets-timeout.test.mjs",
+    "sha256": "9eab399f7afde3c8266d1e65ad362518b60018afe497311ed7f084bf06f8213a"
+  },
+  {
+    "from": "tests/fs-workspace/unit/assistant-ui-races.test.mjs",
+    "to": "tests/unit/web/fs-workspace/assistant-ui-races.test.mjs",
+    "sha256": "5243a6e36a93ea2cbc16377d4fd2b9f65a517449256b869323fc1e1d5cb73b41"
+  },
+  {
+    "from": "tests/fs-workspace/unit/ast.test.mjs",
+    "to": "tests/unit/api/fs-workspace/ast.test.mjs",
+    "sha256": "cc269d0177e76fb9dae0eff10891f1dde539e83dfe88286268a9108b4fc92377"
+  },
+  {
+    "from": "tests/fs-workspace/unit/blob-finalization.test.mjs",
+    "to": "tests/unit/api/fs-workspace/blob-finalization.test.mjs",
+    "sha256": "a723fa343ca3bdea1b37270c52f4c831d0866063d4a0f4ff4210a0b626a60738"
+  },
+  {
+    "from": "tests/fs-workspace/unit/consultant-renderer.test.mjs",
+    "to": "tests/unit/api/fs-workspace/consultant-renderer.test.mjs",
+    "sha256": "a7631451f7799c1afae0a2c7984ab2a3023852fe0dba75fe24be6caa01880b6b"
+  },
+  {
+    "from": "tests/fs-workspace/unit/context.test.mjs",
+    "to": "tests/unit/api/fs-workspace/context.test.mjs",
+    "sha256": "2e5b686fcc0adc710e668dc98ea106613b5ab4cfd9dda057f1427fc675845721"
+  },
+  {
+    "from": "tests/fs-workspace/unit/contract-sync.test.mjs",
+    "to": "tests/unit/contracts/fs-workspace/contract-sync.test.mjs",
+    "sha256": "14460336968b25d3b9fcfadff867d3b3a3c016cfc215fc8fdfc22f2df6cda5da"
+  },
+  {
+    "from": "tests/fs-workspace/unit/contracts.test.mjs",
+    "to": "tests/unit/contracts/fs-workspace/contracts.test.mjs",
+    "sha256": "e3cbb1d44d8d859c613488e3e1d9362292bc7553ef6229c63066a5abe420229c"
+  },
+  {
+    "from": "tests/fs-workspace/unit/elements-presentation.test.mjs",
+    "to": "tests/unit/web/fs-workspace/elements-presentation.test.mjs",
+    "sha256": "3de5d9b49ec542122c7c88c8df64f4d7a52746e7f1e3ca8e44938932c90034d1"
+  },
+  {
+    "from": "tests/fs-workspace/unit/gates.test.mjs",
+    "to": "tests/unit/api/fs-workspace/gates.test.mjs",
+    "sha256": "cbb481d74047377a25641d15620e66c817bff9b44c0afa813aa30df5d55a9fc7"
+  },
+  {
+    "from": "tests/fs-workspace/unit/generated-types.test.mjs",
+    "to": "tests/unit/contracts/fs-workspace/generated-types.test.mjs",
+    "sha256": "1fc70f18f0b0d9ca06eb1935297fa18499f9c2f7bc359ced0fceadcc22a61f9a"
+  },
+  {
+    "from": "tests/fs-workspace/unit/impact.test.mjs",
+    "to": "tests/unit/api/fs-workspace/impact.test.mjs",
+    "sha256": "639ed9285b98527114dbf977d1f98589972562b1cda85cc0d12998fc5517690a"
+  },
+  {
+    "from": "tests/fs-workspace/unit/llm-output.test.mjs",
+    "to": "tests/unit/api/fs-workspace/llm-output.test.mjs",
+    "sha256": "177610249d9d9afb4f05eaee35e9d301c5a92507036d066122381a138db8d2ac"
+  },
+  {
+    "from": "tests/fs-workspace/unit/local-attachments.test.mjs",
+    "to": "tests/unit/web/fs-workspace/local-attachments.test.mjs",
+    "sha256": "7096b4cf398fc2928bb4cdaf4f34c2b433e8c7368696ad3d40a2d26a45374ab7"
+  },
+  {
+    "from": "tests/fs-workspace/unit/model-capabilities.test.mjs",
+    "to": "tests/unit/api/fs-workspace/model-capabilities.test.mjs",
+    "sha256": "bcc8bde2c695428f38915aed2683bdfc7e08a71f5c3905f0329ee8fa7e260616"
+  },
+  {
+    "from": "tests/fs-workspace/unit/model-text.test.mjs",
+    "to": "tests/unit/api/fs-workspace/model-text.test.mjs",
+    "sha256": "ebf0f129d8f4d418e205d9bc978226d748839e5ccdfc9385303a48ca282e545b"
+  },
+  {
+    "from": "tests/fs-workspace/unit/rebase.test.mjs",
+    "to": "tests/unit/api/fs-workspace/rebase.test.mjs",
+    "sha256": "5b910676afb338b97a66304bf72658e866ba2eacdfb1d80a9d74536adf43d05e"
+  },
+  {
+    "from": "tests/fs-workspace/unit/session-client.test.mjs",
+    "to": "tests/unit/web/fs-workspace/session-client.test.mjs",
+    "sha256": "64ecc5834529d68d23674766b9c9d5d134a820eb2454061d2eb4b2e4732251cc"
+  },
+  {
+    "from": "tests/fs-workspace/unit/stage-attachment-transaction.test.mjs",
+    "to": "tests/unit/api/fs-workspace/stage-attachment-transaction.test.mjs",
+    "sha256": "4e242deebf3f388c53e8053361b8d2bdf58953949b866544a3e9da02db6e6e2d"
+  },
+  {
+    "from": "tests/fs-workspace/unit/structured-editor.test.mjs",
+    "to": "tests/unit/web/fs-workspace/structured-editor.test.mjs",
+    "sha256": "1f074851c73150a36c9014c513b833dc70a768d98d7b3dfcb3670598049ce2b0"
+  },
+  {
+    "from": "tests/fs-workspace/unit/temporary-ids.test.mjs",
+    "to": "tests/unit/api/fs-workspace/temporary-ids.test.mjs",
+    "sha256": "0e1e319c67dd78a40c5d6f57fd5e04472f746feb3c220434e84125c4c8de28c3"
+  },
+  {
+    "from": "tests/fs-workspace/unit/test-runner.test.mjs",
+    "to": "tests/unit/tooling/fs-workspace/test-runner.test.mjs",
+    "sha256": "b758a079d9d596d3418a69583ba67eb4db6b450c64233a00b30f8fadf78d81d6"
+  },
+  {
+    "from": "tests/fs-workspace/unit/workbench-file-race.test.mjs",
+    "to": "tests/unit/web/fs-workspace/workbench-file-race.test.mjs",
+    "sha256": "f7200a8c002739f0bca33ea162593200862f130e24f92a27476db18f4388c7fa"
+  },
+  {
+    "from": "tests/fs-workspace/unit/workbench-intent.test.mjs",
+    "to": "tests/unit/api/fs-workspace/workbench-intent.test.mjs",
+    "sha256": "aaf6192b72a539f0edc013dbc3f6923610d4c8a13be3dd61e739612ef9bdf6dc"
+  },
+  {
+    "from": "tests/fs-workspace/unit/workspace-client.test.mjs",
+    "to": "tests/unit/web/fs-workspace/workspace-client.test.mjs",
+    "sha256": "f8f76ac478b44cb96db1af475f2a3b8fa48d658f94b450da8a0919cae200abad"
+  },
+  {
+    "from": "tests/fs-workspace/worker/agent.test.mjs",
+    "to": "tests/integration/api/fs-workspace/worker/agent.test.mjs",
+    "sha256": "61efaa46f4bd7fa38f40c03bb1e268053a0901e97721188bd46334c5471f8760"
+  },
+  {
+    "from": "tests/fs-workspace/worker/export.test.mjs",
+    "to": "tests/integration/api/fs-workspace/worker/export.test.mjs",
+    "sha256": "9597f249078802c9b0652ae159560f4f9d31ad778f852b14a2dc490bf7dbcbd6"
+  },
+  {
+    "from": "tests/fs-workspace/worker/parser.test.mjs",
+    "to": "tests/integration/api/fs-workspace/worker/parser.test.mjs",
+    "sha256": "d9f79f242de378f92b42e22cd537daefc5477105bcc11bb7cabbb143082df9ea"
+  },
+  {
+    "from": "tests/fs-workspace/worker/recovery.test.mjs",
+    "to": "tests/integration/api/fs-workspace/worker/recovery.test.mjs",
+    "sha256": "9c38e73eadf6f80afc5d482e3dfb0406870099ee8da9997f2f8656d76508a407"
+  },
+  {
+    "from": "tests/fs-workspace/worker/retry-budget.test.mjs",
+    "to": "tests/integration/api/fs-workspace/worker/retry-budget.test.mjs",
+    "sha256": "738b0787e1b2595fe8a833ea4c3656d69258865dd9acd696e0412b6e4495d00a"
+  },
+  {
+    "from": "tests/fs-workspace/worker/scanner.test.mjs",
+    "to": "tests/integration/api/fs-workspace/worker/scanner.test.mjs",
+    "sha256": "ea26533f5f5697085a6e87ecda28a3b86c0b7c1b73596614c464d34a8feb9588"
+  },
+  {
+    "from": "tests/fs-workspace/worker/storage.test.mjs",
+    "to": "tests/integration/api/fs-workspace/worker/storage.test.mjs",
+    "sha256": "4fb0ad011a649c2fb7447fd8af08fb5a946267178a9887a5dc3011f194709678"
+  },
+  {
+    "from": "tests/fsd-workflow-controls.test.mjs",
+    "to": "tests/unit/web/fsd-workflow-controls.test.mjs",
+    "sha256": "833fedc749e9ba2d1a90f7a851be022a69cb4abf1ea06e837368b73f577d2b88"
+  },
+  {
+    "from": "tests/model-api.test.mjs",
+    "to": "tests/integration/api/model-api.test.mjs",
+    "sha256": "9cbb6b9696a8e450c127dafc52cdc2ef974921b94d8ec966f8c4dd2b476417dc"
+  },
+  {
+    "from": "tests/model-parameters-removed.test.mjs",
+    "to": "tests/unit/api/model-parameters-removed.test.mjs",
+    "sha256": "280deec7db4da4ba6de5043b88b67766d3773ee1bdc48c994c93dc8fcf275aed"
+  },
+  {
+    "from": "tests/model-probe-budget.test.mjs",
+    "to": "tests/unit/api/model-probe-budget.test.mjs",
+    "sha256": "51f40a58485e4a94b12394377d281bb171bb05d49c41b7edc980a3db7858c66a"
+  },
+  {
+    "from": "tests/models.test.mjs",
+    "to": "tests/unit/api/models.test.mjs",
+    "sha256": "a24c6c4be8be0453b8b973c21c7595b9527b5d3ce73d7113bcd81460c69c8830"
+  },
+  {
+    "from": "tests/pending-items-ui.test.mjs",
+    "to": "tests/e2e/pending-items-ui.test.mjs",
+    "sha256": "07d6dcd80eb8e61b91bf4298462b533bde64efd0037a005465277efe1dcff13d"
+  },
+  {
+    "from": "tests/production-config.test.mjs",
+    "to": "tests/unit/tooling/production-config.test.mjs",
+    "sha256": "bce81b01a08277ef10bdf623aed7f393672f7e7b3d900cf437a4c1e674e5d997"
+  },
+  {
+    "from": "tests/report-cases.test.mjs",
+    "to": "tests/unit/tooling/report-cases.test.mjs",
+    "sha256": "b19cceac720ecfa7f215e301f8a7733bdac6828320638611dc8f61077ee36679"
+  },
+  {
+    "from": "tests/requirement-richtext.test.mjs",
+    "to": "tests/unit/api/requirement-richtext.test.mjs",
+    "sha256": "8393e8aa65bd4eb0e13917081802643118c75bb0ea9bdd6e8868fcf699dbbefc"
+  },
+  {
+    "from": "tests/sap-api.test.mjs",
+    "to": "tests/integration/api/sap-api.test.mjs",
+    "sha256": "e4d4bb42d1ac0ad32b01f6ed34a85940d84ae3d9c15fbfb72ee0673a8c828f87"
+  },
+  {
+    "from": "tests/sap-config.test.mjs",
+    "to": "tests/unit/api/sap-config.test.mjs",
+    "sha256": "08e777c25e145d955353c2b25011082728d74b1774d9a12ab70f16a12bf5359f"
+  },
+  {
+    "from": "tests/sap-probe.test.mjs",
+    "to": "tests/unit/api/sap-probe.test.mjs",
+    "sha256": "6d466b4f5a6d1c0babe8b5a7b73a90dcdea73cb55934f511b9b23ec581a0e4fd"
+  },
+  {
+    "from": "tests/sap-verification.test.mjs",
+    "to": "tests/unit/api/sap-verification.test.mjs",
+    "sha256": "fcde807e9eddc49dc88302016325327df8b745a47b0b14c1429eb0ccb9c80d3e"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/runs/authorization.mjs",
+    "to": "apps/api/src/modules/fs-workspace/runs/authorization.mjs",
+    "sha256": "f3b3eff2b4bea607c265285d73e99c62f959627d4b0f8aa1484f0c0c3d50704c"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/runs/checkpoints.mjs",
+    "to": "apps/api/src/modules/fs-workspace/runs/checkpoints.mjs",
+    "sha256": "c566683c4f46e0ffd2761504a4a82d86adb5833d959eff9064cc7d2942c44e10"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/runs/events.mjs",
+    "to": "apps/api/src/modules/fs-workspace/runs/events.mjs",
+    "sha256": "c7f47bba862722ade9368388455f5d67148300958567f90eb206462a6d018897"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/runs/queue.mjs",
+    "to": "apps/api/src/modules/fs-workspace/runs/queue.mjs",
+    "sha256": "ed8aac8a566936782d82c91bdb85cb21294764ea4b5661f5a23694dd01aec192"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/runs/routes.mjs",
+    "to": "apps/api/src/modules/fs-workspace/runs/routes.mjs",
+    "sha256": "5aa454bace856bbdba4daab3c181d5c4f13e3bd66e7642d0470206bdf4ab3827"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/runs/runner.mjs",
+    "to": "apps/api/src/modules/fs-workspace/runs/runner.mjs",
+    "sha256": "cc111bd01ecb8c657cc8f83bbfd78e8e101c0e4eac5af9e76900ba64eee184fc"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/runs/service.mjs",
+    "to": "apps/api/src/modules/fs-workspace/runs/service.mjs",
+    "sha256": "430f473ee7c683bd328eca3e94e0bacd565679e6e08355d229e18832e1e6eedd"
+  },
+  {
+    "from": "apps/api/src/fs-workspace/runs/worker.mjs",
+    "to": "apps/api/src/modules/fs-workspace/runs/worker.mjs",
+    "sha256": "57b6ca568d213da95f1d3732f8c7dec09228c05afc003f863e11dab62d3c6b67"
+  },
+  {
+    "from": "tools/fsd-batch/lib/recorder.mjs",
+    "to": "apps/api/src/modules/agent-runtime/diagnostics/recorder.mjs",
+    "sha256": "868780a1103fb2f4fd0a37198925571f14d30a15cba191fe2da0c094ded7c556"
+  },
+  {
+    "from": "tools/fsd-batch/lib/analyzer.mjs",
+    "to": "apps/api/src/modules/agent-runtime/diagnostics/analyzer.mjs",
+    "sha256": "0df1a00f69f5b2d42cce6917022485f0970c50d260d1ec4e23e4da75c297f6de"
+  },
+  {
+    "from": "tools/fsd-batch/lib/clone-route.mjs",
+    "to": "apps/api/src/modules/delivery/clone-route.mjs",
+    "sha256": "ad7ecaf9299bc0512421a65df32dbd6ab1955a50efa4c60876dac238de83efbc"
+  },
+  {
+    "from": "apps/api/src/modules/agent-runtime/consultant-renderer.mjs",
+    "to": "packages/contracts/agent-runtime/markdown.mjs",
+    "sha256": "011da3cdc6ed5fcf2aa39bc62ec67875c3c107273ddf4f01f2fa9e802f5c5d40"
+  },
+  {
+    "from": "tools/fsd-batch/tests/core.test.mjs",
+    "to": "tests/unit/tooling/fsd-batch/core.test.mjs",
+    "sha256": "1d2e5ec27c914df1860a5e605ad2d5ce1e0d70c703c1a09361d79755583d6c02"
+  },
+  {
+    "from": "tools/fsd-batch/tests/review.test.mjs",
+    "to": "tests/unit/tooling/fsd-batch/review.test.mjs",
+    "sha256": "cfd60dbe013c3032e071e4c0d7f63b56a74089d4b31f767665900cf10c207045"
+  },
+  {
+    "from": "tools/fsd-batch/tests/clone.integration.mjs",
+    "to": "tests/e2e/fsd-batch/clone.integration.mjs",
+    "sha256": "7438116bd82c57b89c0eac172777a5179ca1487c11dd52b91c8e5a355b6e1835"
+  },
+  {
+    "from": "packages/contracts/abap-fsd-agent/fsd/v1/c.example.json",
+    "to": "packages/contracts/agent-runtime/fsd/v1/c.example.json",
+    "sha256": "d8b969412244dd2cfbf7800c8268d2ba6face9429a3eef4b101f625ac5cf3e8a"
+  },
+  {
+    "from": "packages/contracts/abap-fsd-agent/fsd/v1/c.schema.json",
+    "to": "packages/contracts/agent-runtime/fsd/v1/c.schema.json",
+    "sha256": "8700cffc6b2d46aed24aabcbfdef0f6733c5e2270a10898936cbc352b79d4d34"
+  },
+  {
+    "from": "packages/contracts/abap-fsd-agent/fsd/v1/e.example.json",
+    "to": "packages/contracts/agent-runtime/fsd/v1/e.example.json",
+    "sha256": "345f68d20c249b732839c72fc5352bb4930176407c0739b07b7a5e24fc9ab4ed"
+  },
+  {
+    "from": "packages/contracts/abap-fsd-agent/fsd/v1/e.schema.json",
+    "to": "packages/contracts/agent-runtime/fsd/v1/e.schema.json",
+    "sha256": "6efe7407d374a3c3c280decf15eb70998372ced8486a5b5fe19c92257741cd00"
+  },
+  {
+    "from": "packages/contracts/abap-fsd-agent/fsd/v1/i.example.json",
+    "to": "packages/contracts/agent-runtime/fsd/v1/i.example.json",
+    "sha256": "bbaf32b6b9b26e1551c4b4f2fa9aad7d9df9fdb0626a0c2e8eec15a18a9288f8"
+  },
+  {
+    "from": "packages/contracts/abap-fsd-agent/fsd/v1/i.schema.json",
+    "to": "packages/contracts/agent-runtime/fsd/v1/i.schema.json",
+    "sha256": "b125dd7878247ca7d05f27140535b56d6cb8e5689f586b5acd62b3fc9a2a6e55"
+  },
+  {
+    "from": "packages/contracts/abap-fsd-agent/fsd/v1/r.example.json",
+    "to": "packages/contracts/agent-runtime/fsd/v1/r.example.json",
+    "sha256": "64b23b0ba85755f8d47871d4a3ea268989e83492d794b4c3ca443ad4755f8454"
+  },
+  {
+    "from": "packages/contracts/abap-fsd-agent/fsd/v1/r.schema.json",
+    "to": "packages/contracts/agent-runtime/fsd/v1/r.schema.json",
+    "sha256": "22f54b38301c198a6936c1138a8ca7c5de5d37aec02c00d6028171c2703bc3af"
+  },
+  {
+    "from": "packages/contracts/abap-fsd-agent/fsd/v1/review-envelope.schema.json",
+    "to": "packages/contracts/agent-runtime/fsd/v1/review-envelope.schema.json",
+    "sha256": "a34cf9cfd32d6537a0300b176526ca18f24efec6fb0a0ba9d07ee3b649080dfb"
+  },
+  {
+    "from": "packages/contracts/abap-fsd-agent/fsd/v1/validate-contracts.mjs",
+    "to": "packages/contracts/agent-runtime/fsd/v1/validate-contracts.mjs",
+    "sha256": "6846ad53dfeed6d064720a0fb0803f0437b3c52bc2bb353720da15b79015de1d"
+  },
+  {
+    "from": "packages/contracts/abap-fsd-agent/fsd/v1/validate.mjs",
+    "to": "packages/contracts/agent-runtime/fsd/v1/validate.mjs",
+    "sha256": "70c55c34d2cc8d3127ef30ae579b3562293cbb8b57aeb5df3ee0c37e358d9b78"
+  },
+  {
+    "from": "packages/contracts/abap-fsd-agent/fsd/v1/validation-report.json",
+    "to": "packages/contracts/agent-runtime/fsd/v1/validation-report.json",
+    "sha256": "167e230da8d60d2be3d9d2b95fed812d8e439b529b62525c9816d9dea7ef9e99"
+  },
+  {
+    "from": "packages/contracts/abap-fsd-agent/runtime.schema.json",
+    "to": "packages/contracts/agent-runtime/runtime.schema.json",
+    "sha256": "09dbffb35231714e440682cec4d4cd5ce69ee2542b6bc266664abb32743aaaae"
+  },
+  {
+    "from": "packages/contracts/abap-fsd-agent/sse.d.mts",
+    "to": "packages/contracts/agent-runtime/sse.d.mts",
+    "sha256": "18936679bd67aeba66da2c545b2e2f9d1832662a7ad20dccad0e90f1112c0835"
+  },
+  {
+    "from": "packages/contracts/abap-fsd-agent/sse.mjs",
+    "to": "packages/contracts/agent-runtime/sse.mjs",
+    "sha256": "22c3d9ce969bcc5ac549b18a164c8dd139d4e7df2fbf89c380704fc366762936"
+  },
+  {
+    "from": "packages/contracts/abap-fsd-agent/types.ts",
+    "to": "packages/contracts/agent-runtime/types.ts",
+    "sha256": "236d4ae8c60ece70ff40984cedea0a6111360f7fb0425afe2fb59a416d9fc661"
+  },
+  {
+    "from": "packages/contracts/abap-fsd-agent/目录说明.md",
+    "to": "packages/contracts/agent-runtime/目录说明.md",
+    "sha256": "b6668bf626222281bd4ad8b95e25f47ea6ce503ab663ed1b55393859a5f912f6"
+  },
+  {
+    "from": "tests/e2e/fsd-batch/clone.integration.mjs",
+    "to": "tests/integration/api/clone.test.mjs",
+    "sha256": "253b572c2319fc1b9417c8cec99a149a631f0a0a62dbeddb1f010be748a4f976"
+  }
+]

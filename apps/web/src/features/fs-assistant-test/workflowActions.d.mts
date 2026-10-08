@@ -1,4 +1,4 @@
-import type { FsdWorkflow } from '../../../../../packages/contracts/abap-fsd-agent/types';
+import type { FsdWorkflow } from '@sap-delivery-workbench/contracts/agent-runtime/types';
 export function workflowReviewKey(state: FsdWorkflow | null): string;
 export function workflowArtifactToSync(
   state: FsdWorkflow | null,

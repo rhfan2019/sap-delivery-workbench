@@ -1,0 +1,58 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "question": {
+      "type": "string"
+    },
+    "impact": {
+      "type": "string"
+    },
+    "owner_role": {
+      "type": "string",
+      "enum": [
+        "business",
+        "technical",
+        "security",
+        "product"
+      ]
+    },
+    "blocking": {
+      "type": "string",
+      "enum": [
+        "release",
+        "review",
+        "none"
+      ]
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "open",
+        "resolved",
+        "superseded"
+      ]
+    },
+    "entity_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "id",
+    "question",
+    "impact",
+    "owner_role",
+    "blocking",
+    "state",
+    "entity_ids"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/Issue.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Issue"
+}

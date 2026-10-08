@@ -1,0 +1,27 @@
+{
+  "type": "object",
+  "properties": {
+    "checkpoint_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "checkpoint_id",
+    "reason"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/Resume.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Resume"
+}

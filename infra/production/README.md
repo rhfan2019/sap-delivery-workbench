@@ -33,9 +33,9 @@ dc() { docker compose --env-file production.env -f compose.yaml "$@"; }
 dc config --quiet
 dc --profile ops build
 dc up -d --wait postgres
-dc run --rm tooling node scripts/db-migrate.mjs
-dc run --rm tooling node scripts/db-provision.mjs
-dc run --rm tooling node scripts/bootstrap.mjs
+dc run --rm tooling node scripts/database/migrate.mjs
+dc run --rm tooling node scripts/database/provision.mjs
+dc run --rm tooling node scripts/database/bootstrap.mjs
 sudo cat secrets/organization.env
 ```
 
@@ -51,7 +51,7 @@ dc ps
 
 首次登录立即改密并删除临时密码交接文件。验收真实域名 HTTPS、Secure/HttpOnly 会话、真实客户端 IP 限流、组织/项目隔离、附件上传下载、SAP 私网连接及选定模型连接；重启容器后验证数据与附件仍存在。readiness 检查数据库连接，业务迁移、授权、外部系统仍需上述验收。健康检查失败不会自动修复配置，需通过云监控外部探测与告警处理。
 
-生产入口为 `node scripts/serve.mjs`，不运行 Vite dev/preview。Nginx 代理读取超时为 150 秒，覆盖模型连接同步测试最长 120 秒的服务端超时。API 信任唯一 Nginx 地址 `172.30.80.10`；Nginx 覆盖客户端传入的 X-Forwarded-For，不能把 API 端口公开。如果此 Docker 网段与 VPC/VPN 冲突，须同时更改 Compose 子网、Nginx 固定 IP 与 TRUST_PROXY。新增 CLB 时需重新审核可信代理与来源 IP 链。
+生产入口为 `node apps/api/src/server.mjs`，不运行 Vite dev/preview。Nginx 代理读取超时为 150 秒，覆盖模型连接同步测试最长 120 秒的服务端超时。API 信任唯一 Nginx 地址 `172.30.80.10`；Nginx 覆盖客户端传入的 X-Forwarded-For，不能把 API 端口公开。如果此 Docker 网段与 VPC/VPN 冲突，须同时更改 Compose 子网、Nginx 固定 IP 与 TRUST_PROXY。新增 CLB 时需重新审核可信代理与来源 IP 链。
 
 默认生产数据库允许服务名 postgres 上的容器网络非 TLS 连接；开发仍强制回环地址与 `_dev` 后缀。若迁至腾讯云 PostgreSQL，改 POSTGRES_HOST、POSTGRES_PORT，并设 POSTGRES_SSL_MODE=verify-full，挂载 CA 后设 POSTGRES_SSL_CA_FILE；证书主机名必须匹配，不允许 rejectUnauthorized=false。迁移与初始化使用工具容器的管理账号，API 不注入该账号。不要在生产运行测试脚本。
 
@@ -79,7 +79,7 @@ dc up -d --wait api web
 
 1. 在隔离测试环境跑完整测试并演练迁移、恢复；给 API/Web/tooling 镜像唯一 RELEASE 标签并记录镜像 ID，禁止覆盖旧标签。基础镜像当前固定版本标签，发布审核时应锁定 registry digest 并扫描漏洞。
 2. 现网执行一致性备份并确认完成，`dc stop web api`。保存旧 RELEASE 和配置，部署新代码、更新 RELEASE，`dc --profile ops build`。
-3. `dc run --rm tooling node scripts/db-migrate.mjs`，再 `dc run --rm tooling node scripts/db-provision.mjs`，最后 `dc up -d --wait api web`，执行 HTTPS/登录/附件等冒烟验收。迁移失败时不启动新版本。
+3. `dc run --rm tooling node scripts/database/migrate.mjs`，再 `dc run --rm tooling node scripts/database/provision.mjs`，最后 `dc up -d --wait api web`，执行 HTTPS/登录/附件等冒烟验收。迁移失败时不启动新版本。
 4. 若新旧 schema 向后兼容，把 RELEASE 改回旧标签并 `dc up -d --no-build api web`。不兼容或数据已改变时，停止写入，使用升级前备份恢复至独立空实例，运行旧镜像并验收后切换。不能盲目运行 down migration，也不能执行 `docker compose down -v`。
 
 容器配置和本机测试不能替代云端演练；网络、证书续期、COS备份、容量与告警、真实SAP及模型可达性均需上线前实测。

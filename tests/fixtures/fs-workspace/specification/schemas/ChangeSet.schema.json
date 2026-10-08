@@ -1,0 +1,640 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "context": {
+      "$ref": "#/$defs/Context"
+    },
+    "change_set_id": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "operations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Operation"
+      }
+    },
+    "impacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Impact"
+      }
+    },
+    "atomic_groups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "operation_target_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "operation_target_ids",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "new_issue_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "context",
+    "change_set_id",
+    "reason",
+    "operations",
+    "impacts",
+    "atomic_groups",
+    "new_issue_ids"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fs-workspace.example/schemas/ChangeSet.schema.json",
+  "title": "ChangeSet",
+  "description": "llm proposal only",
+  "$defs": {
+    "Block": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "paragraph",
+            "table",
+            "callout"
+          ]
+        },
+        "text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Row"
+          }
+        },
+        "classification": {
+          "type": "string",
+          "enum": [
+            "source_fact",
+            "assumption",
+            "recommendation",
+            "pending"
+          ]
+        },
+        "requirement_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rule_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "decision_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Link"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "text",
+        "columns",
+        "rows",
+        "classification",
+        "requirement_ids",
+        "rule_ids",
+        "decision_ids",
+        "evidence_refs"
+      ],
+      "additionalProperties": false
+    },
+    "Context": {
+      "type": "object",
+      "properties": {
+        "workspace_id": {
+          "type": "string"
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "document_id": {
+          "type": "string"
+        },
+        "base_document_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "context_snapshot_id": {
+          "type": "string"
+        },
+        "template_id": {
+          "type": "string"
+        },
+        "template_version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "session_id",
+        "run_id",
+        "document_id",
+        "base_document_version",
+        "context_snapshot_id",
+        "template_id",
+        "template_version"
+      ],
+      "additionalProperties": false
+    },
+    "Impact": {
+      "type": "object",
+      "properties": {
+        "entity_id": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "revise",
+            "invalidate_confirmation",
+            "invalidate_review",
+            "reverify",
+            "inspect"
+          ]
+        }
+      },
+      "required": [
+        "entity_id",
+        "reason",
+        "action"
+      ],
+      "additionalProperties": false
+    },
+    "Issue": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "question": {
+          "type": "string"
+        },
+        "impact": {
+          "type": "string"
+        },
+        "owner_role": {
+          "type": "string",
+          "enum": [
+            "business",
+            "technical",
+            "security",
+            "product"
+          ]
+        },
+        "blocking": {
+          "type": "string",
+          "enum": [
+            "release",
+            "review",
+            "none"
+          ]
+        },
+        "entity_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "resolved",
+            "superseded"
+          ]
+        },
+        "resolution_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "question",
+        "impact",
+        "owner_role",
+        "blocking",
+        "entity_ids",
+        "status",
+        "resolution_ref"
+      ],
+      "additionalProperties": false
+    },
+    "Link": {
+      "type": "object",
+      "properties": {
+        "evidence_id": {
+          "type": "string"
+        },
+        "locator": {
+          "type": "string"
+        },
+        "conclusion": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "locator",
+        "conclusion"
+      ],
+      "additionalProperties": false
+    },
+    "Operation": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "type": "string",
+          "enum": [
+            "add",
+            "replace",
+            "remove"
+          ]
+        },
+        "entity_type": {
+          "type": "string",
+          "enum": [
+            "requirement",
+            "rule",
+            "decision",
+            "issue",
+            "verification_request",
+            "section",
+            "block",
+            "test"
+          ]
+        },
+        "target_id": {
+          "type": "string"
+        },
+        "expected_revision": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "before_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Proposal"
+                },
+                {
+                  "$ref": "#/$defs/Issue"
+                },
+                {
+                  "$ref": "#/$defs/VerificationRequest"
+                },
+                {
+                  "$ref": "#/$defs/Section"
+                },
+                {
+                  "$ref": "#/$defs/Block"
+                },
+                {
+                  "$ref": "#/$defs/Test"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "op",
+        "entity_type",
+        "target_id",
+        "expected_revision",
+        "before_hash",
+        "value",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "Proposal": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "text": {
+          "type": "string"
+        },
+        "classification": {
+          "type": "string",
+          "enum": [
+            "source_fact",
+            "assumption",
+            "recommendation",
+            "pending"
+          ]
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Link"
+          }
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "text",
+        "classification",
+        "source_refs",
+        "depends_on"
+      ],
+      "additionalProperties": false
+    },
+    "Row": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "cells": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "cells"
+      ],
+      "additionalProperties": false
+    },
+    "Section": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "template_slot": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Block"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "template_slot",
+        "title",
+        "blocks"
+      ],
+      "additionalProperties": false
+    },
+    "Target": {
+      "type": "object",
+      "properties": {
+        "system_id": {
+          "type": "string"
+        },
+        "client": {
+          "type": "string"
+        },
+        "release": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "system_id",
+        "client",
+        "release"
+      ],
+      "additionalProperties": false
+    },
+    "Test": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "preconditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expected": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requirement_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rule_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "section_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Link"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "preconditions",
+        "steps",
+        "expected",
+        "requirement_ids",
+        "rule_ids",
+        "section_ids",
+        "evidence_refs"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/Target"
+        },
+        "claim": {
+          "type": "string"
+        },
+        "object_type": {
+          "type": "string",
+          "enum": [
+            "table",
+            "field",
+            "domain",
+            "transaction",
+            "interface",
+            "enhancement",
+            "authorization",
+            "behavior"
+          ]
+        },
+        "candidate_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "scope": {
+          "type": "string"
+        },
+        "required_evidence": {
+          "type": "string"
+        },
+        "blocking": {
+          "type": "string",
+          "enum": [
+            "release",
+            "review",
+            "none"
+          ]
+        },
+        "related_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "target",
+        "claim",
+        "object_type",
+        "candidate_name",
+        "scope",
+        "required_evidence",
+        "blocking",
+        "related_ids"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

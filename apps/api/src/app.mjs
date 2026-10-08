@@ -1,17 +1,17 @@
 import Fastify from 'fastify';
-import { registerDesignUnavailable } from './design-assistant/unavailable.mjs';
-import { registerItemWorkspaceRoutes } from './item-workspace/routes.mjs';
-import { registerWorkAgent } from './item-workspace/agent.mjs';
+import { registerDesignUnavailable } from './modules/design-assistant/unavailable.mjs';
+import { registerItemWorkspaceRoutes } from './modules/item-workspace/routes.mjs';
+import { registerWorkAgent } from './modules/item-workspace/agent.mjs';
 import pg from 'pg';
-import { databaseConfig } from '../../../scripts/lib/database.mjs';
-import { createAuth, failure } from './auth.mjs';
-import { registerAdminRoutes } from './admin/routes.mjs';
-import { registerDeliveryRoutes } from './delivery/routes.mjs';
-import { registerTechnicalRoutes } from './technical/routes.mjs';
-import { registerSapRoutes } from './sap/routes.mjs';
-import { registerModelRoutes } from './models/routes.mjs';
-import { registerFsWorkspaceRoutes } from './fs-workspace/routes.mjs';
-import { startFsWorker } from './fs-workspace/runs/runner.mjs';
+import { databaseConfig } from './platform/database.mjs';
+import { createAuth, failure } from './platform/auth.mjs';
+import { registerAdminRoutes } from './modules/admin/routes.mjs';
+import { registerDeliveryRoutes } from './modules/delivery/routes.mjs';
+import { registerTechnicalRoutes } from './modules/technical/routes.mjs';
+import { registerSapRoutes } from './modules/sap/routes.mjs';
+import { registerModelRoutes } from './modules/models/routes.mjs';
+import { registerFsWorkspaceRoutes } from './modules/fs-workspace/routes.mjs';
+import { startFsWorker } from './modules/fs-workspace/runs/runner.mjs';
 
 export async function createApp({
   organizationId = process.env.DEFAULT_ORGANIZATION_ID,

@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "properties": {
+    "document_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "document_hash": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "document_version_id",
+    "document_hash"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/ReviewCreate.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ReviewCreate"
+}

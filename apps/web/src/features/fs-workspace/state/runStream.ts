@@ -1,4 +1,4 @@
-import type { RunEvent } from '../../../../../../packages/contracts/fs-workspace/generated/types';
+import type { RunEvent } from '@sap-delivery-workbench/contracts/fs-workspace/types';
 
 const eventTypes = [
   'run.queued',

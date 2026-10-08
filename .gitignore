@@ -14,7 +14,7 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
-backups/
+/backups/
 .superpowers/
 .runtime/
 infra/production/production.env
@@ -23,7 +23,7 @@ infra/production/secrets/
 infra/production/tls/
 
 # 运行产物与临时生成物（不进入版本控制）
-runs/
-outputs/
-artifacts/
-artifacts_to_be_deleted/
+/runs/
+/outputs/
+/artifacts/
+/artifacts_to_be_deleted/

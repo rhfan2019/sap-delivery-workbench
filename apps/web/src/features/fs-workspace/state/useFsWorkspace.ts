@@ -16,7 +16,7 @@ import {
   type Attachment,
   type FsExport,
 } from '../api';
-import { canonicalJson } from '../../../../../../packages/contracts/fs-workspace/canonical.mjs';
+import { canonicalJson } from '@sap-delivery-workbench/contracts/fs-workspace/canonical';
 
 export function useFsWorkspace(projectId: string, itemId: string) {
   const client = createWorkspaceClient(projectId, itemId);

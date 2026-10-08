@@ -1,4 +1,4 @@
-import { createSseParser } from '../../../packages/contracts/abap-fsd-agent/sse.mjs';
+import { createSseParser } from '@sap-delivery-workbench/contracts/agent-runtime/sse';
 export function createClient({ url, origin = url, cookie }) {
   const headers = { cookie, origin, 'Content-Type': 'application/json' };
   return {

@@ -2,6 +2,14 @@
 **/.env
 **/.env.*
 .runtime
+tests
+docs
+tools
+.workbuddy
+artifacts
+outputs
+runs
+artifacts_to_be_deleted
 backups
 .git
 .superpowers

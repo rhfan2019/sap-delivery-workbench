@@ -7,7 +7,7 @@ import type {
   AgentSelection,
   SystemProfile,
   RunReceipt,
-} from '../../../../../packages/contracts/abap-fsd-agent/types';
+} from '@sap-delivery-workbench/contracts/agent-runtime/types';
 const route = useRoute();
 const props = defineProps<{ busy: boolean; locked: boolean; receipt: RunReceipt | null }>();
 type SapSystem = { id: string; name: string; status: string; backendVersion?: string | null };

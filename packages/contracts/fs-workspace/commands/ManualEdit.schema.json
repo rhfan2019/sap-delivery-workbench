@@ -1,0 +1,32 @@
+{
+  "type": "object",
+  "properties": {
+    "base_document_version": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "block_id": {
+      "type": "string"
+    },
+    "before_hash": {
+      "type": "string"
+    },
+    "new_block": {
+      "$ref": "https://fs-workspace.example/schemas/FsProposal.schema.json#/$defs/Block"
+    },
+    "reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "base_document_version",
+    "block_id",
+    "before_hash",
+    "new_block",
+    "reason"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/ManualEdit.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ManualEdit"
+}

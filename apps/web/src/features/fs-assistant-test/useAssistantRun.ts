@@ -5,10 +5,10 @@ import type {
   AgentSelection,
   AgentMessage,
   RunReceipt,
-} from '../../../../../packages/contracts/abap-fsd-agent/types';
+} from '@sap-delivery-workbench/contracts/agent-runtime/types';
 import { computed, onScopeDispose, ref } from 'vue';
 import { api, identity } from '../../services/session';
-import { createSseParser } from '../../../../../packages/contracts/abap-fsd-agent/sse.mjs';
+import { createSseParser } from '@sap-delivery-workbench/contracts/agent-runtime/sse';
 import type { ModelRecord } from '../models/types';
 
 type SendOptions = {

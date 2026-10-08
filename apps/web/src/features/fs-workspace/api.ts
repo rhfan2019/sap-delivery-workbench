@@ -13,7 +13,7 @@ export type {
   Capabilities,
   Head,
   Export as FsExport,
-} from '../../../../../packages/contracts/fs-workspace/generated/types';
+} from '@sap-delivery-workbench/contracts/fs-workspace/types';
 export interface Envelope<T> {
   data: T;
   meta: { request_id: string; workspace_revision: string | null };
@@ -33,7 +33,7 @@ export function createWorkspaceClient(projectId: string, itemId: string) {
       form.append('file', file);
       const result = await api<
         Envelope<
-          import('../../../../../packages/contracts/fs-workspace/generated/types').Attachment
+          import('@sap-delivery-workbench/contracts/fs-workspace/types').Attachment
         >
       >(base + '/attachments', form, 'POST', {
         headers: { 'Idempotency-Key': identity.key },

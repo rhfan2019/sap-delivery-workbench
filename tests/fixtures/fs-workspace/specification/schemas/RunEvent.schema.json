@@ -1,0 +1,177 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "context": {
+      "$ref": "#/$defs/Context"
+    },
+    "event_id": {
+      "type": "string"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "occurred_at": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "run.queued",
+        "run.started",
+        "run.progress",
+        "run.waiting",
+        "artifact.proposed",
+        "draft.saved",
+        "review.submitted",
+        "approval.recorded",
+        "baseline.published",
+        "export.ready",
+        "run.failed",
+        "run.cancelled",
+        "run.completed"
+      ]
+    },
+    "run_status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "running",
+        "waiting_user",
+        "waiting_evidence",
+        "failed",
+        "cancel_requested",
+        "cancelled",
+        "completed"
+      ]
+    },
+    "node_id": {
+      "type": "string"
+    },
+    "data": {
+      "$ref": "#/$defs/EventData"
+    }
+  },
+  "required": [
+    "schema_version",
+    "context",
+    "event_id",
+    "sequence",
+    "occurred_at",
+    "event_type",
+    "run_status",
+    "node_id",
+    "data"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fs-workspace.example/schemas/RunEvent.schema.json",
+  "title": "RunEvent",
+  "description": "server event only",
+  "$defs": {
+    "Context": {
+      "type": "object",
+      "properties": {
+        "workspace_id": {
+          "type": "string"
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "document_id": {
+          "type": "string"
+        },
+        "base_document_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "context_snapshot_id": {
+          "type": "string"
+        },
+        "template_id": {
+          "type": "string"
+        },
+        "template_version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "session_id",
+        "run_id",
+        "document_id",
+        "base_document_version",
+        "context_snapshot_id",
+        "template_id",
+        "template_version"
+      ],
+      "additionalProperties": false
+    },
+    "EventData": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "progress": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "entity_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "error_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "result_version_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "checkpoint_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "message",
+        "progress",
+        "entity_ids",
+        "error_code",
+        "retryable",
+        "result_version_id",
+        "checkpoint_id"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

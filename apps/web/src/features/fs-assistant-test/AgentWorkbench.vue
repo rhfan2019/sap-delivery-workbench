@@ -24,7 +24,7 @@ import type { ModelList, ModelRecord } from '../models/types';
 import type {
   AgentArtifact,
   AgentSelection,
-} from '../../../../../packages/contracts/abap-fsd-agent/types';
+} from '@sap-delivery-workbench/contracts/agent-runtime/types';
 const props = withDefaults(
   defineProps<{
     base?: string;

@@ -1,8 +1,8 @@
 import { readdirSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { readJson, saveJson } from './storage.mjs';
-import { analyzeRun, recommendations } from './analyzer.mjs';
-import { readTrace } from './recorder.mjs';
+import { analyzeRun, recommendations } from '@sap-delivery-workbench/api/diagnostics/analyzer';
+import { readTrace } from '@sap-delivery-workbench/api/diagnostics/recorder';
 const esc = (v) =>
   String(v ?? '').replace(
     /[&<>"']/g,

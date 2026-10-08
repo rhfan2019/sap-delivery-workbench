@@ -7,11 +7,11 @@ import AgentWorkbench from '../fs-assistant-test/AgentWorkbench.vue';
 import GemFsdV2 from './GemFsdV2.vue';
 import ChatMarkdown from '../fs-assistant-test/ChatMarkdown.vue';
 import StructuredEditor from './StructuredEditor.vue';
-import fsdSchema from '../../../../../packages/contracts/abap-fsd-agent/fsd/v1/r.schema.json';
+import fsdSchema from '@sap-delivery-workbench/contracts/agent-runtime/fsd/v1/r.schema.json';
 import type {
   AgentArtifact,
   AgentSelection,
-} from '../../../../../packages/contracts/abap-fsd-agent/types';
+} from '@sap-delivery-workbench/contracts/agent-runtime/types';
 import {
   ArrowLeft,
   MoreHorizontal,

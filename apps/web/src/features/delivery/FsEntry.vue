@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import FsEditor from './FsEditor.vue';
 import { api } from '../../services/session';
 import type { Item } from './model';
-import type { Snapshot } from '../../../../../packages/contracts/fs-workspace/generated/types';
+import type { Snapshot } from '@sap-delivery-workbench/contracts/fs-workspace/types';
 const props = defineProps<{ path: string; item: Item; writable: boolean }>();
 const emit = defineEmits<{ updated: [] }>();
 const editor = ref<InstanceType<typeof FsEditor> | null>(null),

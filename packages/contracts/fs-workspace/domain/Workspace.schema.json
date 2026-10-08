@@ -1,0 +1,78 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "fs_number": {
+      "type": "string"
+    },
+    "profile": {
+      "type": "string",
+      "enum": [
+        "report",
+        "interface",
+        "enhancement",
+        "batch",
+        "tool",
+        "form"
+      ]
+    },
+    "template_id": {
+      "type": "string"
+    },
+    "template_version": {
+      "type": "string"
+    },
+    "draft_head": {
+      "anyOf": [
+        {
+          "$ref": "https://fs-workspace.example/http/Head.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "review_head": {
+      "anyOf": [
+        {
+          "$ref": "https://fs-workspace.example/http/Head.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "baseline_head": {
+      "anyOf": [
+        {
+          "$ref": "https://fs-workspace.example/http/Head.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "revision": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    }
+  },
+  "required": [
+    "id",
+    "fs_number",
+    "profile",
+    "template_id",
+    "template_version",
+    "draft_head",
+    "review_head",
+    "baseline_head",
+    "revision"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/Workspace.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Workspace"
+}

@@ -1,0 +1,43 @@
+{
+  "type": "object",
+  "properties": {
+    "template_id": {
+      "type": "string"
+    },
+    "template_version": {
+      "type": "string"
+    },
+    "profile": {
+      "type": "string",
+      "enum": [
+        "report",
+        "interface",
+        "enhancement",
+        "batch",
+        "tool",
+        "form"
+      ]
+    },
+    "legacy_source_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "template_id",
+    "template_version",
+    "profile",
+    "legacy_source_id"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/WorkspaceCreate.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WorkspaceCreate"
+}

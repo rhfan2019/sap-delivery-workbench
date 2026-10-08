@@ -7,7 +7,7 @@ import type {
   FsdPhase,
   FsdWorkflow,
   FsdWorkflowCommand,
-} from '../../../../../packages/contracts/abap-fsd-agent/types';
+} from '@sap-delivery-workbench/contracts/agent-runtime/types';
 import { workflowActions, workflowReviewKey, workflowArtifactToSync } from './workflowActions.mjs';
 import ChatMarkdown from './ChatMarkdown.vue';
 const props = defineProps<{

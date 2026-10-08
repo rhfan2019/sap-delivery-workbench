@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "properties": {
+    "source_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "base_document_version": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "source_version_id",
+    "base_document_version",
+    "reason"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/Restore.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Restore"
+}

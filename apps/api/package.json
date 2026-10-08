@@ -1,0 +1,37 @@
+{
+  "name": "@sap-delivery-workbench/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/app.mjs",
+    "./platform/database": "./src/platform/database.mjs",
+    "./platform/production": "./src/platform/production.mjs",
+    "./platform/auth": "./src/platform/auth.mjs",
+    "./platform/password": "./src/platform/password.mjs",
+    "./sap-mcp": "./src/modules/technical/sap-mcp.mjs",
+    "./delivery-validation": "./src/modules/delivery/validation.mjs",
+    "./document-renderer": "./src/modules/agent-runtime/feedback.mjs",
+    "./diagnostics/recorder": "./src/modules/agent-runtime/diagnostics/recorder.mjs",
+    "./diagnostics/analyzer": "./src/modules/agent-runtime/diagnostics/analyzer.mjs"
+  },
+  "scripts": {
+    "start": "node src/server.mjs"
+  },
+  "dependencies": {
+    "@fastify/multipart": "10.1.2",
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "argon2": "^0.45.1",
+    "docx": "9.8.1",
+    "fast-xml-parser": "^5.11.1",
+    "fastify": "^5.12.5",
+    "jszip": "3.10.2",
+    "pdfjs-dist": "6.3.289",
+    "pg": "^8.23.1",
+    "playwright": "1.63.0",
+    "sanitize-html": "^2.18.0",
+    "@sap-delivery-workbench/contracts": "*"
+  }
+}

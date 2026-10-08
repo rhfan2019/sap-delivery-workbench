@@ -1,0 +1,37 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "revision": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "formal_number": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "content_hash": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "revision",
+    "formal_number",
+    "content_hash"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/Head.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Head"
+}

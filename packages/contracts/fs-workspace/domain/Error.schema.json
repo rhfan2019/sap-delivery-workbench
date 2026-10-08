@@ -1,0 +1,70 @@
+{
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "enum": [
+        "INVALID_INPUT",
+        "UNAUTHENTICATED",
+        "FORBIDDEN",
+        "NOT_FOUND",
+        "VERSION_CONFLICT",
+        "IDEMPOTENCY_CONFLICT",
+        "FS_WORKSPACE_ENABLED",
+        "GATE_BLOCKED",
+        "PRECONDITION_REQUIRED",
+        "PAYLOAD_TOO_LARGE",
+        "EVENT_CURSOR_EXPIRED",
+        "MODEL_CAPABILITY_REQUIRED",
+        "DEPENDENCY_MISSING",
+        "SERVICE_UNAVAILABLE"
+      ]
+    },
+    "message": {
+      "type": "string"
+    },
+    "details": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "rule_id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "entity_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "path",
+          "rule_id",
+          "message",
+          "entity_ids"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "request_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "code",
+    "message",
+    "details",
+    "request_id"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/Error.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Error"
+}

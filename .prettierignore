@@ -6,3 +6,7 @@ package-lock.json
 .env.*
 database/migrations/
 vendor/
+.runtime/
+docs/archive/
+docs/architecture/moved-files.json
+docs/architecture/restored-files.json

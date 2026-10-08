@@ -1,0 +1,141 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "revision": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "applicability": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "input_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "output_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "algorithm_summary": {
+      "type": "string"
+    },
+    "authorization_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "exception_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "test_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "currency_policy": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "currencies": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "scale_source": {
+              "type": "string"
+            },
+            "rounding": {
+              "type": "string",
+              "enum": [
+                "half_up",
+                "half_even",
+                "down",
+                "not_applicable"
+              ]
+            },
+            "tolerance_decimal": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cross_currency_allowed": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "currencies",
+            "scale_source",
+            "rounding",
+            "tolerance_decimal",
+            "cross_currency_allowed"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "unit_policy": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "confirmation_subject": {
+      "$ref": "https://fs-workspace.example/http/ManifestEntry.schema.json"
+    },
+    "open_issue_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "id",
+    "revision",
+    "applicability",
+    "input_refs",
+    "output_refs",
+    "algorithm_summary",
+    "authorization_refs",
+    "exception_refs",
+    "test_refs",
+    "currency_policy",
+    "unit_policy",
+    "confirmation_subject",
+    "open_issue_ids"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/RuleDetail.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RuleDetail"
+}

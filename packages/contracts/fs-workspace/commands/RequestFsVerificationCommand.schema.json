@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "properties": {
+    "verification_id": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "verification_id",
+    "scope"
+  ],
+  "additionalProperties": false,
+  "$id": "https://fs-workspace.example/http/RequestFsVerificationCommand.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RequestFsVerificationCommand"
+}

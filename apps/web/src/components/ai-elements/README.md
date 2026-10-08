@@ -21,4 +21,4 @@ Platform adaptations:
 - Heading observation handles asynchronously mounted Markdown headings and keeps document outline navigation.
 - Elements utility/theme CSS uses platform tokens, with existing CSS in the base layer; no global Tailwind Preflight reset.
 
-Upgrades: download a reviewed commit, compare against upstream.json and reapply local patches deliberately. `scripts/vendor-ai-elements.mjs` is the initial import utility and overwrites imported source; do not rerun against local patches without reviewing the diff. Never use an unpinned all-components registry update in the working application.
+Upgrades: download a reviewed commit, compare against upstream.json and reapply local patches deliberately. `scripts/vendor/vendor-ai-elements.mjs` is the initial import utility and overwrites imported source; do not rerun against local patches without reviewing the diff. Never use an unpinned all-components registry update in the working application.

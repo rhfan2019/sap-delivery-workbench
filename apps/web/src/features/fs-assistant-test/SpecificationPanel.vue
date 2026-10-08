@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { X, Download, FileText } from '@lucide/vue';
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { visibleOutline, type OutlineItem } from './outline.mjs';
-import type { AgentArtifact } from '../../../../../packages/contracts/abap-fsd-agent/types';
+import type { AgentArtifact } from '@sap-delivery-workbench/contracts/agent-runtime/types';
 import ChatMarkdown from './ChatMarkdown.vue';
 const props = withDefaults(defineProps<{ artifact: AgentArtifact; base?: string }>(), {
   base: '/admin/abap-fsd-agent',

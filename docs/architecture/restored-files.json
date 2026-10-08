@@ -1,0 +1,427 @@
+[
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\abap-fsd-agent\\目录说明.md",
+    "restored": "packages/contracts/abap-fsd-agent/目录说明.md",
+    "sha256": "B6668BF626222281BD4AD8B95E25F47EA6CE503AB663ED1B55393859A5F912F6"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\abap-fsd-agent\\runtime.schema.json",
+    "restored": "packages/contracts/abap-fsd-agent/runtime.schema.json",
+    "sha256": "09DBFFB35231714E440682CEC4D4CD5CE69EE2542B6BC266664ABB32743AAAAE"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\abap-fsd-agent\\sse.d.mts",
+    "restored": "packages/contracts/abap-fsd-agent/sse.d.mts",
+    "sha256": "18936679BD67AEBA66DA2C545B2E2F9D1832662A7AD20DCCAD0E90F1112C0835"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\abap-fsd-agent\\sse.mjs",
+    "restored": "packages/contracts/abap-fsd-agent/sse.mjs",
+    "sha256": "22C3D9CE969BCC5AC549B18A164C8DD139D4E7DF2FBF89C380704FC366762936"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\abap-fsd-agent\\types.ts",
+    "restored": "packages/contracts/abap-fsd-agent/types.ts",
+    "sha256": "236D4AE8C60ECE70FF40984CEDEA0A6111360F7FB0425AFE2FB59A416D9FC661"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\abap-fsd-agent\\fsd\\v1\\c.example.json",
+    "restored": "packages/contracts/abap-fsd-agent/fsd/v1/c.example.json",
+    "sha256": "D8B969412244DD2CFBF7800C8268D2BA6FACE9429A3EEF4B101F625AC5CF3E8A"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\abap-fsd-agent\\fsd\\v1\\c.schema.json",
+    "restored": "packages/contracts/abap-fsd-agent/fsd/v1/c.schema.json",
+    "sha256": "8700CFFC6B2D46AED24AABCBFDEF0F6733C5E2270A10898936CBC352B79D4D34"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\abap-fsd-agent\\fsd\\v1\\e.example.json",
+    "restored": "packages/contracts/abap-fsd-agent/fsd/v1/e.example.json",
+    "sha256": "345F68D20C249B732839C72FC5352BB4930176407C0739B07B7A5E24FC9AB4ED"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\abap-fsd-agent\\fsd\\v1\\e.schema.json",
+    "restored": "packages/contracts/abap-fsd-agent/fsd/v1/e.schema.json",
+    "sha256": "6EFE7407D374A3C3C280DECF15EB70998372CED8486A5B5FE19C92257741CD00"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\abap-fsd-agent\\fsd\\v1\\i.example.json",
+    "restored": "packages/contracts/abap-fsd-agent/fsd/v1/i.example.json",
+    "sha256": "BBAF32B6B9B26E1551C4B4F2FA9AAD7D9DF9FDB0626A0C2E8EEC15A18A9288F8"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\abap-fsd-agent\\fsd\\v1\\i.schema.json",
+    "restored": "packages/contracts/abap-fsd-agent/fsd/v1/i.schema.json",
+    "sha256": "B125DD7878247CA7D05F27140535B56D6CB8E5689F586B5ACD62B3FC9A2A6E55"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\abap-fsd-agent\\fsd\\v1\\r.example.json",
+    "restored": "packages/contracts/abap-fsd-agent/fsd/v1/r.example.json",
+    "sha256": "64B23B0BA85755F8D47871D4A3EA268989E83492D794B4C3CA443AD4755F8454"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\abap-fsd-agent\\fsd\\v1\\r.schema.json",
+    "restored": "packages/contracts/abap-fsd-agent/fsd/v1/r.schema.json",
+    "sha256": "22F54B38301C198A6936C1138A8CA7C5DE5D37AEC02C00D6028171C2703BC3AF"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\abap-fsd-agent\\fsd\\v1\\review-envelope.schema.json",
+    "restored": "packages/contracts/abap-fsd-agent/fsd/v1/review-envelope.schema.json",
+    "sha256": "A34CF9CFD32D6537A0300B176526CA18F24EFEC6FB0A0BA9D07EE3B649080DFB"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\abap-fsd-agent\\fsd\\v1\\validate-contracts.mjs",
+    "restored": "packages/contracts/abap-fsd-agent/fsd/v1/validate-contracts.mjs",
+    "sha256": "6846AD53DFEED6D064720A0FB0803F0437B3C52BC2BB353720DA15B79015DE1D"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\abap-fsd-agent\\fsd\\v1\\validate.mjs",
+    "restored": "packages/contracts/abap-fsd-agent/fsd/v1/validate.mjs",
+    "sha256": "70C55C34D2CC8D3127EF30AE579B3562293CBB8B57AEB5DF3EE0C37E358D9B78"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\abap-fsd-agent\\fsd\\v1\\validation-report.json",
+    "restored": "packages/contracts/abap-fsd-agent/fsd/v1/validation-report.json",
+    "sha256": "167E230DA8D60D2BE3D9D2B95FED812D8E439B529B62525C9816D9DEA7EF9E99"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\canonical.d.mts",
+    "restored": "packages/contracts/fs-workspace/canonical.d.mts",
+    "sha256": "E41E1A16F41DC2DF92CC7C442D70F1065CD292D16123E0E357F49F07619FF0A6"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\canonical.mjs",
+    "restored": "packages/contracts/fs-workspace/canonical.mjs",
+    "sha256": "2066DB78F84FD95FA2BD85198589E4DB0708BEC6B6D24C7EC7065256DF247629"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\index.mjs",
+    "restored": "packages/contracts/fs-workspace/index.mjs",
+    "sha256": "25040AFE57920F0D158F00B0E81FF3D14846E7C3999A5925DAA4ED842897D312"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\registry.json",
+    "restored": "packages/contracts/fs-workspace/registry.json",
+    "sha256": "380C566CAA828600384ADA24028205C65672946A44E41ED4D8532AFA3E403C1A"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\AcceptChange.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/AcceptChange.schema.json",
+    "sha256": "0D76FABCB8C5BB752363710BA0EFFAB743CC7DECA0ACB6C5AFEBA68DB7A336E3"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\ApprovalCreate.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/ApprovalCreate.schema.json",
+    "sha256": "F6853200CD1F32A3DAA9D8B13E3DA064D03649C9824CC67228634368DA1038CB"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\AssessFsVerificationCommand.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/AssessFsVerificationCommand.schema.json",
+    "sha256": "D154976EDD977E842BE5AA565B7DDAAFFB908955E27A37EA578AD59EBFDE8DDF"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\Confirm.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/Confirm.schema.json",
+    "sha256": "D5DF8C6B6D2A77FBFEBB4BDBF458B285AA1B3A2DABF6346223C6BE70DD28C76A"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\Empty.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/Empty.schema.json",
+    "sha256": "2CA018DFAA883A9D39658C0338822630A1E6AD44E87AD5AC08864C6D2C0D741E"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\ExportCreate.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/ExportCreate.schema.json",
+    "sha256": "9BCB8A9C564708052584F9108AB6C6D2F4484D3BCD767A51B15D6E60855BA607"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\ManualEdit.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/ManualEdit.schema.json",
+    "sha256": "6CC3042F1090B232CF2B3F7CD66BEC53BB6B31D3BD5C0ABAA66DF970D6750862"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\MessageCreate.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/MessageCreate.schema.json",
+    "sha256": "6C25805631C1FCF15D1496E2C6F6DA2C11BB64E1569AA96ECC3D134FA724921D"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\PublicationCreate.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/PublicationCreate.schema.json",
+    "sha256": "FAE5CF0E8EC866AB8C0D940B3A255CCE8B2D34B49EECD7495F4405FBD5748150"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\RebaseFsChangeCommand.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/RebaseFsChangeCommand.schema.json",
+    "sha256": "B8BA1E1B72AFBA83DF424C311566260ADA44696B1800ABFBB3A609B441FC6F28"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\RejectFsChangeCommand.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/RejectFsChangeCommand.schema.json",
+    "sha256": "477DA1F7BFA475EB9853DFC99D182C31F414F07145239352E03C4AF45CFEB6F1"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\RequestFsVerificationCommand.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/RequestFsVerificationCommand.schema.json",
+    "sha256": "9AB3DEF1A3ACAAB5A0B6F5A32D7450D70756B681652F3B845F02D8B07FFF0A75"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\Restore.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/Restore.schema.json",
+    "sha256": "D161E142DA94480EF1155F9942504CB0A7E24F2B72F4774D9C5DCB8DE6D53E7B"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\Resume.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/Resume.schema.json",
+    "sha256": "A4F33FAF892FF3ED9FC7BABCF586CD55EF7D8BF87EA2075F5C60509F419FE217"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\RetryFsParseCommand.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/RetryFsParseCommand.schema.json",
+    "sha256": "5C40218700671AEA1AFFB040FA126AED6DAA34F0190F4F158065B6BD961B921F"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\ReviewCreate.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/ReviewCreate.schema.json",
+    "sha256": "96D61D17F326C802455B001BEE44132E0935AA32592E1ECE85187F56AE87C763"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\SessionCreate.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/SessionCreate.schema.json",
+    "sha256": "52898EFE1F2C91BA6A5CFFF78E00ADEC6C6E051049B9DF5CF2099765E48D47DF"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\SetFsProjectRolesCommand.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/SetFsProjectRolesCommand.schema.json",
+    "sha256": "D606993533F85B8D5EF884B1542BC42B11CBCE06557898F4DBE3FAEB2D7C4B05"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\SnapshotCreate.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/SnapshotCreate.schema.json",
+    "sha256": "E4E5FC3D0254E2E0A42B06A0E9C612996FF06CE2AFB2A1355FE15FCFA40059B6"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\WithdrawFsBaselineCommand.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/WithdrawFsBaselineCommand.schema.json",
+    "sha256": "F2C3C7338F9B85C880FF7BFBCA76F18986C8D8B4364D7F5955C0D2C81D148C31"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\commands\\WorkspaceCreate.schema.json",
+    "restored": "packages/contracts/fs-workspace/commands/WorkspaceCreate.schema.json",
+    "sha256": "27FB683400660D12D8097BEE05573C6418BC02F3FBA71544CF24BC7305871EE5"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\AgentArtifact.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/AgentArtifact.schema.json",
+    "sha256": "AED07D58D7F1B5E10175E9B86ACF27C9D00C1CE1F52FFE40635743AF5EAEDE8C"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\ApprovalRecord.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/ApprovalRecord.schema.json",
+    "sha256": "4DFEC8B787C23735762D12330F916DDFF342F124778E0D889A9FB58F6ADAD691"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\Attachment.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/Attachment.schema.json",
+    "sha256": "EAAAB100038B24D6BD3F6463327F29AC04354AFABE0328D93B36C26F75CD3246"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\Capabilities.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/Capabilities.schema.json",
+    "sha256": "C285F3E3D9BD2B81244CB990349D6E39CA06790F970B272410822F221DE50EAD"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\CommandReceipt.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/CommandReceipt.schema.json",
+    "sha256": "2857656F2A94757B0E2E40461C80D1A85BF50A599CDA2A0B39887241CEACB6F1"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\ContextSnapshot.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/ContextSnapshot.schema.json",
+    "sha256": "6A9F28B308229F05F55139E3FA45F5C7A4E1B1EC9C496E421B5AE0719B8CFCC9"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\DecisionRecord.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/DecisionRecord.schema.json",
+    "sha256": "1399F6F63DA2723E7A73D30A0E5B0CC68DC1FE58BC0763FB9C755F88EF8D8A9F"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\Error.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/Error.schema.json",
+    "sha256": "AB248CD70C04B61F7469D6331A5F657609E40EFF0E3D80D6F2F1496F5315D91B"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\EvidenceRecord.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/EvidenceRecord.schema.json",
+    "sha256": "78025E3B44D85A85C66CEDC8BAC8A657F9CD16282D6E433EC6FE68AD7C034854"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\Export.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/Export.schema.json",
+    "sha256": "2686EEB9D95A9839C08A38FAB51989FAC3234C85DDD4BA37F246B07EE03646E1"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\ExportManifest.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/ExportManifest.schema.json",
+    "sha256": "6B8798FFB5C6C9078DEB1970E948466C042A580B0B4448A710B1BB0A3FE7B451"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\FsDocument.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/FsDocument.schema.json",
+    "sha256": "595A39F20B2761D0E8092483E19D0568A965056E864752295F34D460FCB8612F"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\FsProjectRoleAssignment.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/FsProjectRoleAssignment.schema.json",
+    "sha256": "B6E4E731BA3FB8A8036496F5EA98D22F571A84A75583B083904B9C6B7A171C35"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\Gate.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/Gate.schema.json",
+    "sha256": "71FC93BD3772245549A757071065E095878C2AE9BC777F7E915A503ACB06FDEC"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\Head.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/Head.schema.json",
+    "sha256": "4D0FB0D786683DB862219D2758A897C8E2DE59AA28D179AB07068AD747C92C35"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\Issue.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/Issue.schema.json",
+    "sha256": "4C2B80D3FD2AC4F4E082C455E52856082FEC7AD5CEE20E34796ABFD44950C8F6"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\ManifestEntry.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/ManifestEntry.schema.json",
+    "sha256": "82BDD795BB11D455B54D2FE1F4F34EB0C1CACB5BF3127A81A73ABF5846E21F82"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\Message.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/Message.schema.json",
+    "sha256": "D0DF8973AF8954866A8DA13508C5A25DF17F80C480490F100F3530CADCAD49B5"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\Meta.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/Meta.schema.json",
+    "sha256": "94AC3B1226AB1A6C6EDB8920DFAC7AD5D8A0F832D95C7C166B4D00289CC031B6"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\ParseResult.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/ParseResult.schema.json",
+    "sha256": "26FDA8D118E1B22A66CAC2134A8C2FF901332830C0955913F38F7349BC0E9AC2"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\RequirementRecord.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/RequirementRecord.schema.json",
+    "sha256": "F46A926DEE0A17EC08EA8D9FE65127CD2248935E96417CDD02E7C84DA2991C91"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\ReviewRequest.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/ReviewRequest.schema.json",
+    "sha256": "DE69F46CE64B4D9C8A13560EEB75C326B6203AA2C7A9874AD97A503E45450B97"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\RuleDetail.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/RuleDetail.schema.json",
+    "sha256": "5348AD8D9731087A15971041CEA296B5D459CA31CEF69276224DF6E334FFFBFB"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\Run.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/Run.schema.json",
+    "sha256": "EF51327E75FCD27FE050B2D3637841235D4C4EF59AB04EC2E92B0D1FAE63B18C"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\RunCheckpoint.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/RunCheckpoint.schema.json",
+    "sha256": "0998C3B40C8C1C80AB45F96DA90C565D4839BE9536C35053F83FC6D9153D736C"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\Selection.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/Selection.schema.json",
+    "sha256": "B5B02783E30657EDC915A951478B3194B3B26E349E291ECFD8B0F1DBE75FB3B9"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\Session.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/Session.schema.json",
+    "sha256": "1C3396744184B3CA6C4F7489579400AC6F227304971AC81B419D283B0A88E570"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\Snapshot.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/Snapshot.schema.json",
+    "sha256": "67ABD07A5F6A5D5E602127F28500FE8EE7B2D19FDEB5770751626E2F0E3101FC"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\SourceRegion.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/SourceRegion.schema.json",
+    "sha256": "08B0077304A2A7506A28C1FB40FDFFAEC986AC92D0FFC02072EF07223ABB27A7"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\UploadReceipt.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/UploadReceipt.schema.json",
+    "sha256": "A1B4B027C8A3FBF185A813D924C8416C94275A92AE2B2ACE19C2C144744C7732"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\domain\\Workspace.schema.json",
+    "restored": "packages/contracts/fs-workspace/domain/Workspace.schema.json",
+    "sha256": "E2D660729FE1726CEE234F9E8EA7EC5D1888FF119390CB24F4ECD4D1F251DBCE"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\events\\RunEvent.schema.json",
+    "restored": "packages/contracts/fs-workspace/events/RunEvent.schema.json",
+    "sha256": "BE5C3E002D850E07D47D91153415AEBC7C536823268F4EB0CC25B15487027677"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\generated\\types.ts",
+    "restored": "packages/contracts/fs-workspace/generated/types.ts",
+    "sha256": "BBBD8E4C610CBBA5751AE6F26AD9DF7DF5AE1AFA5E79AC02C99893031CBD3624"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\proposals\\ChangeSet.schema.json",
+    "restored": "packages/contracts/fs-workspace/proposals/ChangeSet.schema.json",
+    "sha256": "55607A9FE18B134E4C95E025FAFA5133A6A067DEA2D4913B803A0640204B9898"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\proposals\\Clarification.schema.json",
+    "restored": "packages/contracts/fs-workspace/proposals/Clarification.schema.json",
+    "sha256": "B18C5F04085EAC0103FF3B13EEB9BC0D112C12059EE692493F0E1844B6832EB5"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\proposals\\FsProposal.schema.json",
+    "restored": "packages/contracts/fs-workspace/proposals/FsProposal.schema.json",
+    "sha256": "F8E31BEED2695C00D4308C810E058CD4E655D4DE3816804B7E0572496DB8C926"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\proposals\\OrchestratorPlan.schema.json",
+    "restored": "packages/contracts/fs-workspace/proposals/OrchestratorPlan.schema.json",
+    "sha256": "5D657667F83E4208D0161DBC73E02AA75C65B880277FEC97DFDDFA422BBC74F7"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\proposals\\RequirementAnalysis.schema.json",
+    "restored": "packages/contracts/fs-workspace/proposals/RequirementAnalysis.schema.json",
+    "sha256": "7E8D4EFDEB4B8DFE10C7C62FC28FACA728C9D33C181CA776304EC24F2A59745E"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\proposals\\ReviewResult.schema.json",
+    "restored": "packages/contracts/fs-workspace/proposals/ReviewResult.schema.json",
+    "sha256": "B13F60257A7E211B47E2833585B6EF2A73BC4AE6AEC941AA2B234122075A480A"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\fs-workspace\\proposals\\VerificationProposal.schema.json",
+    "restored": "packages/contracts/fs-workspace/proposals/VerificationProposal.schema.json",
+    "sha256": "71B3FF39869A47B4636D5652E6872F770CE3E402A14C7471C3F28C9A2FFB5159"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\item-workspace\\document.mjs",
+    "restored": "packages/contracts/item-workspace/document.mjs",
+    "sha256": "43AFE6FF63D64094969F851271CDCD5FB29E12A99805CFAAF9284E6840BF4EA5"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\contracts\\item-workspace\\document.schema.json",
+    "restored": "packages/contracts/item-workspace/document.schema.json",
+    "sha256": "D263794ACF8C2BC39161AEAB2C686C8786E4BE6280649997544DAFA5AF541543"
+  },
+  {
+    "source": "D:\\Workspace\\sap-delivery-workbench - 副本 (2)\\packages\\agents\\item-development\\v1\\system.md",
+    "restored": "packages/agents/item-development/v1/system.md",
+    "sha256": "8CC7C388F2505ED6AA658F9DAEB318C2E089F111C242EE3CDF6E0B39089849E8"
+  }
+]

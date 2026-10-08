@@ -4,7 +4,7 @@ import type { HTMLAttributes } from 'vue';
 import { cn } from '@/lib/utils';
 import { reactiveOmit } from '@vueuse/core';
 import { SelectContent, SelectPortal, SelectViewport, useForwardPropsEmits } from 'reka-ui';
-import { SelectScrollDownButton, SelectScrollUpButton } from '.';
+import { SelectScrollDownButton, SelectScrollUpButton } from './';
 
 defineOptions({
   inheritAttrs: false,
