@@ -168,9 +168,13 @@ export function normalizeClarification(value) {
       other: true,
       requires_material: false,
     };
-    q.options = q.options.filter((o) => o !== other).map((o) => ({ ...o, other: false }));
+    // The chat decision card has no per-answer upload; a requires_material option could
+    // never be submitted (INVALID_ANSWER). Material goes in as a normal chat attachment.
+    q.options = q.options
+      .filter((o) => o !== other)
+      .map((o) => ({ ...o, other: false, requires_material: false }));
     if (q.options.length >= 8) q.options.length = 7;
-    q.options.push({ ...other, other: true });
+    q.options.push({ ...other, other: true, requires_material: false });
     unique(q.options);
     const pick = q.options.findIndex((o) => o.recommended && !o.other);
     q.options.forEach((o, i) => (o.recommended = i === (pick >= 0 ? pick : 0)));
