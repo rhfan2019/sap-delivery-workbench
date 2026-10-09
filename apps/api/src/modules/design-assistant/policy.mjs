@@ -323,10 +323,15 @@ export const SECTION_GROUPS = Object.freeze([
   { id: 'review', sections: [7, 8] },
 ]);
 // Merge one group's proposal into the draft: that group's sections are replaced, the rest kept.
-export function mergeProposalGroup(draft, part, group) {
+// byObject: a fix call (dangling references, dependency review) re-states only some objects of
+// the group; those replace their earlier versions and the group's other changes stay.
+export function mergeProposalGroup(draft, part, group, { byObject = false } = {}) {
+  const restated = new Set(part.changes.map((c) => c.object_id));
   // An empty group answer means "unchanged": keep what the draft already has for it.
-  const keep = (draft?.changes ?? []).filter(
-    (c) => !part.changes.length || !group.sections.includes(c.section),
+  const keep = (draft?.changes ?? []).filter((c) =>
+    byObject
+      ? !restated.has(c.object_id)
+      : !part.changes.length || !group.sections.includes(c.section),
   );
   // A re-proposed group may rename or drop objects; those still cited by another chapter
   // stay (unchanged) so the draft does not end with dangling references.
@@ -334,6 +339,7 @@ export function mergeProposalGroup(draft, part, group) {
   const cited = new Set([...keep, ...part.changes].flatMap((c) => c.dependencies ?? []));
   const stillCited = (draft?.changes ?? []).filter(
     (c) =>
+      !byObject &&
       group.sections.includes(c.section) &&
       part.changes.length &&
       !proposed.has(c.object_id) &&
@@ -342,8 +348,12 @@ export function mergeProposalGroup(draft, part, group) {
   const issues = new Map(
     [...(draft?.unresolved_issues ?? []), ...part.unresolved_issues].map((i) => [i.id, i]),
   );
-  // Open items are listed in unresolved_issues, not dependency targets.
-  const changes = [...keep, ...stillCited, ...part.changes].map((c) =>
+  // One change per object (a later statement wins); open items are listed in
+  // unresolved_issues, not dependency targets.
+  const unique = [
+    ...new Map([...keep, ...stillCited, ...part.changes].map((c) => [c.object_id, c])).values(),
+  ];
+  const changes = unique.map((c) =>
     Array.isArray(c.dependencies) && c.dependencies.some((d) => issues.has(d))
       ? { ...c, dependencies: c.dependencies.filter((d) => !issues.has(d)) }
       : c,

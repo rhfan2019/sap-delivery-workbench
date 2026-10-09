@@ -370,3 +370,51 @@ test('FLOW-13 references to objects no chapter defines get one fix round, then b
     await w.close();
   }
 });
+test('FLOW-14 objects depending on a revised object get one dependency review call', async () => {
+  const w = await workflow();
+  const reviewCalls = [];
+  try {
+    const field = {
+      object_id: 'field-qty',
+      base_version: 0,
+      op: 'ADD',
+      content: '订单数量',
+      dependencies: ['section-3'],
+      reason: 'fixture',
+      section: 3,
+    };
+    await w.command({ command: 'supplement', text: '建立字段' });
+    await w.run({
+      model: async (args) => {
+        const r = await syntheticModel(args);
+        if (args.kind === 'ChangeProposal' && args.part?.group.sections.includes(3))
+          r.output.changes.push(structuredClone(field));
+        return r;
+      },
+    });
+    assert.equal(w.task.objects['field-qty'].version, 1);
+    await w.command({ command: 'supplement', text: '只改第 3 章' });
+    await w.run({
+      model: async (args) => {
+        const r = await syntheticModel(args);
+        if (args.kind === 'ChangeProposal') {
+          if (args.part?.review) {
+            reviewCalls.push(args.part.review);
+            // Reviewed: the dependent field is re-stated as part of this revision.
+            r.output.changes = [{ ...structuredClone(field), content: '订单数量（已复核）' }];
+          } else
+            r.output.changes = r.output.changes
+              .filter((c) => c.section === 3)
+              .map((c) => ({ ...c, content: '修订：' + c.content }));
+        }
+        return r;
+      },
+    });
+    assert.deepEqual(reviewCalls, [['field-qty']]);
+    assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
+    assert.equal(w.task.objects['field-qty'].version, 2);
+    assert.ok(w.task.objects['section-3'].content.startsWith('修订：'));
+  } finally {
+    await w.close();
+  }
+});

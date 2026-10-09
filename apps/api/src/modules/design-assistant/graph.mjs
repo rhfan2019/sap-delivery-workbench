@@ -59,8 +59,16 @@ export function buildGraph(
     for (let repair = 0; repair <= r.assets.budget.format_repairs; repair++) {
       const op = hash(
         part
-          ? part.dangling
-            ? [r.id, kind, state.round, phase, repair, part.group.id, 'dangling']
+          ? part.dangling || part.review
+            ? [
+                r.id,
+                kind,
+                state.round,
+                phase,
+                repair,
+                part.group.id,
+                part.dangling ? 'dangling' : 'review',
+              ]
             : [r.id, kind, state.round, phase, repair, part.group.id]
           : [r.id, kind, state.round, phase, repair],
       );
@@ -626,6 +634,7 @@ export function buildGraph(
           proposal,
           await call('ChangeProposal', s, { group, draft: proposal, dangling: refs }),
           group,
+          { byObject: true },
         );
       }
       missing = danglingIn(proposal);
@@ -649,6 +658,29 @@ export function buildGraph(
             },
           ],
         };
+      }
+      // 04 §8: a saved object whose dependency is revised must be revised in the same change.
+      // Group calls rarely re-state such dependents, so each affected group gets one review
+      // call for them; anything still left open is rejected at commit as before
+      // (DEPENDENCY_REVIEW_REQUIRED).
+      const staleIn = (p) => {
+        const revised = new Set(p.changes.map((c) => c.object_id));
+        return Object.values(t.objects).filter(
+          (o) =>
+            !revised.has(o.object_id) &&
+            (o.dependency_links ?? []).some((l) => revised.has(l.target_id)),
+        );
+      };
+      const stale = staleIn(proposal);
+      for (const group of SECTION_GROUPS) {
+        const ids = stale.filter((o) => group.sections.includes(o.section)).map((o) => o.object_id);
+        if (!ids.length) continue;
+        proposal = mergeProposalGroup(
+          proposal,
+          await call('ChangeProposal', s, { group, draft: proposal, review: ids }),
+          group,
+          { byObject: true },
+        );
       }
       const ref = hash(proposal);
       await commit('N07:' + s.round + ':' + (s.cycle ?? 0), proposal, (_t, run) => {
