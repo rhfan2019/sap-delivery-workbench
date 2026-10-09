@@ -5,7 +5,8 @@ export const objectIdentity =
 
 // Build the complete candidate before mutating the authoritative task. Artifact snapshots
 // retain old object contents and links; dependency endpoints refer to exact versions.
-export function applyObjectChanges(objects, changes, evidence) {
+// decisions: customer decisions a rule may rest on (answer:<question>, requirement) → version.
+export function applyObjectChanges(objects, changes, evidence, decisions = new Map()) {
   const next = structuredClone(objects),
     changed = new Set();
   for (let change of changes) {
@@ -25,7 +26,7 @@ export function applyObjectChanges(objects, changes, evidence) {
     };
   }
   if (Object.keys(next).length > 200) throw fault('OUT_OF_SCOPE', 'OUTPUT_VALIDATION');
-  const targets = new Map(evidence.map((e) => [e.id, e.source_version]));
+  const targets = new Map([...decisions, ...evidence.map((e) => [e.id, e.source_version])]);
   for (const object of Object.values(next)) targets.set(object.object_id, object.version);
   for (const object of Object.values(next)) {
     if (changed.has(object.object_id)) {

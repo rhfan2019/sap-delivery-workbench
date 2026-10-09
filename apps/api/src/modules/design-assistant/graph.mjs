@@ -161,6 +161,8 @@ export function buildGraph(
             const old = t.objects[c.object_id];
             c.base_version = old?.version ?? 0;
             c.op = old ? (c.op === 'ADD' ? 'REVISE' : c.op) : 'ADD';
+            if (Array.isArray(c.dependencies))
+              c.dependencies = [...new Set(c.dependencies.map(decisionRef))];
           }
         // The snapshot id and base version are echoes of this prompt, which the server just
         // built; smaller models miscopy the UUID, so restore them instead of failing STALE_INPUT.
@@ -645,7 +647,12 @@ export function buildGraph(
           (e) => checkEvidence(e, task.target, e.required_properties).valid,
         );
         if (!valid.length && !task.target.sap_disabled) throw fault('STALE_EVIDENCE', 'RETRIEVAL');
-        task.objects = applyObjectChanges(task.objects, proposal.changes, valid);
+        task.objects = applyObjectChanges(
+          task.objects,
+          proposal.changes,
+          valid,
+          customerDecisions(task),
+        );
         const version = (task.artifact_version ?? 0) + 1;
         const artifact = {
           id: randomUUID(),
@@ -795,6 +802,21 @@ export function buildGraph(
     g.addConditionalEdges(name, (s) => s.route);
   }
   return g.compile({ checkpointer });
+}
+// Customer decisions are dependency targets alongside evidence (01 §5.4: a customer rule
+// must rest on the customer's answer): every recorded answer and the requirement text.
+function customerDecisions(task) {
+  const answers = [...(task.answered ?? []), ...Object.values(task.answers ?? {})];
+  return new Map([
+    ['requirement', task.input_version ?? 1],
+    ...answers.map((a) => ['answer:' + a.question_id, task.answer_version ?? 1]),
+  ]);
+}
+// Models cite decisions by where they saw them in the prompt; map those to the stable ids.
+function decisionRef(ref) {
+  const answer = /^snapshot\.(?:prior_)?answers(?:\.\d+)?\.([^.]+)/.exec(ref ?? '');
+  if (answer) return 'answer:' + answer[1];
+  return /^snapshot\.(?:text|input)\b/.test(ref ?? '') ? 'requirement' : ref;
 }
 async function bounded(action, signal) {
   signal.throwIfAborted();

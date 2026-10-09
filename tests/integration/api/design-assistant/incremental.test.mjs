@@ -258,3 +258,30 @@ test('FLOW-10 a revision that labels saved chapters as new still commits as a re
     await w.close();
   }
 });
+test('FLOW-11 rules may depend on customer answers and the requirement text', async () => {
+  const w = await workflow();
+  try {
+    await w.command({ command: 'supplement', text: '按客户答复定义未清' });
+    await w.run({
+      model: async (args) => {
+        const r = await syntheticModel(args);
+        if (args.kind === 'ChangeProposal')
+          for (const c of r.output.changes)
+            if (c.section === 6)
+              // How the model cites them after reading the prompt snapshot.
+              c.dependencies = [
+                ...c.dependencies,
+                'snapshot.answers.open-definition',
+                'snapshot.text',
+              ];
+        return r;
+      },
+    });
+    assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
+    const links = w.task.objects['section-6'].dependency_links.map((l) => l.target_id);
+    assert.ok(links.includes('answer:open-definition'));
+    assert.ok(links.includes('requirement'));
+  } finally {
+    await w.close();
+  }
+});
