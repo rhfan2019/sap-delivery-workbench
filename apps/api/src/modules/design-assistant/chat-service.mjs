@@ -103,8 +103,29 @@ export async function startChatTurn(db, scope, input, assets, target = null) {
         });
         return recordTurn(db, scope, task, input, task.active_run_id);
       }
+      // draftApproved stays set until the FSD round has saved a final draft (graph N08), so a
+      // failed final generation can be retried without losing the plan approval.
       if (input.action === 'draft' && task.chat.draftApproved) {
-        task.chat.draftApproved = false;
+        if (task.wait_reason === 'TECHNICAL') {
+          // Retry after a failure: a successor run redoes only the FSD round (fresh model calls,
+          // nothing reused from the rejected attempt); approvals and saved objects are kept.
+          const failed = task.active_run_id;
+          task.wait_reason = null;
+          task.revision++;
+          await newRun(db, task, task.assets, 'FSD_RETRY');
+          await db.query(
+            "UPDATE app.fsd_v1_run SET status='COMPLETED',generation=generation+1,lease_until=NULL,state=state || $2::jsonb WHERE id=$1",
+            [
+              failed,
+              { completion_reason: 'SUPERSEDED_BY_RETRY', successor_run_id: task.active_run_id },
+            ],
+          );
+          await db.query('UPDATE app.fsd_v1_run SET state=state || $2::jsonb WHERE id=$1', [
+            task.active_run_id,
+            { fsd_round: true },
+          ]);
+          return recordTurn(db, scope, task, input, task.active_run_id);
+        }
         task.status = 'ACTIVE';
         await db.query("UPDATE app.fsd_v1_run SET status='QUEUED' WHERE id=$1", [
           task.active_run_id,

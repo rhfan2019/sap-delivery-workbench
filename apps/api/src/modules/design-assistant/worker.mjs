@@ -250,11 +250,14 @@ export async function executeRun(
           const values = previous.checkpoint.channel_values;
           if (!values || (values.run_id ?? values.__start__?.run_id) !== lease.id)
             throw fault('CHECKPOINT_CORRUPT', 'CHECKPOINT');
+          // An FSD round needs the plan approval: committed by this run (N09), or — for a retried
+          // final generation (FSD_RETRY) — already recorded on the task before the run started.
           if (
             (values.cycle === 1 ||
               previous.pendingWrites?.some(
                 ([, channel, value]) => channel === 'cycle' && value === 1,
               )) &&
+            !(lease.state.fsd_round && t.confirmations.some((c) => c.kind === 'PLAN_CONFIRM')) &&
             !(
               await pool.query(
                 "SELECT 1 FROM app.fsd_v1_commit WHERE run_id=$1 AND step_id='N09:plan-confirmed'",

@@ -262,9 +262,13 @@ export function buildGraph(
   const g = new StateGraph(state);
   g.addNode(
     'N01',
-    node('N01', async () => ({
-      route: lease.snapshot.chat_action === 'dialogue' ? 'CHAT' : 'N02',
-    })),
+    node('N01', async () =>
+      // A retried final generation (chat-service FSD_RETRY) starts at the FSD round: the plan
+      // is already approved, so analysis and plan proposal are not repeated.
+      lease.state.fsd_round
+        ? { route: 'N07', cycle: 1, round: 0 }
+        : { route: lease.snapshot.chat_action === 'dialogue' ? 'CHAT' : 'N02' },
+    ),
   );
   g.addNode(
     'N02',
@@ -659,11 +663,20 @@ export function buildGraph(
           version,
           workspace_version_id: lease.snapshot.workspace_version_id ?? null,
           kind: s.cycle === 1 ? 'FSD' : 'PLAN',
+          // The FSD rests on the approved plan; a retried FSD round runs under a new input
+          // snapshot, so the plan is found by its approval, not by snapshot id.
           plan_artifact_id:
             s.cycle === 1
               ? task.artifacts
                   .filter(
-                    (a) => a.kind === 'PLAN' && a.input_snapshot_id === task.input_snapshot_id,
+                    (a) =>
+                      a.kind === 'PLAN' &&
+                      task.confirmations.some(
+                        (c) =>
+                          c.kind === 'PLAN_CONFIRM' &&
+                          c.artifact_id === a.id &&
+                          c.artifact_version === a.version,
+                      ),
                   )
                   .at(-1)?.id
               : null,
@@ -689,6 +702,8 @@ export function buildGraph(
         task.current_artifact_id = artifact.id;
         task.blocking_issues = proposal.unresolved_issues.filter((i) => i.blocking);
         task.phase = task.phase >= 5 ? 6 : 4;
+        // The final draft exists now; the chat layer's "plan approved, final pending" flag ends.
+        if (s.cycle === 1 && task.chat) task.chat.draftApproved = false;
         return { artifact_id: artifact.id, version };
       });
       return { route: 'N09' };
