@@ -6,7 +6,8 @@ import { head } from './service.mjs';
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function resolveWorkAction(prompt) {
   if (
-    /(不要|暂不|别|不需要|无需|不用|不).{0,8}(生成|输出|修改|更新|写入|起草|补充|完善|编写|重写|修订|实现)/.test(
+    // A negation applies only within its own clause: "不要再追问。请生成FSD" asks for a draft.
+    /(不要|暂不|别|不需要|无需|不用|不)[^，。；！？,.;!?\n]{0,8}(生成|输出|修改|更新|写入|起草|补充|完善|编写|重写|修订|实现)/.test(
       prompt,
     )
   )

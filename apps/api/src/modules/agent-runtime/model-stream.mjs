@@ -4,15 +4,23 @@ import { createSseParser } from '@sap-delivery-workbench/contracts/agent-runtime
 import { failure } from '../../platform/auth.mjs';
 
 export function streamPayload(config, prompt, context) {
-  // Verified QianWen Flash capability: interactive turns request answer text directly.
-  // Do not send this vendor extension to unrelated models or protocols.
+  // Verified on QianWen Flash and Max: interactive turns request answer text directly
+  // (Max otherwise spends the whole output budget on reasoning and is cut off).
+  // Do not send this vendor extension to unrelated providers or protocols.
   const directQwen =
-    config.protocol === 'openai_chat' &&
-    config.provider?.toLowerCase() === 'qianwen' &&
-    config.modelId === 'qwen3.8-flash';
+    config.protocol === 'openai_chat' && config.provider?.toLowerCase() === 'qianwen';
   const common = {
     model: config.modelId,
     stream: true,
+    ...(Number.isSafeInteger(context?.outputLimit) && context.outputLimit > 0
+      ? {
+          [{
+            openai_chat: 'max_completion_tokens',
+            openai_responses: 'max_output_tokens',
+            anthropic_messages: 'max_tokens',
+          }[config.protocol]]: context.outputLimit,
+        }
+      : {}),
     ...(directQwen ? { enable_thinking: false } : {}),
   };
   if (config.protocol === 'openai_responses')

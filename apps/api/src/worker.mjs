@@ -5,11 +5,13 @@ import { databaseConfig } from './platform/database.mjs';
 import { claimRun, expireExhaustedRuns } from './modules/fs-workspace/runs/queue.mjs';
 import { transaction } from './platform/auth.mjs';
 import { runOne } from './modules/fs-workspace/runs/worker.mjs';
+import { startDesignWorker } from './modules/design-assistant/worker.mjs';
 const organizationId = process.env.DEFAULT_ORGANIZATION_ID;
 if (!organizationId) throw new Error('DEFAULT_ORGANIZATION_ID is required');
 const pool = new pg.Pool({ ...databaseConfig({ runtime: true }), max: 4 });
 const workerId = 'fs-worker-' + randomUUID();
 let stopping = false;
+const stopDesignWorker = startDesignWorker(pool);
 process.on('SIGINT', () => {
   stopping = true;
 });
@@ -42,5 +44,6 @@ try {
     }
   }
 } finally {
+  await stopDesignWorker();
   await pool.end();
 }

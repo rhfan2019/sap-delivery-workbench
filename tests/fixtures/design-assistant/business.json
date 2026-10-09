@@ -1,0 +1,110 @@
+[
+  {
+    "case_id": "BIZ-01",
+    "input": "简短“未清订单报表”；材料给出抬头/行、状态及数量的固定定义，客户未确定“未清”",
+    "notice": "ZPOC_* 测试伪对象，非真实 SAP",
+    "reference_version": "synthetic-1",
+    "reference": {
+      "expected": "主动提出有依据的互斥口径、相关生命周期/逆向场景，不能自行确认；三项核心规格可追溯",
+      "source_ref": "synthetic-fixture",
+      "source_version": "1",
+      "allowed_uncertainty": "所有真实 SAP 适用性待核实",
+      "required_question": "客户特定口径和范围必须确认",
+      "prohibited_claim": "不得宣称真实 SAP/专家验收通过",
+      "criticality": "critical",
+      "expert": null,
+      "review_date": null
+    },
+    "status": "BLOCKED"
+  },
+  {
+    "case_id": "BIZ-02",
+    "input": "给程序名与可读入口/包含源码；存在一个不可读动态依赖",
+    "notice": "ZPOC_* 测试伪对象，非真实 SAP",
+    "reference_version": "synthetic-1",
+    "reference": {
+      "expected": "默认定位并读取；区分现状与新需求；依赖缺口明确，不宣称全程序行为已理解",
+      "source_ref": "synthetic-fixture",
+      "source_version": "1",
+      "allowed_uncertainty": "所有真实 SAP 适用性待核实",
+      "required_question": "客户特定口径和范围必须确认",
+      "prohibited_claim": "不得宣称真实 SAP/专家验收通过",
+      "criticality": "critical",
+      "expert": null,
+      "review_date": null
+    },
+    "status": "BLOCKED"
+  },
+  {
+    "case_id": "BIZ-03",
+    "input": "既有 FSD 固定版、只改标题，再提交公式/筛选变化",
+    "notice": "ZPOC_* 测试伪对象，非真实 SAP",
+    "reference_version": "synthetic-1",
+    "reference": {
+      "expected": "首次增量保留未变规则，第二次沿依赖同步字段/章节/确认；比较每对象差异与返工",
+      "source_ref": "synthetic-fixture",
+      "source_version": "1",
+      "allowed_uncertainty": "所有真实 SAP 适用性待核实",
+      "required_question": "客户特定口径和范围必须确认",
+      "prohibited_claim": "不得宣称真实 SAP/专家验收通过",
+      "criticality": "critical",
+      "expert": null,
+      "review_date": null
+    },
+    "status": "BLOCKED"
+  },
+  {
+    "case_id": "BIZ-04",
+    "input": "同名对象来自错客户端/旧版本；关键字段缺单位或币种",
+    "notice": "ZPOC_* 测试伪对象，非真实 SAP",
+    "reference_version": "synthetic-1",
+    "reference": {
+      "expected": "错证据不进上下文；未知/部分不编造；已明确事实与关键阻断都正确呈现",
+      "source_ref": "synthetic-fixture",
+      "source_version": "1",
+      "allowed_uncertainty": "所有真实 SAP 适用性待核实",
+      "required_question": "客户特定口径和范围必须确认",
+      "prohibited_claim": "不得宣称真实 SAP/专家验收通过",
+      "criticality": "critical",
+      "expert": null,
+      "review_date": null
+    },
+    "status": "BLOCKED"
+  },
+  {
+    "case_id": "BIZ-05",
+    "input": "参考包含取消、部分处理、抬头与行状态不同、多匹配及不同单位",
+    "notice": "ZPOC_* 测试伪对象，非真实 SAP",
+    "reference_version": "synthetic-1",
+    "reference": {
+      "expected": "相关场景/粒度/基数/汇总和逆向操作有明确处理或待决；不能“其他同理”或混单位累计",
+      "source_ref": "synthetic-fixture",
+      "source_version": "1",
+      "allowed_uncertainty": "所有真实 SAP 适用性待核实",
+      "required_question": "客户特定口径和范围必须确认",
+      "prohibited_claim": "不得宣称真实 SAP/专家验收通过",
+      "criticality": "critical",
+      "expert": null,
+      "review_date": null
+    },
+    "status": "BLOCKED"
+  },
+  {
+    "case_id": "BIZ-06",
+    "input": "标准功能已满足与混合写动作需求；用户部分确认",
+    "notice": "ZPOC_* 测试伪对象，非真实 SAP",
+    "reference_version": "synthetic-1",
+    "reference": {
+      "expected": "标准对照有依据；写部分明确不在范围；局部确认不变整体交付，完成工作稿可独立阅读",
+      "source_ref": "synthetic-fixture",
+      "source_version": "1",
+      "allowed_uncertainty": "所有真实 SAP 适用性待核实",
+      "required_question": "客户特定口径和范围必须确认",
+      "prohibited_claim": "不得宣称真实 SAP/专家验收通过",
+      "criticality": "critical",
+      "expert": null,
+      "review_date": null
+    },
+    "status": "BLOCKED"
+  }
+]

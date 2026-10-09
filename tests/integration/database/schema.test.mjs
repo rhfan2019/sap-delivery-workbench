@@ -4,6 +4,16 @@ import { test } from 'node:test';
 import { connectDatabase } from '../../../apps/api/src/platform/database.mjs';
 
 const expectedTables = [
+  'fsd_v1_task',
+  'fsd_v1_run',
+  'fsd_v1_request',
+  'fsd_v1_event',
+  'fsd_v1_commit',
+  'fsd_v1_operation',
+  'fsd_v1_attempt',
+  'fsd_v1_attachment',
+  'fsd_v1_chat_turn',
+  'fsd_v1_chat_event',
   'app_user',
   'audit_event',
   'auth_session',

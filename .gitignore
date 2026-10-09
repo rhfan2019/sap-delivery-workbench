@@ -27,3 +27,4 @@ infra/production/tls/
 /outputs/
 /artifacts/
 /artifacts_to_be_deleted/
+.archify/*

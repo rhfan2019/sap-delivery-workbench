@@ -9,7 +9,22 @@ import type {
 import { computed, onScopeDispose, ref } from 'vue';
 import { api, identity } from '../../services/session';
 import { createSseParser } from '@sap-delivery-workbench/contracts/agent-runtime/sse';
+import { reconnectingChatStream } from './chatStream.mjs';
 import type { ModelRecord } from '../models/types';
+
+// Deployment gates reject the request before a run exists; the server message is only the code.
+const gateMessages: Record<string, string> = {
+  REAL_INPUT_NOT_APPROVED:
+    '资料出域尚未批准（FSD_REAL_INPUT_APPROVED），需求未发送给模型。请联系部署负责人开启后重试。',
+  SAP_CAPABILITY_UNVERIFIED:
+    '生成 FSD 需要已登记并验证的 SAP 目标（FSD_TARGET_MANIFEST），当前未配置或未通过能力验证。需求对话不受影响。',
+  INVALID_TARGET_MANIFEST: 'SAP 目标登记文件无法读取或格式无效，请联系部署负责人检查。',
+};
+function failureText(cause: unknown) {
+  if (!(cause instanceof Error)) return '调用失败，请重试。';
+  const code = (cause as { code?: string }).code ?? cause.message;
+  return gateMessages[code] ?? cause.message;
+}
 
 type SendOptions = {
   action?: 'dialogue' | 'draft' | 'auto';
@@ -44,6 +59,7 @@ export function useAssistantRun(
   } = {},
 ) {
   const base = config.base ?? '/admin/abap-fsd-agent';
+  const persistentChat = base.endsWith('/work/design/fsd/v1/chat');
   const decision = ref<AgentDecision | null>(null);
   const storageKey = () =>
     'fs-assistant-run:' +
@@ -176,6 +192,117 @@ export function useAssistantRun(
       }
     }
   }
+  async function consumeStream() {
+    let terminal = false,
+      lastSeq = 0;
+    readerController = new AbortController();
+    const subscribe = persistentChat ? reconnectingChatStream : fetch;
+    const response = await subscribe('/api' + base + '/runs/' + runId + '/events', {
+      credentials: 'same-origin',
+      signal: readerController.signal,
+      headers: { Accept: 'text/event-stream' },
+    });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.message || '无法订阅模型回复，请重新发送。');
+    }
+    if (!response.body || !response.headers.get('content-type')?.startsWith('text/event-stream'))
+      throw new Error('服务未返回可读取的流式响应。');
+    const reader = response.body.getReader(),
+      decoder = new TextDecoder('utf-8', { fatal: true }),
+      parser = createSseParser();
+    try {
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        for (const item of parser.push(decoder.decode(value, { stream: true }))) {
+          const event = JSON.parse(item.data);
+          if (event.runId !== runId || !Number.isSafeInteger(event.seq))
+            throw new Error('流式事件标识异常。');
+          if (event.seq <= lastSeq) continue;
+          if (event.seq !== lastSeq + 1 || terminal) throw new Error('流式事件顺序异常。');
+          lastSeq = event.seq;
+          if (event.type === 'message.reset') {
+            flush();
+            responseText.value = '';
+            const message = messages.value.find((m) => m.id === assistantId);
+            if (message) message.content = '';
+          } else if (event.type === 'message.delta' || event.type === 'technical.delta') {
+            if (typeof event.data?.text !== 'string') throw new Error('流式文本无效。');
+            append(event.data.text);
+            if (!stopRequested) status.value = 'streaming';
+          } else if (event.type === 'generation.progress') {
+            generationNote.value = event.data?.message ?? '正在继续生成…';
+            if (event.data?.lastContentAt)
+              generationNote.value +=
+                ' · 最后正文进展 ' +
+                new Date(event.data.lastContentAt).toLocaleTimeString('zh-CN', { hour12: false });
+          } else if (event.type === 'step.updated') {
+            generationNote.value = '';
+            const index = steps.value.findIndex((s) => s.stepId === event.data.stepId);
+            if (index >= 0) steps.value[index] = event.data;
+            else {
+              const successor = steps.value.findIndex((s) =>
+                s.dependencies?.includes(event.data.stepId),
+              );
+              const prior = steps.value.findIndex((s) =>
+                event.data.dependencies?.includes(s.stepId),
+              );
+              steps.value.splice(
+                successor >= 0 ? successor : prior >= 0 ? prior + 1 : steps.value.length,
+                0,
+                event.data,
+              );
+            }
+          } else if (event.type === 'artifact.ready') {
+            artifact.value = event.data;
+            const owner = messages.value.find((m) => m.id === assistantId);
+            if (owner) owner.artifact = event.data;
+          } else if (event.type === 'run.waiting_user') {
+            flush();
+            status.value = 'waiting_user';
+            decision.value = event.data.decision;
+            responseText.value = '';
+            const m = messages.value.find((m) => m.id === assistantId);
+            if (m) {
+              m.content = '';
+              m.decision = event.data.decision;
+            }
+            terminal = true;
+          } else if (event.type === 'run.completed') {
+            flush();
+            status.value = 'completed';
+            terminal = true;
+          } else if (event.type === 'run.cancelled') {
+            flush();
+            status.value = 'cancelled';
+            terminal = true;
+          } else if (event.type === 'run.failed') {
+            flush();
+            status.value = 'failed';
+            error.value = event.data?.message || '调用失败。';
+            const failedMessage = messages.value.find((m) => m.id === assistantId);
+            if (failedMessage)
+              Object.assign(failedMessage, {
+                error: error.value,
+                errorCode: event.data?.code,
+                finishReason: event.data?.finishReason,
+                outputLimit: event.data?.outputLimit,
+              });
+            terminal = true;
+          }
+        }
+        if (terminal) break;
+      }
+      parser.push(decoder.decode());
+      parser.finish();
+      if (!terminal) throw new Error('连接已中断，回复可能不完整。请重新发送。');
+    } finally {
+      await reader.cancel().catch(() => {});
+      reader.releaseLock();
+    }
+    return terminal;
+  }
   async function send(
     model: ModelRecord,
     prompt: string,
@@ -233,8 +360,7 @@ export function useAssistantRun(
     status.value = 'creating';
     runId = options.resumeRunId ?? '';
     stopRequested = false;
-    let terminal = false,
-      lastSeq = 0;
+    let terminal = false;
     try {
       const created = await api<RunReceipt>(
         base + '/runs',
@@ -269,142 +395,39 @@ export function useAssistantRun(
         assistant.action = created.action ?? assistant.action;
       }
       if (disposed) {
-        await cancelRemote(runId);
+        if (!persistentChat || stopRequested) await cancelRemote(runId);
         return;
       }
       if (stopRequested) await cancelRemote(runId);
       else status.value = 'waiting';
-      readerController = new AbortController();
-      const response = await fetch('/api' + base + '/runs/' + runId + '/events', {
-        credentials: 'same-origin',
-        signal: readerController.signal,
-        headers: { Accept: 'text/event-stream' },
-      });
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.message || '无法订阅模型回复，请重新发送。');
-      }
-      if (!response.body || !response.headers.get('content-type')?.startsWith('text/event-stream'))
-        throw new Error('服务未返回可读取的流式响应。');
-      const reader = response.body.getReader(),
-        decoder = new TextDecoder('utf-8', { fatal: true }),
-        parser = createSseParser();
-      try {
-        for (;;) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          for (const item of parser.push(decoder.decode(value, { stream: true }))) {
-            const event = JSON.parse(item.data);
-            if (event.runId !== runId || !Number.isSafeInteger(event.seq))
-              throw new Error('流式事件标识异常。');
-            if (event.seq <= lastSeq) continue;
-            if (event.seq !== lastSeq + 1 || terminal) throw new Error('流式事件顺序异常。');
-            lastSeq = event.seq;
-            if (event.type === 'message.reset') {
-              flush();
-              responseText.value = '';
-              const message = messages.value.find((m) => m.id === assistantId);
-              if (message) message.content = '';
-            } else if (event.type === 'message.delta' || event.type === 'technical.delta') {
-              if (typeof event.data?.text !== 'string') throw new Error('流式文本无效。');
-              append(event.data.text);
-              if (!stopRequested) status.value = 'streaming';
-            } else if (event.type === 'generation.progress') {
-              generationNote.value = event.data?.message ?? '正在继续生成…';
-              if (event.data?.lastContentAt)
-                generationNote.value +=
-                  ' · 最后正文进展 ' +
-                  new Date(event.data.lastContentAt).toLocaleTimeString('zh-CN', { hour12: false });
-            } else if (event.type === 'step.updated') {
-              generationNote.value = '';
-              const index = steps.value.findIndex((s) => s.stepId === event.data.stepId);
-              if (index >= 0) steps.value[index] = event.data;
-              else {
-                const successor = steps.value.findIndex((s) =>
-                  s.dependencies?.includes(event.data.stepId),
-                );
-                const prior = steps.value.findIndex((s) =>
-                  event.data.dependencies?.includes(s.stepId),
-                );
-                steps.value.splice(
-                  successor >= 0 ? successor : prior >= 0 ? prior + 1 : steps.value.length,
-                  0,
-                  event.data,
-                );
-              }
-            } else if (event.type === 'artifact.ready') {
-              artifact.value = event.data;
-              const owner = messages.value.find((m) => m.id === assistantId);
-              if (owner) owner.artifact = event.data;
-            } else if (event.type === 'run.waiting_user') {
-              flush();
-              status.value = 'waiting_user';
-              decision.value = event.data.decision;
-              responseText.value = '';
-              const m = messages.value.find((m) => m.id === assistantId);
-              if (m) {
-                m.content = '';
-                m.decision = event.data.decision;
-              }
-              terminal = true;
-            } else if (event.type === 'run.completed') {
-              flush();
-              status.value = 'completed';
-              terminal = true;
-            } else if (event.type === 'run.cancelled') {
-              flush();
-              status.value = 'cancelled';
-              terminal = true;
-            } else if (event.type === 'run.failed') {
-              flush();
-              status.value = 'failed';
-              error.value = event.data?.message || '调用失败。';
-              const failedMessage = messages.value.find((m) => m.id === assistantId);
-              if (failedMessage)
-                Object.assign(failedMessage, {
-                  error: error.value,
-                  errorCode: event.data?.code,
-                  finishReason: event.data?.finishReason,
-                  outputLimit: event.data?.outputLimit,
-                });
-              terminal = true;
-            }
-          }
-          if (terminal) break;
-        }
-        parser.push(decoder.decode());
-        parser.finish();
-        if (!terminal) throw new Error('连接已中断，回复可能不完整。请重新发送。');
-      } finally {
-        await reader.cancel().catch(() => {});
-        reader.releaseLock();
-      }
+      terminal = await consumeStream();
     } catch (cause) {
       if (!disposed) {
         flush();
         status.value = 'failed';
-        error.value = cause instanceof Error ? cause.message : '调用失败，请重试。';
+        error.value = failureText(cause);
       }
-      if (runId && !terminal && runId !== options.resumeRunId)
+      if (!persistentChat && runId && !terminal && runId !== options.resumeRunId)
         void cancelRemote(runId).catch(() => {});
     } finally {
       flush();
       readerController = null;
+      const finalStatus = status.value as Status;
       const message = messages.value.find((m) => m.id === assistantId);
       if (message)
         message.finishedAt = new Date(Date.now() + (message.clockOffsetMs ?? 0)).toISOString();
       if (message)
         message.status =
-          status.value === 'waiting_user'
+          finalStatus === 'waiting_user'
             ? 'waiting_user'
-            : status.value === 'completed'
+            : finalStatus === 'completed'
               ? 'completed'
-              : status.value === 'cancelled'
+              : finalStatus === 'cancelled'
                 ? 'cancelled'
                 : 'failed';
-      if (message && status.value === 'failed') message.error = error.value;
+      if (message && finalStatus === 'failed') message.error = error.value;
       canRetry.value =
-        !!lastRequest && !disposed && !decision.value && status.value !== 'waiting_user';
+        !!lastRequest && !disposed && !decision.value && finalStatus !== 'waiting_user';
       generationNote.value = '';
       if (terminal && !disposed) {
         try {
@@ -534,7 +557,41 @@ export function useAssistantRun(
         }));
         generationNote.value = r.snapshot?.generationProgress?.message ?? '正在恢复运行进度…';
         canRetry.value = false;
-        pollRestoredRun(epoch, runId);
+        if (persistentChat) {
+          const current = messages.value.find((m) => m.role === 'assistant' && m.runId === runId);
+          if (current) assistantId = current.id;
+          // Replay from the beginning so snapshot and event cursors cannot race.
+          responseText.value = '';
+          if (current) current.content = '';
+          stopRequested = false;
+          try {
+            await consumeStream();
+            flush();
+            const restoredStatus = status.value as Status;
+            const message = messages.value.find((m) => m.id === assistantId);
+            if (message) {
+              message.status =
+                restoredStatus === 'waiting_user'
+                  ? 'waiting_user'
+                  : restoredStatus === 'completed'
+                    ? 'completed'
+                    : restoredStatus === 'cancelled'
+                      ? 'cancelled'
+                      : 'failed';
+              message.finishedAt = new Date(
+                Date.now() + (message.clockOffsetMs ?? 0),
+              ).toISOString();
+              if (restoredStatus === 'failed') message.error = error.value;
+            }
+            if (!disposed) await refreshHistory(runId);
+          } finally {
+            flush();
+            readerController = null;
+            active.value = false;
+            generationNote.value = '';
+            canRetry.value = !!lastRequest && !disposed && !decision.value;
+          }
+        } else pollRestoredRun(epoch, runId);
       }
       if (decision.value && !model)
         error.value = '原模型不可用，请恢复模型配置后刷新；问题和需求已保存。';
@@ -549,7 +606,7 @@ export function useAssistantRun(
     lifecycle++;
     flush();
     readerController?.abort();
-    if (runId && busy.value)
+    if (!persistentChat && runId && busy.value)
       void fetch('/api' + base + '/runs/' + runId + '/cancel', {
         method: 'POST',
         credentials: 'same-origin',

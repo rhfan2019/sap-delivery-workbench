@@ -1,5 +1,8 @@
 import Fastify from 'fastify';
 import { registerDesignUnavailable } from './modules/design-assistant/unavailable.mjs';
+import { registerDesignRoutes } from './modules/design-assistant/routes.mjs';
+import { startDesignWorker } from './modules/design-assistant/worker.mjs';
+import { createTelemetry } from './modules/design-assistant/telemetry.mjs';
 import { registerItemWorkspaceRoutes } from './modules/item-workspace/routes.mjs';
 import { registerWorkAgent } from './modules/item-workspace/agent.mjs';
 import pg from 'pg';
@@ -43,13 +46,17 @@ export async function createApp({
       ?.slice(cookieName.length + 1);
   const cookie = (token, maxAge) =>
     `${cookieName}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure ? '; Secure' : ''}`;
-  let stopWorker;
+  let stopWorker, stopDesignWorker;
+  const designTelemetry = createTelemetry();
   if (fsWorker)
     app.addHook('onReady', async () => {
       stopWorker = startFsWorker(pool, organizationId);
+      stopDesignWorker = startDesignWorker(pool, { telemetry: designTelemetry });
     });
   app.addHook('onClose', async () => {
     await stopWorker?.();
+    await stopDesignWorker?.();
+    await designTelemetry.shutdown();
     await pool.end();
   });
   if (process.env.NODE_ENV === 'production')
@@ -72,6 +79,15 @@ export async function createApp({
       throw failure(403, '请求来源不受信任，请从平台页面操作。');
   });
   app.setErrorHandler((error, req, reply) => {
+    if (req.routeOptions.url?.includes('/fsd/v1'))
+      return reply
+        .code(error.statusCode ?? 503)
+        .send({
+          code: error.statusCode ? (error.code ?? 'INVALID_INPUT') : 'SERVICE_UNAVAILABLE',
+          error_origin: error.error_origin ?? 'UNKNOWN',
+          message: error.statusCode ? (error.code ?? '请求无效') : '服务暂不可用',
+          request_id: req.id,
+        });
     if (error.code === 'FS_WORKSPACE_ENABLED')
       return reply
         .code(409)
@@ -172,6 +188,7 @@ export async function createApp({
   registerAdminRoutes(app, pool, organizationId, requireSession);
   registerDeliveryRoutes(app, pool, organizationId, requireSession);
   registerItemWorkspaceRoutes(app, pool, organizationId, requireSession);
+  registerDesignRoutes(app, pool, organizationId, requireSession, { telemetry: designTelemetry });
 
   registerTechnicalRoutes(app, pool, organizationId, requireSession);
   registerSapRoutes(app, pool, organizationId, requireSession);

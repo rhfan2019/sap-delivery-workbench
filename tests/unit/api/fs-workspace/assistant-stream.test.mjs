@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { streamText } from '../../../../apps/api/src/modules/agent-runtime/model-stream.mjs';
+import { streamText, streamPayload } from '../../../../apps/api/src/modules/agent-runtime/model-stream.mjs';
+
+test('an explicit per-operation output budget is encoded for every stream protocol', () => {
+  const context = { messages: [{ role: 'user', content: 'test' }], outputLimit: 1234 };
+  for (const [protocol, key] of [['openai_chat', 'max_completion_tokens'], ['openai_responses', 'max_output_tokens'], ['anthropic_messages', 'max_tokens']]) {
+    assert.equal(streamPayload({ protocol, modelId: 'test' }, 'test', context)[key], 1234);
+  }
+});
 const config = {
   protocol: 'openai_chat',
   modelId: 'synthetic',

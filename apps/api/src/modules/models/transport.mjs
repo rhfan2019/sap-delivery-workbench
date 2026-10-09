@@ -154,7 +154,13 @@ async function prepareModelRequest(
         ),
         { code: 'MODEL_CAPABILITY_REQUIRED' },
       );
-    payload = { ...payload, max_tokens: metadata.data.max_tokens };
+    payload = {
+      ...payload,
+      max_tokens:
+        Number.isSafeInteger(payload.max_tokens) && payload.max_tokens > 0
+          ? Math.min(payload.max_tokens, metadata.data.max_tokens)
+          : metadata.data.max_tokens,
+    };
   }
   const bytes = modelMetadata ? Buffer.alloc(0) : Buffer.from(JSON.stringify(payload));
   if (bytes.length > 2000000) throw new Error('REQUEST_LIMIT');

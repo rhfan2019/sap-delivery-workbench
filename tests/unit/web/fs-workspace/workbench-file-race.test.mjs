@@ -24,7 +24,10 @@ test('new session first file request survives session invalidation and settles l
     filesLoading = ref(false),
     error = ref('');
   let complete;
-  const api = () => new Promise((r) => (complete = r));
+  const api = (url) => {
+    assert.equal(url, '/work/design/fsd/v1/chat/sessions/new/files');
+    return new Promise((r) => (complete = r));
+  };
   const scope = effectScope();
   const run = scope.run(() =>
     new Function(
@@ -36,7 +39,7 @@ test('new session first file request survives session invalidation and settles l
       'error',
       'api',
       'controller',
-      'base',
+      'sessionBase',
       'let filesEpoch=0;' + body,
     )(
       watch,
@@ -47,7 +50,7 @@ test('new session first file request survives session invalidation and settles l
       error,
       api,
       new AbortController(),
-      '/work',
+      '/work/design/fsd/v1/chat',
     ),
   );
   sessionId.value = 'new';

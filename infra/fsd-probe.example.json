@@ -1,0 +1,24 @@
+{
+  "notice": "Local operator plan only. Copy to a protected local path; fill exact approved samples and use a read-only account. This example authorizes no call.",
+  "approval": { "approved_by": null, "approved_at": null },
+  "target": {
+    "target_ref": "replace-with-approved-target",
+    "origin": "https://replace.invalid",
+    "client": "000",
+    "environment": "DEV",
+    "data_egress_approved": false,
+    "allowed_urls": [],
+    "templates": {}
+  },
+  "probes": [
+    {
+      "capability_id": "SAP-C02",
+      "item": {
+        "target_ref": "replace-with-approved-target",
+        "tool_name": "searchObject",
+        "arguments": { "query": "ZREPLACE", "max": 10 },
+        "required_properties": []
+      }
+    }
+  ]
+}

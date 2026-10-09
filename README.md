@@ -58,6 +58,8 @@ docs/                        架构、规格、计划、使用指南和历史报
 
 旧设计助手和 Gem FSD v2 的设计生成接口已停用，返回 `410 DESIGN_ASSISTANT_REMOVED`。历史数据和读取能力保留；目录重构不恢复旧设计引擎。开发助手主提示词在 `apps/api/src/modules/item-workspace/prompts/system.md`。
 
+新的版本化 FSD 后端使用 `work/design/fsd/v1`。原 AgentWorkbench 通过其 `/chat` 协议接入 LangGraph，保留页面模板、样式、多轮对话与实时文本流；断线按持久事件游标续传。原页面的多轮、流式刷新恢复、停止、附件、澄清及两次确认已有隔离浏览器验收，旧设计入口仍返回 410。启动、迁移、检查点、Trace 与实际验收边界见 [ABAP FSD 运行指南](docs/guides/abap-fsd-backend.md)和[实施说明](docs/specs/abap-fsd-implementation.md)。真实 SAP 与业务 PoC 尚未验收。
+
 ## 开发与验证
 
 所有命令从根目录运行：

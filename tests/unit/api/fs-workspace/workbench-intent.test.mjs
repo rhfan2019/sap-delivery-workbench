@@ -12,6 +12,7 @@ test('continuous chat routes explicit artifact requests and preserves discussion
     '请根据设计生成ABAP代码',
     '把上述要求写入文档',
     '请生成说明书，包含如何处理异常的内容',
+    '其余按默认处理，不要再追问。请生成FSD。',
   ])
     assert.equal(resolveWorkAction(prompt), 'draft', prompt);
   for (const prompt of [

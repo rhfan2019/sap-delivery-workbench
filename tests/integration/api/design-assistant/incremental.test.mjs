@@ -1,0 +1,205 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { workflow } from '../../../fixtures/design-assistant/workflow.mjs';
+import { syntheticModel } from '../../../../apps/api/src/modules/design-assistant/simulation.mjs';
+test('FLOW-05 title and formula revisions preserve untouched object versions and invalidate old confirmation', async () => {
+  const w = await workflow();
+  try {
+    await w.run();
+    const initial = structuredClone(w.task.objects),
+      oldWait = structuredClone(w.task.wait);
+    await w.command({ command: 'supplement', text: '仅修改报表标题' });
+    await w.run({
+      model: async (args) => {
+        const r = await syntheticModel(args);
+        if (args.kind === 'ChangeProposal') {
+          r.output.changes = r.output.changes.filter((c) => c.section === 1);
+          r.output.changes[0].content = '新标题；' + r.output.changes[0].content;
+        }
+        return r;
+      },
+    });
+    assert.equal(w.task.objects['section-1'].version, initial['section-1'].version + 1);
+    for (let n = 2; n <= 8; n++)
+      assert.deepEqual(w.task.objects['section-' + n], initial['section-' + n]);
+    await assert.rejects(
+      () => w.command({ command: 'confirm', ...oldWait, confirmed: true }),
+      /STALE_CONFIRMATION/,
+    );
+    const title = structuredClone(w.task.objects['section-1']);
+    await w.command({ command: 'supplement', text: '修改未清计算公式及筛选' });
+    await w.run({
+      model: async (args) => {
+        const r = await syntheticModel(args);
+        if (args.kind === 'ChangeProposal') {
+          r.output.changes = r.output.changes.filter((c) => [5, 6].includes(c.section));
+          r.output.changes.forEach((c) => (c.content = '口径修订：' + c.content));
+        }
+        return r;
+      },
+    });
+    assert.deepEqual(w.task.objects['section-1'], title);
+    assert.equal(w.task.objects['section-6'].version, initial['section-6'].version + 1);
+    assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
+    assert.equal(w.task.status, 'WAITING');
+  } finally {
+    await w.close();
+  }
+});
+for (const repairBody of [false, true])
+  test('FLOW-06 resolved review requires actual body change: ' + repairBody, async () => {
+    const w = await workflow();
+    let proposals = 0,
+      reviews = 0;
+    try {
+      const execute = () =>
+        w.run({
+          model: async (args) => {
+            const r = await syntheticModel(args);
+            if (args.kind === 'ChangeProposal' && ++proposals === 2) {
+              assert.equal(args.context.r.state.review_open.length, 1);
+              r.output.changes.find((c) => c.section === (repairBody ? 6 : 7)).content +=
+                ' 修复了取消后剩余量反例。';
+            }
+            if (args.kind === 'ReviewResult' && ++reviews === 1)
+              r.output.issues = [
+                {
+                  issue_id: 'i',
+                  rule_ref: 'section-6',
+                  counterexample: '取消后的数量仍被计入',
+                  evidence_refs: r.output.evidence_refs,
+                  impact: '错误计数',
+                  suggestion: '修正规则正文',
+                  status: 'OPEN',
+                },
+              ];
+            return r;
+          },
+        });
+      if (repairBody) {
+        await execute();
+        assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
+        assert.ok(w.task.objects['section-6'].content.includes('修复了'));
+      } else {
+        await assert.rejects(execute, /REVIEW_NOT_APPLIED/);
+        assert.equal(w.task.artifacts.length, 0);
+        assert.equal(w.task.wait_reason, 'TECHNICAL');
+      }
+    } finally {
+      await w.close();
+    }
+  });
+test('FLOW-08 withdrawn premise and explicit end never become delivered and preserve history', async () => {
+  const w = await workflow();
+  try {
+    await w.run();
+    const before = structuredClone(w.task.artifacts);
+    await w.command({ command: 'withdraw' });
+    assert.equal(w.task.status, 'PAUSED');
+    assert.equal(w.task.pause_reason, 'PREMISE_WITHDRAWN');
+    await w.command({ command: 'end' });
+    assert.equal(w.task.status, 'ENDED');
+    assert.deepEqual(w.task.artifacts, before);
+    assert.equal(w.task.delivered_artifact_id, undefined);
+    await assert.rejects(() => w.command({ command: 'recover' }), /INVALID_TRANSITION/);
+  } finally {
+    await w.close();
+  }
+});
+test('FLOW-08 explicit final confirmation cannot publish an artifact after critical evidence disappears', async () => {
+  const w = await workflow();
+  try {
+    await w.run();
+    await w.command({ command: 'confirm', ...w.task.wait, confirmed: true });
+    await w.run();
+    await w.pool.query(
+      "UPDATE app.fsd_v1_task SET state=jsonb_set(state,'{evidence}','[]'::jsonb) WHERE id=$1",
+      [w.task.id],
+    );
+    await w.refresh();
+    await w.command({ command: 'confirm', ...w.task.wait, confirmed: true });
+    await assert.rejects(() => w.run(), /DELIVERY_BLOCKED/);
+    assert.equal(w.task.delivered_artifact_id, undefined);
+    assert.equal(w.task.artifacts.length, 2);
+  } finally {
+    await w.close();
+  }
+});
+for (const includeDependent of [false, true])
+  test('FLOW-05 atomic dependency transaction closure: ' + includeDependent, async () => {
+    const w = await workflow();
+    try {
+      await w.run({
+        model: async (args) => {
+          const v = await syntheticModel(args);
+          if (args.kind === 'ChangeProposal') {
+            v.output.changes.push(
+              {
+                object_id: 'field-quantity',
+                base_version: 0,
+                op: 'ADD',
+                content: '数量，单位 EA',
+                dependencies: v.output.evidence_refs,
+                reason: 'fixed fixture',
+                section: 3,
+              },
+              {
+                object_id: 'rule-open',
+                base_version: 0,
+                op: 'ADD',
+                content: '数量大于零',
+                dependencies: ['field-quantity'],
+                reason: 'fixed fixture',
+                section: 6,
+              },
+            );
+            v.output.allowed_scope.push('field-quantity', 'rule-open');
+          }
+          return v;
+        },
+      });
+      const old = structuredClone(w.task.objects),
+        version = w.task.artifact_version;
+      await w.command({ command: 'supplement', text: '变更数量字段及受影响规则' });
+      const run = () =>
+        w.run({
+          model: async (args) => {
+            const v = await syntheticModel(args);
+            if (args.kind === 'ChangeProposal') {
+              v.output.changes = [
+                {
+                  ...old['field-quantity'],
+                  base_version: 1,
+                  op: 'REVISE',
+                  content: '数量，单位 BOX',
+                },
+                ...(includeDependent
+                  ? [
+                      {
+                        ...old['rule-open'],
+                        base_version: 1,
+                        op: 'REVISE',
+                        content: '数量换算后大于零',
+                      },
+                    ]
+                  : []),
+              ].map(({ version, kind, dependency_links, ...c }) => c);
+              v.output.allowed_scope = v.output.changes.map((c) => c.object_id);
+            }
+            return v;
+          },
+        });
+      if (includeDependent) {
+        await run();
+        assert.equal(w.task.objects['rule-open'].dependency_links[0].target_version, 2);
+        assert.equal(w.task.artifact_version, version + 1);
+        assert.deepEqual(w.task.objects['section-1'], old['section-1']);
+      } else {
+        await assert.rejects(run, /DEPENDENCY_REVIEW_REQUIRED/);
+        assert.deepEqual(w.task.objects, old);
+        assert.equal(w.task.artifact_version, version);
+      }
+    } finally {
+      await w.close();
+    }
+  });

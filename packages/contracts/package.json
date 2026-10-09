@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./design-assistant/protocol": "./design-assistant/protocol.mjs",
     "./fs-workspace": "./fs-workspace/index.mjs",
     "./fs-workspace/canonical": "./fs-workspace/canonical.mjs",
     "./fs-workspace/types": "./fs-workspace/generated/types.ts",

@@ -1,6 +1,10 @@
 # 仓库目录与依赖契约
 
-版本：1.0。日期：2026-10-08。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.2。日期：2026-10-09。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.2 变更：design-assistant 可通过既有 agent-runtime/public.mjs 复用材料解析、模型文本流传输和只读历史投影；通过 item-workspace/public.mjs 获取工作稿基准及按原文档合同采用内容。不复用或恢复历史设计执行器。聊天轮次与用户可见流事件归 design-assistant，自有数据库迁移归 database/migrations，诊断事件不承载聊天正文。依赖方向及公开入口检查规则不变。
+
+1.1 变更：授权新的 ABAP FSD LangGraph 后端归 design-assistant，旧 unavailable 边界不变；新入口为 work/design/fsd/v1。其运行资源归本模块，纯共享协议归 contracts/design-assistant。新增跨模块调用仅通过 item-workspace/public.mjs（工作区授权）、models/public.mjs（冻结模型配置及传输）、agent-runtime/public.mjs（材料解析）、sap/public.mjs（受控 SAP 连接）；依赖清单与架构检查同步登记，禁止 design-assistant 深层导入这些模块。
 
 这是本项目选择并执行的工程约定，不宣称是所有 Web 应用的唯一标准。目标是让每个文件有唯一责任归属，让前后端、共享代码与工程工具之间的边界可检查。
 
@@ -51,7 +55,7 @@ apps/
       modules/<business>/    # 业务模块与其自有运行资源
 ```
 
-后端现有模块：admin（组织/用户/项目管理）、delivery（交付台账）、item-workspace（开发项工作区）、fs-workspace（功能规格工作区）、agent-runtime（开发助手和历史读取共享运行支持）、models（模型配置与调用）、sap（SAP 连接）、technical（技术验证）、design-assistant（已停用接口边界）。
+后端现有模块：admin（组织/用户/项目管理）、delivery（交付台账）、item-workspace（开发项工作区）、fs-workspace（功能规格工作区）、agent-runtime（开发助手和历史读取共享运行支持）、models（模型配置与调用）、sap（SAP 连接）、technical（技术验证）、design-assistant（新版本 FSD 设计后端及保持停用的历史接口边界）。
 
 fs-workspace 中的 FS 是 Functional Specification，不是文件系统。agent-runtime 不代表重新启用旧设计助手。URL、数据库表名和历史协议字段不因内部目录改名而改变。
 

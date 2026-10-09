@@ -1,6 +1,10 @@
 {
   "description": "Existing module dependencies retained; new edges require contract review.",
   "allowedEdges": [
+    "design-assistant->item-workspace",
+    "design-assistant->models",
+    "design-assistant->agent-runtime",
+    "design-assistant->sap",
     "agent-runtime->admin",
     "agent-runtime->delivery",
     "agent-runtime->fs-workspace",

@@ -90,10 +90,18 @@ const actions = computed(() =>
 const chosen = computed(() => state.value?.revisions.find((r) => r.id === rollbackId.value));
 let epoch = 0;
 let syncedRevision = '';
+let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+function scheduleRefresh() {
+  clearTimeout(refreshTimer);
+  if (props.base.endsWith('/work/design/fsd/v1/chat') && state.value?.activeRunId)
+    refreshTimer = setTimeout(refresh, 1000);
+}
 onBeforeUnmount(() => {
   epoch++;
+  clearTimeout(refreshTimer);
 });
 async function refresh() {
+  clearTimeout(refreshTimer);
   const id = props.conversationId,
     current = ++epoch;
   if (!id) {
@@ -118,13 +126,14 @@ async function refresh() {
     }
   } catch (cause) {
     if (current === epoch) {
-      state.value = null;
+      if (!props.base.endsWith('/work/design/fsd/v1/chat')) state.value = null;
       error.value = cause instanceof Error ? cause.message : '阶段状态加载失败';
     }
   } finally {
     if (current === epoch) {
       pending.value = false;
       emit('busy', false);
+      scheduleRefresh();
     }
   }
 }
@@ -202,6 +211,7 @@ async function command(command: FsdWorkflowCommand) {
     if (current === epoch) {
       pending.value = false;
       emit('busy', false);
+      scheduleRefresh();
     }
   }
 }

@@ -14,6 +14,27 @@ const files = new Set([
   'packages/contracts/fs-workspace/index.mjs',
 ]);
 const options = { files, allowedModuleEdges: new Set() };
+test('new design module must use public facades even when the module edge is registered', () => {
+  const opts = {
+    files: new Set([
+      'apps/api/src/modules/models/store.mjs',
+      'apps/api/src/modules/models/public.mjs',
+    ]),
+    allowedModuleEdges: new Set(['design-assistant->models']),
+  };
+  assert.match(
+    checkImport(
+      'apps/api/src/modules/design-assistant/model.mjs',
+      '../models/store.mjs',
+      opts,
+    ).join(),
+    /public facade/,
+  );
+  assert.deepEqual(
+    checkImport('apps/api/src/modules/design-assistant/model.mjs', '../models/public.mjs', opts),
+    [],
+  );
+});
 
 test('architecture rejects frontend access to backend and Node-only contracts', () => {
   assert.match(

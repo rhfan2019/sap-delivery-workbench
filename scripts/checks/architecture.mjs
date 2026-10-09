@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const browserContracts = new Set([
+  'design-assistant/protocol',
   'fs-workspace/canonical',
   'fs-workspace/types',
   'agent-runtime/types',
@@ -128,6 +129,15 @@ export function checkImport(file, specifier, { files, allowedModuleEdges }) {
   const fromModule = moduleName(file),
     toModule = moduleName(target);
   if (
+    fromModule === 'design-assistant' &&
+    toModule &&
+    toModule !== fromModule &&
+    !/^apps\/api\/src\/modules\/(item-workspace|models|agent-runtime|sap)\/public\.mjs$/.test(
+      target,
+    )
+  )
+    errors.push('Design assistant must use an explicit module public facade');
+  if (
     fromModule &&
     toModule &&
     fromModule !== toModule &&
@@ -184,6 +194,7 @@ export async function checkRepository(directory = root) {
     'tools',
     'vendor',
     '.runtime',
+    '.archify',
     '.git',
     '.vscode',
     'node_modules',

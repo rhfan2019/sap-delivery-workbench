@@ -2,10 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { failure } from '../../platform/auth.mjs';
 import { findWorkspace } from '../fs-workspace/workspace/repository.mjs';
 import { createWorkspace } from '../fs-workspace/workspace/service.mjs';
-import {
-  validDocument,
-  renderDocument,
-} from '@sap-delivery-workbench/contracts/item-workspace';
+import { validDocument, renderDocument } from '@sap-delivery-workbench/contracts/item-workspace';
 import { sha256 } from '../agent-runtime/specification.mjs';
 
 export const viewVersion = (r) =>
@@ -30,6 +27,39 @@ export async function head(db, workspaceId, stage) {
       )
     ).rows[0] ?? null
   );
+}
+
+export async function assistantWorkspaceContext(db, scope) {
+  const ws = await findWorkspace(db, scope);
+  const current = ws && (await head(db, ws.id, 'design'));
+  return current ? { draftVersionId: current.id, document: current.document } : null;
+}
+
+export async function adoptAssistantContent(
+  db,
+  scope,
+  item,
+  { baseVersionId, basisVersionId, artifact },
+) {
+  const ws = await findWorkspace(db, scope);
+  if (!ws) throw failure(404, '工作区不存在。');
+  const old = await version(db, ws.id, baseVersionId, 'design');
+  if (basisVersionId !== old.id)
+    throw failure(409, '此候选基于较早工作稿，请使用当前已保存内容重新生成后采用。');
+  // New eight-section prose is editable in the existing notes editor. Keep all
+  // pre-existing structured fields: no guessed conversion into the old schema.
+  const document = artifact.legacy
+    ? { kind: 'design', spec: artifact.spec, notes: old.document.notes }
+    : {
+        ...old.document,
+        notes: [old.document.notes, artifact.markdown].filter(Boolean).join('\n\n'),
+      };
+  const created = await appendVersion(db, scope, ws, 'design', {
+    baseVersionId,
+    document,
+    sourceArtifactId: artifact.legacy ? artifact.id : null,
+  });
+  return { versionId: created.id, state: await snapshot(db, scope, 'design', item, true) };
 }
 export async function version(db, workspaceId, id, stage) {
   if (!/^[0-9a-f-]{36}$/i.test(id ?? '')) throw failure(400, '版本标识无效。');

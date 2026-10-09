@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "notice": "Copy to a protected local path, fill approved real environment and evidence. This example does not authorize SAP calls.",
+  "targets": [
+    {
+      "target_ref": "replace-with-approved-target",
+      "organization_id": "00000000-0000-0000-0000-000000000000",
+      "project_id": "00000000-0000-0000-0000-000000000000",
+      "system_id": "00000000-0000-0000-0000-000000000000",
+      "client": "000",
+      "environment": "DEV",
+      "deployment_version": "UNVERIFIED",
+      "data_egress_approved": false,
+      "allowed_urls": [],
+      "templates": {},
+      "capabilities": [
+        {
+          "id": "SAP-C01",
+          "status": "UNVERIFIED",
+          "evidence_ref": null,
+          "approved_by": null,
+          "reason": null,
+          "evidence_sha256": null
+        },
+        {
+          "id": "SAP-C02",
+          "status": "UNVERIFIED",
+          "evidence_ref": null,
+          "approved_by": null,
+          "reason": null,
+          "evidence_sha256": null
+        },
+        {
+          "id": "SAP-C03",
+          "status": "UNVERIFIED",
+          "evidence_ref": null,
+          "approved_by": null,
+          "reason": null,
+          "evidence_sha256": null
+        },
+        {
+          "id": "SAP-C04",
+          "status": "UNVERIFIED",
+          "evidence_ref": null,
+          "approved_by": null,
+          "reason": null,
+          "evidence_sha256": null
+        },
+        {
+          "id": "SAP-C05",
+          "status": "UNVERIFIED",
+          "evidence_ref": null,
+          "approved_by": null,
+          "reason": null,
+          "evidence_sha256": null
+        },
+        {
+          "id": "SAP-C06",
+          "status": "UNVERIFIED",
+          "evidence_ref": null,
+          "approved_by": null,
+          "reason": null,
+          "evidence_sha256": null
+        },
+        {
+          "id": "SAP-C07",
+          "status": "UNVERIFIED",
+          "evidence_ref": null,
+          "approved_by": null,
+          "reason": null,
+          "evidence_sha256": null
+        }
+      ]
+    }
+  ]
+}

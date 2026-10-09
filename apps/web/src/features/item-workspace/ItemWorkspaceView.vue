@@ -4,7 +4,6 @@ import { onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router';
 import { api, identity } from '../../services/session';
 import { askConfirmation } from '../../services/confirmation';
 import AgentWorkbench from '../fs-assistant-test/AgentWorkbench.vue';
-import GemFsdV2 from './GemFsdV2.vue';
 import ChatMarkdown from '../fs-assistant-test/ChatMarkdown.vue';
 import StructuredEditor from './StructuredEditor.vue';
 import fsdSchema from '@sap-delivery-workbench/contracts/agent-runtime/fsd/v1/r.schema.json';
@@ -27,9 +26,10 @@ import {
 import { useMediaQuery } from '@vueuse/core';
 import './workspace.css';
 const props = defineProps<{ projectId: string; itemId: string; stage: string }>();
-const useV2 = ref(false);
 const stage = props.stage === 'development' ? 'development' : 'design';
 const base = `/projects/${props.projectId}/development-items/${props.itemId}/work/${stage}`;
+const agentBase = base + (stage === 'design' ? '/fsd/v1/chat' : '/agent');
+const sessionBase = stage === 'design' ? agentBase : base;
 const state = ref<any>(null),
   draft = ref<any>(null),
   historical = ref<any>(null),
@@ -79,7 +79,7 @@ function adopt(s: any) {
 }
 async function refreshSessions() {
   if (controller.signal.aborted) return;
-  const r = await api<any>(base + '/sessions', undefined, undefined, { signal: controller.signal });
+  const r = await api<any>(sessionBase + '/sessions', undefined, undefined, { signal: controller.signal });
   if (!controller.signal.aborted) sessions.value = r.items;
 }
 async function load() {
@@ -232,7 +232,7 @@ async function adoptArtifact(a: AgentArtifact) {
   busy.value = true;
   error.value = '';
   try {
-    const s = await api<any>(base + '/adopt', {
+    const s = await api<any>(sessionBase + '/adopt', {
       artifactId: a.id,
       baseVersionId: state.value.head.id,
     });
@@ -320,7 +320,7 @@ async function refreshFiles() {
   if (!sessionId.value) return;
   filesLoading.value = true;
   try {
-    const r = await api<any>(base + '/sessions/' + sessionId.value + '/files');
+    const r = await api<any>(sessionBase + '/sessions/' + sessionId.value + '/files');
     if (token === filesEpoch && !controller.signal.aborted) files.value = r;
   } catch (e) {
     if (token === filesEpoch) error.value = (e as Error).message;
@@ -331,7 +331,7 @@ async function refreshFiles() {
 async function inspectFile(id: string) {
   const token = filesEpoch;
   try {
-    const r = await api<any>(base + '/sessions/' + sessionId.value + '/files/' + id);
+    const r = await api<any>(sessionBase + '/sessions/' + sessionId.value + '/files/' + id);
     if (token === filesEpoch && !controller.signal.aborted) filePreview.value = r;
   } catch (e) {
     if (token === filesEpoch) error.value = (e as Error).message;
@@ -340,7 +340,7 @@ async function inspectFile(id: string) {
 async function inspectOutput(id: string) {
   const token = filesEpoch;
   try {
-    const r = await api<AgentArtifact>(base + '/agent/artifacts/' + id);
+    const r = await api<AgentArtifact>(agentBase + '/artifacts/' + id);
     if (token === filesEpoch && !controller.signal.aborted) openCandidate(r);
   } catch (e) {
     if (token === filesEpoch) error.value = (e as Error).message;
@@ -360,7 +360,7 @@ async function createSession() {
   busy.value = true;
   error.value = '';
   try {
-    const r = await api<any>(base + '/agent/conversations', {
+    const r = await api<any>(agentBase + '/conversations', {
       selection: selection.value,
       ...(carrySummary.value && sessionId.value ? { handoffFrom: sessionId.value } : {}),
     });
@@ -416,13 +416,6 @@ watch(
       <span class="stage-label">{{ stage === 'design' ? '设计' : '开发' }}</span>
       <div class="work-header-actions">
         <button
-          v-if="stage === 'design'"
-          :disabled="busy || agentBusy || dirty"
-          @click="useV2 = !useV2"
-        >
-          {{ useV2 ? '返回旧版' : 'Gem FSD v2（试用）' }}
-        </button>
-        <button
           class="work-icon"
           aria-label="打开资料面板"
           :aria-expanded="!!pane"
@@ -443,12 +436,13 @@ watch(
     <p v-if="loading" role="status" class="work-loading">正在读取开发项…</p>
     <div v-else-if="state?.head" ref="shell" class="work-body" :class="{ 'panel-open': !!pane }">
       <section class="work-chat" v-show="!compact || !pane" aria-label="对话工作区">
-        <div v-if="!useV2" class="work-chat-heading">
+        <div class="work-chat-heading">
           <div>
             <span class="work-eyebrow">{{ state.project.name }}</span>
             <h2 :title="currentTitle">{{ currentTitle }}</h2>
           </div>
           <button
+            v-if="stage === 'development'"
             :disabled="busy || !state.canEdit"
             @click="resetAssistant"
             title="清空本开发项设计与开发两阶段的全部对话、附件、工作稿和成果，不可撤销"
@@ -482,17 +476,10 @@ watch(
         <p v-if="!state.canEdit" class="work-inline-note">
           当前为只读，仅阶段负责人或项目管理员可以修改。
         </p>
-        <GemFsdV2
-          v-if="useV2"
-          :base="base + '/gem-fsd-v2'"
-          :editable="state.canEdit"
-          @busy="agentBusy = $event"
-        />
         <AgentWorkbench
-          v-else
           :key="agentKey"
           embedded
-          :base="base + '/agent'"
+          :base="agentBase"
           :model-path="base + '/models'"
           :selection="selection"
           :stage="stage"

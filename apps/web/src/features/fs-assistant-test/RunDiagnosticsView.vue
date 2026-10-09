@@ -11,7 +11,7 @@ const controller = new AbortController();
 const base = String(route.query.base ?? '/admin/abap-fsd-agent');
 async function load() {
   if (
-    !/^(?:\/admin\/abap-fsd-agent|\/projects\/[a-f0-9-]{36}\/development-items\/[a-f0-9-]{36}\/work\/(?:design|development)\/agent)$/.test(
+    !/^(?:\/admin\/abap-fsd-agent|\/projects\/[a-f0-9-]{36}\/development-items\/[a-f0-9-]{36}\/work\/(?:(?:design|development)\/agent|design\/fsd\/v1\/chat))$/.test(
       base,
     )
   ) {

@@ -1,0 +1,1357 @@
+{
+  "dataset_id": "abap-fsd-54",
+  "version": 4,
+  "data_mode": "SYNTHETIC",
+  "source_version": "09 V0.1 2026-10-08",
+  "source_sha256": "26b02d14bb5389268c6fcd1bedf3b763f8c99af2fab954928830aba5bc73a2a2",
+  "notice": "Complete case PASS requires all specified assertions; partial tests never count as full case PASS.",
+  "cases": [
+    {
+      "case_id": "OBS-01",
+      "version": 1,
+      "requirement_id": "REQ-OBS",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "一条带 mock 查询/模型/提交/导出的正常任务",
+      "assertions": "API→Outbox→worker→节点→模型/工具→提交/checkpoint→导出全部可用 task/run 查到，父子/links 无错绑；业务结果有效",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/unit/api/design-assistant/telemetry.test.mjs",
+        "tests/integration/api/design-assistant/api.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs",
+        "tests/integration/api/design-assistant/observation.test.mjs",
+        "tests/e2e/design-assistant/workbench.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "OBS-02",
+      "version": 1,
+      "requirement_id": "REQ-OBS",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "杀 worker 后接管恢复",
+      "assertions": "logical_run/thread 不变，新 attempt/Trace；原 Trace 与 checkpoint、commit 导航可查，不复用 span_id",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/unit/api/design-assistant/telemetry.test.mjs",
+        "tests/integration/api/design-assistant/api.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs",
+        "tests/integration/api/design-assistant/observation.test.mjs",
+        "tests/integration/api/design-assistant/crash.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "OBS-03",
+      "version": 2,
+      "requirement_id": "REQ-OBS",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "两次同请求工具重试，随后用户取消",
+      "assertions": "各 attempt 独立 Span；retry_reason、cancel_source、remote_outcome 和累计预算正确；取消后不提交",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/unit/api/design-assistant/telemetry.test.mjs",
+        "tests/integration/api/design-assistant/api.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs",
+        "tests/integration/api/design-assistant/observation.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "OBS-04",
+      "version": 1,
+      "requirement_id": "REQ-OBS",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "在输入、工具结果、异常 stack/header、metadata 中放合成口令/个人标记",
+      "assertions": "exporter/日志/诊断包不存在敏感标记；安全摘要仍能定位错误；受控原文访问有鉴权",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/unit/api/design-assistant/telemetry.test.mjs",
+        "tests/integration/api/design-assistant/api.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs",
+        "tests/integration/api/design-assistant/observation.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "OBS-05",
+      "version": 1,
+      "requirement_id": "REQ-OBS",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "Trace 后端拒绝连接/慢响应/恢复",
+      "assertions": "exporter 限时降级；业务完成及审计不丢；本地 failed/dropped 可查，恢复不重复业务",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/unit/api/design-assistant/telemetry.test.mjs",
+        "tests/integration/api/design-assistant/api.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs",
+        "tests/integration/api/design-assistant/observation.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "OBS-06",
+      "version": 1,
+      "requirement_id": "REQ-OBS",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "exporter 队列超过 1,000 条",
+      "assertions": "有界掉数，不无限内存/磁盘增长；任务不死锁；missing_span/degraded 明示",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/unit/api/design-assistant/telemetry.test.mjs",
+        "tests/integration/api/design-assistant/api.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs",
+        "tests/integration/api/design-assistant/observation.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "OBS-07",
+      "version": 1,
+      "requirement_id": "REQ-OBS",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "业务审计写入失败，但 Trace 正常",
+      "assertions": "业务事务回滚、不产生 APPLIED/阶段推进；PERSISTENCE_ERROR 可定位；不能靠 Trace 伪成功",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/unit/api/design-assistant/telemetry.test.mjs",
+        "tests/integration/api/design-assistant/api.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs",
+        "tests/integration/api/design-assistant/observation.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "OBS-08",
+      "version": 1,
+      "requirement_id": "REQ-OBS",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "两项目并发，异步回调乱序；跨任务访问 Trace/原证据",
+      "assertions": "无上下文串线；跨项目诊断/材料拒绝；指标无 task/run 高基数标签泄露",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/unit/api/design-assistant/telemetry.test.mjs",
+        "tests/integration/api/design-assistant/api.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs",
+        "tests/integration/api/design-assistant/observation.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "DBG-01",
+      "version": 1,
+      "requirement_id": "REQ-DBG",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "查询一个失败 case 的诊断入口",
+      "assertions": "找到原输入/资产、错误原点、状态、checkpoint/commit、证据限制与允许下一步；原因未知明确 UNKNOWN",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/api.test.mjs",
+        "tests/integration/api/design-assistant/observation.test.mjs",
+        "tests/e2e/design-assistant/diagnosis.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "DBG-02",
+      "version": 2,
+      "requirement_id": "REQ-DBG",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "固定输入/证据，Prompt A/B 比较",
+      "assertions": "两运行清单除目标变量外一致；质量、修改范围、Token、延迟与错误可比较；不能只比速度",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/api.test.mjs",
+        "tests/integration/api/design-assistant/observation.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "DBG-03",
+      "version": 1,
+      "requirement_id": "REQ-DBG",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "对历史失败运行隔离重放",
+      "assertions": "新 run/thread/replay_of，正式成果/确认/外部写入不变；固定证据模式零真实 SAP 调用",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/api.test.mjs",
+        "tests/integration/api/design-assistant/observation.test.mjs",
+        "tests/integration/api/design-assistant/replay.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "DBG-04",
+      "version": 2,
+      "requirement_id": "REQ-DBG",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "Trace 停机时导出诊断包及未授权用户下载",
+      "assertions": "授权用户拿到本地日志+审计包并看到缺失声明/hash；未授权拒绝并审计；包无原始敏感正文",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/api.test.mjs",
+        "tests/integration/api/design-assistant/observation.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "REC-01",
+      "version": 1,
+      "requirement_id": "REQ-REC",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "调用结果暂存后、checkpoint ACK 前杀进程",
+      "assertions": "原 run/thread 恢复；完整结果可复用或按原预算重试；无重复成果；有 operation/对账事件",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/crash.test.mjs",
+        "tests/integration/api/design-assistant/checkpointer.test.mjs",
+        "tests/integration/api/design-assistant/faults.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "REC-02",
+      "version": 1,
+      "requirement_id": "REQ-REC",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "StepCommit 生效后、checkpoint 前硬退出",
+      "assertions": "重入 SKIP_APPLIED，已有成果/指针不重复变化；未完成后续步可继续；run APPLIED 不被误当整体完成",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/crash.test.mjs",
+        "tests/integration/api/design-assistant/checkpointer.test.mjs",
+        "tests/integration/api/design-assistant/faults.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "REC-03",
+      "version": 1,
+      "requirement_id": "REQ-REC",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "确认/Outbox 事务提交后、实际派发前退出",
+      "assertions": "确认版本/范围不丢，扫描重投原事件，同 wait 决定最多消费一次；不要求重复确认",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/crash.test.mjs",
+        "tests/integration/api/design-assistant/checkpointer.test.mjs",
+        "tests/integration/api/design-assistant/faults.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "REC-04",
+      "version": 1,
+      "requirement_id": "REQ-REC",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "interrupt 等待后重启，单题答复/全批齐备",
+      "assertions": "收题零模型；问题/进度保留；新答案快照创建后继 run/thread，旧快照不混入；确认 resume 同原 run/thread",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/crash.test.mjs",
+        "tests/integration/api/design-assistant/checkpointer.test.mjs",
+        "tests/integration/api/design-assistant/faults.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "REC-05",
+      "version": 1,
+      "requirement_id": "REQ-REC",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "租约失效，新 worker 接管，旧 worker 返回",
+      "assertions": "旧 generation 被拒绝提交；新 attempt 可继续；没有重复 APPLIED/预算双结算",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/crash.test.mjs",
+        "tests/integration/api/design-assistant/checkpointer.test.mjs",
+        "tests/integration/api/design-assistant/faults.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "REC-06",
+      "version": 1,
+      "requirement_id": "REQ-REC",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "SAP 读取成功但客户端断连/超时",
+      "assertions": "OUTCOME_UNKNOWN；会话恢复后新代际完整读取；不混页、不宣称远端失败或成果已核实",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/crash.test.mjs",
+        "tests/integration/api/design-assistant/checkpointer.test.mjs",
+        "tests/integration/api/design-assistant/faults.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "REC-07",
+      "version": 1,
+      "requirement_id": "REQ-REC",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "Prompt/graph/schema 升级后恢复旧 checkpoint",
+      "assertions": "原资产可用则原版继续；不可兼容进入 COMPATIBILITY；禁止偷偷切新资产/丢历史确认",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/crash.test.mjs",
+        "tests/integration/api/design-assistant/checkpointer.test.mjs",
+        "tests/integration/api/design-assistant/faults.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "REC-08",
+      "version": 1,
+      "requirement_id": "REQ-REC",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "checkpoint 保存失败/损坏、业务 DB 不可达",
+      "assertions": "保留有效 StepCommit；明确技术等待/拒绝新命令，不从 Trace 猜成功；修复后从可核对位置恢复",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/crash.test.mjs",
+        "tests/integration/api/design-assistant/checkpointer.test.mjs",
+        "tests/integration/api/design-assistant/faults.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "STATE-01",
+      "version": 1,
+      "requirement_id": "REQ-STATE",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "同 request_id 同内容重复；随后同 ID 不同内容",
+      "assertions": "前者返回已有且最多一次生效；后者 IDEMPOTENCY_CONFLICT，旧记录不变",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/storage.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "STATE-02",
+      "version": 1,
+      "requirement_id": "REQ-STATE",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "模型处理中用户改答案，旧结果到达",
+      "assertions": "旧提案 STALE，不覆盖当前输入；新版全批有效后才启后继运行；旧 input 可定位",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/storage.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/faults.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "STATE-03",
+      "version": 1,
+      "requirement_id": "REQ-STATE",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "双 dispatcher/worker 同时认领一任务，分支乱序",
+      "assertions": "一个活跃写运行；查询结果按代际去重汇聚；共享余额不双预留；无静默 reducer 合并提案",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/storage.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "STATE-04",
+      "version": 1,
+      "requirement_id": "REQ-STATE",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "暂停与提交竞争，两种先后；随后服务重启",
+      "assertions": "先提交则成果保留，先暂停则迟到提交拒绝；重启不解除用户 PAUSED",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/storage.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "STATE-05",
+      "version": 1,
+      "requirement_id": "REQ-STATE",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "模型/外部命令要求任意 goto 或直接 DELIVERED",
+      "assertions": "模型无该权力，非法迁移拒绝；关口/证据/确认未满足不会交付",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/storage.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "STATE-06",
+      "version": 1,
+      "requirement_id": "REQ-STATE",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "局部/附条件/过时确认，随后修订 FSD",
+      "assertions": "不记整体通过；正确版明确确认才消费；确认历史保留且不跨版本范围自动扩张",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/storage.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "TOOL-01",
+      "version": 1,
+      "requirement_id": "REQ-TOOL",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "调用写入/执行工具，或自由 SQL/外部 ADT URL",
+      "assertions": "TOOL_DENIED/INVALID_TOOL_INPUT；底层调用计数为零；模型无直通路径",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/unit/api/design-assistant/tools.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "TOOL-02",
+      "version": 2,
+      "requirement_id": "REQ-TOOL",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "明确权限拒绝、不支持或搜索空结果",
+      "assertions": "前两者不盲重试；空结果 NOT_FOUND_UNCONFIRMED，不改为对象不存在；缺口/next_actions 清楚",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/unit/api/design-assistant/tools.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/faults.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "TOOL-03",
+      "version": 2,
+      "requirement_id": "REQ-TOOL",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "DDIC 返回字段但缺单位/币种/长度属性",
+      "assertions": "coverage 不完整、missing_properties 明确；关键公式/字段不能标已核实或正式交付",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/unit/api/design-assistant/tools.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/faults.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "TOOL-04",
+      "version": 2,
+      "requirement_id": "REQ-TOOL",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "多页结果，页过期、跳 offset、异代际页",
+      "assertions": "不拼接，保留缺失范围；新读使用新代际；从实际 nextOffset 续读；证据 hash 可核对",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/unit/api/design-assistant/tools.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/faults.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "TOOL-05",
+      "version": 1,
+      "requirement_id": "REQ-TOOL",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "工具成功但证据错系统/client/旧版本",
+      "assertions": "检索/证据校验拒绝进入当前上下文；记录来源错配，关键结论待复核",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/unit/api/design-assistant/tools.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/faults.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "TOOL-06",
+      "version": 2,
+      "requirement_id": "REQ-TOOL",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "source_version 未知、长等待后恢复",
+      "assertions": "重读并保留版本未知限制；仍无法核关键适用性则阻断；时间戳/hash 不冒充未变化证明",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/unit/api/design-assistant/tools.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/faults.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "TOOL-07",
+      "version": 1,
+      "requirement_id": "REQ-TOOL",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "上游通用 isError；会话 BUSY；429 Retry-After",
+      "assertions": "保留 UNKNOWN_CAUSE；串行/有界退避；均受同预算；不猜权限/对象不存在",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/unit/api/design-assistant/tools.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/faults.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "TOOL-08",
+      "version": 1,
+      "requirement_id": "REQ-TOOL",
+      "design": "09 §3 / §5",
+      "layer": "L3",
+      "input": "真实 SAP 的必需对象/账号/部署能力记录",
+      "assertions": "06 SAP-C01～07 实际证据齐全；缺环境=BLOCKED；mock 不替代 PASS，非适用有明确理由",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/unit/api/design-assistant/tools.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/unit/api/design-assistant/probe.test.mjs"
+      ],
+      "coverage": "partial",
+      "blocker": "SAP-C01..07 授权环境与真实能力证据未提供",
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "MODEL-01",
+      "version": 1,
+      "requirement_id": "REQ-MODEL",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "非法 JSON/缺版本/错误引用/越范围提案",
+      "assertions": "05 Schema 明确错误字段；最多 1 次格式修复；结果不写权威状态，超限可解释停止",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/faults.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "MODEL-02",
+      "version": 2,
+      "requirement_id": "REQ-MODEL",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "模型持续流式返回、输出截断",
+      "assertions": "120 秒绝对超时不重置；未完成片段不发布；续写/修复计预算",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/faults.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "MODEL-03",
+      "version": 1,
+      "requirement_id": "REQ-MODEL",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "同证据/同问题连续两轮，模型换题号要求继续",
+      "assertions": "gap_id 不变、NO_PROGRESS 停止；文字变长不算进展；调用树能看循环",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/faults.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "MODEL-04",
+      "version": 1,
+      "requirement_id": "REQ-MODEL",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "SDK/工具/节点各试图重试，并在中途重启",
+      "assertions": "应用统一授权，实际次数不叠加；任务/run 累计不清零；低上限用例精确停止",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/faults.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "MODEL-05",
+      "version": 2,
+      "requirement_id": "REQ-MODEL",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "两任务并发、用量未知/迟到；格式修复也扣量",
+      "assertions": "不双花余额；未知挂账，不因重启退款；operation 只结算一次；真实额和估计分开",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/faults.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "MODEL-06",
+      "version": 2,
+      "requirement_id": "REQ-MODEL",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "缺失/无界预算配置，用户申请重开",
+      "assertions": "缺配置拒绝能力启动；重开必须显式授权/条件变化/增量，保留历史消耗与资产版",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/faults.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/concurrency.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "FLOW-01",
+      "version": 1,
+      "requirement_id": "REQ-FLOW",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "短文本→mock 查询→澄清→两确认→完整 FSD",
+      "assertions": "01 三项核心规格及引用完整；仅合法确认后交付；导出不用模型重生全文",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/flow.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/incremental.test.mjs",
+        "tests/e2e/design-assistant/workbench.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "FLOW-02",
+      "version": 1,
+      "requirement_id": "REQ-FLOW",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "“其他”无说明、必需材料未到、错选项",
+      "assertions": "原题等待，零模型；不能记齐备/全批完成",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/flow.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/incremental.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "FLOW-03",
+      "version": 2,
+      "requirement_id": "REQ-FLOW",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "收题期间修改已答题、上传材料、暂停恢复",
+      "assertions": "固定问题/总数不变；仅可读检查，不模型 OCR/总结；全批冻结一次逻辑结果",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/flow.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/incremental.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "FLOW-04",
+      "version": 1,
+      "requirement_id": "REQ-FLOW",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "本批一项失败、一项部分、一项成功/取消",
+      "assertions": "全部终态才解释；工具成功不等充分；关键缺口阻断，不无限等待",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/flow.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/faults.test.mjs",
+        "tests/integration/api/design-assistant/incremental.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "FLOW-05",
+      "version": 2,
+      "requirement_id": "REQ-FLOW",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "调整标题，随后改变关键“未清”口径",
+      "assertions": "标题只改关联叙述；口径检查依赖、规则/字段/确认；扩展范围有理由，不盲改全文",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/flow.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/incremental.test.mjs",
+        "tests/unit/api/design-assistant/objects.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "FLOW-06",
+      "version": 1,
+      "requirement_id": "REQ-FLOW",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "反向审查发现规则漏洞，模型只改审查章节",
+      "assertions": "正文/相关规则未回写则不通过；修正回写及相关回归后才进确认",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/flow.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/incremental.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "FLOW-07",
+      "version": 2,
+      "requirement_id": "REQ-FLOW",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "标准功能足够、非报表混合需求、仅整理现有源码",
+      "assertions": "按 01 分支说明并等用户决定；不强制自开发、不扩展业务自动化、不把现状当正确目标",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/flow.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/incremental.test.mjs",
+        "tests/integration/api/design-assistant/faults.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "FLOW-08",
+      "version": 1,
+      "requirement_id": "REQ-FLOW",
+      "design": "09 §3 / §5",
+      "layer": "L0/L1",
+      "input": "前提撤回、用户结束、无关键证据仍要求先交付",
+      "assertions": "按现有 Q11 暂停/取消，不自动替代题；结束不标交付；无证据不因同意先交付而核实",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": null,
+      "tests": [
+        "tests/integration/api/design-assistant/flow.test.mjs",
+        "tests/unit/api/design-assistant/policy.test.mjs",
+        "tests/integration/api/design-assistant/incremental.test.mjs"
+      ],
+      "coverage": "complete",
+      "blocker": null,
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 1
+    },
+    {
+      "case_id": "BIZ-01",
+      "version": 1,
+      "requirement_id": "REQ-BIZ",
+      "design": "09 §3 / §5",
+      "layer": "L4",
+      "input": "简短“未清订单报表”；材料给出抬头/行、状态及数量的固定定义，客户未确定“未清”",
+      "assertions": "主动提出有依据的互斥口径、相关生命周期/逆向场景，不能自行确认；三项核心规格可追溯",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": "business.json",
+      "tests": [],
+      "coverage": "partial",
+      "blocker": "真实样本、授权证据、冻结模型和专家参考未提供",
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 3
+    },
+    {
+      "case_id": "BIZ-02",
+      "version": 1,
+      "requirement_id": "REQ-BIZ",
+      "design": "09 §3 / §5",
+      "layer": "L4",
+      "input": "给程序名与可读入口/包含源码；存在一个不可读动态依赖",
+      "assertions": "默认定位并读取；区分现状与新需求；依赖缺口明确，不宣称全程序行为已理解",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": "business.json",
+      "tests": [],
+      "coverage": "partial",
+      "blocker": "真实样本、授权证据、冻结模型和专家参考未提供",
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 3
+    },
+    {
+      "case_id": "BIZ-03",
+      "version": 1,
+      "requirement_id": "REQ-BIZ",
+      "design": "09 §3 / §5",
+      "layer": "L4",
+      "input": "既有 FSD 固定版、只改标题，再提交公式/筛选变化",
+      "assertions": "首次增量保留未变规则，第二次沿依赖同步字段/章节/确认；比较每对象差异与返工",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": "business.json",
+      "tests": [],
+      "coverage": "partial",
+      "blocker": "真实样本、授权证据、冻结模型和专家参考未提供",
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 3
+    },
+    {
+      "case_id": "BIZ-04",
+      "version": 1,
+      "requirement_id": "REQ-BIZ",
+      "design": "09 §3 / §5",
+      "layer": "L4",
+      "input": "同名对象来自错客户端/旧版本；关键字段缺单位或币种",
+      "assertions": "错证据不进上下文；未知/部分不编造；已明确事实与关键阻断都正确呈现",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": "business.json",
+      "tests": [],
+      "coverage": "partial",
+      "blocker": "真实样本、授权证据、冻结模型和专家参考未提供",
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 3
+    },
+    {
+      "case_id": "BIZ-05",
+      "version": 1,
+      "requirement_id": "REQ-BIZ",
+      "design": "09 §3 / §5",
+      "layer": "L4",
+      "input": "参考包含取消、部分处理、抬头与行状态不同、多匹配及不同单位",
+      "assertions": "相关场景/粒度/基数/汇总和逆向操作有明确处理或待决；不能“其他同理”或混单位累计",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": "business.json",
+      "tests": [],
+      "coverage": "partial",
+      "blocker": "真实样本、授权证据、冻结模型和专家参考未提供",
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 3
+    },
+    {
+      "case_id": "BIZ-06",
+      "version": 1,
+      "requirement_id": "REQ-BIZ",
+      "design": "09 §3 / §5",
+      "layer": "L4",
+      "input": "标准功能已满足与混合写动作需求；用户部分确认",
+      "assertions": "标准对照有依据；写部分明确不在范围；局部确认不变整体交付，完成工作稿可独立阅读",
+      "data_mode": "SYNTHETIC",
+      "fixture_ref": "business.json",
+      "tests": [],
+      "coverage": "partial",
+      "blocker": "真实样本、授权证据、冻结模型和专家参考未提供",
+      "forbidden_side_effects": [
+        "SAP writes",
+        "primary database modification",
+        "historical deletion"
+      ],
+      "timeout_ms": 60000,
+      "repeats": 3
+    }
+  ],
+  "change_note": "Adds concurrency revalidation, context filtering, failed trace recovery and bounded retry assertions. Earlier v1 experiments preserved."
+}
