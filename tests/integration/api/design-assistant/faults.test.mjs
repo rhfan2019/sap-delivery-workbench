@@ -188,7 +188,7 @@ test('MODEL-01 invalid model output has exactly one repair and no authoritative 
     await f.pool.end();
   }
 });
-test('MODEL-01b invented evidence reference gets one repair that names the reason', async () => {
+test('MODEL-01b invented evidence reference is dropped without failing the call', async () => {
   const f = await setup();
   const repairs = [];
   try {
@@ -202,15 +202,21 @@ test('MODEL-01b invented evidence reference gets one repair that names the reaso
         return result;
       },
     }).catch(() => {});
-    assert.deepEqual(repairs.slice(0, 2), [null, 'UNKNOWN_REFERENCE']);
+    assert.equal(repairs[1], null, 'no repair round for a removable citation');
     const failed = (
       await f.pool.query(
-        "SELECT data FROM app.fsd_v1_event WHERE task_id=$1 AND event_type='operation.failed'",
+        "SELECT data FROM app.fsd_v1_event WHERE task_id=$1 AND event_type='operation.failed' AND data->>'error_code'='UNKNOWN_REFERENCE'",
         [f.task.id],
       )
     ).rows;
-    assert.equal(failed.length, 1);
-    assert.equal(failed[0].data.error_code, 'UNKNOWN_REFERENCE');
+    assert.equal(failed.length, 0);
+    const settled = (
+      await f.pool.query(
+        "SELECT result FROM app.fsd_v1_operation o JOIN app.fsd_v1_run r ON r.id=o.run_id WHERE r.task_id=$1 AND o.status='SETTLED' ORDER BY o.created_at LIMIT 1",
+        [f.task.id],
+      )
+    ).rows[0];
+    assert.ok(!settled.result.evidence_refs.includes('chat:user:invented'));
   } finally {
     await f.pool.end();
   }

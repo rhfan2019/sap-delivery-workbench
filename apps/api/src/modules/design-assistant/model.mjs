@@ -46,7 +46,7 @@ export async function configuredStreamingModel({ context, signal, onDelta, trans
 }
 const answeredCount = (snapshot) =>
   Object.keys(snapshot.answers ?? {}).length + (snapshot.prior_answers?.length ?? 0);
-export async function configuredModel({ kind, context, signal, repair }) {
+export async function configuredModel({ kind, context, signal, repair, part }) {
   const { pool, r, t } = context;
   const model = r.assets.model;
   if (model.mode !== 'REAL' || !model.version_id) throw fault('MODEL_NOT_CONFIGURED', 'MODEL', 409);
@@ -74,6 +74,10 @@ export async function configuredModel({ kind, context, signal, repair }) {
       '\n可引用的证据编号（所有 evidence_refs/evidence_ref 只能取自此列表；为空时一律填空数组，用户答复与通用知识不是证据）：' +
       JSON.stringify((t.evidence ?? []).map((e) => e.id)) +
       '\nbasis=FACT 的结论必须至少引用一个上述证据编号；没有证据时，用户已确认的写 CUSTOMER_DECISION，其余写 INFERENCE。' +
+      // FSD_SAP_MODE=off: the target cannot be read at all, so asking for queries is pointless.
+      (t.target?.sap_disabled
+        ? '\n本次未接入 SAP，无法查询系统：不要返回 NEED_QUERY；表、字段、状态值等系统结论一律按通用 SAP 知识写为 INFERENCE，并在 unresolved_issues 中列为“待 SAP 核实”（blocking=false）。'
+        : '') +
       '\nsnapshot.prior_answers（更早轮次）与 snapshot.answers（最近一轮，冲突时以它为准）都是客户已确认的答复，直接采用，不得就同一事项再次提问。' +
       // Real models otherwise keep refining the same topics round after round.
       (answeredCount(r.snapshot) >= 6
@@ -91,6 +95,14 @@ export async function configuredModel({ kind, context, signal, repair }) {
       // The model otherwise reads allowed_scope as a topic ("report") and invents id prefixes.
       (kind === 'ChangeProposal'
         ? '\nobject_id 只能是 section-1 至 section-8、objects 中已有编号，或新增的 scenario-*/rule-*/field-*（后缀仅英文、数字、-、_）；allowed_scope 必须逐一列出 changes 中出现的全部 object_id。' +
+          (part
+            ? '\n本次只编写第 ' +
+              part.group.sections.join('、') +
+              ' 章：changes 的 section 只能取这些值，每章至少一条变更；decision 为 PROPOSE，证据或口径不足写入 unresolved_issues，不得返回空 changes。candidate 是本轮已编写的其他章节，只用于保持术语、编号和引用一致，不要重复输出。'
+            : '') +
+          (Object.keys(t.objects ?? {}).length
+            ? ''
+            : '\n尚无已保存对象：新对象一律 op=ADD、base_version=0。') +
           '\n现有对象编号：' +
           JSON.stringify(Object.keys(t.objects ?? {}))
         : '\n本类输出须精简：只填 Schema 要求的字段，不得添加 Schema 之外的键；每条说明不超过两句，总输出控制在 3000 字以内。') +
@@ -111,7 +123,7 @@ export async function configuredModel({ kind, context, signal, repair }) {
         snapshot: { ...r.snapshot, base_evidence: undefined },
         evidence: t.evidence,
         objects: t.objects,
-        candidate: r.state.proposal ?? null,
+        candidate: part ? part.draft : (r.state.proposal ?? null),
         review_feedback: r.state.review_open ?? [],
         artifact_version: t.artifact_version,
         input_snapshot_id: r.input_snapshot_id,
@@ -185,7 +197,10 @@ export async function configuredModel({ kind, context, signal, repair }) {
   const known = total === null ? null : { total_tokens: total };
   let output;
   try {
-    output = JSON.parse(fromAlias(text));
+    // Some models wrap the JSON in a markdown fence despite the instructions.
+    output = JSON.parse(
+      fromAlias(text.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '')),
+    );
   } catch {
     throw Object.assign(fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION'), { usage: known });
   }

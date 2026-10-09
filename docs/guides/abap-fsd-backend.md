@@ -36,12 +36,13 @@ npm run dev
 | `FSD_OTLP_URL`               | OTLP HTTP traces 地址；本地 `http://127.0.0.1:4318/v1/traces`      |
 | `FSD_REAL_INPUT_APPROVED`    | 只有明确资料出域许可后配置 `true`，才能创建 REAL 任务              |
 | `FSD_TARGET_MANIFEST`        | 本机受控 SAP 目标登记 JSON 路径，不提交账号、口令或真实材料        |
+| `FSD_SAP_MODE`               | 设为 `off` 时不接入 SAP：不登记目标、不调用工具，系统结论全部作为待核实推断进入 FSD 未决项（PoC 跑通流程用） |
 | `FSD_REAL_DELIVERY_APPROVED` | 两确认门、交付格式与业务准入明确后才允许真实交付                   |
 | 现有模型/SAP 配置            | 复用管理界面的版本化模型及凭据、组织/项目 SAP 连接；不另设明文密钥 |
 
 目标登记包含 organization_id、project_id、target_ref、system_id、client、environment（DEV/QAS）、deployment_version、data_egress_approved、allowed_urls、capabilities。能力条目必须覆盖 SAP-C01..07，具备真实 PASS 证据；NOT_APPLICABLE 必须有 reason 和 approved_by。空能力清单不准入。固定配置查询只接受服务器审核的 SELECT 模板，拒绝自由 SQL、写工具及外部 URL。
 
-预算固定在 run 的 assets 中：run 模型/工具 12/60、task 48/240、Token 120k/480k（真实模型单次结构化调用约 4–6k Token，原 30k/120k 不足以完成一次完整生成）、活动时间 1800/7200 秒、run 图步数 80、模型绝对超时 300 秒、单次输出 16k Token、工具 45 秒、格式修复 1 次、工具重读最多 2 次。UNKNOWN 保留预留；实际 Token 回报会校正预留。租约 30 秒、续租 10 秒；崩溃接管计费至旧租约截止，离线等待不继续累积。
+预算固定在 run 的 assets 中：run 模型/工具 40/60、task 160/240、Token 400k/1.6M（FSD 按章节组分批生成，一次方案约 6 次调用、FSD 编制约 5 次，另加审查修订；原 12 次/30k 不足以完成一次完整生成。为 PoC 临时值，见实现问题与修改日志）、活动时间 1800/7200 秒、run 图步数 80、模型绝对超时 300 秒、单次输出 16k Token、工具 45 秒、格式修复 1 次、工具重读最多 2 次。UNKNOWN 保留预留；实际 Token 回报会校正预留。租约 30 秒、续租 10 秒；崩溃接管计费至旧租约截止，离线等待不继续累积。
 
 低于默认硬上限的试验预算耗尽后，可向 commands 提交 `reopen_budget`，携当前 revision、新 request_id、非空 reason/condition 和正整数 increments（例如 `{ "run_model_calls": 5 }`）。必须处于 WAITING/BUDGET；总限额不得超过上面的已验证默认值。授权单独保存 actor/时间/已有用量，原 assets 不变，用量不清零，继续原 run/thread。该命令不授权无限追加或突破默认硬上限。
 

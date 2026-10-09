@@ -1,6 +1,6 @@
 // Explicit synthetic demonstration provider. Never used for REAL tasks.
 // ZPOC names are fabricated test objects, not SAP standard object claims.
-export async function syntheticModel({ kind, context }) {
+export async function syntheticModel({ kind, context, part }) {
   const { r, t } = context;
   const output = {
     output_schema_version: 2,
@@ -92,15 +92,17 @@ export async function syntheticModel({ kind, context }) {
       '检查反例：部分处理保留、取消排除、抬头完成但行未完成按行规则、无多匹配、跨单位不汇总。合成输入无未解决反例，真实适用性未验证。',
       '依赖：ZPOC_ORDER 测试伪对象；引用当前 evidence ID 和 read_generation。全部材料为 SYNTHETIC，不能作为真实开发依据。',
     ];
-    const changes = contents.map((content, i) => ({
-      object_id: 'section-' + (i + 1),
-      base_version: t.objects['section-' + (i + 1)]?.version ?? 0,
-      op: t.objects['section-' + (i + 1)] ? 'REVISE' : 'ADD',
-      content,
-      dependencies: output.evidence_refs,
-      reason: 'SYNTHETIC',
-      section: i + 1,
-    }));
+    const changes = contents
+      .map((content, i) => ({
+        object_id: 'section-' + (i + 1),
+        base_version: t.objects['section-' + (i + 1)]?.version ?? 0,
+        op: t.objects['section-' + (i + 1)] ? 'REVISE' : 'ADD',
+        content,
+        dependencies: output.evidence_refs,
+        reason: 'SYNTHETIC',
+        section: i + 1,
+      }))
+      .filter((c) => !part || part.group.sections.includes(c.section));
     Object.assign(output, {
       proposal_id: 'proposal-' + t.phase,
       allowed_scope: changes.map((c) => c.object_id),

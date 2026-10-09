@@ -81,10 +81,109 @@ const ajv = new Ajv({ allErrors: true, strict: true });
 const validators = Object.fromEntries(
   Object.entries(outputSchemas).map(([k, v]) => [k, ajv.compile(v)]),
 );
+// One chapter group of an incremental revision may legitimately change nothing.
+const partSchema = structuredClone(outputSchemas.ChangeProposal);
+delete partSchema.properties.changes.minItems;
+const validatePart = ajv.compile(partSchema);
+// Smaller models (qwen3.8-flash) cite evidence they were not given even after a repair.
+// Unknown citations are removed and claims left without evidence are downgraded to
+// INFERENCE, so nothing unverified is presented as FACT; the run can then continue.
+export function dropUnknownReferences(value, evidenceIds) {
+  if (!value || typeof value !== 'object') return value;
+  const known = new Set(evidenceIds ?? []);
+  const keep = (refs) => (Array.isArray(refs) ? refs.filter((r) => known.has(r)) : refs);
+  const out = structuredClone(value);
+  if (Array.isArray(out.evidence_refs)) out.evidence_refs = keep(out.evidence_refs);
+  for (const list of [out.unresolved_issues, out.issues])
+    for (const i of Array.isArray(list) ? list : []) i.evidence_refs = keep(i.evidence_refs);
+  if (Array.isArray(out.claims))
+    for (const c of out.claims) {
+      c.evidence_refs = keep(c.evidence_refs);
+      if (c.basis === 'FACT' && !c.evidence_refs?.length) c.basis = 'INFERENCE';
+    }
+  if (Array.isArray(out.assessments))
+    out.assessments = out.assessments.filter((a) => known.has(a.evidence_ref));
+  return out;
+}
+// Smaller models invent id prefixes ("unit-conversion-1") and treat allowed_scope as a topic.
+// Invalid ids become rule-* (dependencies follow) and allowed_scope lists what changes touch.
+export function normalizeProposalIds(value, allowedScope) {
+  if (value?.kind !== 'ChangeProposal' || !Array.isArray(value.changes)) return value;
+  // Fill fields smaller models omit; section falls back to the id (section-N) or 5 (logic).
+  for (const c of value.changes) {
+    if (!c || typeof c !== 'object') continue;
+    c.base_version ??= 0;
+    c.op ??= c.base_version ? 'REVISE' : 'ADD';
+    c.dependencies ??= [];
+    c.reason ??= '按需求生成';
+    c.section ??= Number(/^section-([1-8])$/.exec(c.object_id ?? '')?.[1] ?? 5);
+  }
+  const fresh = /^(scenario|rule|field)-[A-Za-z0-9][A-Za-z0-9_-]{0,100}$/;
+  const ok = (id) => typeof id === 'string' && (allowedScope.includes(id) || fresh.test(id));
+  const out = structuredClone(value),
+    rename = new Map(),
+    used = new Set(out.changes.map((c) => c.object_id).filter(ok));
+  for (const c of out.changes) {
+    if (ok(c.object_id)) continue;
+    const slug = String(c.object_id ?? '')
+      .replace(/[^A-Za-z0-9_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    let id = 'rule-' + (slug || 'x'),
+      n = 1;
+    while (used.has(id)) id = 'rule-' + (slug || 'x') + '-' + n++;
+    used.add(id);
+    rename.set(c.object_id, id);
+    c.object_id = id;
+  }
+  for (const c of out.changes)
+    if (Array.isArray(c.dependencies))
+      c.dependencies = c.dependencies.map((d) => rename.get(d) ?? d);
+  out.allowed_scope = [...new Set(out.changes.map((c) => c.object_id))];
+  return out;
+}
+// Smaller models break the question-batch conventions (no "other" option last, zero or
+// several recommendations, repeated ids); repair the structure, not the content.
+export function normalizeClarification(value) {
+  if (value?.kind !== 'ClarificationBatch' || !Array.isArray(value.questions)) return value;
+  const out = structuredClone(value);
+  const unique = (items) => {
+    const seen = new Set();
+    for (const item of items) {
+      let id = item.id,
+        n = 1;
+      while (seen.has(id)) id = item.id + '-' + n++;
+      seen.add(id);
+      item.id = id;
+    }
+  };
+  unique(out.questions);
+  for (const q of out.questions) {
+    if (!Array.isArray(q.options)) continue;
+    const others = q.options.filter((o) => o.other);
+    let other = others.at(-1) ?? {
+      id: 'other',
+      label: '其他（请补充说明）',
+      impact: '按客户补充的口径处理。',
+      recommended: false,
+      other: true,
+      requires_material: false,
+    };
+    q.options = q.options.filter((o) => o !== other).map((o) => ({ ...o, other: false }));
+    if (q.options.length >= 8) q.options.length = 7;
+    q.options.push({ ...other, other: true });
+    unique(q.options);
+    const pick = q.options.findIndex((o) => o.recommended && !o.other);
+    q.options.forEach((o, i) => (o.recommended = i === (pick >= 0 ? pick : 0)));
+  }
+  return out;
+}
 export function validateOutput(value, context) {
   if (context.expectedKind && value?.kind !== context.expectedKind)
     throw fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION');
-  const check = validators[value?.kind];
+  const check =
+    context.unchangedGroupAllowed && value?.kind === 'ChangeProposal'
+      ? validatePart
+      : validators[value?.kind];
   if (!check || !check(value))
     throw fault(
       'INVALID_OUTPUT',
@@ -214,6 +313,35 @@ const requiredToolFields = {
   ddicRepositoryAccess: ['path'],
   configurationTemplate: ['template_id'],
 };
+// FSD chapters are proposed group by group (05 §6.1: never the whole FSD in one call); later
+// groups see the earlier ones in the same draft. Order follows dependency: scope/lifecycle,
+// data and rules, then the report design that cites them, then review and dependencies.
+export const SECTION_GROUPS = Object.freeze([
+  { id: 'scope', sections: [1, 2, 4] },
+  { id: 'data', sections: [3, 6] },
+  { id: 'report', sections: [5] },
+  { id: 'review', sections: [7, 8] },
+]);
+// Merge one group's proposal into the draft: that group's sections are replaced, the rest kept.
+export function mergeProposalGroup(draft, part, group) {
+  // An empty group answer means "unchanged": keep what the draft already has for it.
+  const keep = (draft?.changes ?? []).filter(
+    (c) => !part.changes.length || !group.sections.includes(c.section),
+  );
+  const changes = [...keep, ...part.changes];
+  const issues = new Map(
+    [...(draft?.unresolved_issues ?? []), ...part.unresolved_issues].map((i) => [i.id, i]),
+  );
+  return {
+    ...part,
+    decision: 'PROPOSE',
+    proposal_id: draft?.proposal_id ?? part.proposal_id,
+    evidence_refs: [...new Set([...(draft?.evidence_refs ?? []), ...part.evidence_refs])],
+    unresolved_issues: [...issues.values()],
+    allowed_scope: [...new Set(changes.map((c) => c.object_id))],
+    changes,
+  };
+}
 export const modelOutputLimit = (kind, budget) =>
   kind === 'ChangeProposal' ? budget.model_output_limit : Math.min(6000, budget.model_output_limit);
 export const ddicTableUrl = (name) =>

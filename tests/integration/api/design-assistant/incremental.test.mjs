@@ -13,8 +13,10 @@ test('FLOW-05 title and formula revisions preserve untouched object versions and
       model: async (args) => {
         const r = await syntheticModel(args);
         if (args.kind === 'ChangeProposal') {
+          // Only the group holding chapter 1 changes; the other groups answer "unchanged".
           r.output.changes = r.output.changes.filter((c) => c.section === 1);
-          r.output.changes[0].content = '新标题；' + r.output.changes[0].content;
+          if (r.output.changes[0])
+            r.output.changes[0].content = '新标题；' + r.output.changes[0].content;
         }
         return r;
       },
@@ -49,17 +51,18 @@ test('FLOW-05 title and formula revisions preserve untouched object versions and
 for (const repairBody of [false, true])
   test('FLOW-06 resolved review requires actual body change: ' + repairBody, async () => {
     const w = await workflow();
-    let proposals = 0,
-      reviews = 0;
+    let reviews = 0;
     try {
       const execute = () =>
         w.run({
           model: async (args) => {
             const r = await syntheticModel(args);
-            if (args.kind === 'ChangeProposal' && ++proposals === 2) {
+            // Repair round: chapters are proposed per group, so only the group holding the
+            // fixed chapter carries the edit.
+            if (args.kind === 'ChangeProposal' && args.context.r.state.review_open?.length) {
               assert.equal(args.context.r.state.review_open.length, 1);
-              r.output.changes.find((c) => c.section === (repairBody ? 6 : 7)).content +=
-                ' 修复了取消后剩余量反例。';
+              const fixed = r.output.changes.find((c) => c.section === (repairBody ? 6 : 7));
+              if (fixed) fixed.content += ' 修复了取消后剩余量反例。';
             }
             if (args.kind === 'ReviewResult' && ++reviews === 1)
               r.output.issues = [
@@ -203,3 +206,31 @@ for (const includeDependent of [false, true])
       await w.close();
     }
   });
+test('FLOW-09 a fresh FSD proposal is written chapter group by chapter group', async () => {
+  const w = await workflow();
+  const calls = [];
+  try {
+    await w.run({
+      model: async (args) => {
+        const r = await syntheticModel(args);
+        if (args.kind === 'ChangeProposal')
+          calls.push({
+            group: args.part?.group.sections,
+            sections: r.output.changes.map((c) => c.section),
+            draftSections: (args.part?.draft?.changes ?? []).map((c) => c.section),
+          });
+        return r;
+      },
+    });
+    assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
+    assert.equal(calls.length, 4, 'one call per chapter group, not one call for the whole FSD');
+    for (const c of calls) assert.ok(c.sections.every((n) => c.group.includes(n)));
+    assert.deepEqual(calls[1].draftSections.sort(), calls[0].group.slice().sort());
+    assert.deepEqual(
+      [...new Set(Object.values(w.task.objects).map((o) => o.section))].sort(),
+      [1, 2, 3, 4, 5, 6, 7, 8],
+    );
+  } finally {
+    await w.close();
+  }
+});

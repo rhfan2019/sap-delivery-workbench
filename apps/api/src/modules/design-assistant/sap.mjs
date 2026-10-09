@@ -3,6 +3,23 @@ import { dirname, resolve, relative, isAbsolute } from 'node:path';
 import { connectMcp, resolveReadEnvironment } from '../sap/public.mjs';
 import { fault, validateTool, hash, ddicTableUrl } from './policy.mjs';
 export async function registeredTarget(scope, targetRef) {
+  // PoC switch: run the whole flow without SAP. No tool can be called; every system fact
+  // stays an unverified inference and is listed as an open item in the FSD.
+  if (process.env.FSD_SAP_MODE === 'off') {
+    const target = {
+      target_ref: 'no-sap',
+      system_id: 'NONE',
+      client: '000',
+      environment: 'DEV',
+      deployment_version: 'NONE',
+      data_egress_approved: true,
+      allowed_urls: [],
+      templates: {},
+      capabilities: [],
+      sap_disabled: true,
+    };
+    return { ...target, manifest_hash: hash(target) };
+  }
   if (!process.env.FSD_TARGET_MANIFEST)
     throw fault('SAP_CAPABILITY_UNVERIFIED', 'SAP_ADAPTER', 409);
   let manifest;

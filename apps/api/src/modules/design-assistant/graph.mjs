@@ -6,7 +6,12 @@ import {
   fault,
   hash,
   withoutSupersededFields,
+  dropUnknownReferences,
+  normalizeProposalIds,
+  normalizeClarification,
   modelOutputLimit,
+  SECTION_GROUPS,
+  mergeProposalGroup,
   validateOutput,
   validateTool,
   validateEvidence,
@@ -40,7 +45,8 @@ export function buildGraph(
   // Output the model can correct on one more attempt: malformed JSON or references to evidence it was not given.
   const repairable = new Set(['INVALID_OUTPUT', 'UNKNOWN_REFERENCE', 'OUT_OF_SCOPE']);
   const current = () => tx((db) => guard(db, lease, { allowWaiting: true }));
-  async function call(kind, state) {
+  // part: { group, draft } when one FSD chapter group is proposed at a time (see N07).
+  async function call(kind, state, part = null) {
     const { t, r } = await current();
     const phase = state.cycle ?? 0;
     const projected = {
@@ -51,7 +57,11 @@ export function buildGraph(
     };
     let repairReason = null;
     for (let repair = 0; repair <= r.assets.budget.format_repairs; repair++) {
-      const op = hash([r.id, kind, state.round, phase, repair]);
+      const op = hash(
+        part
+          ? [r.id, kind, state.round, phase, repair, part.group.id]
+          : [r.id, kind, state.round, phase, repair],
+      );
       const existing = (await pool.query('SELECT * FROM app.fsd_v1_operation WHERE id=$1', [op]))
         .rows[0];
       if (existing?.status === 'SETTLED') return existing.result;
@@ -110,13 +120,51 @@ export function buildGraph(
                 context: { t: projected, r, pool },
                 signal: combined,
                 repair: repair ? repairReason : null,
+                part,
               }),
             combined,
           ),
         );
+        result.output = normalizeClarification(result.output);
+        result.output = normalizeProposalIds(
+          dropUnknownReferences(
+            result.output,
+            projected.evidence.map((e) => e.id),
+          ),
+          [...Object.keys(t.objects), ...Array.from({ length: 8 }, (_, i) => 'section-' + (i + 1))],
+        );
+        // A group call may only touch its own chapters; anything else would overwrite
+        // chapters proposed by another group in the same draft.
+        // Returning nothing means "unchanged", which only makes sense when every chapter of
+        // the group already has content (saved, or earlier in this draft).
+        const unchangedGroupAllowed =
+          !!part &&
+          part.group.sections.every(
+            (n) =>
+              Object.values(t.objects).some((o) => o.section === n) ||
+              part.draft?.changes.some((c) => c.section === n),
+          );
+        if (part && Array.isArray(result.output?.changes)) {
+          result.output.changes = result.output.changes.filter((c) =>
+            part.group.sections.includes(c.section),
+          );
+          result.output.allowed_scope = result.output.changes.map((c) => c.object_id);
+          if (!result.output.changes.length && !unchangedGroupAllowed)
+            throw Object.assign(fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION'), {
+              usage: result.usage,
+            });
+        }
+        // The snapshot id and base version are echoes of this prompt, which the server just
+        // built; smaller models miscopy the UUID, so restore them instead of failing STALE_INPUT.
+        if (result.output && typeof result.output === 'object')
+          Object.assign(result.output, {
+            input_snapshot_id: r.input_snapshot_id,
+            base_artifact_version: t.artifact_version ?? null,
+          });
         await telemetry.span('output.validate', attrs, async () =>
           validateOutput(result.output, {
             expectedKind: kind,
+            unchangedGroupAllowed,
             allowNewDomainObjects: true,
             snapshotId: r.input_snapshot_id,
             artifactVersion: t.artifact_version,
@@ -216,7 +264,7 @@ export function buildGraph(
         return { phase: 2 };
       });
       const out = await call('AnalysisResult', s);
-      const { r } = await current();
+      const { r, t } = await current();
       const direction =
         out.scope !== 'report' ? out.scope : out.standard_fit === 'SATISFIES' ? 'standard' : null;
       const accepted = r.snapshot.scope_direction;
@@ -227,6 +275,8 @@ export function buildGraph(
         });
         return { route: 'N06' };
       }
+      // Without SAP nothing can be queried: the gaps become open items of the proposal.
+      if (out.decision === 'NEED_QUERY' && t.target.sap_disabled) return { route: 'N07' };
       return {
         route: out.decision === 'NEED_QUERY' ? 'N03' : out.decision === 'PROPOSE' ? 'N07' : 'N06',
       };
@@ -511,8 +561,28 @@ export function buildGraph(
   g.addNode(
     'N07',
     node('N07', async (s) => {
-      const proposal = await call('ChangeProposal', s);
-      const { r } = await current();
+      const { r, t } = await current();
+      const previous = r.state.proposal ?? null;
+      const open = r.state.review_open ?? [];
+      const sectionOf = (ref) =>
+        Number(/^section-([1-8])$/.exec(ref ?? '')?.[1]) ||
+        previous?.changes.find((c) => c.object_id === ref)?.section ||
+        t.objects[ref]?.section;
+      // A review repair re-proposes only the chapter groups its findings point at; an
+      // unattributable finding, or a fresh proposal, goes through every group.
+      const repairing = !!previous && open.length > 0 && open.every((i) => sectionOf(i.rule_ref));
+      const touched = new Set(open.map((i) => sectionOf(i.rule_ref)));
+      const groups = repairing
+        ? SECTION_GROUPS.filter((g) => g.sections.some((n) => touched.has(n)))
+        : SECTION_GROUPS;
+      let proposal = repairing ? structuredClone(previous) : null;
+      for (const group of groups)
+        proposal = mergeProposalGroup(
+          proposal,
+          await call('ChangeProposal', s, { group, draft: proposal }),
+          group,
+        );
+      if (!proposal.changes.length) throw fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION');
       const ref = hash(proposal);
       await commit('N07:' + s.round + ':' + (s.cycle ?? 0), proposal, (_t, run) => {
         run.state.proposal = proposal;
@@ -566,7 +636,7 @@ export function buildGraph(
         const valid = task.evidence.filter(
           (e) => checkEvidence(e, task.target, e.required_properties).valid,
         );
-        if (!valid.length) throw fault('STALE_EVIDENCE', 'RETRIEVAL');
+        if (!valid.length && !task.target.sap_disabled) throw fault('STALE_EVIDENCE', 'RETRIEVAL');
         task.objects = applyObjectChanges(task.objects, proposal.changes, valid);
         const version = (task.artifact_version ?? 0) + 1;
         const artifact = {
@@ -587,14 +657,12 @@ export function buildGraph(
           evidence_refs: valid.map((e) => e.id),
           issues: [
             ...proposal.unresolved_issues,
-            ...(exhausted
-              ? open.map((i) => ({
-                  id: i.issue_id,
-                  description: '审查未闭环：' + i.counterexample + ' 建议：' + i.suggestion,
-                  blocking: false,
-                  evidence_refs: i.evidence_refs,
-                }))
-              : []),
+            ...(exhausted ? open : []).map((i) => ({
+              id: i.issue_id,
+              description: '审查未闭环：' + i.counterexample + ' 建议：' + i.suggestion,
+              blocking: false,
+              evidence_refs: i.evidence_refs,
+            })),
           ],
           created_at: new Date().toISOString(),
           input_snapshot_id: task.input_snapshot_id,
@@ -666,11 +734,16 @@ export function buildGraph(
       await commit('N11', {}, (t) => {
         const a = t.artifacts.at(-1);
         const plan = t.artifacts.find((p) => p.id === a.plan_artifact_id);
+        // No-SAP mode has no evidence by construction; the FSD carries that as open items.
+        const evidenceMissing =
+          !t.target.sap_disabled &&
+          (!t.evidence.length ||
+            !a.evidence_refs.length ||
+            a.evidence_refs.some((id) => !t.evidence.some((e) => e.id === id)) ||
+            t.evidence.some((e) => !checkEvidence(e, t.target, e.required_properties).valid));
         if (
           t.blocking_issues.length ||
-          !t.evidence.length ||
-          !a.evidence_refs.length ||
-          a.evidence_refs.some((id) => !t.evidence.some((e) => e.id === id)) ||
+          evidenceMissing ||
           !plan ||
           !t.confirmations.some(
             (c) =>
@@ -685,8 +758,7 @@ export function buildGraph(
               c.artifact_id === a.id &&
               c.artifact_version === a.version &&
               hash(c.scope) === hash(a.scope),
-          ) ||
-          t.evidence.some((e) => !checkEvidence(e, t.target, e.required_properties).valid)
+          )
         )
           throw fault('DELIVERY_BLOCKED');
         if (t.publication_disabled) throw fault('REPLAY_PUBLICATION_DENIED');
