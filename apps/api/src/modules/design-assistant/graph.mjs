@@ -154,6 +154,14 @@ export function buildGraph(
               usage: result.usage,
             });
         }
+        // base_version/op echo the object versions this prompt showed; models copy the first
+        // proposal's "ADD, 0" into the FSD round, so take them from the objects they were given.
+        if (kind === 'ChangeProposal' && Array.isArray(result.output?.changes))
+          for (const c of result.output.changes) {
+            const old = t.objects[c.object_id];
+            c.base_version = old?.version ?? 0;
+            c.op = old ? (c.op === 'ADD' ? 'REVISE' : c.op) : 'ADD';
+          }
         // The snapshot id and base version are echoes of this prompt, which the server just
         // built; smaller models miscopy the UUID, so restore them instead of failing STALE_INPUT.
         if (result.output && typeof result.output === 'object')

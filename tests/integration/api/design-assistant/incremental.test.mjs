@@ -234,3 +234,27 @@ test('FLOW-09 a fresh FSD proposal is written chapter group by chapter group', a
     await w.close();
   }
 });
+test('FLOW-10 a revision that labels saved chapters as new still commits as a revision', async () => {
+  const w = await workflow();
+  try {
+    await w.run();
+    const before = structuredClone(w.task.objects);
+    await w.command({ command: 'supplement', text: '修订第 1 章' });
+    await w.run({
+      model: async (args) => {
+        const r = await syntheticModel(args);
+        if (args.kind === 'ChangeProposal')
+          // The model copies the first proposal's shape: "ADD, version 0" for a saved chapter.
+          r.output.changes = r.output.changes
+            .filter((c) => c.section === 1)
+            .map((c) => ({ ...c, op: 'ADD', base_version: 0, content: '修订：' + c.content }));
+        return r;
+      },
+    });
+    assert.equal(w.task.objects['section-1'].version, before['section-1'].version + 1);
+    assert.ok(w.task.objects['section-1'].content.startsWith('修订：'));
+    assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
+  } finally {
+    await w.close();
+  }
+});
