@@ -96,8 +96,20 @@ export async function configuredModel({ kind, context, signal, repair, part }) {
       (kind === 'ChangeProposal'
         ? '\nobject_id 只能是 section-1 至 section-8、objects 中已有编号，或新增的 scenario-*/rule-*/field-*（后缀仅英文、数字、-、_）；allowed_scope 必须逐一列出 changes 中出现的全部 object_id。' +
           '\ndependencies 只能引用：对象编号、上述证据编号、客户答复 answer:<题号>（题号取自 snapshot.answers / prior_answers 的 question_id）、需求原文 requirement；推断内容不写依赖。' +
+          (part?.dangling
+            ? '\n上一稿中本组章节引用了不存在的对象：' +
+              part.dangling.join('、') +
+              '。请在本组章节中新增这些对象（若属于本组），或改为引用 candidate / objects 中已有的编号，并输出本组修订后的完整内容。'
+            : '') +
           (part
-            ? '\n本次只编写第 ' +
+            ? '\n已存在可引用的对象编号：' +
+              JSON.stringify([
+                ...new Set([
+                  ...Object.keys(t.objects ?? {}),
+                  ...(part.draft?.changes ?? []).map((c) => c.object_id),
+                ]),
+              ]) +
+              '\n本次只编写第 ' +
               part.group.sections.join('、') +
               ' 章：changes 的 section 只能取这些值，每章至少一条变更；decision 为 PROPOSE，证据或口径不足写入 unresolved_issues，不得返回空 changes。candidate 是本轮已编写的其他章节，只用于保持术语、编号和引用一致，不要重复输出。'
             : '') +

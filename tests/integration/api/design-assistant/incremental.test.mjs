@@ -342,3 +342,31 @@ test('FLOW-12 a repaired chapter group keeps objects other groups still depend o
     await w.close();
   }
 });
+test('FLOW-13 references to objects no chapter defines get one fix round, then become an open item', async () => {
+  const w = await workflow();
+  const fixCalls = [];
+  try {
+    await w.command({ command: 'supplement', text: '引用未定义规则' });
+    await w.run({
+      model: async (args) => {
+        const r = await syntheticModel(args);
+        if (args.kind === 'ChangeProposal' && args.part?.group.sections.includes(5)) {
+          if (args.part.dangling) fixCalls.push(args.part.dangling);
+          // The model keeps citing a rule nobody defines, even after being told.
+          const s5 = r.output.changes.find((c) => c.section === 5);
+          s5.dependencies = [...s5.dependencies, 'rule-never-defined'];
+        }
+        return r;
+      },
+    });
+    assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
+    assert.deepEqual(fixCalls, [['rule-never-defined']]);
+    const links = w.task.objects['section-5'].dependency_links.map((l) => l.target_id);
+    assert.ok(!links.includes('rule-never-defined'));
+    const issue = w.task.artifacts.at(-1).issues.find((i) => i.id === 'dangling-references');
+    assert.ok(issue?.description.includes('rule-never-defined'));
+    assert.equal(issue.blocking, false);
+  } finally {
+    await w.close();
+  }
+});

@@ -59,7 +59,9 @@ export function buildGraph(
     for (let repair = 0; repair <= r.assets.budget.format_repairs; repair++) {
       const op = hash(
         part
-          ? [r.id, kind, state.round, phase, repair, part.group.id]
+          ? part.dangling
+            ? [r.id, kind, state.round, phase, repair, part.group.id, 'dangling']
+            : [r.id, kind, state.round, phase, repair, part.group.id]
           : [r.id, kind, state.round, phase, repair],
       );
       const existing = (await pool.query('SELECT * FROM app.fsd_v1_operation WHERE id=$1', [op]))
@@ -597,6 +599,57 @@ export function buildGraph(
           group,
         );
       if (!proposal.changes.length) throw fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION');
+      // Groups are written separately, so a chapter may cite an object no group defined.
+      // One fix round per affected group; what still dangles is dropped and listed as an
+      // open item instead of failing the whole plan at commit (UNKNOWN_REFERENCE).
+      const decisions = customerDecisions(t);
+      const known = (p) =>
+        new Set([
+          ...Object.keys(t.objects),
+          ...p.changes.map((c) => c.object_id),
+          ...t.evidence.map((e) => e.id),
+          ...decisions.keys(),
+        ]);
+      const danglingIn = (p) => {
+        const ok = known(p);
+        return p.changes.flatMap((c) =>
+          (c.dependencies ?? []).filter((d) => !ok.has(d)).map((d) => [c.section, d]),
+        );
+      };
+      let missing = danglingIn(proposal);
+      for (const group of SECTION_GROUPS) {
+        const refs = [
+          ...new Set(missing.filter(([n]) => group.sections.includes(n)).map(([, d]) => d)),
+        ];
+        if (!refs.length) continue;
+        proposal = mergeProposalGroup(
+          proposal,
+          await call('ChangeProposal', s, { group, draft: proposal, dangling: refs }),
+          group,
+        );
+      }
+      missing = danglingIn(proposal);
+      if (missing.length) {
+        const gone = new Set(missing.map(([, d]) => d));
+        proposal = {
+          ...proposal,
+          changes: proposal.changes.map((c) => ({
+            ...c,
+            dependencies: (c.dependencies ?? []).filter((d) => !gone.has(d)),
+          })),
+          unresolved_issues: [
+            ...proposal.unresolved_issues.filter((i) => i.id !== 'dangling-references'),
+            {
+              id: 'dangling-references',
+              description:
+                '以下被引用的对象在方案中没有定义，已从依赖中移除，需补充定义或确认不需要：' +
+                [...gone].join('、'),
+              blocking: false,
+              evidence_refs: [],
+            },
+          ],
+        };
+      }
       const ref = hash(proposal);
       await commit('N07:' + s.round + ':' + (s.cycle ?? 0), proposal, (_t, run) => {
         run.state.proposal = proposal;
