@@ -273,6 +273,7 @@ test('FLOW-11 rules may depend on customer answers and the requirement text', as
                 ...c.dependencies,
                 'snapshot.answers.open-definition',
                 'snapshot.text',
+                'INFERENCE',
               ];
         return r;
       },

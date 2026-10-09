@@ -95,7 +95,7 @@ export async function configuredModel({ kind, context, signal, repair, part }) {
       // The model otherwise reads allowed_scope as a topic ("report") and invents id prefixes.
       (kind === 'ChangeProposal'
         ? '\nobject_id 只能是 section-1 至 section-8、objects 中已有编号，或新增的 scenario-*/rule-*/field-*（后缀仅英文、数字、-、_）；allowed_scope 必须逐一列出 changes 中出现的全部 object_id。' +
-          '\ndependencies 只能引用：对象编号、上述证据编号、客户答复 answer:<题号>（题号取自 snapshot.answers / prior_answers 的 question_id）、需求原文 requirement。' +
+          '\ndependencies 只能引用：对象编号、上述证据编号、客户答复 answer:<题号>（题号取自 snapshot.answers / prior_answers 的 question_id）、需求原文 requirement；推断内容不写依赖。' +
           (part
             ? '\n本次只编写第 ' +
               part.group.sections.join('、') +

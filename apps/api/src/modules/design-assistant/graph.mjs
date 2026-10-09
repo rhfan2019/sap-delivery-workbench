@@ -162,7 +162,7 @@ export function buildGraph(
             c.base_version = old?.version ?? 0;
             c.op = old ? (c.op === 'ADD' ? 'REVISE' : c.op) : 'ADD';
             if (Array.isArray(c.dependencies))
-              c.dependencies = [...new Set(c.dependencies.map(decisionRef))];
+              c.dependencies = [...new Set(c.dependencies.map(decisionRef))].filter(Boolean);
           }
         // The snapshot id and base version are echoes of this prompt, which the server just
         // built; smaller models miscopy the UUID, so restore them instead of failing STALE_INPUT.
@@ -814,6 +814,8 @@ function customerDecisions(task) {
 }
 // Models cite decisions by where they saw them in the prompt; map those to the stable ids.
 function decisionRef(ref) {
+  // A basis label ("INFERENCE") says the content rests on nothing citable: no dependency.
+  if (['INFERENCE', 'FACT', 'CUSTOMER_DECISION'].includes(ref)) return null;
   const answer = /^snapshot\.(?:prior_)?answers(?:\.\d+)?\.([^.]+)/.exec(ref ?? '');
   if (answer) return 'answer:' + answer[1];
   return /^snapshot\.(?:text|input)\b/.test(ref ?? '') ? 'requirement' : ref;
