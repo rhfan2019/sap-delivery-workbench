@@ -46,18 +46,8 @@ export async function configuredStreamingModel({ context, signal, onDelta, trans
 }
 const answeredCount = (snapshot) =>
   Object.keys(snapshot.answers ?? {}).length + (snapshot.prior_answers?.length ?? 0);
-export async function configuredModel({ kind, context, signal, repair, part }) {
-  const { pool, r, t } = context;
-  const model = r.assets.model;
-  if (model.mode !== 'REAL' || !model.version_id) throw fault('MODEL_NOT_CONFIGURED', 'MODEL', 409);
-  const row = (
-    await pool.query(
-      'SELECT v.config,c.id,c.secret_cipher FROM app.llm_model_version v JOIN app.llm_credential c ON c.id=v.credential_id AND c.organization_id=v.organization_id WHERE v.id=$1 AND v.organization_id=$2',
-      [model.version_id, t.organization_id],
-    )
-  ).rows[0];
-  if (!row) throw fault('COMPATIBILITY', 'MODEL', 409);
-  if (hash(row.config) !== model.config_hash) throw fault('COMPATIBILITY', 'MODEL', 409);
+// The structured prompt for one model call; exported so its content can be tested.
+export function structuredPrompt({ kind, r, t, repair, part }) {
   // Evidence ids are 64-hex hashes the model miscopies; it sees short aliases instead,
   // mapped back before validation.
   const aliases = (t.evidence ?? []).map((e, i) => [e.id, 'EV-' + String(i + 1).padStart(3, '0')]);
@@ -136,9 +126,10 @@ export async function configuredModel({ kind, context, signal, repair, part }) {
         : '') +
       '\n冻结输入与受控资料：' +
       JSON.stringify({
-        // base_evidence repeats earlier reads, including expired ones the validator rejects;
-        // only the current, valid evidence list below may be cited.
-        snapshot: { ...r.snapshot, base_evidence: undefined },
+        // base_evidence/base_objects are frozen copies of evidence and objects; evidence may
+        // include expired reads, and objects below are the same content (sending both doubled
+        // every FSD-round prompt to ~30k tokens).
+        snapshot: { ...r.snapshot, base_evidence: undefined, base_objects: undefined },
         evidence: t.evidence,
         objects: t.objects,
         candidate: part ? part.draft : (r.state.proposal ?? null),
@@ -148,6 +139,21 @@ export async function configuredModel({ kind, context, signal, repair, part }) {
         repair: repair ?? null,
       }),
   );
+  return { prompt, fromAlias };
+}
+export async function configuredModel({ kind, context, signal, repair, part }) {
+  const { pool, r, t } = context;
+  const model = r.assets.model;
+  if (model.mode !== 'REAL' || !model.version_id) throw fault('MODEL_NOT_CONFIGURED', 'MODEL', 409);
+  const row = (
+    await pool.query(
+      'SELECT v.config,c.id,c.secret_cipher FROM app.llm_model_version v JOIN app.llm_credential c ON c.id=v.credential_id AND c.organization_id=v.organization_id WHERE v.id=$1 AND v.organization_id=$2',
+      [model.version_id, t.organization_id],
+    )
+  ).rows[0];
+  if (!row) throw fault('COMPATIBILITY', 'MODEL', 409);
+  if (hash(row.config) !== model.config_hash) throw fault('COMPATIBILITY', 'MODEL', 409);
+  const { prompt, fromAlias } = structuredPrompt({ kind, r, t, repair, part });
   // Only the FSD proposal needs the large budget; analysis-type outputs given 16k tokens
   // ramble past the call timeout (qwen3.8-max: ~11k tokens, 93-300 s for one AnalysisResult).
   const outputLimit = modelOutputLimit(kind, r.assets.budget);
