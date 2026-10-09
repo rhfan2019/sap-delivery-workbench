@@ -286,3 +286,59 @@ test('FLOW-11 rules may depend on customer answers and the requirement text', as
     await w.close();
   }
 });
+test('FLOW-12 a repaired chapter group keeps objects other groups still depend on', async () => {
+  const w = await workflow();
+  let reviews = 0;
+  try {
+    await w.command({ command: 'supplement', text: '审查修订时字段改名' });
+    await w.run({
+      model: async (args) => {
+        const r = await syntheticModel(args);
+        const repairing = !!args.context.r.state.review_open?.length;
+        if (args.kind === 'ChangeProposal') {
+          const groupHas = (n) => args.part?.group.sections.includes(n);
+          if (groupHas(3))
+            r.output.changes.push({
+              object_id: repairing ? 'field-qty-renamed' : 'field-qty',
+              base_version: 0,
+              op: 'ADD',
+              content: '订单数量',
+              dependencies: [],
+              reason: 'fixture',
+              section: 3,
+            });
+          if (groupHas(5)) {
+            const s5 = r.output.changes.find((c) => c.section === 5);
+            // Report chapter cites the field and an open item by id.
+            s5.dependencies = [...s5.dependencies, 'field-qty', 'ISSUE-1'];
+            r.output.unresolved_issues = [
+              { id: 'ISSUE-1', description: '待核实', blocking: false, evidence_refs: [] },
+            ];
+          }
+        }
+        if (args.kind === 'ReviewResult' && ++reviews === 1)
+          r.output.issues = [
+            {
+              issue_id: 'i',
+              rule_ref: 'section-6',
+              counterexample: '取消后的数量仍被计入',
+              evidence_refs: [],
+              impact: '错误计数',
+              suggestion: '修正规则',
+              status: 'OPEN',
+            },
+          ];
+        if (args.kind === 'ChangeProposal' && repairing && args.part?.group.sections.includes(6))
+          r.output.changes.find((c) => c.section === 6).content += ' 修复。';
+        return r;
+      },
+    });
+    assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
+    assert.ok(w.task.objects['field-qty'], 'field still cited by chapter 5 is kept');
+    const links = w.task.objects['section-5'].dependency_links.map((l) => l.target_id);
+    assert.ok(links.includes('field-qty'));
+    assert.ok(!links.includes('ISSUE-1'));
+  } finally {
+    await w.close();
+  }
+});

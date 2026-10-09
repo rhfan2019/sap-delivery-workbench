@@ -328,9 +328,25 @@ export function mergeProposalGroup(draft, part, group) {
   const keep = (draft?.changes ?? []).filter(
     (c) => !part.changes.length || !group.sections.includes(c.section),
   );
-  const changes = [...keep, ...part.changes];
+  // A re-proposed group may rename or drop objects; those still cited by another chapter
+  // stay (unchanged) so the draft does not end with dangling references.
+  const proposed = new Set(part.changes.map((c) => c.object_id));
+  const cited = new Set([...keep, ...part.changes].flatMap((c) => c.dependencies ?? []));
+  const stillCited = (draft?.changes ?? []).filter(
+    (c) =>
+      group.sections.includes(c.section) &&
+      part.changes.length &&
+      !proposed.has(c.object_id) &&
+      cited.has(c.object_id),
+  );
   const issues = new Map(
     [...(draft?.unresolved_issues ?? []), ...part.unresolved_issues].map((i) => [i.id, i]),
+  );
+  // Open items are listed in unresolved_issues, not dependency targets.
+  const changes = [...keep, ...stillCited, ...part.changes].map((c) =>
+    Array.isArray(c.dependencies) && c.dependencies.some((d) => issues.has(d))
+      ? { ...c, dependencies: c.dependencies.filter((d) => !issues.has(d)) }
+      : c,
   );
   return {
     ...part,
