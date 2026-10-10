@@ -278,8 +278,9 @@
                 "description": "P=PARAMETERS；S=SELECT-OPTIONS"
               },
               "ref": {
-                "$ref": "#/$defs/fieldRef",
-                "description": "可参照的表及字段，如 EBAN-WERKS"
+                "type": "string",
+                "minLength": 1,
+                "description": "可参照的表及字段，如 EBAN-WERKS；无参照字段（如单选按钮）写“—”"
               },
               "required": {
                 "type": "boolean"
@@ -861,6 +862,10 @@
           "minLength": 1,
           "description": "小标题后的括注"
         },
+        "intro": {
+          "$ref": "#/$defs/markdown",
+          "description": "小标题后的引导句"
+        },
         "filters": {
           "type": "array",
           "minItems": 1,
@@ -875,7 +880,9 @@
                 "description": "条件名称，如 采购申请类型"
               },
               "field": {
-                "$ref": "#/$defs/fieldRef"
+                "type": "string",
+                "minLength": 1,
+                "description": "表-字段，如 EBAN-BSART"
               },
               "condition": {
                 "type": "string",

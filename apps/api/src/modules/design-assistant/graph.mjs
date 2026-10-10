@@ -170,13 +170,15 @@ export function buildGraph(
             throw Object.assign(fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION', 422, value.problems), {
               usage: result.usage,
             });
-          if (value.problems.length)
+          // Remaining problems, and structure the parser repaired itself, stay inspectable.
+          if (value.problems.length || value.parsed.warnings.length)
             await tx((db) =>
               event(db, t.id, r.id, 'output.problems', {
                 operation_id: op,
                 kind,
                 part: part?.key ?? null,
                 problems: value.problems.slice(0, 20),
+                normalized: value.parsed.warnings.slice(0, 20),
               }),
             );
         } else {
@@ -695,7 +697,14 @@ export function buildGraph(
       }
       ({ doc: draft } = dropDanglingReferences(draft));
       check = validateFsdReport(draft);
-      if (!check.ok) throw fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION', 422, check.errors);
+      if (!check.ok) {
+        await tx((db) =>
+          event(db, lease.task_id, lease.id, 'document.invalid', {
+            errors: check.errors.slice(0, 40),
+          }),
+        );
+        throw fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION', 422, check.errors);
+      }
       const ref = hash(draft);
       await commit('N07:' + s.round + ':' + (s.cycle ?? 0), { draft_hash: ref }, (_t, run) => {
         run.state.draft = draft;

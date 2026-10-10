@@ -200,7 +200,7 @@ function renderBlock(block, r) {
         : `\`${f.field}\` ${r(f.condition)}`;
       return `- ${f.label} ${cond}${f.note ? `（${f.note}）` : ''}`;
     });
-    return [`**${heading}**${qualifier}：`, lines.join('\n')];
+    return [`**${heading}**${qualifier}：${block.intro ? r(block.intro) : ''}`, lines.join('\n')];
   }
   const items = block.items.map(r);
   const isOrdered = block.ordered !== false;

@@ -353,6 +353,67 @@ const SEPARATOR = /^\|(\s*:?-{3,}:?\s*\|)+$/;
 const ITEM = /^(\d+\.|-)\s+(.*)$/;
 const NOTE = /^\[([A-Z][A-Z0-9-]*)\]\s*(?:\*\*(.+?)\*\*：)?(.*)$/s;
 const SAP_REF = /^(\S+)\s+(.+)$/;
+const BLOCK_KINDS = new Set([
+  '前置检查',
+  '规则',
+  '录入校验',
+  '取数逻辑',
+  '判定逻辑',
+  '处理结果',
+  '结果反馈',
+  '输出',
+  '说明',
+  '固定过滤条件',
+]);
+const SAP_TYPES = new Set([
+  'TABLE',
+  'STRUCTURE',
+  'FIELD',
+  'FUNCTION',
+  'BAPI',
+  'CLASS',
+  'METHOD',
+  'TCODE',
+  'AUTH_OBJECT',
+]);
+const SAP_TYPE_NAMES = {
+  表: 'TABLE',
+  透明表: 'TABLE',
+  视图: 'TABLE',
+  VIEW: 'TABLE',
+  CDS: 'TABLE',
+  结构: 'STRUCTURE',
+  字段: 'FIELD',
+  函数: 'FUNCTION',
+  函数模块: 'FUNCTION',
+  FM: 'FUNCTION',
+  类: 'CLASS',
+  方法: 'METHOD',
+  事务: 'TCODE',
+  事务代码: 'TCODE',
+  权限对象: 'AUTH_OBJECT',
+};
+const SEL_KINDS = {
+  P: 'P',
+  S: 'S',
+  R: 'RADIO',
+  RB: 'RADIO',
+  RADIO: 'RADIO',
+  单选: 'RADIO',
+  C: 'CHECKBOX',
+  CB: 'CHECKBOX',
+  CHECKBOX: 'CHECKBOX',
+  复选: 'CHECKBOX',
+  PARAMETER: 'P',
+  PARAMETERS: 'P',
+  'SELECT-OPTIONS': 'S',
+};
+// "`/VBAK/AUART`" or "`VBAK-AUART`" -> "VBAK-AUART"; namespaced names (/ABC/TAB-F) are kept.
+const fieldName = (v) => {
+  const s = v.replace(/`/g, '').trim();
+  const m = /^\/([A-Z][A-Z0-9_]*)\/([A-Z][A-Z0-9_]*)$/.exec(s);
+  return m ? m[1] + '-' + m[2] : s;
+};
 
 /** Empty document a parse starts from; collections exist so rows can be appended. */
 export function emptyWireDoc() {
@@ -381,6 +442,13 @@ export function emptyWireDoc() {
 export function createFsdWireParser({ onEvent = () => {} } = {}) {
   const doc = emptyWireDoc();
   const errors = [];
+  // Structural deviations the parser repairs itself (block types, SAP object types, …);
+  // reported, but not worth a repair call.
+  const warnings = [];
+  const warn = (message, line = lineNo) => {
+    warnings.push({ line, message });
+    onEvent({ type: 'warning', line, message });
+  };
   const outline = [];
   const deletions = [];
   const thoughts = [];
@@ -463,6 +531,20 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
       doc.actions.interaction_rules ??= [];
       return push(doc.actions.interaction_rules, '/actions/interaction_rules', text);
     }
+    if (part?.section && sub?.block?.filters) {
+      // A filter block written as a list: keep the content as a plain block.
+      warn('固定过滤条件应为表格，已按说明块保存', line);
+      sub.block.title ??= '固定过滤条件';
+      sub.block.kind = '说明';
+      delete sub.block.filters;
+      sub.block.items = [];
+      table = null;
+    }
+    if (p === '选择屏幕' && !s) {
+      warn('选择屏幕下的列表已并入“注”', line);
+      doc.selection_screen.note = [doc.selection_screen.note, text].filter(Boolean).join('\n');
+      return;
+    }
     if (part?.section && sub?.block && sub.block.items) {
       const si = doc.logic.sections.length - 1;
       const bi = part.section.blocks.length - 1;
@@ -512,7 +594,15 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
       doc.working[key] ??= [];
       target = [doc.working[key], `/working/${key}`];
     }
-    if (name === '选择屏幕') row.required ??= false;
+    if (name === '选择屏幕') {
+      row.required ??= false;
+      if (row.kind && !['P', 'S', 'CHECKBOX', 'RADIO'].includes(row.kind)) {
+        const kind = SEL_KINDS[row.kind.toUpperCase()] ?? SEL_KINDS[row.kind];
+        if (kind) row.kind = kind;
+      }
+      if (row.ref) row.ref = fieldName(row.ref);
+    }
+    if (name === '固定过滤条件' && row.field) row.field = fieldName(row.field);
     target[0].push(row);
     emit(`${target[1]}/${target[0].length - 1}`, row);
   }
@@ -544,9 +634,19 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
           .filter(Boolean)
           .map((x) => {
             const m = SAP_REF.exec(x);
-            return m
-              ? { type: m[1], name: m[2].trim() }
-              : (error(`SAP对象格式应为“类型 名称”：${x}`), null);
+            if (!m) {
+              // Name only: a field (TABLE-FIELD), otherwise a table.
+              warn(`SAP对象缺少类型，已按名称推断：${x}`);
+              return { type: x.includes('-') ? 'FIELD' : 'TABLE', name: x.replace(/`/g, '') };
+            }
+            const type = SAP_TYPES.has(m[1].toUpperCase())
+              ? m[1].toUpperCase()
+              : (SAP_TYPE_NAMES[m[1]] ?? SAP_TYPE_NAMES[m[1].toUpperCase()]);
+            if (!type) {
+              warn(`SAP对象类型无法识别，已忽略：${x}`);
+              return null;
+            }
+            return { type, name: m[2].replace(/`/g, '').trim() };
           })
           .filter(Boolean);
         return;
@@ -606,15 +706,20 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
     flushParagraph();
     table = null;
     if (part?.section) {
-      const m = /^(BLK-[A-Z0-9-]+)\s+(\S+)$/.exec(title);
+      const m = /^(BLK-[A-Z0-9-]+)\s+(.+)$/.exec(title);
       if (!m) return error(`逻辑块标题应为“### BLK-编号 块类型”：${title}`);
-      const block = { id: m[1], kind: m[2] };
-      if (m[2] === '固定过滤条件') {
+      const block = { id: m[1], kind: m[2].trim() };
+      if (!BLOCK_KINDS.has(block.kind)) {
+        // A free-text block type keeps its wording as the heading of a plain block.
+        warn(`块类型“${block.kind}”不在约定类型中，已按说明块保存`);
+        Object.assign(block, { kind: '说明', title: block.kind });
+      }
+      if (block.kind === '固定过滤条件') {
         block.filters = [];
         table = { name: '固定过滤条件', ...TABLES.固定过滤条件, header: false };
       } else block.items = [];
       part.section.blocks.push(block);
-      sub = { name: m[2], block };
+      sub = { name: block.kind, block };
       return;
     }
     sub = { name: title };
@@ -685,7 +790,7 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
       buffer = '';
       flushItem();
       flushParagraph();
-      return { doc, errors, outline, deletions, thoughts };
+      return { doc, errors, warnings, outline, deletions, thoughts };
     },
   };
 }

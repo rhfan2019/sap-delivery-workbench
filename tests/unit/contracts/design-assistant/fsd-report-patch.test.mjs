@@ -151,3 +151,49 @@ test('PATCH-04 a restated object with reordered keys is not a change', async () 
   const fragment = parseFsdWire(toFsdWire(base, { parts: ['output', 'sections'] })).doc;
   assert.deepEqual(mergeFsdPatch(stored, fragment).changed, []);
 });
+
+test('WIRE-06 structural deviations seen from a real model are normalized, not rejected', () => {
+  const { doc, errors, warnings } = parseFsdWire(
+    [
+      '## 选择屏幕',
+      '| 编号 | 屏幕字段 | P/S | 参照 | 必填 | 描述 | 默认值 |',
+      '| --- | --- | --- | --- | --- | --- | --- |',
+      '| SEL-STATUS | 状态筛选 | R | — | 否 | 全部 / 仅逾期 | 全部 |',
+      '| SEL-AUART | 订单类型 | S | `/VBAK/AUART` | 否 | 订单类型 |  |',
+      '- 单选按钮默认“全部”。',
+      '## 逻辑 LOG-QUERY 数据查询',
+      'SAP对象：TABLE VBAK；SYST-DATUM；表 VBAP；无特定技术对象 ALV 标准功能',
+      '### BLK-QUERY-FILTER 固定过滤条件',
+      '引导：在读取阶段直接排除。',
+      '| 名称 | 字段 | 条件 | 括注 |',
+      '| --- | --- | --- | --- |',
+      '| 拒绝原因 | `VBAP-ABGRU` | 为空 | 未拒绝 |',
+      '### BLK-QUERY-EXTRA 固定过滤条件',
+      '- VBAK-GBSTA 不等于 C',
+      '### BLK-QUERY-EXPORT 导出 Excel 准备',
+      '1. 导出当前筛选结果。',
+    ].join('\n'),
+  );
+  assert.deepEqual(errors, []);
+  assert.equal(warnings.length, 5);
+  const [status, auart] = doc.selection_screen.fields;
+  assert.equal(status.kind, 'RADIO');
+  assert.equal(auart.ref, 'VBAK-AUART');
+  assert.equal(doc.selection_screen.note, '单选按钮默认“全部”。');
+  const s = doc.logic.sections[0];
+  assert.deepEqual(s.sap_refs, [
+    { type: 'TABLE', name: 'VBAK' },
+    { type: 'FIELD', name: 'SYST-DATUM' },
+    { type: 'TABLE', name: 'VBAP' },
+  ]);
+  assert.equal(s.blocks[0].filters[0].field, 'VBAP-ABGRU');
+  assert.equal(s.blocks[0].intro, '在读取阶段直接排除。');
+  assert.deepEqual(s.blocks[1], {
+    id: 'BLK-QUERY-EXTRA',
+    kind: '说明',
+    title: '固定过滤条件',
+    items: ['VBAK-GBSTA 不等于 C'],
+    ordered: false,
+  });
+  assert.deepEqual([s.blocks[2].kind, s.blocks[2].title], ['说明', '导出 Excel 准备']);
+});
