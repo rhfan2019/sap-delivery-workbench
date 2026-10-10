@@ -8,6 +8,7 @@ import {
   withoutSupersededFields,
   dropUnknownReferences,
   normalizeClarification,
+  normalizeReview,
   modelOutputLimit,
   WIRE_KINDS,
   validateOutput,
@@ -182,7 +183,7 @@ export function buildGraph(
               }),
             );
         } else {
-          result.output = normalizeClarification(result.output);
+          result.output = normalizeReview(normalizeClarification(result.output));
           result.output = dropUnknownReferences(
             result.output,
             projected.evidence.map((e) => e.id),

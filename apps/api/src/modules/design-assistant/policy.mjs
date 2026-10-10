@@ -141,6 +141,27 @@ export function normalizeClarification(value) {
   }
   return out;
 }
+// Real review answers leave out issue fields or write the status in their own words; fill
+// the structure (never the finding itself) so one omission does not cost a repair call.
+export function normalizeReview(value) {
+  if (value?.kind !== 'ReviewResult' || !Array.isArray(value.issues)) return value;
+  const out = structuredClone(value);
+  const text = (v, fallback) => (typeof v === 'string' && v.trim() ? v : fallback);
+  out.issues = out.issues
+    .filter((i) => i && typeof i === 'object')
+    .map((i, n) => ({
+      issue_id: text(i.issue_id ?? i.id, 'REVIEW-' + (n + 1)),
+      rule_ref: text(i.rule_ref, 'UNSPECIFIED'),
+      counterexample: text(i.counterexample ?? i.description, '未说明反例'),
+      evidence_refs: Array.isArray(i.evidence_refs) ? i.evidence_refs : [],
+      impact: text(i.impact, '未说明影响'),
+      suggestion: text(i.suggestion, '未给出建议'),
+      status: /^(resolved|closed|fixed|已解决|已关闭)$/i.test(String(i.status ?? '').trim())
+        ? 'RESOLVED'
+        : 'OPEN',
+    }));
+  return out;
+}
 export function validateOutput(value, context) {
   if (context.expectedKind && value?.kind !== context.expectedKind)
     throw fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION');

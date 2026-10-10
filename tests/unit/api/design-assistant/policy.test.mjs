@@ -115,8 +115,9 @@ test('TOOL-03/05/06 missing properties, wrong target and unknown versions stay u
   );
 });
 test('MODEL-06 budgets reject missing, infinite and expanded unvalidated limits', () => {
-  // 40: FSD chapters are proposed per group (implementation log I-02), not 05 §9.1's 12.
-  assert.equal(validateBudget(DEFAULT_BUDGET).run_model_calls, 40);
+  // 80: the plan and the final FSD round share one run, each an outline plus parallel part
+  // writes and review rounds (implementation log I-17; temporary until D-07).
+  assert.equal(validateBudget(DEFAULT_BUDGET).run_model_calls, 80);
   for (const b of [
     {},
     { ...DEFAULT_BUDGET, run_model_calls: Infinity },
