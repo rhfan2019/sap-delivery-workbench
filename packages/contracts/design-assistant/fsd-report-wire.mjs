@@ -351,7 +351,7 @@ function splitRow(line) {
 }
 const SEPARATOR = /^\|(\s*:?-{3,}:?\s*\|)+$/;
 const ITEM = /^(\d+\.|-)\s+(.*)$/;
-const NOTE = /^\[([A-Z][A-Z0-9-]*)\]\s*(?:\*\*(.+?)\*\*：)?(.*)$/s;
+const NOTE = /^\[([A-Za-z][A-Za-z0-9_-]*)\]\s*(?:\*\*(.+?)\*\*：)?(.*)$/s;
 const SAP_REF = /^(\S+)\s+(.+)$/;
 const BLOCK_KINDS = new Set([
   '前置检查',
@@ -408,6 +408,13 @@ const SEL_KINDS = {
   PARAMETERS: 'P',
   'SELECT-OPTIONS': 'S',
 };
+// Ids are PREFIX-NAME in upper case with hyphens; models write OUT-OPEN_QTY or out-qty.
+const normId = (id) =>
+  String(id)
+    .trim()
+    .toUpperCase()
+    .replace(/[_\s.]+/g, '-')
+    .replace(/-+/g, '-');
 // "`/VBAK/AUART`" or "`VBAK-AUART`" -> "VBAK-AUART"; namespaced names (/ABC/TAB-F) are kept.
 const fieldName = (v) => {
   const s = v.replace(/`/g, '').trim();
@@ -484,7 +491,7 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
   function note(text, line) {
     const m = NOTE.exec(text);
     if (!m) return error('说明条目须以 [编号] 开头', line);
-    const n = { id: m[1] };
+    const n = { id: normId(m[1]) };
     if (m[2]) n.title = m[2];
     n.body = m[3].trim();
     return n;
@@ -498,8 +505,8 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
       emit(`${path}/${arr.length - 1}`, value, line);
     };
     if (p === '删除') {
-      const id = text.trim();
-      if (!/^[A-Z][A-Z0-9]*(-[A-Z0-9]+)+$/.test(id)) return error(`删除项应为编号：${id}`, line);
+      const id = normId(text);
+      if (!/^[A-Z][A-Z0-9]*(-[A-Z0-9]+)+$/.test(id)) return error(`删除项应为编号：${text}`, line);
       deletions.push(id);
       return onEvent({ type: 'delete', id, line });
     }
@@ -557,13 +564,19 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
   function placeRow(cells) {
     const { name, cols, hasBasis } = table;
     const expected = cols.length + (hasBasis ? 1 : 0);
-    if (cells.length !== expected)
+    // A row that leaves out the optional 依据 cell the header declared is still complete.
+    if (cells.length !== expected && !(hasBasis && cells.length === cols.length))
       return error(`${name}：应为 ${expected} 列，实际 ${cells.length} 列`);
     const row = {};
     cols.forEach(([, p, conv], i) => {
       if (cells[i] !== '') row[p] = conv ? conv.from(cells[i]) : cells[i];
     });
-    if (hasBasis && cells.at(-1) !== '') {
+    if (row.id) {
+      const id = normId(row.id);
+      if (id !== row.id) warn(`编号“${row.id}”已规范为“${id}”`);
+      row.id = id;
+    }
+    if (hasBasis && cells.length === expected && cells.at(-1) !== '') {
       const basis = basisCodec.from(cells.at(-1));
       if (basis) row.basis = basis;
       else error(`${name}：依据应为“推断”“客户：题号”或“系统：证据编号”`);
@@ -685,9 +698,9 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
     flushParagraph();
     table = null;
     sub = null;
-    const m = /^逻辑\s+(LOG-[A-Z0-9-]+)\s+(.+)$/.exec(title);
+    const m = /^逻辑\s+(LOG-[A-Za-z0-9_-]+)\s+(.+)$/i.exec(title);
     if (m) {
-      const section = { id: m[1], title: m[2].trim(), blocks: [] };
+      const section = { id: normId(m[1]), title: m[2].trim(), blocks: [] };
       doc.logic.sections.push(section);
       part = { name: '逻辑', section };
       onEvent({ type: 'section', id: section.id, title: section.title, line: lineNo });
@@ -706,9 +719,9 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
     flushParagraph();
     table = null;
     if (part?.section) {
-      const m = /^(BLK-[A-Z0-9-]+)\s+(.+)$/.exec(title);
+      const m = /^(BLK-[A-Za-z0-9_-]+)\s+(.+)$/i.exec(title);
       if (!m) return error(`逻辑块标题应为“### BLK-编号 块类型”：${title}`);
-      const block = { id: m[1], kind: m[2].trim() };
+      const block = { id: normId(m[1]), kind: m[2].trim() };
       if (!BLOCK_KINDS.has(block.kind)) {
         // A free-text block type keeps its wording as the heading of a plain block.
         warn(`块类型“${block.kind}”不在约定类型中，已按说明块保存`);
@@ -790,7 +803,16 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
       buffer = '';
       flushItem();
       flushParagraph();
-      return { doc, errors, warnings, outline, deletions, thoughts };
+      const normalized = JSON.parse(
+        JSON.stringify(doc, (k, v) =>
+          typeof v === 'string'
+            ? v.replace(/\[\[([^\]\s]+)\]\]/g, (_, id) => `[[${normId(id)}]]`)
+            : v,
+        ),
+      );
+      for (const issue of normalized.working?.open_issues ?? [])
+        if (issue.related) issue.related = issue.related.map(normId);
+      return { doc: normalized, errors, warnings, outline, deletions, thoughts };
     },
   };
 }

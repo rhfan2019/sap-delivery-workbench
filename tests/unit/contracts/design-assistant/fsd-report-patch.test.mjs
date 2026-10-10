@@ -197,3 +197,24 @@ test('WIRE-06 structural deviations seen from a real model are normalized, not r
   });
   assert.deepEqual([s.blocks[2].kind, s.blocks[2].title], ['说明', '导出 Excel 准备']);
 });
+
+test('WIRE-07 ids are normalized together with the references to them', () => {
+  const { doc, errors } = parseFsdWire(
+    [
+      '## 输出布局',
+      '| 编号 | 字段 | 参照 | 字段描述 | 处理 | 依据 |',
+      '| --- | --- | --- | --- | --- | --- |',
+      '| OUT-OPEN_QTY | OPEN_QTY | 见 [[log-open_calc]] | 未清数量 | 显示 |',
+      '## 逻辑 LOG-OPEN_CALC 未清计算',
+      '### BLK-OPEN_CALC-RULES 规则',
+      '1. 显示于 [[OUT-OPEN_QTY]]。',
+    ].join('\n'),
+  );
+  assert.deepEqual(errors, []);
+  assert.equal(doc.output.fields[0].id, 'OUT-OPEN-QTY');
+  assert.equal(doc.output.fields[0].basis, undefined, 'the missing 依据 cell is tolerated');
+  assert.equal(doc.output.fields[0].ref, '见 [[LOG-OPEN-CALC]]');
+  assert.equal(doc.logic.sections[0].id, 'LOG-OPEN-CALC');
+  assert.equal(doc.logic.sections[0].blocks[0].id, 'BLK-OPEN-CALC-RULES');
+  assert.equal(doc.logic.sections[0].blocks[0].items[0], '显示于 [[OUT-OPEN-QTY]]。');
+});
