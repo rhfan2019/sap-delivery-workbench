@@ -218,3 +218,22 @@ test('WIRE-07 ids are normalized together with the references to them', () => {
   assert.equal(doc.logic.sections[0].blocks[0].id, 'BLK-OPEN-CALC-RULES');
   assert.equal(doc.logic.sections[0].blocks[0].items[0], '显示于 [[OUT-OPEN-QTY]]。');
 });
+
+test('WIRE-08 a short row ending in a 依据 value is a column error, not an omitted 依据', () => {
+  const { doc, errors } = parseFsdWire(
+    [
+      '## 输出布局',
+      '| 编号 | 字段 | 参照 | 字段描述 | 处理 | 依据 |',
+      '| --- | --- | --- | --- | --- | --- |',
+      '| OUT-VBELN | VBAP-VBELN | 销售订单号 | 显示 | 系统：VBAP |',
+      '| OUT-POSNR | POSNR | VBAP-POSNR | 行项目号 | 只读 |',
+    ].join('\n'),
+  );
+  assert.equal(errors.length, 1);
+  assert.equal(errors[0].line, 4);
+  assert.match(errors[0].message, /\| 编号 \| 字段 \| 参照 \| 字段描述 \| 处理 \| 依据 \|/);
+  assert.deepEqual(
+    doc.output.fields.map((f) => [f.id, f.handling]),
+    [['OUT-POSNR', '显示']],
+  );
+});

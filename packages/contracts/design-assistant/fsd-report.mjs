@@ -34,7 +34,10 @@ export function validateFsdReport(doc) {
       errors: validateSchema.errors.map((e) => ({
         path: e.instancePath,
         keyword: e.keyword,
-        message: e.message,
+        // Repair prompts quote these messages; the allowed values are what the model needs.
+        message: e.params?.allowedValues
+          ? `${e.message}: ${e.params.allowedValues.join(' / ')}`
+          : e.message,
       })),
     };
   const refs = checkReferences(doc);

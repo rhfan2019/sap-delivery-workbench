@@ -408,6 +408,17 @@ const SEL_KINDS = {
   PARAMETERS: 'P',
   'SELECT-OPTIONS': 'S',
 };
+const HANDLING = {
+  显示: '显示',
+  只读: '显示',
+  展示: '显示',
+  可修改: '可修改',
+  可编辑: '可修改',
+  可改: '可修改',
+  编辑: '可修改',
+  隐藏: '隐藏',
+  不显示: '隐藏',
+};
 // Ids are PREFIX-NAME in upper case with hyphens; models write OUT-OPEN_QTY or out-qty.
 const normId = (id) =>
   String(id)
@@ -564,9 +575,14 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
   function placeRow(cells) {
     const { name, cols, hasBasis } = table;
     const expected = cols.length + (hasBasis ? 1 : 0);
-    // A row that leaves out the optional 依据 cell the header declared is still complete.
-    if (cells.length !== expected && !(hasBasis && cells.length === cols.length))
-      return error(`${name}：应为 ${expected} 列，实际 ${cells.length} 列`);
+    // A row that leaves out the optional 依据 cell the header declared is still complete; a
+    // short row ending in a 依据 value has lost another column and would shift every value.
+    const basisOmitted =
+      hasBasis && cells.length === cols.length && !basisCodec.from(cells.at(-1) ?? '');
+    if (cells.length !== expected && !basisOmitted)
+      return error(
+        `${name}：应为 ${expected} 列（| ${[...cols.map((c) => c[0]), ...(hasBasis ? ['依据'] : [])].join(' | ')} |），实际 ${cells.length} 列`,
+      );
     const row = {};
     cols.forEach(([, p, conv], i) => {
       if (cells[i] !== '') row[p] = conv ? conv.from(cells[i]) : cells[i];
@@ -606,6 +622,10 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
       const key = WORKING[name];
       doc.working[key] ??= [];
       target = [doc.working[key], `/working/${key}`];
+    }
+    if (name === '输出布局' && row.handling) {
+      const handling = HANDLING[row.handling.replace(/\s/g, '')];
+      if (handling) row.handling = handling;
     }
     if (name === '选择屏幕') {
       row.required ??= false;
