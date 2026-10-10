@@ -38,6 +38,8 @@ export function createWorkContext(pool, organizationId, requireSession) {
         projectId: project.id,
         projectName: project.name,
         itemId: item.id,
+        itemCode: item.code,
+        itemName: item.name,
         actorId: current.user.id,
         sessionId: current.sessionId,
       },

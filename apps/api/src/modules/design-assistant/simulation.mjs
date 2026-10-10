@@ -1,7 +1,171 @@
 // Explicit synthetic demonstration provider. Never used for REAL tasks.
 // ZPOC names are fabricated test objects, not SAP standard object claims.
+import { toFsdWire } from '@sap-delivery-workbench/contracts/design-assistant/fsd-report-wire';
+
+// The document the synthetic model "writes": a read-only open-order list on ZPOC_ORDER.
+export const SYNTHETIC_DOCUMENT = Object.freeze({
+  overview: {
+    summary: '合成测试：未清订单清单（ZPOC 测试伪对象）',
+    difficulty: '低',
+    tcode: 'ZPOC01',
+    run_type: '在线处理',
+    output_to: 'ALV',
+    volume: '合成数据，少量',
+    remark: '只读；不涉及真实 SAP',
+  },
+  requirement: {
+    background: '合成测试报表：查看当前未清订单行，用于验证工程流程。',
+    goals: ['以订单行为粒度列出未清订单；', '显示剩余数量。'],
+    roles: [{ role: '测试用户', scenario: '运行合成测试' }],
+    scope_in: ['未清订单行的查询与展示。'],
+    scope_out: ['任何写操作。'],
+    constraints: ['未清口径见 [[LOG-OPEN]]。'],
+  },
+  authorizations: {
+    items: [
+      {
+        id: 'AUTH-DISPLAY',
+        timing: '执行查询时',
+        auth_object: 'ZPOC_AUTH',
+        auth_object_text: '合成测试权限',
+        fields: 'ACTVT = 03',
+        value_source: '固定值',
+        basis: { kind: 'INFERENCE' },
+      },
+    ],
+  },
+  selection_screen: {
+    fields: [
+      {
+        id: 'SEL-ORDER',
+        label: '订单',
+        kind: 'S',
+        ref: 'ZPOC_ORDER-ORDER_ID',
+        required: true,
+        description: '订单编号',
+        basis: { kind: 'INFERENCE' },
+      },
+    ],
+  },
+  selection_checks: {
+    items: [
+      { id: 'CHK-REQUIRED', title: '必填校验', body: '订单未录入时按 [[MSG-NO-ORDER]] 提示。' },
+    ],
+  },
+  output: {
+    intro: '一行代表一个订单行，按订单、行号升序排列。',
+    fields: [
+      {
+        id: 'OUT-ORDER',
+        name: 'ORDER_ID',
+        ref: 'ZPOC_ORDER-ORDER_ID',
+        description: '订单编号',
+        handling: '显示',
+      },
+      {
+        id: 'OUT-REMAINING',
+        name: 'REMAINING',
+        ref: '计算，见 [[LOG-OPEN]]',
+        description: '剩余数量',
+        handling: '显示',
+      },
+    ],
+    requirements: ['不同单位不汇总，不提供合计行。'],
+  },
+  actions: {
+    items: [
+      {
+        id: 'ACT-REFRESH',
+        label: '刷新',
+        function: '重新查询',
+        scope: '全部清单',
+        logic: '见 [[LOG-QUERY]]',
+      },
+    ],
+  },
+  logic: {
+    sections: [
+      {
+        id: 'LOG-QUERY',
+        title: '数据查询',
+        trigger: '用户执行选择屏幕。',
+        sap_refs: [{ type: 'TABLE', name: 'ZPOC_ORDER' }],
+        blocks: [
+          {
+            id: 'BLK-QUERY-FETCH',
+            kind: '取数逻辑',
+            items: ['从测试伪对象 ZPOC_ORDER 按订单取数，订单行粒度。'],
+          },
+        ],
+      },
+      {
+        id: 'LOG-OPEN',
+        title: '未清判定',
+        basis: { kind: 'INFERENCE' },
+        blocks: [
+          {
+            id: 'BLK-OPEN-RULES',
+            kind: '判定逻辑',
+            items: ['REMAINING = max(QUANTITY - PROCESSED, 0)；仅 REMAINING > 0 的行纳入。'],
+          },
+        ],
+      },
+    ],
+  },
+  messages: {
+    items: [
+      {
+        id: 'MSG-NO-ORDER',
+        scenario: '订单未录入',
+        type: 'E',
+        text: '请录入订单',
+        handling: '停留在选择屏幕',
+      },
+    ],
+  },
+  working: {
+    lifecycle: [
+      {
+        id: 'LC-CREATE',
+        stage: '创建',
+        action: '创建合成订单',
+        impact: '进入清单',
+        decision: '纳入',
+      },
+    ],
+    open_issues: [
+      {
+        id: 'ISS-SYNTHETIC',
+        title: '合成数据不能作为真实开发依据',
+        blocking: false,
+        status: 'OPEN',
+      },
+    ],
+  },
+});
+const OUTLINE = [
+  '> 思路：合成提纲。',
+  '## 提纲',
+  '| 编号 | 类型 | 标题 | 摘要 |',
+  '| --- | --- | --- | --- |',
+  '| LOG-QUERY | 逻辑 | 数据查询 | ZPOC_ORDER 取数 |',
+  '| LOG-OPEN | 逻辑 | 未清判定 | 剩余数量大于零 |',
+  '| MSG-NO-ORDER | 消息 | 订单未录入 | E 类提示 |',
+].join('\n');
+
+/** Wire text of the given parts of the synthetic document. */
+export const syntheticWire = (parts) =>
+  '> 思路：合成内容。\n' + toFsdWire(SYNTHETIC_DOCUMENT, { parts });
+
 export async function syntheticModel({ kind, context, part }) {
   const { r, t } = context;
+  const usage = { total_tokens: 200 };
+  if (kind === 'FsdOutline') return { output: { text: OUTLINE }, usage, cost: null };
+  if (kind === 'FsdWrite')
+    return { output: { text: syntheticWire(part.parts) }, usage, cost: null };
+  // A revision that has nothing to change answers with its thought line only.
+  if (kind === 'FsdRevise')
+    return { output: { text: '> 思路：合成修订，无需修改。' }, usage, cost: null };
   const output = {
     output_schema_version: 2,
     kind,
@@ -34,7 +198,7 @@ export async function syntheticModel({ kind, context, part }) {
           tool_name: 'searchObject',
           arguments: { query: 'ZPOC_ORDER', max: 10 },
           required_properties: ['type', 'quantity', 'unit', 'status'],
-          supports_rule_refs: ['rule-open'],
+          supports_rule_refs: ['LOG-OPEN'],
         },
       ],
       decision: 'NEED_QUERY',
@@ -81,36 +245,8 @@ export async function syntheticModel({ kind, context, part }) {
         },
       ],
     });
-  if (kind === 'ChangeProposal') {
-    const contents = [
-      '合成测试报表：查看当前未清订单行；只读，不涉及真实 SAP。范围为 ZPOC 测试伪对象。',
-      '创建纳入；部分处理显示剩余；完成和关闭排除；取消排除。行状态优先于抬头。无历史还原依据，因此仅支持当前时点。',
-      'ZPOC_ORDER（测试伪对象）：ORDER_ID 字符10、ITEM 整数、QUANTITY 十进制13/3、PROCESSED 十进制13/3、UNIT 字符3、STATUS 字符10。依据为合成只读返回。',
-      '标准功能适用性尚无真实 SAP 证据；本合成试验只验证工程流程，不证明自开发必要性。',
-      '选择屏幕：ORDER_ID 单值/区间/多值，空条件拒绝，不设默认；STATUS 固定排除取消。输出一行一订单行，按 ORDER_ID/ITEM 排序，显示数量与 UNIT；不同单位不汇总；无数据显示空结果，权限不足拒绝查询。只读导出当前结果。',
-      'rule-open：REMAINING=max(QUANTITY-PROCESSED,0)，按订单行计算，取消/完成/关闭排除，仅 REMAINING>0 纳入；订单与行按 ORDER_ID/ITEM 一对一，不匹配列为缺口；单位不相同不可相加。',
-      '检查反例：部分处理保留、取消排除、抬头完成但行未完成按行规则、无多匹配、跨单位不汇总。合成输入无未解决反例，真实适用性未验证。',
-      '依赖：ZPOC_ORDER 测试伪对象；引用当前 evidence ID 和 read_generation。全部材料为 SYNTHETIC，不能作为真实开发依据。',
-    ];
-    const changes = contents
-      .map((content, i) => ({
-        object_id: 'section-' + (i + 1),
-        base_version: t.objects['section-' + (i + 1)]?.version ?? 0,
-        op: t.objects['section-' + (i + 1)] ? 'REVISE' : 'ADD',
-        content,
-        dependencies: output.evidence_refs,
-        reason: 'SYNTHETIC',
-        section: i + 1,
-      }))
-      .filter((c) => !part || part.group.sections.includes(c.section));
-    Object.assign(output, {
-      proposal_id: 'proposal-' + t.phase,
-      allowed_scope: changes.map((c) => c.object_id),
-      changes,
-    });
-  }
   if (kind === 'ReviewResult') Object.assign(output, { issues: [], decision: 'READY_FOR_REVIEW' });
-  return { output, usage: { total_tokens: 200 }, cost: null };
+  return { output, usage, cost: null };
 }
 export async function syntheticTool(item, { target, read_generation }) {
   return {

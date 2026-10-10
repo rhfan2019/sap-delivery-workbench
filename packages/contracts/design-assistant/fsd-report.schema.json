@@ -8,7 +8,6 @@
   "required": [
     "schema_version",
     "doc",
-    "target",
     "overview",
     "requirement",
     "authorizations",
@@ -84,7 +83,7 @@
       }
     },
     "target": {
-      "description": "目标系统。由程序读取 CVERS 确定；无法读取时由用户选择。不渲染到交付文档。",
+      "description": "目标系统。由程序读取 CVERS 确定；无法读取或未接入 SAP 时缺省。不渲染到交付文档。",
       "type": "object",
       "additionalProperties": false,
       "required": ["product", "source"],

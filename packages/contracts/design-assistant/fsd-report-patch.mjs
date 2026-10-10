@@ -45,7 +45,20 @@ const SCALARS = [
 ];
 const OBJECTS = ['doc', 'target', 'overview'];
 
-const withoutRev = (o) => JSON.stringify(o, (k, v) => (k === 'rev' ? undefined : v));
+// Key-order-insensitive: stored documents come back from jsonb with their keys reordered.
+const canonical = (value) =>
+  JSON.stringify(value, (k, v) =>
+    k === 'rev'
+      ? undefined
+      : v && typeof v === 'object' && !Array.isArray(v)
+        ? Object.fromEntries(
+            Object.keys(v)
+              .sort()
+              .map((key) => [key, v[key]]),
+          )
+        : v,
+  );
+const same = (a, b) => canonical(a) === canonical(b);
 
 function upsert(list, incoming, changed) {
   for (const obj of incoming) {
@@ -53,7 +66,7 @@ function upsert(list, incoming, changed) {
     if (i < 0) {
       list.push({ ...obj, rev: 1 });
       changed.add(obj.id);
-    } else if (withoutRev(list[i]) !== withoutRev(obj)) {
+    } else if (!same(list[i], obj)) {
       list[i] = { ...obj, rev: (list[i].rev ?? 1) + 1 };
       changed.add(obj.id);
     }
@@ -73,7 +86,7 @@ export function mergeFsdPatch(base, fragment, deletions = []) {
     for (const [k, v] of Object.entries(patch)) {
       if (k === 'change_log') continue;
       doc[key] ??= {};
-      if (JSON.stringify(doc[key][k]) !== JSON.stringify(v)) {
+      if (!same(doc[key][k], v)) {
         doc[key][k] = structuredClone(v);
         changed.add(`/${key}/${k}`);
       }
@@ -88,7 +101,7 @@ export function mergeFsdPatch(base, fragment, deletions = []) {
   }
   for (const [a, b] of LISTS) {
     const v = fragment[a]?.[b];
-    if (!v?.length || JSON.stringify(doc[a]?.[b]) === JSON.stringify(v)) continue;
+    if (!v?.length || same(doc[a]?.[b], v)) continue;
     doc[a] ??= {};
     doc[a][b] = structuredClone(v);
     changed.add(`/${a}/${b}`);

@@ -350,7 +350,7 @@ test('DBG-02 fixed input and evidence compare a single Prompt variable with corr
         questions: t.wait.questions,
         correctness: 'PASS',
         expert_quality: null,
-        modified_object_count: Object.keys(t.objects).length,
+        modified_object_count: t.document ? 1 : 0,
         tokens: t.budget.tokens,
         elapsed_ms: performance.now() - start,
         error_count: d.operations.filter((o) => o.error).length,

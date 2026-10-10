@@ -266,7 +266,8 @@ export async function executeRun(
             ).rowCount
           )
             throw fault('CHECKPOINT_CORRUPT', 'CHECKPOINT');
-          if (values.proposal_ref && !lease.state.proposal)
+          // N07 records proposal_ref with its draft; a checkpoint past N07 without it is corrupt.
+          if (values.proposal_ref && !lease.state.proposal_ref)
             throw fault('CHECKPOINT_CORRUPT', 'CHECKPOINT');
           // LangGraph may reuse durable pending writes without re-entering a
           // committed node. Reconcile the ledger at the recovery boundary too.

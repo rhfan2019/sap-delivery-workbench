@@ -52,15 +52,6 @@ export const questionSchema = obj({
   options: { ...array(option, 8), minItems: 2 },
   recommendation_reason: str,
 });
-const change = obj({
-  object_id: id,
-  base_version: { type: 'integer', minimum: 0 },
-  op: { enum: ['ADD', 'REVISE', 'REPLACE'] },
-  content: str,
-  dependencies: refs,
-  reason: str,
-  section: { type: 'integer', minimum: 1, maximum: 8 },
-});
 const common = {
   output_schema_version: { const: 2 },
   kind: id,
@@ -116,11 +107,6 @@ const extensions = {
   ClarificationBatch: {
     questions: { ...array(questionSchema, 20), minItems: 1 },
     return_phase: { type: 'integer', minimum: 1, maximum: 6 },
-  },
-  ChangeProposal: {
-    proposal_id: id,
-    allowed_scope: refs,
-    changes: { ...array(change), minItems: 1 },
   },
   ReviewResult: {
     issues: array(

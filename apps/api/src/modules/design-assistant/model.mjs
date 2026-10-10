@@ -1,6 +1,7 @@
 import { requestModel, interpretResponse, openKey } from '../models/public.mjs';
-import { fault, hash, toolCatalog, modelOutputLimit } from './policy.mjs';
+import { fault, hash, toolCatalog, modelOutputLimit, WIRE_KINDS } from './policy.mjs';
 import { outputSchemas } from '@sap-delivery-workbench/contracts/design-assistant/protocol';
+import { toFsdWire } from '@sap-delivery-workbench/contracts/design-assistant/fsd-report-wire';
 import { streamText } from '../agent-runtime/public.mjs';
 
 export async function configuredStreamingModel({ context, signal, onDelta, transport }) {
@@ -44,76 +45,80 @@ export async function configuredStreamingModel({ context, signal, onDelta, trans
   );
   return { ...result, text };
 }
-const answeredCount = (snapshot) =>
-  Object.keys(snapshot.answers ?? {}).length + (snapshot.prior_answers?.length ?? 0);
-// The structured prompt for one model call; exported so its content can be tested.
+
+const PART_LABELS = {
+  overview: '开发概览',
+  requirement: '业务需求',
+  authorizations: '权限校验',
+  selection_screen: '选择屏幕',
+  selection_checks: '选择屏幕检查',
+  output: '输出布局',
+  actions: '功能按钮',
+  logic: '业务逻辑（本章说明）',
+  messages: '消息',
+  lifecycle: '生命周期分析',
+  reverse_review: '反向审查',
+  open_issues: '未决事项',
+};
+const repairText = (repair) => {
+  const code = repair?.code ?? repair;
+  const details = (repair?.details ?? [])
+    .slice(0, 30)
+    .map((d) => `- ${d.line ? '第 ' + d.line + ' 行' : (d.path ?? '')}：${d.message ?? d.keyword}`)
+    .join('\n');
+  if (code === 'UNKNOWN_REFERENCE')
+    return '\n上次输出引用了列表外的证据编号，或把无证据的结论标成了 FACT，已被拒绝；请按上述规则重新输出。';
+  if (code === 'INVALID_OUTPUT')
+    return (
+      '\n上次输出不符合格式要求，已被拒绝；请修正后重新输出。' +
+      (details ? '\n问题：\n' + details : '')
+    );
+  return '';
+};
+
+/**
+ * The prompt for one structured model call; exported so its content can be tested.
+ * JSON kinds (analysis, query plan, evidence, clarification, review) answer with one JSON
+ * object; wire kinds (FsdOutline, FsdWrite, FsdRevise) answer in the FSD wire format.
+ */
 export function structuredPrompt({ kind, r, t, repair, part }) {
-  // Evidence ids are 64-hex hashes the model miscopies; it sees short aliases instead,
-  // mapped back before validation.
-  const aliases = (t.evidence ?? []).map((e, i) => [e.id, 'EV-' + String(i + 1).padStart(3, '0')]);
+  // Evidence ids are 64-hex hashes the model miscopies; it sees short aliases. JSON answers
+  // are mapped back before validation; the document itself keeps the aliases (EV-001), which
+  // working.evidence lists.
+  const aliases = (t.evidence ?? []).map((e, i) => [e.id, evidenceAlias(i)]);
   const toAlias = (s) => aliases.reduce((acc, [id, a]) => acc.split(id).join(a), s);
   const fromAlias = (s) =>
     aliases.reduce((acc, [id, a]) => acc.split('"' + a + '"').join('"' + id + '"'), s);
-  const prompt = toAlias(
-    r.assets.prompt_text +
+  const wire = WIRE_KINDS.has(kind);
+  const document = part?.draft ?? r.state?.draft ?? t.document ?? null;
+  const facts =
+    '\n目标系统：' +
+    (t.target?.sap_disabled
+      ? '本次未接入 SAP，无法查询系统。表、字段、状态值等系统结论一律按通用 SAP 知识写，依据标“推断”，并在未决事项中列为“待 SAP 核实”（阻断=否）。不得声称已核实。'
+      : JSON.stringify({ target_ref: t.target?.target_ref, product: t.target?.product ?? null })) +
+    '\n可引用的证据编号（只能取自此列表，用户答复与通用知识不是证据）：' +
+    JSON.stringify(aliases.map(([, a]) => a)) +
+    '\nsnapshot.prior_answers（更早轮次）与 snapshot.answers（最近一轮，冲突时以它为准）都是客户已确认的答复，直接采用，不得就同一事项再次提问。客户答复在依据中写“客户：<question_id>”。';
+  const inputs = {
+    snapshot: { ...r.snapshot, base_evidence: undefined, base_document: undefined },
+    evidence: t.evidence,
+    analysis: r.state?.analysis ?? null,
+  };
+  let prompt;
+  if (!wire) {
+    prompt =
+      r.assets.prompt_text +
       '\n本次输出类型：' +
       kind +
       '\nSchema：' +
       JSON.stringify(outputSchemas[kind]) +
-      // Validation rejects any other id; the model otherwise invents refs like "chat:user:…".
-      '\n可引用的证据编号（所有 evidence_refs/evidence_ref 只能取自此列表；为空时一律填空数组，用户答复与通用知识不是证据）：' +
-      JSON.stringify((t.evidence ?? []).map((e) => e.id)) +
+      facts +
       '\nbasis=FACT 的结论必须至少引用一个上述证据编号；没有证据时，用户已确认的写 CUSTOMER_DECISION，其余写 INFERENCE。' +
-      // FSD_SAP_MODE=off: the target cannot be read at all, so asking for queries is pointless.
-      (t.target?.sap_disabled
-        ? '\n本次未接入 SAP，无法查询系统：不要返回 NEED_QUERY；表、字段、状态值等系统结论一律按通用 SAP 知识写为 INFERENCE，并在 unresolved_issues 中列为“待 SAP 核实”（blocking=false）。'
+      (t.target?.sap_disabled ? '\n不要返回 NEED_QUERY。' : '') +
+      (kind === 'ReviewResult'
+        ? '\n审查对象是下面的“当前文档”。每个问题的 rule_ref 填被审查对象的编号（如 LOG-APPROVE、OUT-STOCK、MSG-NO-DATA）；已经正确的内容不要报问题。'
         : '') +
-      '\nsnapshot.prior_answers（更早轮次）与 snapshot.answers（最近一轮，冲突时以它为准）都是客户已确认的答复，直接采用，不得就同一事项再次提问。' +
-      // Real models otherwise keep refining the same topics round after round.
-      (answeredCount(r.snapshot) >= 6
-        ? '\n客户已回答 ' +
-          answeredCount(r.snapshot) +
-          ' 个问题。除非缺少会使方案无法成立的信息，应直接 PROPOSE，把次要细节作为非阻塞 unresolved_issues 并在方案中写明默认处理，不要继续细化追问。'
-        : '') +
-      (repair === 'UNKNOWN_REFERENCE'
-        ? '\n上次输出引用了列表外的证据编号，或把无证据的结论标成了 FACT，已被拒绝；请按上述规则重新输出。'
-        : repair === 'INVALID_OUTPUT'
-          ? '\n上次输出不是符合 Schema 的 JSON，已被拒绝；请严格按 Schema 重新输出。'
-          : repair === 'OUT_OF_SCOPE'
-            ? '\n上次输出的 object_id 不在允许范围或未列入 allowed_scope，已被拒绝；请按下述编号规则重新输出。'
-            : '') +
-      // The model otherwise reads allowed_scope as a topic ("report") and invents id prefixes.
-      (kind === 'ChangeProposal'
-        ? '\nobject_id 只能是 section-1 至 section-8、objects 中已有编号，或新增的 scenario-*/rule-*/field-*（后缀仅英文、数字、-、_）；allowed_scope 必须逐一列出 changes 中出现的全部 object_id。' +
-          '\ndependencies 只能引用：对象编号、上述证据编号、客户答复 answer:<题号>（题号取自 snapshot.answers / prior_answers 的 question_id）、需求原文 requirement；推断内容不写依赖。' +
-          (part?.review
-            ? '\n以下已保存对象所依赖的内容在本轮已修订：' +
-              part.review.join('、') +
-              '。请逐一复核并输出这些对象的修订版本（op=REVISE；内容无需变化时原样输出，dependencies 保留原依赖），只输出这些对象。'
-            : '') +
-          (part?.dangling
-            ? '\n上一稿中本组章节引用了不存在的对象：' +
-              part.dangling.join('、') +
-              '。请在本组章节中新增这些对象（若属于本组），或改为引用 candidate / objects 中已有的编号，并输出本组修订后的完整内容。'
-            : '') +
-          (part
-            ? '\n已存在可引用的对象编号：' +
-              JSON.stringify([
-                ...new Set([
-                  ...Object.keys(t.objects ?? {}),
-                  ...(part.draft?.changes ?? []).map((c) => c.object_id),
-                ]),
-              ]) +
-              '\n本次只编写第 ' +
-              part.group.sections.join('、') +
-              ' 章：changes 的 section 只能取这些值，每章至少一条变更；decision 为 PROPOSE，证据或口径不足写入 unresolved_issues，不得返回空 changes。candidate 是本轮已编写的其他章节，只用于保持术语、编号和引用一致，不要重复输出。'
-            : '') +
-          (Object.keys(t.objects ?? {}).length
-            ? ''
-            : '\n尚无已保存对象：新对象一律 op=ADD、base_version=0。') +
-          '\n现有对象编号：' +
-          JSON.stringify(Object.keys(t.objects ?? {}))
-        : '\n本类输出须精简：只填 Schema 要求的字段，不得添加 Schema 之外的键；每条说明不超过两句，总输出控制在 3000 字以内。') +
+      repairText(repair) +
       // DDIC evidence is filtered to the requested fields; read naively, every earlier read
       // looks incomplete and N05 keeps asking for queries until NO_PROGRESS.
       ((t.evidence ?? []).length
@@ -126,21 +131,66 @@ export function structuredPrompt({ kind, r, t, repair, part }) {
         : '') +
       '\n冻结输入与受控资料：' +
       JSON.stringify({
-        // base_evidence/base_objects are frozen copies of evidence and objects; evidence may
-        // include expired reads, and objects below are the same content (sending both doubled
-        // every FSD-round prompt to ~30k tokens).
-        snapshot: { ...r.snapshot, base_evidence: undefined, base_objects: undefined },
-        evidence: t.evidence,
-        objects: t.objects,
-        candidate: part ? part.draft : (r.state.proposal ?? null),
-        review_feedback: r.state.review_open ?? [],
+        ...inputs,
         artifact_version: t.artifact_version,
         input_snapshot_id: r.input_snapshot_id,
-        repair: repair ?? null,
-      }),
-  );
-  return { prompt, fromAlias };
+        review_feedback: r.state?.review_open ?? [],
+      }) +
+      (document ? '\n当前文档（编写格式）：\n' + toFsdWire(document) : '');
+  } else {
+    prompt =
+      r.assets.prompt_text +
+      '\n\n# 本次任务\n' +
+      wireTask(kind, part) +
+      facts +
+      repairText(repair) +
+      '\n\n# 冻结输入与受控资料\n' +
+      JSON.stringify(inputs) +
+      (part?.outline?.length
+        ? '\n\n# 提纲（可引用的编号）\n' +
+          part.outline.map((o) => `${o.id}｜${o.type}｜${o.title}｜${o.summary ?? ''}`).join('\n')
+        : '') +
+      (document ? '\n\n# 当前文档（编写格式）\n' + toFsdWire(document) : '');
+  }
+  return { prompt: toAlias(prompt), fromAlias, wire };
 }
+export const evidenceAlias = (i) => 'EV-' + String(i + 1).padStart(3, '0');
+
+function wireTask(kind, part) {
+  if (kind === 'FsdOutline')
+    return '输出提纲（第十部分第 3 节）：确定本功能的全部业务逻辑章节（按阅读顺序）和全部消息。只输出思路行和“## 提纲”表格，不写正文。';
+  if (kind === 'FsdWrite') {
+    const fix = part.problems?.length
+      ? '\n这部分上次编写的内容没有通过检查，请重写这部分的全部内容并修正：\n' +
+        part.problems
+          .slice(0, 30)
+          .map((p) => `- ${p.path ?? ''} ${p.message ?? p.keyword}`)
+          .join('\n')
+      : '';
+    if (part.section)
+      return (
+        `只编写业务逻辑章节 ${part.section.id}，标题行必须是“## 逻辑 ${part.section.id} ${part.section.title}”。只写这一节，不写其他部分；引用其他章节或消息用提纲中的编号。` +
+        fix
+      );
+    const labels = part.parts.map((p) => PART_LABELS[p] ?? p).join('、');
+    return (
+      `编写以下部分：${labels}。只写这些部分，不写其他部分；引用业务逻辑章节或消息用提纲中的编号。` +
+      (part.parts.includes('messages')
+        ? '消息须包含提纲中的全部消息编号，并覆盖“当前文档”各逻辑章节提到的每一种失败与提示场景。生命周期分析覆盖相关正向、逆向和部分处理环节；反向审查针对“当前文档”提出反例；未决事项列出所有推断待核实或待客户确认的内容。'
+        : '') +
+      fix
+    );
+  }
+  if (part.reason === 'review')
+    return (
+      '按下面的审查意见修订“当前文档”（第十部分第 4 节）：只输出需要变化的内容，每条意见都必须在正文中落实。\n审查意见：' +
+      JSON.stringify(part.issues)
+    );
+  if (part.reason === 'final')
+    return '方案已经用户确认。现在编制正式 FSD：通读“当前文档”，按第九部分自检，补全遗漏、修正不一致；只输出需要变化的内容（第十部分第 4 节）。没有需要修改的内容时，只输出思路行。不得改变已确认的业务口径。';
+  return '客户补充了新的输入（见 snapshot 中最新的需求文字与答复）。识别变化及影响范围，只修订受影响的内容（第十部分第 4 节）；不受影响的内容不要输出。没有需要修改的内容时，只输出思路行。';
+}
+
 export async function configuredModel({ kind, context, signal, repair, part }) {
   const { pool, r, t } = context;
   const model = r.assets.model;
@@ -153,8 +203,8 @@ export async function configuredModel({ kind, context, signal, repair, part }) {
   ).rows[0];
   if (!row) throw fault('COMPATIBILITY', 'MODEL', 409);
   if (hash(row.config) !== model.config_hash) throw fault('COMPATIBILITY', 'MODEL', 409);
-  const { prompt, fromAlias } = structuredPrompt({ kind, r, t, repair, part });
-  // Only the FSD proposal needs the large budget; analysis-type outputs given 16k tokens
+  const { prompt, fromAlias, wire } = structuredPrompt({ kind, r, t, repair, part });
+  // Only document outputs need the large budget; analysis-type outputs given 16k tokens
   // ramble past the call timeout (qwen3.8-max: ~11k tokens, 93-300 s for one AnalysisResult).
   const outputLimit = modelOutputLimit(kind, r.assets.budget);
   const c = row.config,
@@ -186,7 +236,7 @@ export async function configuredModel({ kind, context, signal, repair, part }) {
     c,
     openKey(row.secret_cipher, t.organization_id, row.id),
     payload,
-    { signal, maxResponseBytes: 262144 },
+    { signal, maxResponseBytes: 1048576 },
   );
   const checked = interpretResponse(c.protocol, response.status, response.data);
   if (checked.status !== 'passed')
@@ -219,12 +269,12 @@ export async function configuredModel({ kind, context, signal, repair, part }) {
       ? usage.input_tokens + usage.output_tokens
       : null);
   const known = total === null ? null : { total_tokens: total };
+  // Some models wrap the answer in a markdown fence despite the instructions.
+  const body = text.replace(/^\s*```(?:json|markdown|md)?\s*/i, '').replace(/\s*```\s*$/, '');
+  if (wire) return { output: { text: body }, usage: known, cost: null };
   let output;
   try {
-    // Some models wrap the JSON in a markdown fence despite the instructions.
-    output = JSON.parse(
-      fromAlias(text.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '')),
-    );
+    output = JSON.parse(fromAlias(body));
   } catch {
     throw Object.assign(fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION'), { usage: known });
   }

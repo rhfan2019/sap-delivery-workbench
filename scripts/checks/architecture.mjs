@@ -8,6 +8,10 @@ import { spawnSync } from 'node:child_process';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const browserContracts = new Set([
   'design-assistant/protocol',
+  'design-assistant/fsd-report-refs',
+  'design-assistant/fsd-report-render',
+  'design-assistant/fsd-report-wire',
+  'design-assistant/fsd-report-patch',
   'fs-workspace/canonical',
   'fs-workspace/types',
   'agent-runtime/types',

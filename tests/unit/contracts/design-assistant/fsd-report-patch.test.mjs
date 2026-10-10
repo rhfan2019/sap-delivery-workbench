@@ -137,3 +137,17 @@ test('PATCH-03 a document assembled part by part equals the sample, in outline o
   assert.deepEqual(strip(doc), strip(sample));
   assert.deepEqual(validateFsdReport(doc), { ok: true, errors: [] });
 });
+
+test('PATCH-04 a restated object with reordered keys is not a change', async () => {
+  const base = await isc001();
+  // jsonb storage returns objects with their keys in a different order.
+  const stored = JSON.parse(
+    JSON.stringify(base, (k, v) =>
+      v && typeof v === 'object' && !Array.isArray(v)
+        ? Object.fromEntries(Object.entries(v).reverse())
+        : v,
+    ),
+  );
+  const fragment = parseFsdWire(toFsdWire(base, { parts: ['output', 'sections'] })).doc;
+  assert.deepEqual(mergeFsdPatch(stored, fragment).changed, []);
+});

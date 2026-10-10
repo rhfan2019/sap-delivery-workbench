@@ -8,6 +8,7 @@ import {
   validateBudget,
   safeError,
   DEFAULT_BUDGET,
+  MODEL_CONCURRENCY,
 } from './policy.mjs';
 import { currentTrace } from './telemetry.mjs';
 
@@ -92,7 +93,7 @@ export async function newRun(db, t, assets, processingKind = 'INITIAL', replayOf
     ...structuredClone(t.input),
     input_version: t.input_version,
     artifact_version: t.artifact_version,
-    base_objects: structuredClone(t.objects),
+    base_document: structuredClone(t.document ?? null),
     base_evidence: structuredClone(t.evidence),
     answers: structuredClone(t.answers),
     prior_answers: structuredClone(t.answered ?? []),
@@ -174,7 +175,13 @@ export async function createTask(db, scope, input, assets) {
       input_version: 1,
       artifact_version: null,
       artifacts: [],
-      objects: {},
+      // The FSD content (fsd-report/1); cover comes from the development item.
+      document: null,
+      cover: {
+        doc_id: scope.itemCode ?? null,
+        title: scope.itemName ?? null,
+        project: scope.projectName ?? null,
+      },
       confirmations: [],
       answers: {},
       sessions: [{ id: randomUUID(), created_at: new Date().toISOString() }],
@@ -664,7 +671,7 @@ export async function reserve(db, lease, operationId, kind, tokens = 0) {
         "SELECT count(*)::int AS n FROM app.fsd_v1_operation o JOIN app.fsd_v1_run r ON r.id=o.run_id WHERE o.kind='model' AND o.status='RESERVED' AND r.status='RUNNING' AND r.lease_until>clock_timestamp() AND o.reservation->>'generation'=r.generation::text",
       )
     ).rows[0].n;
-    if (active >= 2) throw fault('RATE_LIMIT', 'MODEL', 429);
+    if (active >= MODEL_CONCURRENCY) throw fault('RATE_LIMIT', 'MODEL', 429);
   }
   const b = r.assets.budget,
     rb = r.state.budget,

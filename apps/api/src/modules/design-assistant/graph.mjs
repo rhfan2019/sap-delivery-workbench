@@ -7,19 +7,36 @@ import {
   hash,
   withoutSupersededFields,
   dropUnknownReferences,
-  normalizeProposalIds,
   normalizeClarification,
   modelOutputLimit,
-  SECTION_GROUPS,
-  mergeProposalGroup,
+  WIRE_KINDS,
   validateOutput,
   validateTool,
   validateEvidence,
   safeError,
+  MODEL_CONCURRENCY,
 } from './policy.mjs';
 import { setTimeout as delay } from 'node:timers/promises';
-import { applyObjectChanges } from './objects.mjs';
 import { executeChatNode } from './chat-node.mjs';
+import { parseFsdWire } from '@sap-delivery-workbench/contracts/design-assistant/fsd-report-wire';
+import {
+  draftSkeleton,
+  outlineProblems,
+  pickParts,
+  partProblems,
+  WRITE_JOBS,
+  jobForPath,
+  dropDanglingReferences,
+  stampVersion,
+} from './document.mjs';
+import {
+  mergeFsdPatch,
+  orderSections,
+} from '@sap-delivery-workbench/contracts/design-assistant/fsd-report-patch';
+import { validateFsdReport } from '@sap-delivery-workbench/contracts/design-assistant/fsd-report';
+
+// Parallel FSD part writing; the provider's own rate limit still applies per call.
+const WRITE_CONCURRENCY = MODEL_CONCURRENCY;
 
 export function buildGraph(
   pool,
@@ -45,39 +62,41 @@ export function buildGraph(
   // Output the model can correct on one more attempt: malformed JSON or references to evidence it was not given.
   const repairable = new Set(['INVALID_OUTPUT', 'UNKNOWN_REFERENCE', 'OUT_OF_SCOPE']);
   const current = () => tx((db) => guard(db, lease, { allowWaiting: true }));
-  // part: { group, draft } when one FSD chapter group is proposed at a time (see N07).
+  // part (FSD wire calls): { key, parts?, section?, outline?, draft?, reason?, issues?,
+  // problems?, check? }; key separates the parallel calls of one node in the ledger.
+  // A wire answer is returned as { text, parsed }; check(parsed) lists problems that make
+  // the answer unusable, which get the same one repair as a malformed answer.
   async function call(kind, state, part = null) {
     const { t, r } = await current();
     const phase = state.cycle ?? 0;
+    const wire = WIRE_KINDS.has(kind);
     const projected = {
       ...t,
       evidence: withoutSupersededFields(
         t.evidence.filter((e) => checkEvidence(e, t.target, e.required_properties).valid),
       ),
     };
+    const accept = (output) => {
+      const parsed = parseFsdWire(output.text);
+      return {
+        text: output.text,
+        parsed,
+        problems: [...parsed.errors, ...(part?.check?.(parsed) ?? [])],
+      };
+    };
     let repairReason = null;
     for (let repair = 0; repair <= r.assets.budget.format_repairs; repair++) {
       const op = hash(
-        part
-          ? part.dangling || part.review
-            ? [
-                r.id,
-                kind,
-                state.round,
-                phase,
-                repair,
-                part.group.id,
-                part.dangling ? 'dangling' : 'review',
-              ]
-            : [r.id, kind, state.round, phase, repair, part.group.id]
+        part?.key
+          ? [r.id, kind, state.round, phase, repair, part.key]
           : [r.id, kind, state.round, phase, repair],
       );
       const existing = (await pool.query('SELECT * FROM app.fsd_v1_operation WHERE id=$1', [op]))
         .rows[0];
-      if (existing?.status === 'SETTLED') return existing.result;
+      if (existing?.status === 'SETTLED') return wire ? accept(existing.result) : existing.result;
       if (existing && existing.status !== 'SETTLED') {
         if (repairable.has(existing.error?.code) && repair < r.assets.budget.format_repairs) {
-          repairReason = existing.error.code;
+          repairReason = { code: existing.error.code, details: [] };
           continue;
         }
         throw fault(
@@ -90,13 +109,15 @@ export function buildGraph(
       const estimated = Math.ceil(
         (JSON.stringify(r.snapshot).length +
           JSON.stringify(projected.evidence).length +
-          JSON.stringify(t.objects).length +
+          JSON.stringify(part?.draft ?? r.state.draft ?? t.document ?? {}).length +
           r.assets.prompt_text.length +
           3000) /
           2,
       );
-      await tx((db) =>
-        reserve(db, lease, op, 'model', estimated + modelOutputLimit(kind, r.assets.budget)),
+      await waitForSlot(() =>
+        tx((db) =>
+          reserve(db, lease, op, 'model', estimated + modelOutputLimit(kind, r.assets.budget)),
+        ),
       );
       await telemetry.span(
         'prompt.construct',
@@ -113,6 +134,7 @@ export function buildGraph(
               excluded_reason:
                 projected.evidence.length < t.evidence.length ? 'INVALID_EVIDENCE' : 'none',
               coverage: 'selected snapshot',
+              ...(part?.key ? { part: part.key } : {}),
             }),
           ),
       );
@@ -135,72 +157,57 @@ export function buildGraph(
             combined,
           ),
         );
-        result.output = normalizeClarification(result.output);
-        result.output = normalizeProposalIds(
-          dropUnknownReferences(
-            result.output,
-            projected.evidence.map((e) => e.id),
-          ),
-          [...Object.keys(t.objects), ...Array.from({ length: 8 }, (_, i) => 'section-' + (i + 1))],
-        );
-        // A group call may only touch its own chapters; anything else would overwrite
-        // chapters proposed by another group in the same draft.
-        // Returning nothing means "unchanged", which only makes sense when every chapter of
-        // the group already has content (saved, or earlier in this draft).
-        const unchangedGroupAllowed =
-          !!part &&
-          part.group.sections.every(
-            (n) =>
-              Object.values(t.objects).some((o) => o.section === n) ||
-              part.draft?.changes.some((c) => c.section === n),
-          );
-        if (part && Array.isArray(result.output?.changes)) {
-          result.output.changes = result.output.changes.filter((c) =>
-            part.group.sections.includes(c.section),
-          );
-          result.output.allowed_scope = result.output.changes.map((c) => c.object_id);
-          if (!result.output.changes.length && !unchangedGroupAllowed)
+        let value;
+        if (wire) {
+          if (typeof result.output?.text !== 'string')
             throw Object.assign(fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION'), {
               usage: result.usage,
             });
+          value = accept(result.output);
+          // The last attempt is kept with its problems listed: the document check after the
+          // merge decides what is still unusable, instead of discarding the whole part here.
+          if (value.problems.length && repair < r.assets.budget.format_repairs)
+            throw Object.assign(fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION', 422, value.problems), {
+              usage: result.usage,
+            });
+          if (value.problems.length)
+            await tx((db) =>
+              event(db, t.id, r.id, 'output.problems', {
+                operation_id: op,
+                kind,
+                part: part?.key ?? null,
+                problems: value.problems.slice(0, 20),
+              }),
+            );
+        } else {
+          result.output = normalizeClarification(result.output);
+          result.output = dropUnknownReferences(
+            result.output,
+            projected.evidence.map((e) => e.id),
+          );
+          // The snapshot id and base version are echoes of this prompt, which the server just
+          // built; smaller models miscopy the UUID, so restore them instead of failing STALE_INPUT.
+          if (result.output && typeof result.output === 'object')
+            Object.assign(result.output, {
+              input_snapshot_id: r.input_snapshot_id,
+              base_artifact_version: t.artifact_version ?? null,
+            });
+          await telemetry.span('output.validate', attrs, async () =>
+            validateOutput(result.output, {
+              expectedKind: kind,
+              snapshotId: r.input_snapshot_id,
+              artifactVersion: t.artifact_version,
+              evidenceIds: projected.evidence.map((e) => e.id),
+            }),
+          );
+          value = result.output;
         }
-        // base_version/op echo the object versions this prompt showed; models copy the first
-        // proposal's "ADD, 0" into the FSD round, so take them from the objects they were given.
-        if (kind === 'ChangeProposal' && Array.isArray(result.output?.changes))
-          for (const c of result.output.changes) {
-            const old = t.objects[c.object_id];
-            c.base_version = old?.version ?? 0;
-            c.op = old ? (c.op === 'ADD' ? 'REVISE' : c.op) : 'ADD';
-            if (Array.isArray(c.dependencies))
-              c.dependencies = [...new Set(c.dependencies.map(decisionRef))].filter(Boolean);
-          }
-        // The snapshot id and base version are echoes of this prompt, which the server just
-        // built; smaller models miscopy the UUID, so restore them instead of failing STALE_INPUT.
-        if (result.output && typeof result.output === 'object')
-          Object.assign(result.output, {
-            input_snapshot_id: r.input_snapshot_id,
-            base_artifact_version: t.artifact_version ?? null,
-          });
-        await telemetry.span('output.validate', attrs, async () =>
-          validateOutput(result.output, {
-            expectedKind: kind,
-            unchangedGroupAllowed,
-            allowNewDomainObjects: true,
-            snapshotId: r.input_snapshot_id,
-            artifactVersion: t.artifact_version,
-            evidenceIds: projected.evidence.map((e) => e.id),
-            allowedScope: [
-              ...Object.keys(t.objects),
-              ...Array.from({ length: 8 }, (_, i) => 'section-' + (i + 1)),
-            ],
-          }),
-        );
         await tx((db) => settle(db, lease, op, result.output, null, result.usage));
         await onBoundary('after_operation_result_before_checkpoint', {
           run_id: r.id,
           operation_id: op,
         });
-        return result.output;
+        return value;
       } catch (e) {
         const error = safeError({
           code:
@@ -216,7 +223,20 @@ export function buildGraph(
         );
         if (!repairable.has(e.code) || repair === r.assets.budget.format_repairs)
           throw fault(error.code, error.error_origin);
-        repairReason = e.code;
+        repairReason = { code: e.code, details: e.details ?? [] };
+      }
+    }
+  }
+  // RATE_LIMIT from reserve means every model slot is busy (MODEL_CONCURRENCY); wait for one
+  // within the call timeout instead of failing the run.
+  async function waitForSlot(action) {
+    const deadline = Date.now() + 300000;
+    for (;;) {
+      try {
+        return await action();
+      } catch (e) {
+        if (e.code !== 'RATE_LIMIT' || Date.now() > deadline) throw e;
+        await delay(200, undefined, { signal });
       }
     }
   }
@@ -288,6 +308,18 @@ export function buildGraph(
         return { phase: 2 };
       });
       const out = await call('AnalysisResult', s);
+      // The writing calls get the analysis as context (claims with their basis, gaps).
+      await commit('N02:analysis', { goal: out.goal }, (_t, run) => {
+        run.state.analysis = {
+          goal: out.goal,
+          scope: out.scope,
+          standard_fit: out.standard_fit,
+          claims: out.claims,
+          gaps: out.gaps,
+          unresolved_issues: out.unresolved_issues,
+        };
+        return { claims: out.claims.length };
+      });
       const { r, t } = await current();
       const direction =
         out.scope !== 'report' ? out.scope : out.standard_fit === 'SATISFIES' ? 'standard' : null;
@@ -582,110 +614,96 @@ export function buildGraph(
       return { wait_ref: wait.id, route: 'N10' };
     }),
   );
+  // N07 writes or revises the FSD document (fsd-report/1) in the wire format.
+  // First write: one outline call fixes every logic section and message id, then the
+  // fixed parts and each logic section are written in parallel against that outline, and
+  // the messages/analysis tables last (they cover what the sections say). A revision (review
+  // findings, new customer input, the final FSD round) answers only what changes.
+  // The merged draft must pass the content model; failing parts get one targeted fix call,
+  // references still pointing nowhere are removed and listed as an open item.
   g.addNode(
     'N07',
     node('N07', async (s) => {
       const { r, t } = await current();
-      const previous = r.state.proposal ?? null;
       const open = r.state.review_open ?? [];
-      const sectionOf = (ref) =>
-        Number(/^section-([1-8])$/.exec(ref ?? '')?.[1]) ||
-        previous?.changes.find((c) => c.object_id === ref)?.section ||
-        t.objects[ref]?.section;
-      // A review repair re-proposes only the chapter groups its findings point at; an
-      // unattributable finding, or a fresh proposal, goes through every group.
-      const repairing = !!previous && open.length > 0 && open.every((i) => sectionOf(i.rule_ref));
-      const touched = new Set(open.map((i) => sectionOf(i.rule_ref)));
-      const groups = repairing
-        ? SECTION_GROUPS.filter((g) => g.sections.some((n) => touched.has(n)))
-        : SECTION_GROUPS;
-      let proposal = repairing ? structuredClone(previous) : null;
-      for (const group of groups)
-        proposal = mergeProposalGroup(
-          proposal,
-          await call('ChangeProposal', s, { group, draft: proposal }),
-          group,
-        );
-      if (!proposal.changes.length) throw fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION');
-      // Groups are written separately, so a chapter may cite an object no group defined.
-      // One fix round per affected group; what still dangles is dropped and listed as an
-      // open item instead of failing the whole plan at commit (UNKNOWN_REFERENCE).
-      const decisions = customerDecisions(t);
-      const known = (p) =>
-        new Set([
-          ...Object.keys(t.objects),
-          ...p.changes.map((c) => c.object_id),
-          ...t.evidence.map((e) => e.id),
-          ...decisions.keys(),
-        ]);
-      const danglingIn = (p) => {
-        const ok = known(p);
-        return p.changes.flatMap((c) =>
-          (c.dependencies ?? []).filter((d) => !ok.has(d)).map((d) => [c.section, d]),
-        );
-      };
-      let missing = danglingIn(proposal);
-      for (const group of SECTION_GROUPS) {
-        const refs = [
-          ...new Set(missing.filter(([n]) => group.sections.includes(n)).map(([, d]) => d)),
+      // A committed draft is the task document now; only an open draft is built upon.
+      const base = (!r.state.draft_committed && r.state.draft) || t.document || null;
+      let draft, outline, changed;
+      if (!base) {
+        outline = (await call('FsdOutline', s, { key: 'outline', check: outlineProblems })).parsed
+          .outline;
+        const jobs = [
+          ...WRITE_JOBS.filter((j) => j.key !== 'tail'),
+          ...outline
+            .filter((o) => o.type === '逻辑')
+            .map((o) => ({
+              key: 'section:' + o.id,
+              parts: ['section:' + o.id],
+              section: { id: o.id, title: o.title },
+            })),
         ];
-        if (!refs.length) continue;
-        proposal = mergeProposalGroup(
-          proposal,
-          await call('ChangeProposal', s, { group, draft: proposal, dangling: refs }),
-          group,
-          { byObject: true },
+        const written = await parallel(
+          jobs.map(
+            (job) => () => call('FsdWrite', s, { ...job, outline, check: partProblems(job) }),
+          ),
+          WRITE_CONCURRENCY,
         );
-      }
-      missing = danglingIn(proposal);
-      if (missing.length) {
-        const gone = new Set(missing.map(([, d]) => d));
-        proposal = {
-          ...proposal,
-          changes: proposal.changes.map((c) => ({
-            ...c,
-            dependencies: (c.dependencies ?? []).filter((d) => !gone.has(d)),
-          })),
-          unresolved_issues: [
-            ...proposal.unresolved_issues.filter((i) => i.id !== 'dangling-references'),
-            {
-              id: 'dangling-references',
-              description:
-                '以下被引用的对象在方案中没有定义，已从依赖中移除，需补充定义或确认不需要：' +
-                [...gone].join('、'),
-              blocking: false,
-              evidence_refs: [],
-            },
-          ],
-        };
-      }
-      // 04 §8: a saved object whose dependency is revised must be revised in the same change.
-      // Group calls rarely re-state such dependents, so each affected group gets one review
-      // call for them; anything still left open is rejected at commit as before
-      // (DEPENDENCY_REVIEW_REQUIRED).
-      const staleIn = (p) => {
-        const revised = new Set(p.changes.map((c) => c.object_id));
-        return Object.values(t.objects).filter(
-          (o) =>
-            !revised.has(o.object_id) &&
-            (o.dependency_links ?? []).some((l) => revised.has(l.target_id)),
+        draft = draftSkeleton(
+          t,
+          withoutSupersededFields(
+            t.evidence.filter((e) => checkEvidence(e, t.target, e.required_properties).valid),
+          ),
         );
-      };
-      const stale = staleIn(proposal);
-      for (const group of SECTION_GROUPS) {
-        const ids = stale.filter((o) => group.sections.includes(o.section)).map((o) => o.object_id);
-        if (!ids.length) continue;
-        proposal = mergeProposalGroup(
-          proposal,
-          await call('ChangeProposal', s, { group, draft: proposal, review: ids }),
-          group,
-          { byObject: true },
-        );
+        written.forEach((w, i) => {
+          draft = mergeFsdPatch(draft, pickParts(w.parsed.doc, jobs[i].parts)).doc;
+        });
+        draft = orderSections(draft, outline);
+        const tail = WRITE_JOBS.find((j) => j.key === 'tail');
+        const last = await call('FsdWrite', s, { ...tail, outline, draft });
+        draft = mergeFsdPatch(draft, pickParts(last.parsed.doc, tail.parts)).doc;
+        changed = ['*'];
+      } else {
+        outline = r.state.outline ?? null;
+        const reason = open.length ? 'review' : s.cycle === 1 ? 'final' : 'input';
+        const answer = await call('FsdRevise', s, {
+          key: 'revise:' + reason,
+          reason,
+          issues: open,
+          draft: base,
+        });
+        ({ doc: draft, changed } = mergeFsdPatch(base, answer.parsed.doc, answer.parsed.deletions));
       }
-      const ref = hash(proposal);
-      await commit('N07:' + s.round + ':' + (s.cycle ?? 0), proposal, (_t, run) => {
-        run.state.proposal = proposal;
-        return { proposal_ref: ref };
+      // Content-model check; each failing part is rewritten once with its problems listed.
+      let check = validateFsdReport(draft);
+      const failing = new Map();
+      for (const e of check.ok ? [] : check.errors) {
+        const job = jobForPath(e.path, draft);
+        if (!job) throw fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION', 422, [e]);
+        failing.set(job.key, { job, problems: [...(failing.get(job.key)?.problems ?? []), e] });
+      }
+      for (const { job, problems } of failing.values()) {
+        const fixed = await call('FsdWrite', s, {
+          ...job,
+          key: job.key + ':fix',
+          outline,
+          draft,
+          problems,
+        });
+        const merged = mergeFsdPatch(draft, pickParts(fixed.parsed.doc, job.parts));
+        draft = merged.doc;
+        changed = [...new Set([...changed, ...merged.changed])];
+      }
+      ({ doc: draft } = dropDanglingReferences(draft));
+      check = validateFsdReport(draft);
+      if (!check.ok) throw fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION', 422, check.errors);
+      const ref = hash(draft);
+      await commit('N07:' + s.round + ':' + (s.cycle ?? 0), { draft_hash: ref }, (_t, run) => {
+        run.state.draft = draft;
+        run.state.draft_committed = false;
+        run.state.proposal_ref = ref;
+        run.state.outline = outline;
+        run.state.last_changed = changed;
+        return { proposal_ref: ref, changed: changed.length };
       });
       await onBoundary('after_proposal_persist_before_commit', { run_id: r.id });
       return { proposal_ref: ref, route: 'N08' };
@@ -695,102 +713,99 @@ export function buildGraph(
     'N08',
     node('N08', async (s) => {
       const review = await call('ReviewResult', s);
-      const { r, t } = await current();
+      const { r } = await current();
       const open = review.issues.filter((i) => i.status === 'OPEN');
       // After the last repair round the remaining review findings go to the human gate as
       // unresolved issues; a self-review that never fully converges must not discard the work.
       const exhausted = open.length > 0 && s.round >= r.assets.budget.review_repairs;
       if (open.length && !exhausted) {
         await commit('N08:review:' + s.round + ':' + (s.cycle ?? 0), review, (_t, run) => {
-          run.state.review_open = review.issues.filter((i) => i.status === 'OPEN');
-          run.state.review_candidate = structuredClone(run.state.proposal);
-          return { count: run.state.review_open.length };
+          run.state.review_open = open;
+          return { count: open.length };
         });
         return { round: s.round + 1, route: 'N07' };
       }
-      const proposal = r.state.proposal;
-      if (!proposal) throw fault('UNKNOWN_REFERENCE', 'BUSINESS_COMMIT');
-      if (
-        !exhausted &&
-        r.state.review_open?.some(
-          (issue) =>
-            !proposal.changes.some(
-              (c) =>
-                c.section !== 7 &&
-                c.content !==
-                  r.state.review_candidate?.changes.find((old) => old.object_id === c.object_id)
-                    ?.content &&
-                (c.object_id === issue.rule_ref ||
-                  c.dependencies.includes(issue.rule_ref) ||
-                  c.section === 6),
-            ),
-        )
-      )
+      const draft = r.state.draft;
+      if (!draft) throw fault('UNKNOWN_REFERENCE', 'BUSINESS_COMMIT');
+      // A revision answering review findings must actually change the document (09 FLOW-06).
+      if (!exhausted && r.state.review_open?.length && !r.state.last_changed?.length)
         throw fault('REVIEW_NOT_APPLIED', 'OUTPUT_VALIDATION');
-      await commit('N08:' + s.round + ':' + (s.cycle ?? 0), proposal, (task, run) => {
-        run.state.review_open = [];
-        delete run.state.review_candidate;
-        // Evidence from earlier runs expires while the customer answers questions; only the
-        // current valid reads back this commit (the proposal could only cite those).
-        const valid = task.evidence.filter(
-          (e) => checkEvidence(e, task.target, e.required_properties).valid,
-        );
-        if (!valid.length && !task.target.sap_disabled) throw fault('STALE_EVIDENCE', 'RETRIEVAL');
-        task.objects = applyObjectChanges(
-          task.objects,
-          proposal.changes,
-          valid,
-          customerDecisions(task),
-        );
-        const version = (task.artifact_version ?? 0) + 1;
-        const artifact = {
-          id: randomUUID(),
-          version,
-          workspace_version_id: lease.snapshot.workspace_version_id ?? null,
-          kind: s.cycle === 1 ? 'FSD' : 'PLAN',
-          // The FSD rests on the approved plan; a retried FSD round runs under a new input
-          // snapshot, so the plan is found by its approval, not by snapshot id.
-          plan_artifact_id:
-            s.cycle === 1
-              ? task.artifacts
-                  .filter(
-                    (a) =>
-                      a.kind === 'PLAN' &&
-                      task.confirmations.some(
-                        (c) =>
-                          c.kind === 'PLAN_CONFIRM' &&
-                          c.artifact_id === a.id &&
-                          c.artifact_version === a.version,
-                      ),
-                  )
-                  .at(-1)?.id
-              : null,
-          scope: task.scope,
-          objects: structuredClone(task.objects),
-          evidence_refs: valid.map((e) => e.id),
-          issues: [
-            ...proposal.unresolved_issues,
+      await commit(
+        'N08:' + s.round + ':' + (s.cycle ?? 0),
+        { draft_hash: hash(draft) },
+        (task, run) => {
+          // Evidence from earlier runs expires while the customer answers questions; only the
+          // current valid reads back this commit.
+          const valid = task.evidence.filter(
+            (e) => checkEvidence(e, task.target, e.required_properties).valid,
+          );
+          if (!valid.length && !task.target.sap_disabled)
+            throw fault('STALE_EVIDENCE', 'RETRIEVAL');
+          const version = (task.artifact_version ?? 0) + 1;
+          const kind = s.cycle === 1 ? 'FSD' : 'PLAN';
+          const document = stampVersion(draft, version, kind);
+          if (!validateFsdReport(document).ok)
+            throw fault('INCOMPLETE_ARTIFACT', 'OUTPUT_VALIDATION');
+          const issues = [
+            ...(document.working?.open_issues ?? [])
+              .filter((i) => i.status === 'OPEN')
+              .map((i) => ({
+                id: i.id,
+                description: i.title + (i.impact ? '：' + i.impact : ''),
+                blocking: i.blocking,
+                evidence_refs: [],
+              })),
             ...(exhausted ? open : []).map((i) => ({
               id: i.issue_id,
               description: '审查未闭环：' + i.counterexample + ' 建议：' + i.suggestion,
               blocking: false,
               evidence_refs: i.evidence_refs,
             })),
-          ],
-          created_at: new Date().toISOString(),
-          input_snapshot_id: task.input_snapshot_id,
-        };
-        if (new Set(Object.values(artifact.objects).map((o) => o.section)).size !== 8)
-          throw fault('INCOMPLETE_ARTIFACT', 'OUTPUT_VALIDATION');
-        task.artifacts.push(artifact);
-        task.artifact_version = version;
-        task.current_artifact_id = artifact.id;
-        task.blocking_issues = proposal.unresolved_issues.filter((i) => i.blocking);
-        task.phase = task.phase >= 5 ? 6 : 4;
-        // The final draft exists now; the chat layer's "plan approved, final pending" flag ends.
-        if (s.cycle === 1 && task.chat) task.chat.draftApproved = false;
-        return { artifact_id: artifact.id, version };
-      });
+          ];
+          const artifact = {
+            id: randomUUID(),
+            version,
+            workspace_version_id: lease.snapshot.workspace_version_id ?? null,
+            kind,
+            // The FSD rests on the approved plan; a retried FSD round runs under a new input
+            // snapshot, so the plan is found by its approval, not by snapshot id.
+            plan_artifact_id:
+              kind === 'FSD'
+                ? task.artifacts
+                    .filter(
+                      (a) =>
+                        a.kind === 'PLAN' &&
+                        task.confirmations.some(
+                          (c) =>
+                            c.kind === 'PLAN_CONFIRM' &&
+                            c.artifact_id === a.id &&
+                            c.artifact_version === a.version,
+                        ),
+                    )
+                    .at(-1)?.id
+                : null,
+            scope: task.scope,
+            document,
+            evidence_refs: valid.map((e) => e.id),
+            issues,
+            created_at: new Date().toISOString(),
+            input_snapshot_id: task.input_snapshot_id,
+          };
+          task.document = document;
+          task.artifacts.push(artifact);
+          task.artifact_version = version;
+          task.current_artifact_id = artifact.id;
+          task.blocking_issues = issues.filter((i) => i.blocking);
+          task.phase = task.phase >= 5 ? 6 : 4;
+          // The final draft exists now; the chat layer's "plan approved, final pending" flag ends.
+          if (kind === 'FSD' && task.chat) task.chat.draftApproved = false;
+          // The draft stays: a crash before the checkpoint re-enters N08, which needs it.
+          run.state.draft_committed = true;
+          run.state.review_open = [];
+          run.state.last_changed = [];
+          return { artifact_id: artifact.id, version };
+        },
+      );
       return { route: 'N09' };
     }),
   );
@@ -903,22 +918,19 @@ export function buildGraph(
   }
   return g.compile({ checkpointer });
 }
-// Customer decisions are dependency targets alongside evidence (01 §5.4: a customer rule
-// must rest on the customer's answer): every recorded answer and the requirement text.
-function customerDecisions(task) {
-  const answers = [...(task.answered ?? []), ...Object.values(task.answers ?? {})];
-  return new Map([
-    ['requirement', task.input_version ?? 1],
-    ...answers.map((a) => ['answer:' + a.question_id, task.answer_version ?? 1]),
-  ]);
-}
-// Models cite decisions by where they saw them in the prompt; map those to the stable ids.
-function decisionRef(ref) {
-  // A basis label ("INFERENCE") says the content rests on nothing citable: no dependency.
-  if (['INFERENCE', 'FACT', 'CUSTOMER_DECISION'].includes(ref)) return null;
-  const answer = /^snapshot\.(?:prior_)?answers(?:\.\d+)?\.([^.]+)/.exec(ref ?? '');
-  if (answer) return 'answer:' + answer[1];
-  return /^snapshot\.(?:text|input)\b/.test(ref ?? '') ? 'requirement' : ref;
+// Runs tasks with at most limit in flight; results keep the task order.
+async function parallel(tasks, limit) {
+  const results = new Array(tasks.length);
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(limit, tasks.length) }, async () => {
+      while (next < tasks.length) {
+        const k = next++;
+        results[k] = await tasks[k]();
+      }
+    }),
+  );
+  return results;
 }
 async function bounded(action, signal) {
   signal.throwIfAborted();

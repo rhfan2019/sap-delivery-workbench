@@ -12,6 +12,7 @@ import { createTelemetry } from './telemetry.mjs';
 import { registeredTarget } from './sap.mjs';
 import { audit } from '../../platform/auth.mjs';
 import { registerChatRoutes } from './chat-routes.mjs';
+import { chatArtifact } from './chat-workflow.mjs';
 
 export const designBase = '/api/projects/:projectId/development-items/:itemId/work/design/fsd/v1';
 const uuid = (v) => {
@@ -316,7 +317,7 @@ export function registerDesignRoutes(
       await saveTask(db, replay);
       replay.input = { text: source.snapshot.text };
       replay.answers = source.snapshot.answers;
-      replay.objects = source.snapshot.base_objects;
+      replay.document = source.snapshot.base_document ?? null;
       replay.artifact_version = source.snapshot.artifact_version;
       replay.evidence = structuredClone(source.snapshot.base_evidence ?? []);
       await saveTask(db, replay);
@@ -366,18 +367,20 @@ export function registerDesignRoutes(
               ? '已确认 FSD'
               : '工作稿（未交付）';
         if (format === 'json') return { label, ...a };
+        // Interim Word export: the rendered Markdown line by line, headings mapped. The
+        // template-based Word rendering of the document is a separate step.
+        const headings = [HeadingLevel.HEADING_1, HeadingLevel.HEADING_2, HeadingLevel.HEADING_3];
         const children = [
           new Paragraph({ text: label, heading: HeadingLevel.TITLE }),
-          new Paragraph('版本 ' + a.version),
-          ...Object.values(a.objects)
-            .sort((x, y) => x.section - y.section)
-            .flatMap((o) => [
-              new Paragraph({
-                text: `${o.section}. ${o.object_id}`,
-                heading: HeadingLevel.HEADING_1,
-              }),
-              new Paragraph(o.content),
-            ]),
+          ...chatArtifact(a)
+            .markdown.split('\n')
+            .filter((line) => line.trim() && !/^\|(\s*-+\s*\|)+$/.test(line.trim()))
+            .map((line) => {
+              const h = /^(#{1,3})\s+(.*)$/.exec(line);
+              return h
+                ? new Paragraph({ text: h[2], heading: headings[h[1].length - 1] })
+                : new Paragraph(line);
+            }),
           new Paragraph('证据引用：' + a.evidence_refs.join(', ')),
         ];
         const bytes = await Packer.toBuffer(new Document({ sections: [{ children }] }));

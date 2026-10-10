@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { api } from '../../services/session';
+import { renderFsdMarkdown } from '@sap-delivery-workbench/contracts/design-assistant/fsd-report-render';
+import MessageResponse from '@/components/ai-elements/message/MessageResponse.vue';
 const props = defineProps<{ base: string; editable: boolean }>();
 const task = ref<any>(null),
   tasks = ref<any[]>([]),
@@ -25,6 +27,16 @@ const question = computed(() =>
     : null,
 );
 const artifact = computed(() => task.value?.artifacts?.at(-1));
+// Artifacts before the fsd-report document model hold chapter objects; show those as they were.
+const artifactMarkdown = computed(() => {
+  const a = artifact.value as any;
+  if (!a) return '';
+  if (a.document) return renderFsdMarkdown(a.document);
+  return Object.values(a.objects ?? {})
+    .sort((x: any, y: any) => x.section - y.section)
+    .map((o: any) => `## 第 ${o.section} 章\n\n${o.content}`)
+    .join('\n\n');
+});
 async function operation(fn: () => Promise<void>) {
   if (busy.value) return;
   busy.value = true;
@@ -234,10 +246,7 @@ onBeforeUnmount(() => {
       </button>
       <template v-if="artifact"
         ><h3>{{ artifact.kind === 'PLAN' ? '业务方案' : '功能规格' }} · v{{ artifact.version }}</h3>
-        <section v-for="o in Object.values(artifact.objects) as any[]" :key="o.object_id">
-          <h4>第 {{ o.section }} 章</h4>
-          <p style="white-space: pre-wrap">{{ o.content }}</p>
-        </section>
+        <MessageResponse :content="artifactMarkdown" />
         <div class="work-actions">
           <a
             :href="

@@ -1,47 +1,73 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { workflow } from '../../../fixtures/design-assistant/workflow.mjs';
-import { syntheticModel } from '../../../../apps/api/src/modules/design-assistant/simulation.mjs';
-test('FLOW-05 title and formula revisions preserve untouched object versions and invalidate old confirmation', async () => {
+import {
+  syntheticModel,
+  SYNTHETIC_DOCUMENT,
+} from '../../../../apps/api/src/modules/design-assistant/simulation.mjs';
+import { toFsdWire } from '@sap-delivery-workbench/contracts/design-assistant/fsd-report-wire';
+import { validateFsdReport } from '@sap-delivery-workbench/contracts/design-assistant/fsd-report';
+
+// Wire text of some parts of a modified copy of the synthetic document.
+const wireOf = (edit, parts) => {
+  const doc = structuredClone(SYNTHETIC_DOCUMENT);
+  edit(doc);
+  return '> 思路：测试。\n' + toFsdWire(doc, { parts });
+};
+const answer = (text) => ({ output: { text }, usage: { total_tokens: 200 }, cost: null });
+const section = (doc, id) => doc.logic.sections.find((s) => s.id === id);
+const field = (doc, id) => doc.output.fields.find((f) => f.id === id);
+const reviewIssue = (rule_ref) => ({
+  issue_id: 'i',
+  rule_ref,
+  counterexample: '取消后的数量仍被计入',
+  evidence_refs: [],
+  impact: '错误计数',
+  suggestion: '修正规则正文',
+  status: 'OPEN',
+});
+
+test('FLOW-05 title and formula revisions preserve untouched objects and invalidate old confirmation', async () => {
   const w = await workflow();
   try {
     await w.run();
-    const initial = structuredClone(w.task.objects),
+    const initial = structuredClone(w.task.document),
       oldWait = structuredClone(w.task.wait);
     await w.command({ command: 'supplement', text: '仅修改报表标题' });
     await w.run({
-      model: async (args) => {
-        const r = await syntheticModel(args);
-        if (args.kind === 'ChangeProposal') {
-          // Only the group holding chapter 1 changes; the other groups answer "unchanged".
-          r.output.changes = r.output.changes.filter((c) => c.section === 1);
-          if (r.output.changes[0])
-            r.output.changes[0].content = '新标题；' + r.output.changes[0].content;
-        }
-        return r;
-      },
+      model: async (args) =>
+        args.kind === 'FsdRevise'
+          ? answer(wireOf((d) => (d.overview.summary = '新标题：未清订单清单'), ['overview']))
+          : syntheticModel(args),
     });
-    assert.equal(w.task.objects['section-1'].version, initial['section-1'].version + 1);
-    for (let n = 2; n <= 8; n++)
-      assert.deepEqual(w.task.objects['section-' + n], initial['section-' + n]);
+    assert.equal(w.task.document.overview.summary, '新标题：未清订单清单');
+    assert.deepEqual(w.task.document.logic, initial.logic);
+    assert.deepEqual(w.task.document.output, initial.output);
     await assert.rejects(
       () => w.command({ command: 'confirm', ...oldWait, confirmed: true }),
       /STALE_CONFIRMATION/,
     );
-    const title = structuredClone(w.task.objects['section-1']);
+    const titled = structuredClone(w.task.document);
     await w.command({ command: 'supplement', text: '修改未清计算公式及筛选' });
     await w.run({
-      model: async (args) => {
-        const r = await syntheticModel(args);
-        if (args.kind === 'ChangeProposal') {
-          r.output.changes = r.output.changes.filter((c) => [5, 6].includes(c.section));
-          r.output.changes.forEach((c) => (c.content = '口径修订：' + c.content));
-        }
-        return r;
-      },
+      model: async (args) =>
+        args.kind === 'FsdRevise'
+          ? answer(
+              wireOf(
+                (d) => {
+                  section(d, 'LOG-OPEN').blocks[0].items = [
+                    'REMAINING = QUANTITY - PROCESSED - BLOCKED。',
+                  ];
+                },
+                ['section:LOG-OPEN'],
+              ),
+            )
+          : syntheticModel(args),
     });
-    assert.deepEqual(w.task.objects['section-1'], title);
-    assert.equal(w.task.objects['section-6'].version, initial['section-6'].version + 1);
+    const doc = w.task.document;
+    assert.equal(doc.overview.summary, titled.overview.summary);
+    assert.equal(section(doc, 'LOG-OPEN').rev, section(initial, 'LOG-OPEN').rev + 1);
+    assert.deepEqual(section(doc, 'LOG-QUERY'), section(initial, 'LOG-QUERY'));
     assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
     assert.equal(w.task.status, 'WAITING');
   } finally {
@@ -56,33 +82,34 @@ for (const repairBody of [false, true])
       const execute = () =>
         w.run({
           model: async (args) => {
-            const r = await syntheticModel(args);
-            // Repair round: chapters are proposed per group, so only the group holding the
-            // fixed chapter carries the edit.
-            if (args.kind === 'ChangeProposal' && args.context.r.state.review_open?.length) {
-              assert.equal(args.context.r.state.review_open.length, 1);
-              const fixed = r.output.changes.find((c) => c.section === (repairBody ? 6 : 7));
-              if (fixed) fixed.content += ' 修复了取消后剩余量反例。';
+            if (args.kind === 'FsdRevise' && args.part.reason === 'review') {
+              assert.deepEqual(
+                args.part.issues.map((i) => i.rule_ref),
+                ['LOG-OPEN'],
+              );
+              return answer(
+                repairBody
+                  ? wireOf(
+                      (d) => {
+                        section(d, 'LOG-OPEN').blocks[0].items.push(
+                          '取消的数量不计入；修复了取消后剩余量反例。',
+                        );
+                      },
+                      ['section:LOG-OPEN'],
+                    )
+                  : '> 思路：认为无需修改。',
+              );
             }
+            const r = await syntheticModel(args);
             if (args.kind === 'ReviewResult' && ++reviews === 1)
-              r.output.issues = [
-                {
-                  issue_id: 'i',
-                  rule_ref: 'section-6',
-                  counterexample: '取消后的数量仍被计入',
-                  evidence_refs: r.output.evidence_refs,
-                  impact: '错误计数',
-                  suggestion: '修正规则正文',
-                  status: 'OPEN',
-                },
-              ];
+              r.output.issues = [reviewIssue('LOG-OPEN')];
             return r;
           },
         });
       if (repairBody) {
         await execute();
         assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
-        assert.ok(w.task.objects['section-6'].content.includes('修复了'));
+        assert.ok(section(w.task.document, 'LOG-OPEN').blocks[0].items.at(-1).includes('修复了'));
       } else {
         await assert.rejects(execute, /REVIEW_NOT_APPLIED/);
         assert.equal(w.task.artifacts.length, 0);
@@ -128,292 +155,209 @@ test('FLOW-08 explicit final confirmation cannot publish an artifact after criti
     await w.close();
   }
 });
-for (const includeDependent of [false, true])
-  test('FLOW-05 atomic dependency transaction closure: ' + includeDependent, async () => {
-    const w = await workflow();
-    try {
-      await w.run({
-        model: async (args) => {
-          const v = await syntheticModel(args);
-          if (args.kind === 'ChangeProposal') {
-            v.output.changes.push(
-              {
-                object_id: 'field-quantity',
-                base_version: 0,
-                op: 'ADD',
-                content: '数量，单位 EA',
-                dependencies: v.output.evidence_refs,
-                reason: 'fixed fixture',
-                section: 3,
-              },
-              {
-                object_id: 'rule-open',
-                base_version: 0,
-                op: 'ADD',
-                content: '数量大于零',
-                dependencies: ['field-quantity'],
-                reason: 'fixed fixture',
-                section: 6,
-              },
-            );
-            v.output.allowed_scope.push('field-quantity', 'rule-open');
-          }
-          return v;
-        },
-      });
-      const old = structuredClone(w.task.objects),
-        version = w.task.artifact_version;
-      await w.command({ command: 'supplement', text: '变更数量字段及受影响规则' });
-      const run = () =>
-        w.run({
-          model: async (args) => {
-            const v = await syntheticModel(args);
-            if (args.kind === 'ChangeProposal') {
-              v.output.changes = [
-                {
-                  ...old['field-quantity'],
-                  base_version: 1,
-                  op: 'REVISE',
-                  content: '数量，单位 BOX',
-                },
-                ...(includeDependent
-                  ? [
-                      {
-                        ...old['rule-open'],
-                        base_version: 1,
-                        op: 'REVISE',
-                        content: '数量换算后大于零',
-                      },
-                    ]
-                  : []),
-              ].map(({ version, kind, dependency_links, ...c }) => c);
-              v.output.allowed_scope = v.output.changes.map((c) => c.object_id);
-            }
-            return v;
-          },
-        });
-      if (includeDependent) {
-        await run();
-        assert.equal(w.task.objects['rule-open'].dependency_links[0].target_version, 2);
-        assert.equal(w.task.artifact_version, version + 1);
-        assert.deepEqual(w.task.objects['section-1'], old['section-1']);
-      } else {
-        await assert.rejects(run, /DEPENDENCY_REVIEW_REQUIRED/);
-        assert.deepEqual(w.task.objects, old);
-        assert.equal(w.task.artifact_version, version);
-      }
-    } finally {
-      await w.close();
-    }
-  });
-test('FLOW-09 a fresh FSD proposal is written chapter group by chapter group', async () => {
+test('FLOW-05 deleting an object other parts still cite leaves no dangling reference', async () => {
+  const w = await workflow();
+  try {
+    await w.run();
+    await w.command({ command: 'supplement', text: '删除订单必填提示' });
+    await w.run({
+      model: async (args) =>
+        args.kind === 'FsdRevise'
+          ? answer('> 思路：删除提示。\n## 删除\n- MSG-NO-ORDER')
+          : syntheticModel(args),
+    });
+    const doc = w.task.document;
+    assert.ok(!doc.messages.items.some((m) => m.id === 'MSG-NO-ORDER'));
+    assert.doesNotMatch(JSON.stringify(doc), /\[\[MSG-NO-ORDER\]\]/);
+    const issue = doc.working.open_issues.find((i) => i.id === 'ISS-DANGLING-REFS');
+    assert.ok(issue.title.includes('MSG-NO-ORDER'));
+    assert.deepEqual(validateFsdReport(doc), { ok: true, errors: [] });
+    assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
+  } finally {
+    await w.close();
+  }
+});
+test('FLOW-09 a fresh document is written as an outline, then its parts in parallel', async () => {
   const w = await workflow();
   const calls = [];
   try {
     await w.run({
       model: async (args) => {
-        const r = await syntheticModel(args);
-        if (args.kind === 'ChangeProposal')
+        if (['FsdOutline', 'FsdWrite'].includes(args.kind))
           calls.push({
-            group: args.part?.group.sections,
-            sections: r.output.changes.map((c) => c.section),
-            draftSections: (args.part?.draft?.changes ?? []).map((c) => c.section),
+            kind: args.kind,
+            key: args.part?.key,
+            outline: (args.part?.outline ?? []).map((o) => o.id),
+            draftSections: (args.part?.draft?.logic?.sections ?? []).map((s) => s.id),
           });
-        return r;
+        return syntheticModel(args);
       },
     });
     assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
-    assert.equal(calls.length, 4, 'one call per chapter group, not one call for the whole FSD');
-    for (const c of calls) assert.ok(c.sections.every((n) => c.group.includes(n)));
-    assert.deepEqual(calls[1].draftSections.sort(), calls[0].group.slice().sort());
+    // The parts are written in parallel, so only the first and last call have a fixed place.
+    assert.equal(calls[0].key, 'outline');
+    assert.equal(calls.at(-1).key, 'tail');
     assert.deepEqual(
-      [...new Set(Object.values(w.task.objects).map((o) => o.section))].sort(),
-      [1, 2, 3, 4, 5, 6, 7, 8],
+      calls
+        .slice(1, -1)
+        .map((c) => c.key)
+        .sort(),
+      ['require', 'section:LOG-OPEN', 'section:LOG-QUERY', 'spec'],
     );
+    for (const c of calls.slice(1))
+      assert.deepEqual(c.outline, ['LOG-QUERY', 'LOG-OPEN', 'MSG-NO-ORDER']);
+    // Messages and analysis tables are written last, against the assembled sections.
+    assert.deepEqual(calls.at(-1).draftSections, ['LOG-QUERY', 'LOG-OPEN']);
+    const doc = w.task.document;
+    assert.deepEqual(
+      doc.logic.sections.map((s) => s.id),
+      ['LOG-QUERY', 'LOG-OPEN'],
+    );
+    assert.deepEqual(validateFsdReport(doc), { ok: true, errors: [] });
+    assert.equal(w.task.artifacts.at(-1).document.doc.version, 'V1.0');
   } finally {
     await w.close();
   }
 });
-test('FLOW-10 a revision that labels saved chapters as new still commits as a revision', async () => {
+test('FLOW-10 a revision restating a saved row updates it in place and counts its revision', async () => {
   const w = await workflow();
   try {
     await w.run();
-    const before = structuredClone(w.task.objects);
-    await w.command({ command: 'supplement', text: '修订第 1 章' });
+    const before = structuredClone(w.task.document);
+    await w.command({ command: 'supplement', text: '剩余数量改为显示单位' });
     await w.run({
-      model: async (args) => {
-        const r = await syntheticModel(args);
-        if (args.kind === 'ChangeProposal')
-          // The model copies the first proposal's shape: "ADD, version 0" for a saved chapter.
-          r.output.changes = r.output.changes
-            .filter((c) => c.section === 1)
-            .map((c) => ({ ...c, op: 'ADD', base_version: 0, content: '修订：' + c.content }));
-        return r;
-      },
+      model: async (args) =>
+        args.kind === 'FsdRevise'
+          ? answer(
+              wireOf(
+                (d) => (field(d, 'OUT-REMAINING').description = '剩余数量（含单位）'),
+                ['output'],
+              ),
+            )
+          : syntheticModel(args),
     });
-    assert.equal(w.task.objects['section-1'].version, before['section-1'].version + 1);
-    assert.ok(w.task.objects['section-1'].content.startsWith('修订：'));
+    const doc = w.task.document;
+    assert.equal(field(doc, 'OUT-REMAINING').description, '剩余数量（含单位）');
+    assert.equal(field(doc, 'OUT-REMAINING').rev, field(before, 'OUT-REMAINING').rev + 1);
+    assert.deepEqual(field(doc, 'OUT-ORDER'), field(before, 'OUT-ORDER'));
+    assert.equal(
+      doc.output.fields.findIndex((f) => f.id === 'OUT-REMAINING'),
+      before.output.fields.findIndex((f) => f.id === 'OUT-REMAINING'),
+    );
+    assert.equal(w.task.artifacts.at(-1).document.doc.version, 'V1.1');
     assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
   } finally {
     await w.close();
   }
 });
-test('FLOW-11 rules may depend on customer answers and the requirement text', async () => {
+test('FLOW-11 rules may rest on customer answers and the requirement text', async () => {
   const w = await workflow();
   try {
-    await w.command({ command: 'supplement', text: '按客户答复定义未清' });
     await w.run({
-      model: async (args) => {
-        const r = await syntheticModel(args);
-        if (args.kind === 'ChangeProposal')
-          for (const c of r.output.changes)
-            if (c.section === 6)
-              // How the model cites them after reading the prompt snapshot.
-              c.dependencies = [
-                ...c.dependencies,
-                'snapshot.answers.open-definition',
-                'snapshot.text',
-                'INFERENCE',
-              ];
-        return r;
-      },
+      model: async (args) =>
+        args.kind === 'FsdWrite' && args.part.key === 'section:LOG-OPEN'
+          ? answer(
+              wireOf(
+                (d) =>
+                  (section(d, 'LOG-OPEN').basis = {
+                    kind: 'CUSTOMER_DECISION',
+                    refs: ['answer:open-definition', 'requirement'],
+                  }),
+                ['section:LOG-OPEN'],
+              ),
+            )
+          : syntheticModel(args),
     });
     assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
-    const links = w.task.objects['section-6'].dependency_links.map((l) => l.target_id);
-    assert.ok(links.includes('answer:open-definition'));
-    assert.ok(links.includes('requirement'));
+    assert.deepEqual(section(w.task.document, 'LOG-OPEN').basis, {
+      kind: 'CUSTOMER_DECISION',
+      refs: ['answer:open-definition', 'requirement'],
+    });
   } finally {
     await w.close();
   }
 });
-test('FLOW-12 a repaired chapter group keeps objects other groups still depend on', async () => {
+test('FLOW-12 a review repair rewrites only the cited section; the rest keeps its revision', async () => {
   const w = await workflow();
   let reviews = 0;
+  const reasons = [];
   try {
-    await w.command({ command: 'supplement', text: '审查修订时字段改名' });
     await w.run({
       model: async (args) => {
-        const r = await syntheticModel(args);
-        const repairing = !!args.context.r.state.review_open?.length;
-        if (args.kind === 'ChangeProposal') {
-          const groupHas = (n) => args.part?.group.sections.includes(n);
-          if (groupHas(3))
-            r.output.changes.push({
-              object_id: repairing ? 'field-qty-renamed' : 'field-qty',
-              base_version: 0,
-              op: 'ADD',
-              content: '订单数量',
-              dependencies: [],
-              reason: 'fixture',
-              section: 3,
-            });
-          if (groupHas(5)) {
-            const s5 = r.output.changes.find((c) => c.section === 5);
-            // Report chapter cites the field and an open item by id.
-            s5.dependencies = [...s5.dependencies, 'field-qty', 'ISSUE-1'];
-            r.output.unresolved_issues = [
-              { id: 'ISSUE-1', description: '待核实', blocking: false, evidence_refs: [] },
-            ];
-          }
+        if (args.kind === 'FsdRevise') {
+          reasons.push(args.part.reason);
+          return answer(
+            wireOf(
+              (d) => section(d, 'LOG-OPEN').blocks[0].items.push('取消的数量不计入。'),
+              ['section:LOG-OPEN'],
+            ),
+          );
         }
+        const r = await syntheticModel(args);
         if (args.kind === 'ReviewResult' && ++reviews === 1)
-          r.output.issues = [
-            {
-              issue_id: 'i',
-              rule_ref: 'section-6',
-              counterexample: '取消后的数量仍被计入',
-              evidence_refs: [],
-              impact: '错误计数',
-              suggestion: '修正规则',
-              status: 'OPEN',
-            },
-          ];
-        if (args.kind === 'ChangeProposal' && repairing && args.part?.group.sections.includes(6))
-          r.output.changes.find((c) => c.section === 6).content += ' 修复。';
+          r.output.issues = [reviewIssue('LOG-OPEN')];
         return r;
       },
     });
-    assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
-    assert.ok(w.task.objects['field-qty'], 'field still cited by chapter 5 is kept');
-    const links = w.task.objects['section-5'].dependency_links.map((l) => l.target_id);
-    assert.ok(links.includes('field-qty'));
-    assert.ok(!links.includes('ISSUE-1'));
+    assert.deepEqual(reasons, ['review']);
+    const doc = w.task.document;
+    assert.equal(section(doc, 'LOG-OPEN').rev, 2);
+    assert.equal(section(doc, 'LOG-QUERY').rev, 1);
+    assert.ok(doc.output.fields.every((f) => f.rev === 1));
+    assert.equal(w.task.artifacts.length, 1, 'the repair happens before the plan is committed');
   } finally {
     await w.close();
   }
 });
-test('FLOW-13 references to objects no chapter defines get one fix round, then become an open item', async () => {
+test('FLOW-13 references to objects nobody defines get one fix call, then become an open item', async () => {
   const w = await workflow();
-  const fixCalls = [];
+  const fixes = [];
   try {
-    await w.command({ command: 'supplement', text: '引用未定义规则' });
     await w.run({
       model: async (args) => {
-        const r = await syntheticModel(args);
-        if (args.kind === 'ChangeProposal' && args.part?.group.sections.includes(5)) {
-          if (args.part.dangling) fixCalls.push(args.part.dangling);
-          // The model keeps citing a rule nobody defines, even after being told.
-          const s5 = r.output.changes.find((c) => c.section === 5);
-          s5.dependencies = [...s5.dependencies, 'rule-never-defined'];
+        if (args.kind === 'FsdWrite' && args.part.key.startsWith('section:LOG-QUERY')) {
+          if (args.part.problems) fixes.push(args.part.problems.map((p) => p.message));
+          // The model keeps citing a section nobody writes, even after being told.
+          return answer(
+            wireOf(
+              (d) => section(d, 'LOG-QUERY').blocks[0].items.push('排除规则见 [[LOG-NEVER]]。'),
+              ['section:LOG-QUERY'],
+            ),
+          );
         }
-        return r;
+        return syntheticModel(args);
       },
     });
     assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
-    assert.deepEqual(fixCalls, [['rule-never-defined']]);
-    const links = w.task.objects['section-5'].dependency_links.map((l) => l.target_id);
-    assert.ok(!links.includes('rule-never-defined'));
-    const issue = w.task.artifacts.at(-1).issues.find((i) => i.id === 'dangling-references');
-    assert.ok(issue?.description.includes('rule-never-defined'));
+    assert.deepEqual(fixes, [['unknown reference LOG-NEVER']]);
+    const doc = w.task.document;
+    assert.doesNotMatch(JSON.stringify(doc.logic), /LOG-NEVER/);
+    const issue = w.task.artifacts.at(-1).issues.find((i) => i.id === 'ISS-DANGLING-REFS');
+    assert.ok(issue?.description.includes('LOG-NEVER'));
     assert.equal(issue.blocking, false);
   } finally {
     await w.close();
   }
 });
-test('FLOW-14 objects depending on a revised object get one dependency review call', async () => {
+test('FLOW-14 a part failing the content model gets one targeted rewrite', async () => {
   const w = await workflow();
-  const reviewCalls = [];
+  const requireCalls = [];
   try {
-    const field = {
-      object_id: 'field-qty',
-      base_version: 0,
-      op: 'ADD',
-      content: '订单数量',
-      dependencies: ['section-3'],
-      reason: 'fixture',
-      section: 3,
-    };
-    await w.command({ command: 'supplement', text: '建立字段' });
     await w.run({
       model: async (args) => {
-        const r = await syntheticModel(args);
-        if (args.kind === 'ChangeProposal' && args.part?.group.sections.includes(3))
-          r.output.changes.push(structuredClone(field));
-        return r;
-      },
-    });
-    assert.equal(w.task.objects['field-qty'].version, 1);
-    await w.command({ command: 'supplement', text: '只改第 3 章' });
-    await w.run({
-      model: async (args) => {
-        const r = await syntheticModel(args);
-        if (args.kind === 'ChangeProposal') {
-          if (args.part?.review) {
-            reviewCalls.push(args.part.review);
-            // Reviewed: the dependent field is re-stated as part of this revision.
-            r.output.changes = [{ ...structuredClone(field), content: '订单数量（已复核）' }];
-          } else
-            r.output.changes = r.output.changes
-              .filter((c) => c.section === 3)
-              .map((c) => ({ ...c, content: '修订：' + c.content }));
+        if (args.kind === 'FsdWrite' && args.part.key.startsWith('require')) {
+          requireCalls.push(args.part.key);
+          // First answer uses a difficulty outside 高/中/低; the fix call is told so.
+          if (args.part.key === 'require')
+            return answer(wireOf((d) => (d.overview.difficulty = '中等'), args.part.parts));
+          assert.ok(args.part.problems.some((p) => p.path === '/overview/difficulty'));
         }
-        return r;
+        return syntheticModel(args);
       },
     });
-    assert.deepEqual(reviewCalls, [['field-qty']]);
+    assert.deepEqual(requireCalls, ['require', 'require:fix']);
+    assert.equal(w.task.document.overview.difficulty, '低');
     assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
-    assert.equal(w.task.objects['field-qty'].version, 2);
-    assert.ok(w.task.objects['section-3'].content.startsWith('修订：'));
   } finally {
     await w.close();
   }

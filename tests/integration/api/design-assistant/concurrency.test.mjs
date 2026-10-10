@@ -247,7 +247,7 @@ test('STATE-04 commit-first then pause retains artifact; restart cannot remove p
     const lease = await transaction(pool, (db) => claim(db, 'worker', t.active_run_id));
     await transaction(pool, (db) =>
       stepCommit(db, lease, 'first', {}, (s) => {
-        s.objects.kept = { content: 'kept' };
+        s.document = { kept: 'kept' };
         return { ok: true };
       }),
     );
@@ -260,7 +260,7 @@ test('STATE-04 commit-first then pause retains artifact; restart cannot remove p
       }),
     );
     assert.equal(await transaction(pool, (db) => claim(db, 'restarted', lease.id)), null);
-    assert.equal((await loadTask(pool, scope, t.id)).objects.kept.content, 'kept');
+    assert.equal((await loadTask(pool, scope, t.id)).document.kept, 'kept');
   } finally {
     await pool.end();
   }

@@ -1,28 +1,31 @@
 import { randomUUID } from 'node:crypto';
 import { loadTask, saveTask, command, dedupe } from './repository.mjs';
 import { hash, fault } from './policy.mjs';
+import { renderFsdMarkdown } from '@sap-delivery-workbench/contracts/design-assistant/fsd-report-render';
 
+// Artifacts before graph fsd-5 hold eight chapter objects instead of a document; they stay
+// readable in the history.
+const legacyMarkdown = (a) =>
+  '# ' +
+  (a.kind === 'FSD' ? '功能说明书' : '设计初稿') +
+  '\n\n' +
+  Object.values(a.objects ?? {})
+    .sort((x, y) => x.section - y.section || x.object_id.localeCompare(y.object_id))
+    .map((o) => `## ${o.section}\n\n${o.content}`)
+    .join('\n\n');
 export function chatArtifact(a) {
   if (!a) return null;
-  const markdown =
-    '# ' +
-    (a.kind === 'FSD' ? '功能说明书' : '设计初稿') +
-    '\n\n' +
-    Object.values(a.objects)
-      .sort((x, y) => x.section - y.section || x.object_id.localeCompare(y.object_id))
-      .map((o) => `## ${o.section}\n\n${o.content}`)
-      .join('\n\n');
   return {
     id: a.id,
     revision: a.version,
     contentHash: hash({
       id: a.id,
       version: a.version,
-      objects: a.objects,
+      ...(a.document ? { document: a.document } : { objects: a.objects }),
       evidence_refs: a.evidence_refs,
     }),
-    markdown,
-    spec: { issues: a.issues ?? [], objects: a.objects },
+    markdown: a.document ? renderFsdMarkdown(a.document) : legacyMarkdown(a),
+    spec: { issues: a.issues ?? [], document: a.document ?? null },
   };
 }
 export function chatDecision(task) {
@@ -168,7 +171,7 @@ export async function chatWorkflowCommand(db, scope, id, input) {
         if (!selected) throw fault('NOT_FOUND', 'INPUT', 404);
         // A historical revision is a new review basis, never an inherited approval.
         t.current_artifact_id = selected.id;
-        t.objects = structuredClone(selected.objects);
+        t.document = structuredClone(selected.document ?? null);
         t.confirmations = [];
         t.chat.draftApproved = false;
         t.chat.revising = true;

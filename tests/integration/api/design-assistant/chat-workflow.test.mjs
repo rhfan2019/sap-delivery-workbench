@@ -231,7 +231,8 @@ test('I-07 retrying a failed final generation keeps the plan approval and redoes
     receipt = await turn('基于已确认初稿生成正式版');
     snapshot = await run({
       model: async (args) => {
-        if (args.kind === 'ChangeProposal')
+        // The FSD round is the final revision of the approved plan document.
+        if (args.kind === 'FsdRevise')
           throw Object.assign(Error('provider down'), { code: 'CONNECTION_ERROR' });
         return syntheticModel(args);
       },
