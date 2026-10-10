@@ -20,23 +20,38 @@
     "messages"
   ],
   "properties": {
-    "schema_version": { "const": "fsd-report/1" },
-
+    "schema_version": {
+      "const": "fsd-report/1"
+    },
     "doc": {
       "description": "封面与文档变更记录",
       "type": "object",
       "additionalProperties": false,
       "required": ["doc_id", "title", "project", "author_org", "version", "change_log"],
       "properties": {
-        "doc_id": { "type": "string", "minLength": 1, "description": "开发编号，如 ISC001" },
+        "doc_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "开发编号，如 ISC001"
+        },
         "title": {
           "type": "string",
           "minLength": 1,
           "description": "功能名称，如 采购申请点检审批功能"
         },
-        "project": { "type": "string", "minLength": 1 },
-        "author_org": { "type": "string", "minLength": 1, "description": "实施公司名称" },
-        "version": { "type": "string", "pattern": "^V\\d+\\.\\d+$" },
+        "project": {
+          "type": "string",
+          "minLength": 1
+        },
+        "author_org": {
+          "type": "string",
+          "minLength": 1,
+          "description": "实施公司名称"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^V\\d+\\.\\d+$"
+        },
         "change_log": {
           "type": "array",
           "minItems": 1,
@@ -45,17 +60,29 @@
             "additionalProperties": false,
             "required": ["version", "date", "content"],
             "properties": {
-              "version": { "type": "string", "pattern": "^V\\d+\\.\\d+$" },
-              "date": { "type": "string", "format": "date" },
-              "author": { "type": "string" },
-              "content": { "type": "string", "minLength": 1 },
-              "remark": { "type": "string" }
+              "version": {
+                "type": "string",
+                "pattern": "^V\\d+\\.\\d+$"
+              },
+              "date": {
+                "type": "string",
+                "format": "date"
+              },
+              "author": {
+                "type": "string"
+              },
+              "content": {
+                "type": "string",
+                "minLength": 1
+              },
+              "remark": {
+                "type": "string"
+              }
             }
           }
         }
       }
     },
-
     "target": {
       "description": "目标系统。由程序读取 CVERS 确定；无法读取时由用户选择。不渲染到交付文档。",
       "type": "object",
@@ -66,40 +93,75 @@
           "enum": ["ECC", "S4_OP", "S4_PCE"],
           "description": "不支持 S/4HANA Public Cloud"
         },
-        "release": { "type": "string", "description": "如 S4CORE 105" },
-        "basis_release": { "type": "string", "description": "如 SAP_BASIS 755" },
+        "release": {
+          "type": "string",
+          "description": "如 S4CORE 105"
+        },
+        "basis_release": {
+          "type": "string",
+          "description": "如 SAP_BASIS 755"
+        },
         "source": {
           "enum": ["SYSTEM", "USER"],
           "description": "SYSTEM=读取 CVERS 得出；USER=用户选择，待核实"
         }
       }
     },
-
     "overview": {
       "description": "1.1 开发概览",
       "type": "object",
       "additionalProperties": false,
       "required": ["summary", "difficulty", "run_type", "output_to"],
       "properties": {
-        "summary": { "type": "string", "minLength": 1 },
-        "difficulty": { "enum": ["高", "中", "低"] },
-        "tcode": { "type": "string", "description": "事务代码；无则为空" },
-        "run_type": { "enum": ["在线处理", "批处理", "在线及批处理"] },
-        "output_to": { "type": "string", "minLength": 1, "description": "如 ALV（可编辑）" },
-        "volume": { "type": "string", "description": "交易量" },
-        "remark": { "type": "string" },
-        "basis": { "$ref": "#/$defs/basis" }
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "difficulty": {
+          "enum": ["高", "中", "低"]
+        },
+        "tcode": {
+          "type": "string",
+          "description": "事务代码；无则为空"
+        },
+        "run_type": {
+          "enum": ["在线处理", "批处理", "在线及批处理"]
+        },
+        "output_to": {
+          "type": "string",
+          "minLength": 1,
+          "description": "如 ALV（可编辑）"
+        },
+        "volume": {
+          "type": "string",
+          "description": "交易量"
+        },
+        "remark": {
+          "type": "string"
+        },
+        "basis": {
+          "$ref": "#/$defs/basis"
+        }
       }
     },
-
     "requirement": {
       "description": "1.2 业务需求描述",
       "type": "object",
       "additionalProperties": false,
       "required": ["background", "goals", "roles", "scope_in", "scope_out"],
       "properties": {
-        "background": { "$ref": "#/$defs/markdown", "description": "业务背景与痛点" },
-        "goals": { "$ref": "#/$defs/textList", "description": "功能目标，渲染为有序列表" },
+        "background": {
+          "$ref": "#/$defs/markdown",
+          "description": "业务背景与痛点"
+        },
+        "goals_intro": {
+          "$ref": "#/$defs/markdown",
+          "description": "功能目标前的引导句"
+        },
+        "goals": {
+          "$ref": "#/$defs/textList",
+          "description": "功能目标，渲染为有序列表"
+        },
         "roles": {
           "type": "array",
           "minItems": 1,
@@ -108,25 +170,40 @@
             "additionalProperties": false,
             "required": ["role", "scenario"],
             "properties": {
-              "role": { "type": "string", "minLength": 1 },
-              "scenario": { "$ref": "#/$defs/markdown" }
+              "role": {
+                "type": "string",
+                "minLength": 1
+              },
+              "scenario": {
+                "$ref": "#/$defs/markdown"
+              }
             }
           }
         },
-        "scope_in": { "$ref": "#/$defs/textList" },
-        "scope_out": { "$ref": "#/$defs/textList" },
-        "constraints": { "$ref": "#/$defs/textList", "description": "业务约束" },
-        "basis": { "$ref": "#/$defs/basis" }
+        "scope_in": {
+          "$ref": "#/$defs/textList"
+        },
+        "scope_out": {
+          "$ref": "#/$defs/textList"
+        },
+        "constraints": {
+          "$ref": "#/$defs/textList",
+          "description": "业务约束"
+        },
+        "basis": {
+          "$ref": "#/$defs/basis"
+        }
       }
     },
-
     "authorizations": {
       "description": "2.1 权限校验",
       "type": "object",
       "additionalProperties": false,
       "required": ["items"],
       "properties": {
-        "intro": { "$ref": "#/$defs/markdown" },
+        "intro": {
+          "$ref": "#/$defs/markdown"
+        },
         "items": {
           "type": "array",
           "items": {
@@ -134,9 +211,17 @@
             "additionalProperties": false,
             "required": ["id", "timing", "auth_object", "fields", "value_source"],
             "properties": {
-              "id": { "$ref": "#/$defs/id" },
-              "timing": { "type": "string", "minLength": 1, "description": "校验时机" },
-              "auth_object": { "$ref": "#/$defs/sapName" },
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "timing": {
+                "type": "string",
+                "minLength": 1,
+                "description": "校验时机"
+              },
+              "auth_object": {
+                "$ref": "#/$defs/sapName"
+              },
               "auth_object_text": {
                 "type": "string",
                 "description": "权限对象说明，如 采购申请工厂权限"
@@ -146,23 +231,34 @@
                 "minLength": 1,
                 "description": "校验字段及取值，如 ACTVT = 03（显示）、WERKS"
               },
-              "value_source": { "$ref": "#/$defs/markdown", "description": "校验参数来源" },
-              "rev": { "$ref": "#/$defs/rev" },
-              "basis": { "$ref": "#/$defs/basis" }
+              "value_source": {
+                "$ref": "#/$defs/markdown",
+                "description": "校验参数来源"
+              },
+              "rev": {
+                "$ref": "#/$defs/rev"
+              },
+              "basis": {
+                "$ref": "#/$defs/basis"
+              }
             }
           }
         },
-        "notes": { "$ref": "#/$defs/notes", "description": "校验说明，渲染为有序列表" }
+        "notes": {
+          "$ref": "#/$defs/notes",
+          "description": "校验说明，渲染为有序列表"
+        }
       }
     },
-
     "selection_screen": {
       "description": "2.2 选择屏幕设计及其布局",
       "type": "object",
       "additionalProperties": false,
       "required": ["fields"],
       "properties": {
-        "intro": { "$ref": "#/$defs/markdown" },
+        "intro": {
+          "$ref": "#/$defs/markdown"
+        },
         "fields": {
           "type": "array",
           "items": {
@@ -170,8 +266,14 @@
             "additionalProperties": false,
             "required": ["id", "label", "kind", "ref", "required", "description"],
             "properties": {
-              "id": { "$ref": "#/$defs/id" },
-              "label": { "type": "string", "minLength": 1, "description": "屏幕字段" },
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "description": "屏幕字段"
+              },
               "kind": {
                 "enum": ["P", "S", "CHECKBOX", "RADIO"],
                 "description": "P=PARAMETERS；S=SELECT-OPTIONS"
@@ -180,36 +282,54 @@
                 "$ref": "#/$defs/fieldRef",
                 "description": "可参照的表及字段，如 EBAN-WERKS"
               },
-              "required": { "type": "boolean" },
-              "description": { "type": "string", "minLength": 1 },
-              "default": { "type": "string" },
-              "rev": { "$ref": "#/$defs/rev" },
-              "basis": { "$ref": "#/$defs/basis" }
+              "required": {
+                "type": "boolean"
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default": {
+                "type": "string"
+              },
+              "rev": {
+                "$ref": "#/$defs/rev"
+              },
+              "basis": {
+                "$ref": "#/$defs/basis"
+              }
             }
           }
         },
-        "note": { "$ref": "#/$defs/markdown" }
+        "note": {
+          "$ref": "#/$defs/markdown"
+        }
       }
     },
-
     "selection_checks": {
       "description": "2.3 选择屏幕检查确认",
       "type": "object",
       "additionalProperties": false,
       "required": ["items"],
       "properties": {
-        "intro": { "$ref": "#/$defs/markdown" },
-        "items": { "$ref": "#/$defs/notes" }
+        "intro": {
+          "$ref": "#/$defs/markdown"
+        },
+        "items": {
+          "$ref": "#/$defs/notes"
+        }
       }
     },
-
     "output": {
       "description": "2.4 输出布局及样式",
       "type": "object",
       "additionalProperties": false,
       "required": ["intro", "fields", "requirements"],
       "properties": {
-        "intro": { "$ref": "#/$defs/markdown", "description": "须说明一行代表什么、默认排序" },
+        "intro": {
+          "$ref": "#/$defs/markdown",
+          "description": "须说明一行代表什么、默认排序"
+        },
         "fields": {
           "type": "array",
           "minItems": 1,
@@ -218,7 +338,9 @@
             "additionalProperties": false,
             "required": ["id", "name", "ref", "description", "handling"],
             "properties": {
-              "id": { "$ref": "#/$defs/id" },
+              "id": {
+                "$ref": "#/$defs/id"
+              },
               "name": {
                 "type": "string",
                 "minLength": 1,
@@ -228,17 +350,28 @@
                 "$ref": "#/$defs/markdown",
                 "description": "参照：表-字段、函数返回或计算公式；可用 [[ID]] 引用逻辑章节"
               },
-              "description": { "type": "string", "minLength": 1 },
-              "handling": { "enum": ["显示", "可修改", "隐藏"] },
-              "rev": { "$ref": "#/$defs/rev" },
-              "basis": { "$ref": "#/$defs/basis" }
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "handling": {
+                "enum": ["显示", "可修改", "隐藏"]
+              },
+              "rev": {
+                "$ref": "#/$defs/rev"
+              },
+              "basis": {
+                "$ref": "#/$defs/basis"
+              }
             }
           }
         },
-        "requirements": { "$ref": "#/$defs/textList", "description": "对于输出的要求" }
+        "requirements": {
+          "$ref": "#/$defs/textList",
+          "description": "对于输出的要求"
+        }
       }
     },
-
     "actions": {
       "description": "2.5 功能按钮与交互",
       "type": "object",
@@ -252,38 +385,59 @@
             "additionalProperties": false,
             "required": ["id", "label", "function", "scope", "logic"],
             "properties": {
-              "id": { "$ref": "#/$defs/id" },
-              "label": { "type": "string", "minLength": 1, "description": "按钮/操作" },
-              "function": { "type": "string", "minLength": 1 },
-              "scope": { "type": "string", "minLength": 1, "description": "作用范围" },
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "description": "按钮/操作"
+              },
+              "function": {
+                "type": "string",
+                "minLength": 1
+              },
+              "scope": {
+                "type": "string",
+                "minLength": 1,
+                "description": "作用范围"
+              },
               "logic": {
                 "$ref": "#/$defs/markdown",
                 "description": "处理逻辑，通常为 见 [[LOG-xxx]]"
               },
-              "rev": { "$ref": "#/$defs/rev" },
-              "basis": { "$ref": "#/$defs/basis" }
+              "rev": {
+                "$ref": "#/$defs/rev"
+              },
+              "basis": {
+                "$ref": "#/$defs/basis"
+              }
             }
           }
         },
-        "interaction_rules": { "$ref": "#/$defs/textList" }
+        "interaction_rules": {
+          "$ref": "#/$defs/textList"
+        }
       }
     },
-
     "logic": {
       "description": "第 3 章业务逻辑。sections 依次渲染为 3.1、3.2……；messages 渲染为最后一节",
       "type": "object",
       "additionalProperties": false,
       "required": ["sections"],
       "properties": {
-        "intro": { "$ref": "#/$defs/markdown" },
+        "intro": {
+          "$ref": "#/$defs/markdown"
+        },
         "sections": {
           "type": "array",
           "minItems": 1,
-          "items": { "$ref": "#/$defs/logicSection" }
+          "items": {
+            "$ref": "#/$defs/logicSection"
+          }
         }
       }
     },
-
     "messages": {
       "description": "消息与异常处理，渲染为第 3 章最后一节",
       "type": "object",
@@ -297,8 +451,13 @@
             "additionalProperties": false,
             "required": ["id", "scenario", "type", "text", "handling"],
             "properties": {
-              "id": { "$ref": "#/$defs/id" },
-              "scenario": { "type": "string", "minLength": 1 },
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "scenario": {
+                "type": "string",
+                "minLength": 1
+              },
               "type": {
                 "enum": ["E", "W", "S", "I", "A", "—"],
                 "description": "— 表示不单独弹出，仅在处理结果中显示"
@@ -308,16 +467,24 @@
                 "minLength": 1,
                 "description": "提示文本，占位符用 &1、&2"
               },
-              "handling": { "type": "string", "minLength": 1 },
-              "rev": { "$ref": "#/$defs/rev" },
-              "basis": { "$ref": "#/$defs/basis" }
+              "handling": {
+                "type": "string",
+                "minLength": 1
+              },
+              "rev": {
+                "$ref": "#/$defs/rev"
+              },
+              "basis": {
+                "$ref": "#/$defs/basis"
+              }
             }
           }
         },
-        "note": { "$ref": "#/$defs/markdown" }
+        "note": {
+          "$ref": "#/$defs/markdown"
+        }
       }
     },
-
     "working": {
       "description": "设计过程数据，不渲染到交付文档",
       "type": "object",
@@ -330,12 +497,28 @@
             "additionalProperties": false,
             "required": ["id", "title", "blocking", "status"],
             "properties": {
-              "id": { "$ref": "#/$defs/id" },
-              "title": { "type": "string", "minLength": 1 },
-              "impact": { "$ref": "#/$defs/markdown" },
-              "blocking": { "type": "boolean" },
-              "status": { "enum": ["OPEN", "RESOLVED", "WITHDRAWN"] },
-              "related": { "type": "array", "items": { "$ref": "#/$defs/id" } }
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "impact": {
+                "$ref": "#/$defs/markdown"
+              },
+              "blocking": {
+                "type": "boolean"
+              },
+              "status": {
+                "enum": ["OPEN", "RESOLVED", "WITHDRAWN"]
+              },
+              "related": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/id"
+                }
+              }
             }
           }
         },
@@ -346,16 +529,29 @@
             "additionalProperties": false,
             "required": ["id", "source_kind", "object", "summary"],
             "properties": {
-              "id": { "$ref": "#/$defs/id" },
-              "source_kind": { "enum": ["SAP", "ATTACHMENT", "USER_ANSWER", "REQUIREMENT"] },
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "source_kind": {
+                "enum": ["SAP", "ATTACHMENT", "USER_ANSWER", "REQUIREMENT"]
+              },
               "object": {
                 "type": "string",
                 "minLength": 1,
                 "description": "如 TABLE MDEZ、FUNC BAPI_REQUISITION_RELEASE"
               },
-              "summary": { "type": "string", "minLength": 1 },
-              "observed_at": { "type": "string", "format": "date-time" },
-              "ref": { "type": "string", "description": "原始结果或答复的存储引用" }
+              "summary": {
+                "type": "string",
+                "minLength": 1
+              },
+              "observed_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "ref": {
+                "type": "string",
+                "description": "原始结果或答复的存储引用"
+              }
             }
           }
         },
@@ -367,13 +563,30 @@
             "additionalProperties": false,
             "required": ["id", "stage", "action", "impact", "decision"],
             "properties": {
-              "id": { "$ref": "#/$defs/id" },
-              "stage": { "type": "string", "minLength": 1 },
-              "tcode": { "type": "string" },
-              "action": { "type": "string", "minLength": 1 },
-              "impact": { "$ref": "#/$defs/markdown" },
-              "decision": { "$ref": "#/$defs/markdown", "description": "纳入/排除及理由" },
-              "basis": { "$ref": "#/$defs/basis" }
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "stage": {
+                "type": "string",
+                "minLength": 1
+              },
+              "tcode": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string",
+                "minLength": 1
+              },
+              "impact": {
+                "$ref": "#/$defs/markdown"
+              },
+              "decision": {
+                "$ref": "#/$defs/markdown",
+                "description": "纳入/排除及理由"
+              },
+              "basis": {
+                "$ref": "#/$defs/basis"
+              }
             }
           }
         },
@@ -385,32 +598,53 @@
             "additionalProperties": false,
             "required": ["id", "target", "scenario", "impact", "resolution", "status"],
             "properties": {
-              "id": { "$ref": "#/$defs/id" },
-              "target": { "$ref": "#/$defs/id", "description": "被审查的对象" },
-              "scenario": { "$ref": "#/$defs/markdown" },
-              "impact": { "$ref": "#/$defs/markdown" },
-              "resolution": { "$ref": "#/$defs/markdown" },
-              "status": { "enum": ["FIXED", "NO_CHANGE", "OPEN"] }
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "target": {
+                "$ref": "#/$defs/id",
+                "description": "被审查的对象"
+              },
+              "scenario": {
+                "$ref": "#/$defs/markdown"
+              },
+              "impact": {
+                "$ref": "#/$defs/markdown"
+              },
+              "resolution": {
+                "$ref": "#/$defs/markdown"
+              },
+              "status": {
+                "enum": ["FIXED", "NO_CHANGE", "OPEN"]
+              }
             }
           }
         }
       }
     }
   },
-
   "$defs": {
     "id": {
       "description": "稳定编号：类型前缀-名称，如 SEL-WERKS、OUT-STOCK、LOG-APPROVE、MSG-NO-PLANT。修订时保持不变，不渲染到交付文档。SEC- 为保留的固定章节编号：SEC-OVERVIEW、SEC-REQUIREMENT、SEC-AUTH、SEC-SELECTION、SEC-CHECKS、SEC-OUTPUT、SEC-ACTIONS、SEC-MESSAGES，仅用于 [[ID]] 引用。",
       "type": "string",
       "pattern": "^(SEC|OVW|REQ|AUTH|AN|SEL|CHK|OUT|ACT|LOG|BLK|MSG|ISS|EV|LC|RV)-[A-Z0-9]+(-[A-Z0-9]+)*$"
     },
-    "rev": { "type": "integer", "minimum": 1, "description": "对象版本，由服务端维护" },
+    "rev": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "对象版本，由服务端维护"
+    },
     "markdown": {
       "type": "string",
       "minLength": 1,
       "description": "Markdown 文本，可含缩进子列表。[[ID]] 为对象引用：引用固定章节、逻辑章节、消息或权限渲染为其所在章节号（如 2.1、3.6），引用选择屏幕/输出字段渲染为字段名；引用必须存在。"
     },
-    "textList": { "type": "array", "items": { "$ref": "#/$defs/markdown" } },
+    "textList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/markdown"
+      }
+    },
     "notes": {
       "description": "带编号的说明条目，渲染为有序列表；title 渲染为加粗前缀",
       "type": "array",
@@ -419,15 +653,28 @@
         "additionalProperties": false,
         "required": ["id", "body"],
         "properties": {
-          "id": { "$ref": "#/$defs/id" },
-          "title": { "type": "string" },
-          "body": { "$ref": "#/$defs/markdown" },
-          "rev": { "$ref": "#/$defs/rev" },
-          "basis": { "$ref": "#/$defs/basis" }
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "$ref": "#/$defs/markdown"
+          },
+          "rev": {
+            "$ref": "#/$defs/rev"
+          },
+          "basis": {
+            "$ref": "#/$defs/basis"
+          }
         }
       }
     },
-    "sapName": { "type": "string", "pattern": "^(/[A-Z0-9_]+/)?[A-Z][A-Z0-9_]*$" },
+    "sapName": {
+      "type": "string",
+      "pattern": "^(/[A-Z0-9_]+/)?[A-Z][A-Z0-9_]*$"
+    },
     "fieldRef": {
       "type": "string",
       "pattern": "^(/[A-Z0-9_]+/)?[A-Z][A-Z0-9_]*-[A-Z][A-Z0-9_]*$",
@@ -445,7 +692,9 @@
         },
         "refs": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "证据编号、answer:<题号>、requirement"
         }
       }
@@ -473,7 +722,9 @@
           "minLength": 1,
           "description": "只记录名称，不记录参数。如 EBAN、MDEZ-SORT0、BAPI_PR_CHANGE、CL_XXX=>METHOD"
         },
-        "purpose": { "type": "string" }
+        "purpose": {
+          "type": "string"
+        }
       }
     },
     "logicSection": {
@@ -481,22 +732,47 @@
       "additionalProperties": false,
       "required": ["id", "title", "blocks"],
       "properties": {
-        "id": { "$ref": "#/$defs/id" },
-        "title": { "type": "string", "minLength": 1 },
-        "trigger": { "$ref": "#/$defs/markdown", "description": "触发" },
-        "intro": { "$ref": "#/$defs/markdown" },
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trigger": {
+          "$ref": "#/$defs/markdown",
+          "description": "触发"
+        },
+        "intro": {
+          "$ref": "#/$defs/markdown"
+        },
         "blocks": {
           "type": "array",
           "minItems": 1,
-          "items": { "oneOf": [{ "$ref": "#/$defs/textBlock" }, { "$ref": "#/$defs/filterBlock" }] }
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/textBlock"
+              },
+              {
+                "$ref": "#/$defs/filterBlock"
+              }
+            ]
+          }
         },
         "sap_refs": {
           "description": "本节使用的 SAP 对象，用于系统核实与依赖清单；不单独渲染",
           "type": "array",
-          "items": { "$ref": "#/$defs/sapRef" }
+          "items": {
+            "$ref": "#/$defs/sapRef"
+          }
         },
-        "rev": { "$ref": "#/$defs/rev" },
-        "basis": { "$ref": "#/$defs/basis" }
+        "rev": {
+          "$ref": "#/$defs/rev"
+        },
+        "basis": {
+          "$ref": "#/$defs/basis"
+        }
       }
     },
     "textBlock": {
@@ -505,7 +781,9 @@
       "additionalProperties": false,
       "required": ["id", "kind", "items"],
       "properties": {
-        "id": { "$ref": "#/$defs/id" },
+        "id": {
+          "$ref": "#/$defs/id"
+        },
         "kind": {
           "enum": [
             "前置检查",
@@ -519,12 +797,36 @@
             "说明"
           ]
         },
-        "title": { "type": "string", "description": "缺省用 kind 作为小标题" },
-        "intro": { "$ref": "#/$defs/markdown", "description": "小标题后的引导句" },
-        "ordered": { "type": "boolean", "default": true },
-        "items": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/markdown" } },
-        "rev": { "$ref": "#/$defs/rev" },
-        "basis": { "$ref": "#/$defs/basis" }
+        "title": {
+          "type": "string",
+          "description": "缺省用 kind 作为小标题"
+        },
+        "qualifier": {
+          "type": "string",
+          "minLength": 1,
+          "description": "小标题后的括注，如 （在 ALV 修改时即时校验……）"
+        },
+        "intro": {
+          "$ref": "#/$defs/markdown",
+          "description": "小标题后的引导句"
+        },
+        "ordered": {
+          "type": "boolean",
+          "default": true
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/markdown"
+          }
+        },
+        "rev": {
+          "$ref": "#/$defs/rev"
+        },
+        "basis": {
+          "$ref": "#/$defs/basis"
+        }
       }
     },
     "filterBlock": {
@@ -533,29 +835,55 @@
       "additionalProperties": false,
       "required": ["id", "kind", "filters"],
       "properties": {
-        "id": { "$ref": "#/$defs/id" },
-        "kind": { "const": "固定过滤条件" },
-        "title": { "type": "string" },
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "const": "固定过滤条件"
+        },
+        "title": {
+          "type": "string"
+        },
+        "qualifier": {
+          "type": "string",
+          "minLength": 1,
+          "description": "小标题后的括注"
+        },
         "filters": {
           "type": "array",
           "minItems": 1,
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["field", "condition", "meaning"],
+            "required": ["label", "field", "condition"],
             "properties": {
-              "field": { "$ref": "#/$defs/fieldRef" },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "description": "条件名称，如 采购申请类型"
+              },
+              "field": {
+                "$ref": "#/$defs/fieldRef"
+              },
               "condition": {
                 "type": "string",
                 "minLength": 1,
-                "description": "如 = ZR10、为空、不为空"
+                "description": "以 = 开头时渲染为 `字段 = 值`；否则渲染为 `字段` 条件"
               },
-              "meaning": { "type": "string", "minLength": 1 }
+              "note": {
+                "type": "string",
+                "minLength": 1,
+                "description": "括注，如 未删除"
+              }
             }
           }
         },
-        "rev": { "$ref": "#/$defs/rev" },
-        "basis": { "$ref": "#/$defs/basis" }
+        "rev": {
+          "$ref": "#/$defs/rev"
+        },
+        "basis": {
+          "$ref": "#/$defs/basis"
+        }
       }
     }
   }

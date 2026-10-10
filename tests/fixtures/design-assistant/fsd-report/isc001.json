@@ -46,6 +46,7 @@
   },
   "requirement": {
     "background": "在现行采购申请（Purchase Requisition，以下简称\"采购申请\"）处理流程中，MRP 运行自动生成的采购申请在生效前须经人工审批。当前审批动作分散于多个事务之间，采购人员需在不同界面间切换方可完成\"查询—核对—修改—审批\"的完整操作，缺乏统一的工作台，既降低了处理效率，也容易因操作路径分散而产生漏单或错单风险。",
+    "goals_intro": "本功能为采购人员提供一个采购申请\"点检—审批\"工作台，将对未审批采购申请的查询、核对、栏位修正、审批放行整合于同一 ALV 界面完成，实现以下目标：",
     "goals": [
       "以采购申请行项目为粒度，集中展示待审批清单，便于逐条点检；",
       "支持在审批前对采购申请的需求日期、数量进行修正，数量改为 0 即标记删除该行，避免错误的申请进入后续采购流程；",
@@ -488,32 +489,35 @@
           {
             "id": "BLK-QUERY-FILTER",
             "kind": "固定过滤条件",
-            "title": "固定过滤条件（系统内部固定施加，不随用户输入变化）",
+            "qualifier": "系统内部固定施加，不随用户输入变化",
             "filters": [
               {
+                "label": "采购申请类型",
                 "field": "EBAN-BSART",
-                "condition": "= ZR10",
-                "meaning": "采购申请类型"
+                "condition": "= ZR10"
               },
               {
+                "label": "创建标识",
                 "field": "EBAN-ESTKZ",
                 "condition": "= B",
-                "meaning": "创建标识：由 MRP 运行生成"
+                "note": "由 MRP 运行生成"
               },
               {
+                "label": "删除标识",
                 "field": "EBAN-LOEKZ",
                 "condition": "为空",
-                "meaning": "未删除"
+                "note": "未删除"
               },
               {
+                "label": "关闭标识",
                 "field": "EBAN-EBAKZ",
                 "condition": "为空",
-                "meaning": "未关闭"
+                "note": "未关闭"
               },
               {
+                "label": "审批策略",
                 "field": "EBAN-FRGST",
-                "condition": "不为空，且按 [[LOG-RELEASE-STATUS]] 判定审批尚未完成",
-                "meaning": "有审批策略且审批未完成"
+                "condition": "不为空，且按 [[LOG-RELEASE-STATUS]] 判定审批尚未完成"
               }
             ]
           },
@@ -647,7 +651,7 @@
           {
             "id": "BLK-SAVE-INPUT",
             "kind": "录入校验",
-            "intro": "在 ALV 修改时即时校验，不通过的单元格标红并给出提示，保存前须修正：",
+            "qualifier": "在 ALV 修改时即时校验，不通过的单元格标红并给出提示，保存前须修正",
             "items": ["数量不得为负数。", "需求日期必须为有效日期，不得为空。"]
           },
           {

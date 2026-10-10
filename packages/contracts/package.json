@@ -7,6 +7,8 @@
     "./design-assistant/protocol": "./design-assistant/protocol.mjs",
     "./design-assistant/fsd-report": "./design-assistant/fsd-report.mjs",
     "./design-assistant/fsd-report-refs": "./design-assistant/fsd-report-refs.mjs",
+    "./design-assistant/fsd-report-render": "./design-assistant/fsd-report-render.mjs",
+    "./design-assistant/fsd-report-wire": "./design-assistant/fsd-report-wire.mjs",
     "./design-assistant/fsd-report.schema.json": "./design-assistant/fsd-report.schema.json",
     "./fs-workspace": "./fs-workspace/index.mjs",
     "./fs-workspace/canonical": "./fs-workspace/canonical.mjs",
