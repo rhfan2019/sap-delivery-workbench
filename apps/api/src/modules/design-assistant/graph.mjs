@@ -189,11 +189,15 @@ export function buildGraph(
           );
           // The snapshot id and base version are echoes of this prompt, which the server just
           // built; smaller models miscopy the UUID, so restore them instead of failing STALE_INPUT.
-          if (result.output && typeof result.output === 'object')
+          if (result.output && typeof result.output === 'object') {
             Object.assign(result.output, {
               input_snapshot_id: r.input_snapshot_id,
               base_artifact_version: t.artifact_version ?? null,
             });
+            // reason_code is a short audit code; models write a sentence. Cut it, don't repair.
+            if (typeof result.output.reason_code === 'string')
+              result.output.reason_code = result.output.reason_code.slice(0, 160);
+          }
           await telemetry.span('output.validate', attrs, async () =>
             validateOutput(result.output, {
               expectedKind: kind,
@@ -223,6 +227,21 @@ export function buildGraph(
         await tx((db) => settle(db, lease, op, null, error, result?.usage ?? e.usage)).catch(
           () => {},
         );
+        // A rejected answer stays inspectable: what failed, and the start of what came back.
+        if (repairable.has(e.code))
+          await tx((db) =>
+            event(db, t.id, r.id, 'output.rejected', {
+              operation_id: op,
+              kind,
+              part: part?.key ?? null,
+              code: e.code,
+              details: (e.details ?? []).slice(0, 20),
+              excerpt: String(e.raw ?? (result?.output ? JSON.stringify(result.output) : '')).slice(
+                0,
+                3000,
+              ),
+            }),
+          ).catch(() => {});
         if (!repairable.has(e.code) || repair === r.assets.budget.format_repairs)
           throw fault(error.code, error.error_origin);
         repairReason = { code: e.code, details: e.details ?? [] };

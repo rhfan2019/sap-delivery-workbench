@@ -276,7 +276,10 @@ export async function configuredModel({ kind, context, signal, repair, part }) {
   try {
     output = JSON.parse(fromAlias(body));
   } catch {
-    throw Object.assign(fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION'), { usage: known });
+    throw Object.assign(fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION'), {
+      usage: known,
+      raw: body.slice(0, 3000),
+    });
   }
   return { output, usage: known, cost: null };
 }
