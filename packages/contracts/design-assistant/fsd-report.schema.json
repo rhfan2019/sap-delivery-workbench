@@ -518,6 +518,9 @@
                 "items": {
                   "$ref": "#/$defs/id"
                 }
+              },
+              "rev": {
+                "$ref": "#/$defs/rev"
               }
             }
           }
@@ -551,6 +554,9 @@
               "ref": {
                 "type": "string",
                 "description": "原始结果或答复的存储引用"
+              },
+              "rev": {
+                "$ref": "#/$defs/rev"
               }
             }
           }
@@ -586,6 +592,9 @@
               },
               "basis": {
                 "$ref": "#/$defs/basis"
+              },
+              "rev": {
+                "$ref": "#/$defs/rev"
               }
             }
           }
@@ -602,8 +611,9 @@
                 "$ref": "#/$defs/id"
               },
               "target": {
-                "$ref": "#/$defs/id",
-                "description": "被审查的对象"
+                "type": "string",
+                "minLength": 1,
+                "description": "被审查的对象编号或名称"
               },
               "scenario": {
                 "$ref": "#/$defs/markdown"
@@ -616,6 +626,9 @@
               },
               "status": {
                 "enum": ["FIXED", "NO_CHANGE", "OPEN"]
+              },
+              "rev": {
+                "$ref": "#/$defs/rev"
               }
             }
           }

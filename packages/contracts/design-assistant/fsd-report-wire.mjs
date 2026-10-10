@@ -1,15 +1,17 @@
 // FSD wire format: the Markdown dialect the model writes and the server parses
-// line by line into fsd-report/1. Pure and browser-safe.
+// line by line into fsd-report/1. Pure and browser-safe. Prompt V2 §十 is the
+// model-facing description of the same grammar.
 //
 // Grammar (one construct per line):
+//   > 思路：…                 thought line, shown while streaming, not stored
 //   ## <部分>                 fixed part, see PARTS
 //   ## 逻辑 <LOG-ID> <标题>    business-logic section
 //   ### <子部分>              fixed sub-part, or ### <BLK-ID> <块类型> inside a logic section
-//   <键>：<值>                property line (说明/注/触发/SAP对象/标题/括注/引导)
+//   <键>：<值>                property line (说明/注/触发/SAP对象/依据/标题/括注/引导)
 //   | a | b |                 table; header must match the part's fixed columns
 //   1. text / - text          list item; lines indented by 2+ spaces continue the item
 //   1. [ID] **标题**：正文     note item (权限校验说明、选择屏幕检查)
-// Cells escape "|" as "\|" and line breaks as <br>. basis/rev are not part of the wire.
+// Cells escape "|" as "\|" and line breaks as <br>. Object rev is not part of the wire.
 
 const KV = {
   封面: {
@@ -34,79 +36,157 @@ const yesNo = { to: (v) => (v ? '是' : '否'), from: (v) => v === '是' };
 const list = { to: (v) => (v ?? []).join('、'), from: (v) => (v ? v.split('、') : []) };
 const isoDate = { to: (v) => v, from: (v) => v.replaceAll('/', '-') };
 
-// [column header, property, optional converter]
+/** basis <-> 依据 cell: 推断 / 客户：Q1、requirement / 系统：EV-001 */
+export const basisCodec = {
+  to(b) {
+    if (!b) return '';
+    const refs = b.refs ?? [];
+    if (b.kind === 'FACT') return '系统：' + refs.join('、');
+    if (b.kind === 'CUSTOMER_DECISION')
+      return '客户：' + refs.map((r) => r.replace(/^answer:/, '')).join('、');
+    return '推断';
+  },
+  from(text) {
+    const value = text.trim();
+    if (value === '推断') return { kind: 'INFERENCE' };
+    const m = /^(客户|系统)[：:]\s*(.*)$/.exec(value);
+    if (!m) return null;
+    const refs = m[2]
+      .split(/[、,，\s]+/)
+      .map((r) => r.trim())
+      .filter(Boolean);
+    if (m[1] === '系统') return refs.length ? { kind: 'FACT', refs } : null;
+    return {
+      kind: 'CUSTOMER_DECISION',
+      refs: refs.map((r) => (r === 'requirement' || r.startsWith('answer:') ? r : 'answer:' + r)),
+    };
+  },
+};
+
+// [column header, property, optional converter]; basis: an optional trailing 依据 column.
 const TABLES = {
-  变更记录: [
-    ['版本号', 'version'],
-    ['修订日期', 'date', isoDate],
-    ['修订人', 'author'],
-    ['修订内容', 'content'],
-    ['备注', 'remark'],
-  ],
-  使用角色与场景: [
-    ['角色', 'role'],
-    ['使用场景', 'scenario'],
-  ],
-  权限校验: [
-    ['编号', 'id'],
-    ['校验时机', 'timing'],
-    ['权限对象', 'auth_object'],
-    ['权限对象说明', 'auth_object_text'],
-    ['校验字段', 'fields'],
-    ['校验参数来源', 'value_source'],
-  ],
-  选择屏幕: [
-    ['编号', 'id'],
-    ['屏幕字段', 'label'],
-    ['P/S', 'kind'],
-    ['参照', 'ref'],
-    ['必填', 'required', yesNo],
-    ['描述', 'description'],
-    ['默认值', 'default'],
-  ],
-  输出布局: [
-    ['编号', 'id'],
-    ['字段', 'name'],
-    ['参照', 'ref'],
-    ['字段描述', 'description'],
-    ['处理', 'handling'],
-  ],
-  功能按钮: [
-    ['编号', 'id'],
-    ['按钮/操作', 'label'],
-    ['功能', 'function'],
-    ['作用范围', 'scope'],
-    ['处理逻辑', 'logic'],
-  ],
-  固定过滤条件: [
-    ['名称', 'label'],
-    ['字段', 'field'],
-    ['条件', 'condition'],
-    ['括注', 'note'],
-  ],
-  消息: [
-    ['编号', 'id'],
-    ['场景', 'scenario'],
-    ['类型', 'type'],
-    ['提示文本', 'text'],
-    ['处理', 'handling'],
-  ],
-  未决事项: [
-    ['编号', 'id'],
-    ['事项', 'title'],
-    ['影响', 'impact'],
-    ['阻断', 'blocking', yesNo],
-    ['状态', 'status'],
-    ['关联', 'related', list],
-  ],
-  证据: [
-    ['编号', 'id'],
-    ['来源', 'source_kind'],
-    ['对象', 'object'],
-    ['摘要', 'summary'],
-    ['时间', 'observed_at'],
-    ['引用', 'ref'],
-  ],
+  变更记录: {
+    cols: [
+      ['版本号', 'version'],
+      ['修订日期', 'date', isoDate],
+      ['修订人', 'author'],
+      ['修订内容', 'content'],
+      ['备注', 'remark'],
+    ],
+  },
+  使用角色与场景: {
+    cols: [
+      ['角色', 'role'],
+      ['使用场景', 'scenario'],
+    ],
+  },
+  权限校验: {
+    basis: true,
+    cols: [
+      ['编号', 'id'],
+      ['校验时机', 'timing'],
+      ['权限对象', 'auth_object'],
+      ['权限对象说明', 'auth_object_text'],
+      ['校验字段', 'fields'],
+      ['校验参数来源', 'value_source'],
+    ],
+  },
+  选择屏幕: {
+    basis: true,
+    cols: [
+      ['编号', 'id'],
+      ['屏幕字段', 'label'],
+      ['P/S', 'kind'],
+      ['参照', 'ref'],
+      ['必填', 'required', yesNo],
+      ['描述', 'description'],
+      ['默认值', 'default'],
+    ],
+  },
+  输出布局: {
+    basis: true,
+    cols: [
+      ['编号', 'id'],
+      ['字段', 'name'],
+      ['参照', 'ref'],
+      ['字段描述', 'description'],
+      ['处理', 'handling'],
+    ],
+  },
+  功能按钮: {
+    cols: [
+      ['编号', 'id'],
+      ['按钮/操作', 'label'],
+      ['功能', 'function'],
+      ['作用范围', 'scope'],
+      ['处理逻辑', 'logic'],
+    ],
+  },
+  固定过滤条件: {
+    cols: [
+      ['名称', 'label'],
+      ['字段', 'field'],
+      ['条件', 'condition'],
+      ['括注', 'note'],
+    ],
+  },
+  消息: {
+    cols: [
+      ['编号', 'id'],
+      ['场景', 'scenario'],
+      ['类型', 'type'],
+      ['提示文本', 'text'],
+      ['处理', 'handling'],
+    ],
+  },
+  提纲: {
+    cols: [
+      ['编号', 'id'],
+      ['类型', 'type'],
+      ['标题', 'title'],
+      ['摘要', 'summary'],
+    ],
+  },
+  生命周期分析: {
+    cols: [
+      ['编号', 'id'],
+      ['环节', 'stage'],
+      ['事务代码', 'tcode'],
+      ['业务动作', 'action'],
+      ['对本功能的影响', 'impact'],
+      ['处理结论', 'decision'],
+    ],
+  },
+  反向审查: {
+    cols: [
+      ['编号', 'id'],
+      ['审查对象', 'target'],
+      ['反例场景', 'scenario'],
+      ['业务影响', 'impact'],
+      ['处理', 'resolution'],
+      ['状态', 'status'],
+    ],
+  },
+  未决事项: {
+    cols: [
+      ['编号', 'id'],
+      ['事项', 'title'],
+      ['影响', 'impact'],
+      ['阻断', 'blocking', yesNo],
+      ['状态', 'status'],
+      ['关联', 'related', list],
+    ],
+  },
+  证据: {
+    cols: [
+      ['编号', 'id'],
+      ['来源', 'source_kind'],
+      ['对象', 'object'],
+      ['摘要', 'summary'],
+      ['时间', 'observed_at'],
+      ['引用', 'ref'],
+    ],
+  },
 };
 const PROPS = {
   说明: 'intro',
@@ -116,18 +196,47 @@ const PROPS = {
   括注: 'qualifier',
   引导: 'intro',
 };
+const WORKING = {
+  生命周期分析: 'lifecycle',
+  反向审查: 'reverse_review',
+  未决事项: 'open_issues',
+  证据: 'evidence',
+};
+
+/** Parts a write call can be asked for, in document order. */
+export const WIRE_PARTS = Object.freeze([
+  'cover',
+  'overview',
+  'requirement',
+  'authorizations',
+  'selection_screen',
+  'selection_checks',
+  'output',
+  'actions',
+  'logic',
+  'sections',
+  'messages',
+  'lifecycle',
+  'reverse_review',
+  'open_issues',
+  'evidence',
+]);
 
 // ---------------------------------------------------------------- serializer
 
 const esc = (v) => String(v).replace(/\|/g, '\\|').replace(/\r?\n/g, '<br>');
 function tableLines(name, rows) {
-  const cols = TABLES[name];
+  const { cols, basis } = TABLES[name];
+  const withBasis = basis && rows.some((r) => r.basis);
+  const header = [...cols.map((c) => c[0]), ...(withBasis ? ['依据'] : [])];
+  const cell = (row, [, p, conv]) =>
+    row[p] === undefined ? '' : esc(conv ? conv.to(row[p]) : row[p]);
   return [
-    `| ${cols.map((c) => c[0]).join(' | ')} |`,
-    `| ${cols.map(() => '---').join(' | ')} |`,
+    `| ${header.join(' | ')} |`,
+    `| ${header.map(() => '---').join(' | ')} |`,
     ...rows.map(
       (row) =>
-        `| ${cols.map(([, p, conv]) => (row[p] === undefined ? '' : esc(conv ? conv.to(row[p]) : row[p]))).join(' | ')} |`,
+        `| ${[...cols.map((c) => cell(row, c)), ...(withBasis ? [esc(basisCodec.to(row.basis))] : [])].join(' | ')} |`,
     ),
   ];
 }
@@ -141,66 +250,84 @@ const noteLines = (items) =>
   items.map((n, i) => `${i + 1}. [${n.id}] ${n.title ? `**${n.title}**：` : ''}${n.body}`);
 const prop = (key, value) => (value === undefined ? [] : [`${key}：${value}`]);
 
-export function toFsdWire(doc) {
+export function sectionWire(s) {
+  const out = [`## 逻辑 ${s.id} ${s.title}`, ...prop('触发', s.trigger), ...prop('说明', s.intro)];
+  if (s.sap_refs?.length)
+    out.push(`SAP对象：${s.sap_refs.map((r) => `${r.type} ${r.name}`).join('；')}`);
+  if (s.basis) out.push(`依据：${basisCodec.to(s.basis)}`);
+  out.push('');
+  for (const b of s.blocks) {
+    const head = [...prop('标题', b.title), ...prop('括注', b.qualifier), ...prop('引导', b.intro)];
+    const body =
+      b.kind === '固定过滤条件'
+        ? tableLines('固定过滤条件', b.filters)
+        : b.ordered === false
+          ? bulletLines(b.items)
+          : orderedLines(b.items);
+    out.push(`### ${b.id} ${b.kind}`, ...head, ...body, '');
+  }
+  return out;
+}
+
+/**
+ * Serialize a document (or only some parts of it) to the wire format.
+ * parts: subset of WIRE_PARTS; 'section:<LOG-ID>' selects one logic section.
+ */
+export function toFsdWire(doc, { parts } = {}) {
+  const want = (key) => !parts || parts.includes(key);
+  const wantSection = (id) => want('sections') || parts?.includes('section:' + id);
   const out = [];
   const part = (title, ...lines) => out.push(`## ${title}`, ...lines, '');
   const sub = (title, ...lines) => out.push(`### ${title}`, ...lines, '');
-  part('封面', ...kvLines('封面', doc.doc));
-  part('变更记录', ...tableLines('变更记录', doc.doc.change_log));
-  if (doc.target) part('目标系统', ...kvLines('目标系统', doc.target));
-  part('开发概览', ...kvLines('开发概览', doc.overview));
-  const req = doc.requirement;
-  out.push('## 业务需求', '');
-  sub('业务背景与痛点', req.background);
-  sub('功能目标', ...prop('引导', req.goals_intro), ...orderedLines(req.goals));
-  sub('使用角色与场景', ...tableLines('使用角色与场景', req.roles));
-  sub('范围内', ...bulletLines(req.scope_in));
-  sub('范围外', ...bulletLines(req.scope_out));
-  if (req.constraints) sub('业务约束', ...bulletLines(req.constraints));
-  const auth = doc.authorizations;
-  part('权限校验', ...prop('说明', auth.intro), ...tableLines('权限校验', auth.items));
-  if (auth.notes) sub('校验说明', ...noteLines(auth.notes));
-  const sel = doc.selection_screen;
-  part(
-    '选择屏幕',
-    ...prop('说明', sel.intro),
-    ...tableLines('选择屏幕', sel.fields),
-    ...prop('注', sel.note),
-  );
-  const chk = doc.selection_checks;
-  part('选择屏幕检查', ...prop('说明', chk.intro), ...noteLines(chk.items));
-  const output = doc.output;
-  part('输出布局', ...prop('说明', output.intro), ...tableLines('输出布局', output.fields));
-  sub('输出要求', ...orderedLines(output.requirements));
-  part('功能按钮', ...tableLines('功能按钮', doc.actions.items));
-  if (doc.actions.interaction_rules)
-    sub('交互规则', ...orderedLines(doc.actions.interaction_rules));
-  part('业务逻辑', ...prop('说明', doc.logic.intro));
-  for (const s of doc.logic.sections) {
-    const refs = s.sap_refs?.length
-      ? [`SAP对象：${s.sap_refs.map((r) => `${r.type} ${r.name}`).join('；')}`]
-      : [];
-    part(`逻辑 ${s.id} ${s.title}`, ...prop('触发', s.trigger), ...prop('说明', s.intro), ...refs);
-    for (const b of s.blocks) {
-      const head = [
-        ...prop('标题', b.title),
-        ...prop('括注', b.qualifier),
-        ...prop('引导', b.intro),
-      ];
-      if (b.kind === '固定过滤条件')
-        sub(`${b.id} ${b.kind}`, ...head, ...tableLines('固定过滤条件', b.filters));
-      else
-        sub(
-          `${b.id} ${b.kind}`,
-          ...head,
-          ...(b.ordered === false ? bulletLines(b.items) : orderedLines(b.items)),
-        );
-    }
+  if (want('cover') && doc.doc) {
+    part('封面', ...kvLines('封面', doc.doc));
+    part('变更记录', ...tableLines('变更记录', doc.doc.change_log ?? []));
+    if (doc.target) part('目标系统', ...kvLines('目标系统', doc.target));
   }
-  part('消息', ...tableLines('消息', doc.messages.items), ...prop('注', doc.messages.note));
-  const w = doc.working ?? {};
-  if (w.open_issues?.length) part('未决事项', ...tableLines('未决事项', w.open_issues));
-  if (w.evidence?.length) part('证据', ...tableLines('证据', w.evidence));
+  if (want('overview') && doc.overview) part('开发概览', ...kvLines('开发概览', doc.overview));
+  const req = doc.requirement;
+  if (want('requirement') && req) {
+    out.push('## 业务需求', '');
+    if (req.background) sub('业务背景与痛点', req.background);
+    sub('功能目标', ...prop('引导', req.goals_intro), ...orderedLines(req.goals ?? []));
+    sub('使用角色与场景', ...tableLines('使用角色与场景', req.roles ?? []));
+    sub('范围内', ...bulletLines(req.scope_in ?? []));
+    sub('范围外', ...bulletLines(req.scope_out ?? []));
+    if (req.constraints) sub('业务约束', ...bulletLines(req.constraints));
+  }
+  const auth = doc.authorizations;
+  if (want('authorizations') && auth) {
+    part('权限校验', ...prop('说明', auth.intro), ...tableLines('权限校验', auth.items ?? []));
+    if (auth.notes) sub('校验说明', ...noteLines(auth.notes));
+  }
+  const sel = doc.selection_screen;
+  if (want('selection_screen') && sel)
+    part(
+      '选择屏幕',
+      ...prop('说明', sel.intro),
+      ...tableLines('选择屏幕', sel.fields ?? []),
+      ...prop('注', sel.note),
+    );
+  const chk = doc.selection_checks;
+  if (want('selection_checks') && chk)
+    part('选择屏幕检查', ...prop('说明', chk.intro), ...noteLines(chk.items ?? []));
+  const output = doc.output;
+  if (want('output') && output) {
+    part('输出布局', ...prop('说明', output.intro), ...tableLines('输出布局', output.fields ?? []));
+    sub('输出要求', ...orderedLines(output.requirements ?? []));
+  }
+  if (want('actions') && doc.actions) {
+    part('功能按钮', ...tableLines('功能按钮', doc.actions.items ?? []));
+    if (doc.actions.interaction_rules)
+      sub('交互规则', ...orderedLines(doc.actions.interaction_rules));
+  }
+  if (want('logic') && doc.logic) part('业务逻辑', ...prop('说明', doc.logic.intro));
+  for (const s of doc.logic?.sections ?? []) if (wantSection(s.id)) out.push(...sectionWire(s));
+  if (want('messages') && doc.messages)
+    part('消息', ...tableLines('消息', doc.messages.items ?? []), ...prop('注', doc.messages.note));
+  for (const [title, key] of Object.entries(WORKING))
+    if (want(key) && doc.working?.[key]?.length)
+      part(title, ...tableLines(title, doc.working[key]));
   return out.join('\n');
 }
 
@@ -227,14 +354,9 @@ const ITEM = /^(\d+\.|-)\s+(.*)$/;
 const NOTE = /^\[([A-Z][A-Z0-9-]*)\]\s*(?:\*\*(.+?)\*\*：)?(.*)$/s;
 const SAP_REF = /^(\S+)\s+(.+)$/;
 
-/**
- * Incremental parser. push() text chunks as they stream; every completed table row,
- * list item or note fires onEvent({ type: 'object', path, value, line }); malformed
- * input fires { type: 'error', line, message } and parsing continues. end() flushes
- * and returns { doc, errors }.
- */
-export function createFsdWireParser({ onEvent = () => {} } = {}) {
-  const doc = {
+/** Empty document a parse starts from; collections exist so rows can be appended. */
+export function emptyWireDoc() {
+  return {
     schema_version: 'fsd-report/1',
     doc: { change_log: [] },
     overview: {},
@@ -247,12 +369,26 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
     logic: { sections: [] },
     messages: { items: [] },
   };
+}
+
+/**
+ * Incremental parser. push() text chunks as they stream; every completed table row,
+ * list item or note fires onEvent({ type: 'object', path, value, line }), a logic section
+ * header fires { type: 'section' }, a thought line { type: 'thought' }; malformed input
+ * fires { type: 'error', line, message } and parsing continues. end() flushes and returns
+ * { doc, errors, outline, deletions, thoughts }.
+ */
+export function createFsdWireParser({ onEvent = () => {} } = {}) {
+  const doc = emptyWireDoc();
   const errors = [];
+  const outline = [];
+  const deletions = [];
+  const thoughts = [];
   let lineNo = 0;
   let buffer = '';
   let part = null; // { name, section? }
   let sub = null; // { name, block? }
-  let table = null; // { name, cols, header: boolean }
+  let table = null; // { name, cols, header, hasBasis, kv }
   let item = null; // { text, line, ordered }
   let paragraph = null; // string[] for 业务背景与痛点
 
@@ -270,12 +406,11 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
   }
   function flushParagraph() {
     if (!paragraph) return;
-    doc.requirement.background = paragraph.join('\n').trim();
-    emit('/requirement/background', doc.requirement.background);
+    const text = paragraph.join('\n').trim();
     paragraph = null;
-  }
-  function closeTable() {
-    table = null;
+    if (!text) return;
+    doc.requirement.background = text;
+    emit('/requirement/background', text);
   }
 
   function note(text, line) {
@@ -294,6 +429,12 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
       arr.push(value);
       emit(`${path}/${arr.length - 1}`, value, line);
     };
+    if (p === '删除') {
+      const id = text.trim();
+      if (!/^[A-Z][A-Z0-9]*(-[A-Z0-9]+)+$/.test(id)) return error(`删除项应为编号：${id}`, line);
+      deletions.push(id);
+      return onEvent({ type: 'delete', id, line });
+    }
     if (p === '业务需求') {
       const target = {
         功能目标: 'goals',
@@ -332,13 +473,23 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
   }
 
   function placeRow(cells) {
-    const { name, cols } = table;
-    if (cells.length !== cols.length)
-      return error(`${name}：应为 ${cols.length} 列，实际 ${cells.length} 列`);
+    const { name, cols, hasBasis } = table;
+    const expected = cols.length + (hasBasis ? 1 : 0);
+    if (cells.length !== expected)
+      return error(`${name}：应为 ${expected} 列，实际 ${cells.length} 列`);
     const row = {};
     cols.forEach(([, p, conv], i) => {
       if (cells[i] !== '') row[p] = conv ? conv.from(cells[i]) : cells[i];
     });
+    if (hasBasis && cells.at(-1) !== '') {
+      const basis = basisCodec.from(cells.at(-1));
+      if (basis) row.basis = basis;
+      else error(`${name}：依据应为“推断”“客户：题号”或“系统：证据编号”`);
+    }
+    if (name === '提纲') {
+      outline.push(row);
+      return emit(`/outline/${outline.length - 1}`, row);
+    }
     const targets = {
       变更记录: [doc.doc.change_log, '/doc/change_log'],
       使用角色与场景: [doc.requirement.roles, '/requirement/roles'],
@@ -355,9 +506,9 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
         sub.block.filters,
         `/logic/sections/${si}/blocks/${part.section.blocks.length - 1}/filters`,
       ];
-    } else if (name === '未决事项' || name === '证据') {
+    } else if (WORKING[name]) {
       doc.working ??= {};
-      const key = name === '未决事项' ? 'open_issues' : 'evidence';
+      const key = WORKING[name];
       doc.working[key] ??= [];
       target = [doc.working[key], `/working/${key}`];
     }
@@ -370,18 +521,11 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
     const [key, value] = cells;
     const prop = KV[part.name][key];
     if (!prop) return error(`${part.name}：未知项目“${key}”`);
-    if (value === '') return;
-    const obj =
-      part.name === '封面'
-        ? doc.doc
-        : part.name === '目标系统'
-          ? (doc.target ??= {})
-          : doc.overview;
-    obj[prop] = value;
-    emit(
-      `/${part.name === '封面' ? 'doc' : part.name === '目标系统' ? 'target' : 'overview'}/${prop}`,
-      value,
-    );
+    if (value === '' || value === undefined) return;
+    const owner = { 封面: 'doc', 目标系统: 'target', 开发概览: 'overview' }[part.name];
+    doc[owner] ??= {};
+    doc[owner][prop] = value;
+    emit(`/${owner}/${prop}`, value);
   }
 
   function placeProp(key, value) {
@@ -395,7 +539,7 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
     if (part?.section) {
       if (key === 'SAP对象') {
         part.section.sap_refs = value
-          .split('；')
+          .split(/[；;]/)
           .map((x) => x.trim())
           .filter(Boolean)
           .map((x) => {
@@ -405,6 +549,12 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
               : (error(`SAP对象格式应为“类型 名称”：${x}`), null);
           })
           .filter(Boolean);
+        return;
+      }
+      if (key === '依据') {
+        const basis = basisCodec.from(value);
+        if (basis) part.section.basis = basis;
+        else error('依据应为“推断”“客户：题号”或“系统：证据编号”');
         return;
       }
       if (!['触发', '说明'].includes(key)) return error(`逻辑章节不支持“${key}”`);
@@ -433,7 +583,7 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
   function openPart(title) {
     flushItem();
     flushParagraph();
-    closeTable();
+    table = null;
     sub = null;
     const m = /^逻辑\s+(LOG-[A-Z0-9-]+)\s+(.+)$/.exec(title);
     if (m) {
@@ -446,21 +596,22 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
     part = { name: title };
     if (KV[title]) table = { name: title, kv: true, header: false };
     else if (TABLES[title] && title !== '使用角色与场景' && title !== '固定过滤条件')
-      table = { name: title, cols: TABLES[title], header: false };
-    else if (!['业务需求', '选择屏幕检查', '业务逻辑'].includes(title)) error(`未知部分“${title}”`);
+      table = { name: title, ...TABLES[title], header: false };
+    else if (!['业务需求', '选择屏幕检查', '业务逻辑', '删除'].includes(title))
+      error(`未知部分“${title}”`);
   }
 
   function openSub(title) {
     flushItem();
     flushParagraph();
-    closeTable();
+    table = null;
     if (part?.section) {
       const m = /^(BLK-[A-Z0-9-]+)\s+(\S+)$/.exec(title);
       if (!m) return error(`逻辑块标题应为“### BLK-编号 块类型”：${title}`);
       const block = { id: m[1], kind: m[2] };
       if (m[2] === '固定过滤条件') {
         block.filters = [];
-        table = { name: '固定过滤条件', cols: TABLES.固定过滤条件, header: false };
+        table = { name: '固定过滤条件', ...TABLES.固定过滤条件, header: false };
       } else block.items = [];
       part.section.blocks.push(block);
       sub = { name: m[2], block };
@@ -468,7 +619,24 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
     }
     sub = { name: title };
     if (title === '业务背景与痛点') paragraph = [];
-    if (title === '使用角色与场景') table = { name: title, cols: TABLES[title], header: false };
+    if (title === '使用角色与场景') table = { name: title, ...TABLES[title], header: false };
+  }
+
+  function readHeader(text) {
+    const cells = splitRow(text);
+    if (table.kv) {
+      if (cells.join('|') !== '项目|内容') error(`${table.name}：表头应为 | 项目 | 内容 |`);
+    } else {
+      const expected = table.cols.map((c) => c[0]);
+      table.hasBasis =
+        !!table.basis && cells.length === expected.length + 1 && cells.at(-1) === '依据';
+      const got = table.hasBasis ? cells.slice(0, -1) : cells;
+      if (got.join('|') !== expected.join('|'))
+        error(
+          `${table.name}：表头应为 | ${expected.join(' | ')} |${table.basis ? '（可加“依据”列）' : ''}`,
+        );
+    }
+    table.header = true;
   }
 
   function line(raw) {
@@ -477,24 +645,22 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
     if (item && /^\s{2,}\S/.test(text)) return void (item.text += '\n' + text);
     if (text.trim() === '') return; // blank lines never end an item on their own
     if (item && !/^\s/.test(text)) flushItem();
+    if (text.startsWith('>')) {
+      const thought = text.replace(/^>\s*(思路[：:])?\s*/, '');
+      thoughts.push(thought);
+      return onEvent({ type: 'thought', text: thought, line: lineNo });
+    }
     const h2 = /^##\s+(.+)$/.exec(text);
     if (h2 && !text.startsWith('###')) return openPart(h2[1].trim());
     const h3 = /^###\s+(.+)$/.exec(text);
     if (h3) return openSub(h3[1].trim());
     if (text.trimStart().startsWith('|')) {
       if (!table) return error('此处不应出现表格');
-      if (!table.header) {
-        const cells = splitRow(text);
-        const expected = table.kv ? ['项目', '内容'] : table.cols.map((c) => c[0]);
-        if (cells.join('|') !== expected.join('|'))
-          error(`${table.name}：表头应为 | ${expected.join(' | ')} |`);
-        table.header = true;
-        return;
-      }
+      if (!table.header) return readHeader(text);
       if (SEPARATOR.test(text.trim())) return;
       return table.kv ? placeKv(splitRow(text)) : placeRow(splitRow(text));
     }
-    const kv = /^(说明|注|触发|SAP对象|标题|括注|引导)：(.*)$/.exec(text);
+    const kv = /^(说明|注|触发|SAP对象|依据|标题|括注|引导)：(.*)$/.exec(text);
     if (kv) return placeProp(kv[1], kv[2].trim());
     const li = ITEM.exec(text);
     if (li) {
@@ -519,7 +685,7 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
       buffer = '';
       flushItem();
       flushParagraph();
-      return { doc, errors };
+      return { doc, errors, outline, deletions, thoughts };
     },
   };
 }
