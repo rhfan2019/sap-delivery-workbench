@@ -237,3 +237,60 @@ test('WIRE-08 a short row ending in a 依据 value is a column error, not an omi
     [['OUT-POSNR', '显示']],
   );
 });
+
+test('WIRE-09 deviations that cost DeepSeek-V4-Pro four part rewrites are normalized', () => {
+  const { doc, errors, warnings } = parseFsdWire(
+    [
+      '## 业务需求',
+      '### 业务背景与痛点',
+      '跟单人员缺少逾期分析工具。这导致：',
+      '- 无法识别延误的订单行；',
+      '- 无法还原历史时点。',
+      '### 范围内',
+      '- 未完成交货的订单行。',
+      '## 功能规范',
+      '### 权限校验',
+      '说明：执行前检查销售组织权限。',
+      '| 编号 | 校验时机 | 权限对象 | 权限对象说明 | 校验字段 | 校验参数来源 | 依据 |',
+      '| --- | --- | --- | --- | --- | --- | --- |',
+      '| AUTH-VKORG | 执行前 | V_VBAK_VKO | 销售凭证 | VKORG | 选择屏幕 | 推断（待 SAP 核实） |',
+      '### 校验说明',
+      '1. [AN-VKORG] **销售组织**：无权限则终止。',
+      '## 业务逻辑',
+      '说明：按以下顺序处理',
+      '- 先取数再判定状态',
+      '## 逻辑 LOG-FILTER 固定过滤条件',
+      '触发：取数时应用。',
+      '### BLK-FILTER-ORDER 固定过滤条件（订单行级别）',
+      '| 名称 | 字段 | 条件 | 括注 |',
+      '| --- | --- | --- | --- |',
+      '| 无拒绝原因 | VBAP-ABGRU | 为空 | 未拒绝 |',
+      '注：状态字段按目标版本选择。',
+      '### BLK-FILTER-RETURN 规则',
+      '1. 从订单类型配置读取退货类型。',
+      '依据：客户：Q2',
+      '## 逻辑 LOG-QUERY 数据查询',
+      '依据：推断（所有表和字段基于通用知识）',
+      '### BLK-QUERY-SOURCE 取数逻辑',
+      '1. 以 `VBAP` 为驱动表。',
+    ].join('\n'),
+  );
+  assert.deepEqual(errors, []);
+  assert.equal(warnings.length, 10);
+  assert.equal(doc.logic.intro, '按以下顺序处理；先取数再判定状态');
+  assert.equal(
+    doc.requirement.background,
+    '跟单人员缺少逾期分析工具。这导致：\n- 无法识别延误的订单行；\n- 无法还原历史时点。',
+  );
+  assert.deepEqual(doc.requirement.scope_in, ['未完成交货的订单行。']);
+  assert.equal(doc.authorizations.intro, '执行前检查销售组织权限。');
+  assert.deepEqual(doc.authorizations.items[0].basis, { kind: 'INFERENCE' });
+  assert.equal(doc.authorizations.notes[0].id, 'AN-VKORG');
+  const [filter, query] = doc.logic.sections;
+  assert.equal(filter.blocks[0].kind, '固定过滤条件');
+  assert.equal(filter.blocks[0].qualifier, '订单行级别');
+  assert.equal(filter.blocks[0].filters[0].field, 'VBAP-ABGRU');
+  assert.equal(filter.blocks[0].intro, '注：状态字段按目标版本选择。');
+  assert.deepEqual(filter.basis, { kind: 'CUSTOMER_DECISION', refs: ['answer:Q2'] });
+  assert.deepEqual(query.basis, { kind: 'INFERENCE' });
+});

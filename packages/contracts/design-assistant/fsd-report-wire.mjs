@@ -353,6 +353,22 @@ const SEPARATOR = /^\|(\s*:?-{3,}:?\s*\|)+$/;
 const ITEM = /^(\d+\.|-)\s+(.*)$/;
 const NOTE = /^\[([A-Za-z][A-Za-z0-9_-]*)\]\s*(?:\*\*(.+?)\*\*：)?(.*)$/s;
 const SAP_REF = /^(\S+)\s+(.+)$/;
+// Part titles a model may write one level too deep, and group headings it may add.
+const PART_TITLES = new Set([
+  '开发概览',
+  '业务需求',
+  '权限校验',
+  '选择屏幕',
+  '选择屏幕检查',
+  '输出布局',
+  '功能按钮',
+  '业务逻辑',
+  '消息',
+  '生命周期分析',
+  '反向审查',
+  '未决事项',
+]);
+const GROUP_TITLES = new Set(['开发需求', '开发需求部分', '功能规范']);
 const BLOCK_KINDS = new Set([
   '前置检查',
   '规则',
@@ -478,6 +494,17 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
   let item = null; // { text, line, ordered }
   let paragraph = null; // string[] for 业务背景与痛点
 
+  // A 依据 value followed by an explanation ("推断（…待核实）") keeps the value; the
+  // explanation belongs to the open issues the tail call lists from the 推断 entries.
+  function readBasis(value) {
+    const basis = basisCodec.from(value);
+    if (basis) return basis;
+    const head = value.split(/[（(；;。]|<br>/)[0].trim();
+    const kept = head && head !== value.trim() ? basisCodec.from(head) : null;
+    if (kept) warn(`依据后的说明已省略：${value.slice(head.length, head.length + 40)}`);
+    return kept;
+  }
+
   const error = (message, line = lineNo) => {
     errors.push({ line, message });
     onEvent({ type: 'error', line, message });
@@ -563,6 +590,12 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
       doc.selection_screen.note = [doc.selection_screen.note, text].filter(Boolean).join('\n');
       return;
     }
+    if (p === '业务逻辑' && !s) {
+      warn('“业务逻辑”下的列表已并入本章说明', line);
+      // 说明 is one wire line; joined on the same line so a re-serialized draft parses back.
+      doc.logic.intro = [doc.logic.intro, text].filter(Boolean).join('；');
+      return;
+    }
     if (part?.section && sub?.block && sub.block.items) {
       const si = doc.logic.sections.length - 1;
       const bi = part.section.blocks.length - 1;
@@ -593,7 +626,7 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
       row.id = id;
     }
     if (hasBasis && cells.length === expected && cells.at(-1) !== '') {
-      const basis = basisCodec.from(cells.at(-1));
+      const basis = readBasis(cells.at(-1));
       if (basis) row.basis = basis;
       else error(`${name}：依据应为“推断”“客户：题号”或“系统：证据编号”`);
     }
@@ -655,6 +688,23 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
     const prop = PROPS[key];
     const p = part?.name;
     if (part?.section && sub?.block) {
+      // 依据 belongs to the section and 注 to the block text; models write both inside a block.
+      if (key === '依据') {
+        const basis = readBasis(value);
+        if (!basis) return error('依据应为“推断”“客户：题号”或“系统：证据编号”');
+        if (part.section.basis) warn('块内的“依据”已忽略，以章节的“依据”为准');
+        else {
+          warn('块内的“依据”已作为章节的“依据”');
+          part.section.basis = basis;
+        }
+        return;
+      }
+      if (key === '注') {
+        warn('块内的“注”已并入块内容');
+        if (sub.block.items) sub.block.items.push('注：' + value);
+        else sub.block.intro = [sub.block.intro, '注：' + value].filter(Boolean).join('；');
+        return;
+      }
       if (!['标题', '括注', '引导'].includes(key)) return error(`块内不支持“${key}”`);
       sub.block[prop] = value;
       return;
@@ -685,7 +735,7 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
         return;
       }
       if (key === '依据') {
-        const basis = basisCodec.from(value);
+        const basis = readBasis(value);
         if (basis) part.section.basis = basis;
         else error('依据应为“推断”“客户：题号”或“系统：证据编号”');
         return;
@@ -742,6 +792,13 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
       const m = /^(BLK-[A-Za-z0-9_-]+)\s+(.+)$/i.exec(title);
       if (!m) return error(`逻辑块标题应为“### BLK-编号 块类型”：${title}`);
       const block = { id: normId(m[1]), kind: m[2].trim() };
+      // "固定过滤条件（订单行级别）": the qualifier goes to 括注, the block keeps its type.
+      const qualified = /^(.+?)\s*[（(](.+)[）)]$/.exec(block.kind);
+      if (!BLOCK_KINDS.has(block.kind) && qualified && BLOCK_KINDS.has(qualified[1])) {
+        warn(`块类型后的“${qualified[2]}”已作为括注`);
+        block.kind = qualified[1];
+        block.qualifier = qualified[2];
+      }
       if (!BLOCK_KINDS.has(block.kind)) {
         // A free-text block type keeps its wording as the heading of a plain block.
         warn(`块类型“${block.kind}”不在约定类型中，已按说明块保存`);
@@ -789,9 +846,27 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
       return onEvent({ type: 'thought', text: thought, line: lineNo });
     }
     const h2 = /^##\s+(.+)$/.exec(text);
-    if (h2 && !text.startsWith('###')) return openPart(h2[1].trim());
+    if (h2 && !text.startsWith('###')) {
+      // The deliverable's group headings carry no content of their own.
+      if (GROUP_TITLES.has(h2[1].trim())) {
+        warn(`分组标题“${h2[1].trim()}”已忽略`);
+        flushItem();
+        flushParagraph();
+        part = sub = table = null;
+        return;
+      }
+      return openPart(h2[1].trim());
+    }
     const h3 = /^###\s+(.+)$/.exec(text);
-    if (h3) return openSub(h3[1].trim());
+    if (h3) {
+      const title = h3[1].trim();
+      // "### 权限校验" (the deliverable numbers it 2.1) is the part itself, never a subsection.
+      if (!part?.section && (PART_TITLES.has(title) || /^逻辑\s+LOG-/i.test(title))) {
+        warn(`“### ${title}”已按部分标题“## ${title}”处理`);
+        return openPart(title);
+      }
+      return openSub(title);
+    }
     if (text.trimStart().startsWith('|')) {
       if (!table) return error('此处不应出现表格');
       if (!table.header) return readHeader(text);
@@ -801,6 +876,10 @@ export function createFsdWireParser({ onEvent = () => {} } = {}) {
     const kv = /^(说明|注|触发|SAP对象|依据|标题|括注|引导)：(.*)$/.exec(text);
     if (kv) return placeProp(kv[1], kv[2].trim());
     const li = ITEM.exec(text);
+    if (li && paragraph) {
+      warn('“业务背景与痛点”下的列表已并入段落', lineNo);
+      return void paragraph.push(text);
+    }
     if (li) {
       item = { text: li[2], line: lineNo, ordered: li[1] !== '-' };
       return;

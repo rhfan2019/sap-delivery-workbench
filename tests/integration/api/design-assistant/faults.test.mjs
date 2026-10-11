@@ -258,6 +258,31 @@ test('MODEL-02 absolute timeout rejects never-completing transport and prevents 
     await f.pool.end();
   }
 });
+test('MODEL-02 a run deadline closes the open call and records TIMEOUT everywhere', async () => {
+  const f = await setup({ run_active_time: 1500 });
+  try {
+    await assert.rejects(() =>
+      executeRun(f.pool, f.lease, {
+        model: async ({ signal }) =>
+          new Promise((_, reject) =>
+            signal.addEventListener('abort', () => reject(signal.reason), { once: true }),
+          ),
+      }),
+    );
+    const op = (
+      await f.pool.query('SELECT status,error FROM app.fsd_v1_operation WHERE run_id=$1', [
+        f.lease.id,
+      ])
+    ).rows[0];
+    assert.equal(op.status, 'UNKNOWN');
+    assert.equal(op.error.code, 'TIMEOUT');
+    const run = (await f.pool.query('SELECT state FROM app.fsd_v1_run WHERE id=$1', [f.lease.id]))
+      .rows[0];
+    assert.equal(run.state.error.code, 'TIMEOUT');
+  } finally {
+    await f.pool.end();
+  }
+});
 test('MODEL-02 provider truncation cannot publish fragments or trigger unlimited continuation', async () => {
   const f = await setup();
   let calls = 0;

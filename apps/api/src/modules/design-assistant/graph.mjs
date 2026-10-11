@@ -62,6 +62,8 @@ export function buildGraph(
   };
   // Output the model can correct on one more attempt: malformed JSON or references to evidence it was not given.
   const repairable = new Set(['INVALID_OUTPUT', 'UNKNOWN_REFERENCE', 'OUT_OF_SCOPE']);
+  // Write jobs (by key) already rewritten once; the content check does not rewrite them again.
+  const rewritten = new Set();
   const current = () => tx((db) => guard(db, lease, { allowWaiting: true }));
   // part (FSD wire calls): { key, parts?, section?, outline?, draft?, reason?, issues?,
   // problems?, check? }; key separates the parallel calls of one node in the ledger.
@@ -79,11 +81,10 @@ export function buildGraph(
     };
     const accept = (output) => {
       const parsed = parseFsdWire(output.text);
-      return {
-        text: output.text,
-        parsed,
-        problems: [...parsed.errors, ...(part?.check?.(parsed) ?? [])],
-      };
+      // Only a missing part or section (check) is worth rewriting the call; lines the parser
+      // could not place are listed and left to the content check after the merge.
+      const missing = part?.check?.(parsed) ?? [];
+      return { text: output.text, parsed, missing, problems: [...parsed.errors, ...missing] };
     };
     let repairReason = null;
     for (let repair = 0; repair <= r.assets.budget.format_repairs; repair++) {
@@ -165,12 +166,14 @@ export function buildGraph(
               usage: result.usage,
             });
           value = accept(result.output);
-          // The last attempt is kept with its problems listed: the document check after the
-          // merge decides what is still unusable, instead of discarding the whole part here.
-          if (value.problems.length && repair < r.assets.budget.format_repairs)
+          // A part is rewritten at most once in total: here when it is missing, otherwise by the
+          // content check after the merge. Line-level format problems never cost a rewrite
+          // (one FSD spent 3.5 min rewriting four parts and still kept their problems).
+          if (value.missing.length && repair < r.assets.budget.format_repairs)
             throw Object.assign(fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION', 422, value.problems), {
               usage: result.usage,
             });
+          if (repair > 0 && part?.key) rewritten.add(part.key);
           // Remaining problems, and structure the parser repaired itself, stay inspectable.
           if (value.problems.length || value.parsed.warnings.length)
             await tx((db) =>
@@ -695,7 +698,8 @@ export function buildGraph(
         });
         ({ doc: draft, changed } = mergeFsdPatch(base, answer.parsed.doc, answer.parsed.deletions));
       }
-      // Content-model check; each failing part is rewritten once with its problems listed.
+      // Content-model check; each failing part not yet rewritten is rewritten once with its
+      // problems listed. What still fails afterwards stops the run below instead of looping.
       let check = validateFsdReport(draft);
       const failing = new Map();
       for (const e of check.ok ? [] : check.errors) {
@@ -704,6 +708,7 @@ export function buildGraph(
         failing.set(job.key, { job, problems: [...(failing.get(job.key)?.problems ?? []), e] });
       }
       for (const { job, problems } of failing.values()) {
+        if (rewritten.has(job.key)) continue;
         const fixed = await call('FsdWrite', s, {
           ...job,
           key: job.key + ':fix',

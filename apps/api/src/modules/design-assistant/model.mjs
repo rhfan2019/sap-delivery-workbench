@@ -94,7 +94,9 @@ export function structuredPrompt({ kind, r, t, repair, part }) {
   const facts =
     '\n目标系统：' +
     (t.target?.sap_disabled
-      ? '本次未接入 SAP，无法查询系统。表、字段、状态值等系统结论一律按通用 SAP 知识写，依据标“推断”，并在未决事项中列为“待 SAP 核实”（阻断=否）。不得声称已核实。'
+      ? // Asking each part to list its own open items made the model write 待核实 notes into
+        // 依据, 括注 and the text of parts that have no 未决事项 (rejected, then rewritten).
+        '本次未接入 SAP，无法查询系统。表、字段、状态值等系统结论一律按通用 SAP 知识写，依据标“推断”，不得声称已核实。编写“未决事项”时，把标“推断”的系统结论列为“待 SAP 核实”（阻断=否）；其他部分不写核实说明。'
       : JSON.stringify({ target_ref: t.target?.target_ref, product: t.target?.product ?? null })) +
     '\n可引用的证据编号（只能取自此列表，用户答复与通用知识不是证据）：' +
     JSON.stringify(aliases.map(([, a]) => a)) +
@@ -236,7 +238,8 @@ export async function configuredModel({ kind, context, signal, repair, part }) {
     c,
     openKey(row.secret_cipher, t.organization_id, row.id),
     payload,
-    { signal, maxResponseBytes: 1048576 },
+    // The run budget's model_call_timeout (in signal) bounds the call, not the transport default.
+    { signal, maxResponseBytes: 1048576, deadlineMs: null },
   );
   const checked = interpretResponse(c.protocol, response.status, response.data);
   if (checked.status !== 'passed')

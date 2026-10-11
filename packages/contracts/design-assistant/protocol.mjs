@@ -9,7 +9,9 @@ export const PHASES = [
 ];
 export const API_VERSION = 'fsd-v1';
 export const DEFAULT_BUDGET = Object.freeze({
-  model_call_timeout: 300000,
+  // Equal to run_active_time: one model call may use the whole run (thinking models drafting
+  // an FSD went silent past 300 s).
+  model_call_timeout: 1800000,
   tool_call_timeout: 45000,
   model_output_limit: 16000,
   run_model_calls: 80,

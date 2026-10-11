@@ -73,10 +73,31 @@ export async function executeRun(
     attempt_id: lease.attempt_id,
     thread_id: lease.thread_id,
   };
-  const finish = async (error = null) =>
-    transaction(pool, async (db) => {
+  const finish = async (error = null) => {
+    // An absolute deadline (call or run budget) rejects with a DOMException that carries no
+    // code; mapped once so the chat, the run state and the attempt record the same TIMEOUT.
+    if (error?.name === 'TimeoutError') error = fault('TIMEOUT', 'MODEL');
+    return transaction(pool, async (db) => {
       const { t, r } = await guard(db, lease, { allowWaiting: true });
       await chargeActive(db, t, r);
+      // The graph rejects on abort before its nodes settle their calls; a call still RESERVED
+      // here never will be, so it is closed with the run's error and stays inspectable.
+      if (error) {
+        const open = (
+          await db.query(
+            "UPDATE app.fsd_v1_operation SET status='UNKNOWN',error=$2,settled_at=clock_timestamp() WHERE run_id=$1 AND status='RESERVED' RETURNING id",
+            [r.id, safeError(error)],
+          )
+        ).rows;
+        for (const { id } of open)
+          await event(db, t.id, r.id, 'operation.failed', {
+            operation_id: id,
+            error_code: safeError(error).code,
+            error_origin: safeError(error).error_origin,
+            usage_known: false,
+            cost: null,
+          });
+      }
       if (r.state.chat_turn_id) {
         const turn = (
           await db.query('SELECT terminal FROM app.fsd_v1_chat_turn WHERE id=$1', [
@@ -98,14 +119,7 @@ export async function executeRun(
               ? (({ code }) => ({
                   code,
                   message: failureMessages[code] ?? '本轮执行失败，请重试。',
-                }))(
-                  // An absolute deadline rejects with a DOMException that carries no code.
-                  safeError(
-                    error?.name === 'TimeoutError'
-                      ? { code: 'TIMEOUT', error_origin: 'MODEL' }
-                      : error,
-                  ),
-                )
+                }))(safeError(error))
               : decision
                 ? { decision }
                 : {},
@@ -176,6 +190,7 @@ export async function executeRun(
         ]);
       }
     });
+  };
   try {
     const predecessor = (
       await pool.query(

@@ -179,6 +179,8 @@ export async function requestModel(
   {
     signal: callerSignal,
     maxResponseBytes = 262144,
+    // null leaves the deadline to the caller's signal (a run budget of its own).
+    deadlineMs = MODEL_REQUEST_TIMEOUT_MS,
     modelMetadata = false,
     resolve = lookup,
     request: send = https.request,
@@ -190,7 +192,7 @@ export async function requestModel(
     payload,
     callerSignal,
     resolve,
-    MODEL_REQUEST_TIMEOUT_MS,
+    deadlineMs,
     modelMetadata,
     send,
   );
