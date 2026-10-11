@@ -1,6 +1,6 @@
 # abap-fsd-agent 重构实施计划
 
-> 2026-10-11。状态：已确认（第 9 节五项均按建议执行）。准备阶段、阶段 A、阶段 B 已完成；下一步阶段 C。依据：[方向决策](../architecture/2026-10-11-fsd-assistant-direction-decision.md)、[目录与依赖契约 1.3](../architecture/repository-contract.md) 第 3.1 节、系统指令（已迁入 `apps/api/src/modules/abap-fsd-agent/prompts/system.md`）。计划确认前不改代码。
+> 2026-10-11。状态：已确认（第 9 节五项均按建议执行）。准备阶段、阶段 A、阶段 B、阶段 C 已完成（修订闭环待浏览器验证）；下一步阶段 D 与验收。依据：[方向决策](../architecture/2026-10-11-fsd-assistant-direction-decision.md)、[目录与依赖契约 1.3](../architecture/repository-contract.md) 第 3.1 节、系统指令（已迁入 `apps/api/src/modules/abap-fsd-agent/prompts/system.md`）。计划确认前不改代码。
 
 ## 1. 目标与完成标准
 
@@ -138,18 +138,18 @@ apps/api/src/modules/abap-fsd-agent/
 
 ### 4.6 API（`/api/projects/:projectId/development-items/:itemId/abap-fsd-agent`）
 
-| 方法与路径                                    | 用途                                 |
-| --------------------------------------------- | ------------------------------------ |
-| `GET /sessions`、`POST /sessions`             | 会话列表与新建                       |
-| `GET /sessions/:id`                           | 会话详情：消息、当前文档、未解决批注 |
-| `POST /sessions/:id/messages`                 | 发送消息或答复题目，启动一轮         |
-| `GET /sessions/:id/events`                    | SSE：模型输出、工具步骤、文档更新    |
-| `POST /sessions/:id/cancel`                   | 取消当前轮次                         |
-| `GET/POST /sessions/:id/comments`             | 批注列表、新建、标记解决             |
-| `GET /sessions/:id/documents`                 | 版本列表；`/:version` 取全文与差异   |
-| `POST /sessions/:id/documents/:version/label` | 打标签（如定稿）                     |
-| `POST /sessions/:id/attachments`              | 上传附件                             |
-| `GET /sessions/:id/export`                    | 导出 Markdown（Word 导出见 9.3）     |
+| 方法与路径                                     | 用途                                 |
+| ---------------------------------------------- | ------------------------------------ |
+| `GET /sessions`、`POST /sessions`              | 会话列表与新建                       |
+| `GET /sessions/:id`                            | 会话详情：消息、当前文档、未解决批注 |
+| `POST /sessions/:id/messages`                  | 发送消息或答复题目，启动一轮         |
+| `GET /sessions/:id/events`                     | SSE：模型输出、工具步骤、文档更新    |
+| `POST /sessions/:id/cancel`                    | 取消当前轮次                         |
+| `GET/POST /sessions/:id/comments`              | 批注列表、新建、标记解决             |
+| `GET /sessions/:id/documents`                  | 版本列表；`/:version` 取全文与差异   |
+| `POST /sessions/:id/documents/:version/labels` | 打标签（如定稿）                     |
+| `POST /sessions/:id/attachments`               | 上传附件                             |
+| `GET /sessions/:id/export`                     | 导出 Markdown（Word 导出见 9.3）     |
 
 阶段 B 验收：单元测试覆盖循环停止条件、工具白名单、`edit_document` 匹配规则、修改声明比对、`check_document`；集成测试用模拟模型跑通“提问 → 答复 → 出稿 → 批注修订”。
 
@@ -214,9 +214,18 @@ apps/api/src/modules/abap-fsd-agent/
 
 - 新模块 `apps/api/src/modules/abap-fsd-agent/`：`routes.mjs`（HTTP 与 SSE）、`loop.mjs`（智能体循环）、`context.mjs`（系统指令、会话事实、历史）、`events.mjs`（进程内事件缓冲，支持断线续传）、`document.mjs`（章节拆分、局部替换、修改声明比对）、`repository.mjs`、`tools/`（SAP 只读工具、文档/出题/批注工具、`check_document`）、`prompts/system.md`。
 - 迁移 `1791730000000_abap-fsd-agent.sql` 新建 7 张表；models 模块新增 `resolveAgentModel`、`streamChat`（OpenAI 兼容协议的流式工具调用）；sap 模块新增 `resolveProjectSap`（按项目 DEV 配置），`connectMcp` 支持更长的连接时限；删除不再使用的 `resolveReadEnvironment`。
-- API 与第 4.6 节基本一致；实际路径：会话事件为 `GET /sessions/:id/turns/:turnId/events?after=n`，标签为 `PUT /sessions/:id/documents/:version/labels`，附件以 JSON（Base64）上传，单文件上限 10MB。
+- API 与第 4.6 节基本一致；实际路径：会话事件为 `GET /sessions/:id/turns/:turnId/events?after=n`，标签为 `POST /sessions/:id/documents/:version/labels`，附件以 JSON（Base64）上传，单文件上限 10MB。
 - 验证：单元测试新增 6 个文件、集成测试新增 3 项（假模型跑通提问→答复→出稿→批注修订→定稿标签→导出、未声明修改识别、并发占用与取消、访问控制）；`npm run check`、单元 73 项、隔离集成 36 项通过。
 - 真实环境探针（临时脚本，未入库）：
   - SAP（`.env` 中的 DEV 连接）：13 个白名单工具全部可用；`searchObject`、`ddicElement`、`runQuery`（TVAK、DD07T）、`tableContents` 均在约 1 秒内返回；写语句被拒绝。发现 EBAN 表定义原始 JSON 达 24,028 字符，超过截断上限，已改为“一行一字段”的清单（6,479 字符）；发现 `tableContents` 也接受 `sqlQuery`，已加同样的 SELECT 限制。
   - 默认模型（SiliconFlow DeepSeek-V4-Pro）：工具调用与 `reasoning_content` 回传均正常。速度：开启深度思考时一次工具决策 46 秒（389 个输出 token，其中思考 311 个）；关闭思考时 7 秒。可通过 `ABAP_FSD_AGENT_THINKING=off` 关闭思考，`ABAP_FSD_AGENT_MAX_OUTPUT_TOKENS` 设置单次输出上限。
 - 已知限制：主库尚未执行迁移；前端尚未改接（阶段 C）；S/4 中 VBUP 等兼容对象仍可读取，字段核对不会把它们判为不存在。
+
+### 阶段 C（2026-10-11～12）
+
+- 主库已执行迁移（用户授权）。前端数据层改为 `useAgentSession.ts` 与纯映射 `session-model.mjs`；保留页面布局、对话流、输入框、附件、决策卡片、执行步骤与说明书阅读器；新增 `DocumentPanel.vue`（版本、定稿标签、导出、改动章节与未声明修改、划词批注、批注列表、让助手处理批注）。删除 `useAssistantRun.ts`、`WorkflowPanel.vue`、`workflowActions.*` 及对应测试。
+- 后端配合：SSE 发送完整事件以复用断线重连；会话列表附带开发项详情与默认模型名；新增附件文本预览；标签接口改为 POST；消息带作者名、版本带轮次编号。
+- 浏览器联调（DEV-0028，组织默认模型 DeepSeek-V4-Pro，深度思考开启，真实 SAP）：第一轮查 SAP 后提问 6 分 15 秒（33 次工具调用、13 次失败、输入 34.5 万 token）；据此在系统指令与工具描述中补充 SQL 写法、域文本表、参数用法和并行调用要求；第二轮补问 5 分 51 秒（31 次调用仅 10 次往返、5 次失败）；第三轮出稿 5 分 27 秒（11,908 字符，自动校验通过）。助手合计约 17.5 分钟。
+- 已验证：清单入口、设计页加载、流式输出、执行步骤、提问卡片与提交、服务重启后中断轮次的提示、说明书卡片、成果面板、阅读器、划词弹出批注表单。未验证：批注修订闭环、定稿标签与导出（用户暂停本轮）。
+- 事故：重启服务加载新提示词时打断了用户刚提交的答复轮次；此后重启前先征得用户同意。
+- 待改进：第 1 版不应显示“本版改动章节”；阅读器在窄面板中拥挤；执行步骤列表过长、失败步骤显示原始错误；较早轮次的工具结果应进一步压缩以降低输入 token。

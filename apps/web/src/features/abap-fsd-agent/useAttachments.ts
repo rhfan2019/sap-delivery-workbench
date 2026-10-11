@@ -32,10 +32,10 @@ export function useAttachments() {
           if (disposed) return;
           if (
             attachments.value.length >= 10 ||
-            file.size > 20 * MB ||
+            file.size > 10 * MB ||
             attachments.value.reduce((n, a) => n + a.file.size, 0) + file.size > 50 * MB
           ) {
-            attachmentError.value = '最多添加 10 个附件，单个不超过 20 MB，总计不超过 50 MB。';
+            attachmentError.value = '最多添加 10 个附件，单个不超过 10 MB，总计不超过 50 MB。';
             continue;
           }
           const contentHash = Array.from(

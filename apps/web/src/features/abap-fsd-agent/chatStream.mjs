@@ -59,11 +59,7 @@ export async function reconnectingChatStream(
                 if (event.seq !== cursor + 1) throw Error('流事件不连续。');
                 cursor = event.seq;
                 output.enqueue(encoder.encode(`id: ${cursor}\ndata: ${JSON.stringify(event)}\n\n`));
-                if (
-                  ['run.completed', 'run.failed', 'run.cancelled', 'run.waiting_user'].includes(
-                    event.type,
-                  )
-                ) {
+                if (event.type === 'turn.end') {
                   terminal = true;
                   break;
                 }

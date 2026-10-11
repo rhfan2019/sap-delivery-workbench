@@ -1,29 +1,20 @@
-export type FsdPhase = 'analysis' | 'draft_review' | 'refining' | 'final_review' | 'completed';
-export type FsdWorkflowCommand = 'approve_draft' | 'approve_final' | 'revise' | 'rollback';
-export interface FsdWorkflow {
-  phase: FsdPhase;
-  version: string;
-  activeRevisionId: string | null;
-  activeRevision: number | null;
-  activeContentHash: string | null;
-  activeArtifact?: AgentArtifact | null;
-  activeRunId: string | null;
-  draftApproval: { revisionId: string; contentHash: string; actorId: string; at: string } | null;
-  finalApproval: FsdWorkflow['draftApproval'];
-  baselineId: string | null;
-  updatedAt: string;
-  updatedBy: string | null;
-  revisions: {
-    id: string;
-    revision: number;
-    contentHash: string;
-    kind: string;
-    createdAt: string;
-  }[];
+// Shapes shared by the abap-fsd-agent API and the browser.
+
+export interface AgentStep {
+  stepId: string;
+  label: string;
+  status: 'running' | 'succeeded' | 'failed' | 'skipped';
+  attempt: number;
+  summary: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+  dependencies?: string[];
 }
+
+// ask_user questions as the decision card renders them.
 export interface AgentDecision {
   id: string;
-  kind: 'type' | 'business';
+  kind: 'business';
   message: string;
   questions: {
     id: string;
@@ -32,102 +23,67 @@ export interface AgentDecision {
     options: { value: string; label: string; description: string; recommended?: boolean }[];
   }[];
 }
-export interface AgentSelection {
-  workspaceStage?: 'design' | 'development';
-  projectId?: string | null;
-  itemId?: string | null;
-  itemRowVersion?: string | null;
-  systemId?: string | null;
-  qasSystemId?: string | null;
-  environment?: 'DEV' | 'QAS' | 'PRD';
-  consultantVersion?: string;
+
+export interface DocumentComparison {
+  actual: { heading: string; change: 'added' | 'modified' | 'removed' }[];
+  undeclared: string[];
+  unapplied: string[];
 }
-export interface AgentMessage {
-  steps?: AgentStep[];
-  rendered?: {
-    markdown: string;
-    contractValid: boolean;
-    sourceHash: string;
-    rendererVersion: string;
-  };
-  decision?: AgentDecision;
-  answers?: { question: string; label: string; value?: string; description?: string }[];
-  answeredAt?: string;
+
+// One saved FSD version, as opened in the document panel.
+export interface AgentArtifact {
+  id: string;
+  revision: number;
+  markdown: string;
+  labels?: string[];
+  comparison?: DocumentComparison;
   createdAt?: string;
-  finishedAt?: string | null;
-  authorName?: string | null;
-  authorId?: string | null;
-  clockOffsetMs?: number;
-  artifact?: AgentArtifact;
+}
+
+export interface AgentMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   status: 'completed' | 'failed' | 'cancelled' | 'waiting_user';
-  action?: 'dialogue' | 'draft';
-  error?: string;
-  errorCode?: string;
-  finishReason?: string | null;
-  outputLimit?: number | null;
+  createdAt?: string;
+  finishedAt?: string | null;
+  authorName?: string | null;
   model?: string;
   runId?: string;
+  steps?: AgentStep[];
+  decision?: AgentDecision;
+  answers?: { question: string; label: string }[];
+  artifact?: AgentArtifact;
+  error?: string;
+  errorCode?: string;
+  clockOffsetMs?: number;
 }
-export interface SystemProfile {
-  systemId: string | null;
-  discoveryStatus: string;
-  identificationSource: string;
-  profile: {
-    product: string | null;
-    productVersion: string | null;
-    abapRelease: string | null;
-    deployment: string | null;
-  };
-  reason?: string;
-  question: string | null;
-  consultantStatement?: string;
-  evidence: unknown[];
-}
-export interface AgentStep {
-  dependencies?: string[];
-  stepId: string;
-  label: string;
-  status: string;
-  attempt: number;
-  summary: string;
-  startedAt: string | null;
-  finishedAt: string | null;
-}
-export interface AgentArtifact {
-  runId?: string;
+
+export interface AgentSession {
   id: string;
-  spec: Record<string, unknown>;
-  markdown: string;
-  contentHash: string;
-  revision: number;
+  title: string;
+  activeTurnId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  documentVersion?: number | null;
 }
-export interface RunReceipt {
-  createdAt?: string;
-  serverTime?: string;
-  action?: 'dialogue' | 'draft';
-  conversationId?: string;
-  plan?: { type: { riceType: string | null; reason: string }; steps: AgentStep[] };
-  runId: string;
-  systemProfile?: SystemProfile;
-  systemTargets?: Record<
-    'DEV' | 'QAS',
-    { systemId: string | null; environment: string; purpose: string; profile: SystemProfile }
-  >;
-  association?: {
-    projectId: string;
-    itemId: string | null;
-    itemCode?: string;
-    rowVersion?: string;
-  };
-  manifest?: {
-    included: string[];
-    excluded: { id: string; reason: string }[];
-    bytes: number;
-    budgetBytes: number;
-    rules: { file: string; version: string; sha256: string }[];
-  };
-  warnings?: string[];
+
+export interface AgentComment {
+  id: string;
+  anchorText: string;
+  anchorVersion: number;
+  body: string;
+  status: 'open' | 'resolved';
+  replies: { body: string; by: string; at: string }[];
+  authorName: string;
+  createdAt: string;
+}
+
+export interface AgentAttachment {
+  id: string;
+  fileName: string;
+  size: number;
+  parseState: string;
+  warnings: string[];
+  text?: string;
 }

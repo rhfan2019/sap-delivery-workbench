@@ -71,7 +71,7 @@ async function setup() {
     const { turnId } = res.json();
     const events = await call('GET', `/sessions/${sessionId}/turns/${turnId}/events`);
     const end = events.body.split('\n\n').find((frame) => frame.includes('event: turn.end'));
-    return { turnId, events: events.body, end: JSON.parse(end.split('data: ')[1]) };
+    return { turnId, events: events.body, end: JSON.parse(end.split('data: ')[1]).data };
   };
   return { f, model, call, send };
 }
@@ -170,7 +170,7 @@ test('a session goes from questions to a draft to a comment-driven revision', as
       200,
     );
     assert.equal(
-      (await call('PUT', `/sessions/${sid}/documents/2/labels`, { labels: ['定稿'] })).status,
+      (await call('POST', `/sessions/${sid}/documents/2/labels`, { labels: ['定稿'] })).status,
       200,
     );
     const versions = (await call('GET', `/sessions/${sid}/documents`)).json();

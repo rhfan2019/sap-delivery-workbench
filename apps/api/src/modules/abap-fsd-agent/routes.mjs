@@ -60,11 +60,34 @@ export function registerAbapFsdAgent(app, pool, organizationId, requireSession, 
 
   app.get(base + '/sessions', async (req) => {
     await c.authorize(req, pool, false);
+    const item = req.work.item;
+    let model = null;
+    try {
+      model = (await (deps.resolveModel ?? resolveAgentModel)(pool, organizationId)).config.name;
+    } catch {}
     return {
-      item: { code: req.work.scope.itemCode, name: req.work.scope.itemName },
+      project: { name: req.work.scope.projectName },
+      item: {
+        code: item.code,
+        name: item.name,
+        module: item.module,
+        kind: item.kind,
+        summary: item.summary ?? '',
+        acceptance: item.acceptance ?? '',
+      },
       canEdit: req.work.canEdit,
+      model,
       sessions: await repo.listSessions(pool, req.work.scope),
     };
+  });
+
+  app.get(base + '/sessions/:sessionId/attachments/:attachmentId', async (req) => {
+    const s = await session(req, false);
+    const found = (await repo.listAttachments(pool, s.id, { withText: true })).find(
+      (a) => a.id === req.params.attachmentId,
+    );
+    if (!found) throw failure(404, '附件不存在。');
+    return found;
   });
 
   app.post(base + '/sessions', async (req, reply) => {
@@ -83,6 +106,7 @@ export function registerAbapFsdAgent(app, pool, organizationId, requireSession, 
       turns: await repo.listTurns(pool, s.id),
       toolCalls: await repo.listToolCalls(pool, s.id),
       document: (await repo.latestDocument(pool, s.id)) ?? null,
+      documents: await repo.listDocuments(pool, s.id),
       comments: await repo.listComments(pool, s.id),
       attachments: await repo.listAttachments(pool, s.id),
     };
@@ -162,10 +186,9 @@ export function registerAbapFsdAgent(app, pool, organizationId, requireSession, 
       Connection: 'keep-alive',
       'X-Content-Type-Options': 'nosniff',
     });
+    // data carries the whole event so clients can resume by sequence.
     const send = (event) =>
-      reply.raw.write(
-        `id: ${event.seq}\nevent: ${event.type}\ndata: ${JSON.stringify(event.data)}\n\n`,
-      );
+      reply.raw.write(`id: ${event.seq}\nevent: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
     let keepAlive;
     const unsubscribe = subscribe(req.params.turnId, after, (event) => {
       if (event) return send(event);
@@ -237,7 +260,7 @@ export function registerAbapFsdAgent(app, pool, organizationId, requireSession, 
     return doc;
   });
 
-  app.put(base + '/sessions/:sessionId/documents/:version/labels', async (req) => {
+  app.post(base + '/sessions/:sessionId/documents/:version/labels', async (req) => {
     const s = await session(req, true);
     const labels = Array.isArray(req.body?.labels)
       ? [...new Set(req.body.labels.map((l) => String(l).trim()).filter(Boolean))].slice(0, 10)

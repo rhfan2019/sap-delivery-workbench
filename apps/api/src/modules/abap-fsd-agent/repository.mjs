@@ -91,8 +91,10 @@ export async function appendMessage(
 export async function listMessages(db, sessionId) {
   return (
     await db.query(
-      `SELECT id,turn_id AS "turnId",seq,role,content,payload,created_at AS "createdAt"
-       FROM ${T}message WHERE session_id=$1 ORDER BY seq`,
+      `SELECT m.id,m.turn_id AS "turnId",m.seq,m.role,m.content,m.payload,m.created_at AS "createdAt",
+        u.display_name AS "authorName"
+       FROM ${T}message m LEFT JOIN app.app_user u ON u.id=m.created_by
+       WHERE m.session_id=$1 ORDER BY m.seq`,
       [sessionId],
     )
   ).rows;
@@ -158,7 +160,7 @@ export async function getDocument(db, sessionId, version) {
 export async function listDocuments(db, sessionId) {
   return (
     await db.query(
-      `SELECT version,labels,changes,comparison,created_at AS "createdAt",length(markdown) AS "length"
+      `SELECT version,turn_id AS "turnId",labels,changes,comparison,created_at AS "createdAt",length(markdown) AS "length"
        FROM ${T}document WHERE session_id=$1 ORDER BY version DESC`,
       [sessionId],
     )

@@ -17,6 +17,14 @@ export const SAP_TOOLS = [
   'usageReferences',
   'abapDocumentation',
 ];
+// Usage notes appended to the server's terse descriptions; the model sees them on every call.
+const HINTS = {
+  ddicElement: 'path 只放一个对象名，例如 LIKP；返回字段清单。多个表请并行发出多个调用。',
+  runQuery:
+    '只允许单表 SELECT：不用表别名、JOIN、子查询；只写表中真实存在的字段。域文本在 DD07T.DDTEXT，DD07L 没有 DDTEXT。',
+  tableContents: '读取小表的前几行，用于了解配置；需要条件或字段时用 runQuery。',
+  searchObject: 'objType 可省略，或用 TABL、PROG、FUNC、CLAS 等具体类型，不要用 *。',
+};
 const MAX_ROWS = 100;
 const MAX_SOURCE_LINES = 400;
 const MAX_RESULT_CHARS = 24000;
@@ -70,7 +78,7 @@ export async function openSap(
     type: 'function',
     function: {
       name,
-      description: offered.get(name).description ?? name,
+      description: [offered.get(name).description ?? name, HINTS[name]].filter(Boolean).join(' '),
       parameters: schemaOf(offered.get(name)),
     },
   }));

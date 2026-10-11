@@ -12,10 +12,16 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { visibleOutline, type OutlineItem } from './outline.mjs';
 import type { AgentArtifact } from '@sap-delivery-workbench/contracts/abap-fsd-agent/types';
 import ChatMarkdown from './ChatMarkdown.vue';
-const props = withDefaults(defineProps<{ artifact: AgentArtifact; base?: string }>(), {
-  base: '/admin/abap-fsd-agent',
+const props = withDefaults(defineProps<{ artifact: AgentArtifact; closable?: boolean }>(), {
+  closable: true,
 });
-const emit = defineEmits<{ close: [] }>();
+// `select` reports text the reader selects in the document, for adding a comment.
+const emit = defineEmits<{ close: []; select: [text: string] }>();
+function selected() {
+  const selection = window.getSelection();
+  const text = selection?.toString().trim() ?? '';
+  if (text && body.value?.contains(selection!.anchorNode)) emit('select', text);
+}
 const body = ref<HTMLElement | null>(null),
   nav = ref<HTMLElement | null>(null);
 const headings = ref<OutlineItem[]>([]),
@@ -87,20 +93,13 @@ watch(
   },
 );
 onBeforeUnmount(() => cancelAnimationFrame(scrollFrame));
-function download(format: 'md' | 'json') {
-  const a = props.artifact;
+function download() {
   const url = URL.createObjectURL(
-    new Blob([format === 'md' ? a.markdown : JSON.stringify(a.spec, null, 2)], {
-      type: format === 'md' ? 'text/markdown;charset=utf-8' : 'application/json',
-    }),
+    new Blob([props.artifact.markdown], { type: 'text/markdown;charset=utf-8' }),
   );
   const link = document.createElement('a');
   link.href = url;
-  link.download =
-    (a.spec.kind === 'development' ? '开发内容-版本' : '报表功能说明书-版本') +
-    a.revision +
-    '.' +
-    format;
+  link.download = `功能说明书-第${props.artifact.revision}版.md`;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
@@ -111,11 +110,12 @@ function download(format: 'md' | 'json') {
     aria-label="已保存功能说明书"
   >
     <ArtifactHeader>
-      <FileText :size="17" /><ArtifactTitle>{{
-        artifact.spec.kind === 'development' ? '开发内容' : '功能说明书'
-      }}</ArtifactTitle
-      ><span>版本 {{ artifact.revision }}</span
-      ><ArtifactActions
+      <FileText :size="17" /><ArtifactTitle>功能说明书</ArtifactTitle
+      ><span>第 {{ artifact.revision }} 版</span
+      ><span v-for="label in artifact.labels ?? []" :key="label" class="spec-label">{{
+        label
+      }}</span
+      ><ArtifactActions v-if="closable"
         ><ArtifactAction label="关闭说明书" @click="emit('close')"><X :size="18" /></ArtifactAction
       ></ArtifactActions>
     </ArtifactHeader>
@@ -127,10 +127,9 @@ function download(format: 'md' | 'json') {
         @click="showOutline = !showOutline"
         >目录</Button
       >
-      <span>已保存版本 · 确认状态见业务阶段</span
-      ><Button variant="ghost" size="sm" @click="download('md')"
+      <slot name="actions" /><Button variant="ghost" size="sm" @click="download"
         ><Download :size="14" />Markdown</Button
-      ><Button variant="ghost" size="sm" @click="download('json')">JSON</Button>
+      >
     </div>
     <div class="spec-reading">
       <nav v-show="showOutline" ref="nav" class="spec-outline" aria-label="说明书章节目录">
@@ -162,19 +161,14 @@ function download(format: 'md' | 'json') {
           </Button>
         </div>
       </nav>
-      <div ref="body" class="spec-body" @scroll.passive="onScroll">
+      <div ref="body" class="spec-body" @scroll.passive="onScroll" @mouseup="selected">
+        <slot />
         <ChatMarkdown
           :key="artifact.id"
           :content="artifact.markdown"
           :heading-prefix="'fsd-' + artifact.id"
           @outline="receiveOutline"
         />
-        <details>
-          <summary>查看核验证据</summary>
-          <a :href="'/api' + base + '/artifacts/' + artifact.id" target="_blank" rel="noopener"
-            >打开版本、上下文及证据 JSON</a
-          >
-        </details>
       </div>
     </div>
   </Artifact>
@@ -196,6 +190,12 @@ function download(format: 'md' | 'json') {
   font-size: 13px;
   border-bottom: 1px solid #edf0f3;
   color: #334155;
+}
+.spec-label {
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #047857;
+  padding: 1px 8px;
 }
 .spec-panel header span {
   font-size: 11px;

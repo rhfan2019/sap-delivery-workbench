@@ -67,15 +67,6 @@ function elapsed(message: AgentMessage, running: boolean) {
     ? `耗时 ${Math.floor(seconds / 60)}分${seconds % 60}秒`
     : '耗时未记录';
 }
-const structured = (content: string) => /^\s*(?:```(?:json)?\s*)?[\[{]/i.test(content);
-function logs(base: string | undefined, id: string) {
-  return (
-    '/workspace/assistant-runs/' +
-    id +
-    '?base=' +
-    encodeURIComponent(base || '/admin/abap-fsd-agent')
-  );
-}
 async function copy(text: string) {
   try {
     await navigator.clipboard.writeText(text);
@@ -100,23 +91,23 @@ async function copy(text: string) {
         :description="
           development
             ? '依据已保存的设计，讨论技术方案与代码。'
-            : '从业务需求开始，逐步形成可核验的功能说明书。'
+            : '描述需求或上传资料，助手会查询 SAP、提出必要问题并编写 FSD。'
         "
       >
         <template #icon><Sparkles class="size-8" /></template>
       </ConversationEmptyState>
       <div v-if="!messages.length" class="flex flex-wrap justify-center gap-2">
         <Suggestion
-          suggestion="请帮我梳理这个开发项的需求，先找出需要确认的问题。"
+          suggestion="请分析这个开发项的需求，先找出需要客户确认的问题。"
           :disabled="readonly"
           @click="emit('suggestion', $event)"
           >梳理需求与待确认问题</Suggestion
         >
         <Suggestion
-          suggestion="请根据关联开发项的需求，分析SAP对象与测试场景。"
+          suggestion="需求已经比较清楚，请直接查询 SAP 并起草 FSD 初稿。"
           :disabled="readonly"
           @click="emit('suggestion', $event)"
-          >分析 SAP 对象与测试场景</Suggestion
+          >直接起草 FSD 初稿</Suggestion
         >
       </div>
       <Message
@@ -152,7 +143,6 @@ async function copy(text: string) {
         >
           <span class="break-all">运行编号：{{ message.runId }}</span>
           <Button variant="ghost" size="sm" @click="copy(message.runId)">复制编号</Button>
-          <a :href="logs(base, message.runId)" target="_blank" rel="noopener">查看日志</a>
           <time v-if="message.createdAt">{{
             new Date(message.createdAt).toLocaleString('zh-CN', { hour12: false })
           }}</time>
@@ -167,115 +157,32 @@ async function copy(text: string) {
             {{ message.content }}
           </p>
           <template v-else>
-            <p
-              v-if="
-                !message.artifact &&
-                /\b(?:BAPI_[A-Z0-9_]+|[A-Z]{3,10}-[A-Z]{3,10})\b/.test(message.content)
-              "
-              class="text-xs text-muted-foreground"
-            >
-              本回复包含技术对象候选；未附核验证据的名称、签名及适用性均待 SAP 核验。
-            </p>
-            <section v-if="message.rendered" class="space-y-2">
-              <p>需求讨论阅读稿 · 尚未保存为可确认的 FSD 版本。请继续生成初稿后审阅确认。</p>
-              <a :href="'/api' + base + '/runs/' + message.runId + '/markdown'" download
-                >下载 Markdown 文件</a
-              >
-              <ChatMarkdown :content="message.rendered.markdown" />
-              <details v-if="message.content" class="text-xs text-muted-foreground">
-                <summary>技术详情（原始 JSON）</summary>
-                <pre class="max-h-80 overflow-auto whitespace-pre-wrap break-all">{{
-                  message.content
-                }}</pre>
-              </details>
-            </section>
             <section
-              v-else-if="message.decision"
+              v-if="message.decision && message.status !== 'waiting_user'"
               class="rounded-lg border p-4 text-sm"
               aria-label="业务问答记录"
             >
-              <strong>{{
-                message.answers?.length ? '已回答的业务问题' : '待回答的业务问题'
-              }}</strong>
-              <p v-if="message.status === 'waiting_user'" class="mt-1 text-muted-foreground">
-                请使用下方选项确认，无需逐项输入。
-              </p>
-              <div
-                v-for="q in message.status === 'waiting_user' ? [] : message.decision.questions"
-                :key="q.id"
-                class="mt-3"
-              >
+              <strong>{{ message.answers?.length ? '已回答的问题' : '提出的问题' }}</strong>
+              <div v-for="q in message.decision.questions" :key="q.id" class="mt-3">
                 <p>{{ q.title }}</p>
                 <ul class="my-2 space-y-1 text-muted-foreground">
                   <li v-for="o in q.options" :key="o.value">{{ o.label }} — {{ o.description }}</li>
                 </ul>
-                <p v-if="message.answers?.find((a) => a.question === q.title)" class="font-medium">
-                  回答：{{ message.answers.find((a) => a.question === q.title)?.label }}
+                <p
+                  v-if="message.answers?.find((a) => q.title.startsWith(a.question))"
+                  class="font-medium"
+                >
+                  回答：{{ message.answers.find((a) => q.title.startsWith(a.question))?.label }}
                 </p>
               </div>
-              <time v-if="message.answeredAt" class="text-xs text-muted-foreground">{{
-                new Date(message.answeredAt).toLocaleString('zh-CN')
-              }}</time>
             </section>
-            <Artifact
-              v-else-if="message.action === 'draft' && message.status !== 'waiting_user'"
-              class="w-full shadow-none"
-            >
-              <ArtifactHeader
-                ><div class="flex items-center gap-3">
-                  <FileText class="size-5" /><ArtifactTitle>{{
-                    busy && index === messages.length - 1
-                      ? '正在处理交付任务'
-                      : message.artifact
-                        ? development
-                          ? '开发候选已生成'
-                          : '功能说明书候选已生成'
-                        : '本次交付物尚未完成'
-                  }}</ArtifactTitle>
-                </div></ArtifactHeader
-              >
-              <ArtifactContent class="space-y-3">
-                <ArtifactDescription>{{
-                  busy && index === messages.length - 1
-                    ? generationNote || statusLabel
-                    : message.artifact
-                      ? '结构化校验已通过，可打开审阅后采用到开发项。'
-                      : '已有内容保留，未将不完整草稿发布为正式版本。'
-                }}</ArtifactDescription>
-                <Button
-                  v-if="message.artifact"
-                  variant="outline"
-                  size="sm"
-                  @click="emit('openArtifact', message.artifact)"
-                  >打开{{ development ? '开发内容' : '功能说明书' }} · v{{
-                    message.artifact.revision
-                  }}</Button
-                >
-              </ArtifactContent>
-            </Artifact>
-            <p v-else-if="message.status === 'waiting_user'" class="text-muted-foreground">
-              等待确认 · 请使用下方选项继续
-            </p>
-            <details
-              v-else-if="message.content && structured(message.content)"
-              class="rounded-lg border p-3 text-sm"
-            >
-              <summary>
-                {{
-                  busy && index === messages.length - 1 ? '正在接收结构化内容…' : '技术输出（JSON）'
-                }}
-              </summary>
-              <pre class="max-h-80 overflow-auto whitespace-pre-wrap break-all">{{
-                message.content
-              }}</pre>
-            </details>
             <ChatMarkdown
-              v-else-if="message.content"
+              v-if="message.content"
               :content="message.content"
               :streaming="busy && index === messages.length - 1"
             />
             <div
-              v-else-if="!message.error && message.status !== 'cancelled'"
+              v-else-if="!message.error && message.status !== 'cancelled' && !message.decision"
               class="flex items-center gap-2 text-muted-foreground"
             >
               <LoaderCircle
@@ -284,34 +191,44 @@ async function copy(text: string) {
               />{{
                 busy && index === messages.length - 1
                   ? generationNote || '正在准备回复…'
-                  : '未收到模型正文'
+                  : message.artifact
+                    ? ''
+                    : '本轮没有文字回复'
               }}
             </div>
-            <details
-              v-if="
-                message.action === 'draft' &&
-                message.content &&
-                !message.artifact &&
-                !message.decision
-              "
-              class="text-xs text-muted-foreground"
-            >
-              <summary>查看未完成输出</summary>
-              <ChatMarkdown :content="message.content" />
-            </details>
+            <Artifact v-if="message.artifact" class="w-full shadow-none">
+              <ArtifactHeader
+                ><div class="flex items-center gap-3">
+                  <FileText class="size-5" /><ArtifactTitle
+                    >功能说明书已保存 · 第 {{ message.artifact.revision }} 版</ArtifactTitle
+                  >
+                </div></ArtifactHeader
+              >
+              <ArtifactContent class="space-y-3">
+                <ArtifactDescription v-if="message.artifact.comparison?.undeclared?.length"
+                  >注意：以下章节有改动但助手没有说明原因，请重点核对：{{
+                    message.artifact.comparison.undeclared.join('、')
+                  }}</ArtifactDescription
+                >
+                <ArtifactDescription v-else
+                  >可在右侧“成果”中阅读；选中文字即可添加批注，让助手按批注修改。</ArtifactDescription
+                >
+                <Button variant="outline" size="sm" @click="emit('openArtifact', message.artifact)"
+                  >打开功能说明书 · 第 {{ message.artifact.revision }} 版</Button
+                >
+              </ArtifactContent>
+            </Artifact>
             <div
               v-if="message.error"
               class="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm"
               role="alert"
             >
-              <strong>{{
-                message.errorCode === 'OUTPUT_LIMIT' ? '输出达到额度上限' : '本次生成未完成'
-              }}</strong>
+              <strong>本轮未完成</strong>
               <p>{{ message.error }}</p>
               <details v-if="message.runId">
                 <summary>诊断详情</summary>
                 <p>运行编号：{{ message.runId }}</p>
-                <p>{{ message.errorCode }} · {{ message.finishReason }}</p>
+                <p v-if="message.errorCode">{{ message.errorCode }}</p>
               </details>
             </div>
           </template>
@@ -323,20 +240,14 @@ async function copy(text: string) {
         >
           {{
             message.status === 'failed'
-              ? '本轮未完成，已保留原需求。请查看日志，修正后重试。'
+              ? '本轮未完成，已保存的进度不受影响。可以重新发送消息继续。'
               : message.status === 'cancelled'
                 ? '已停止本轮运行。可补充需求后重新发送。'
                 : message.status === 'waiting_user'
-                  ? '已完成当前需求分析。请回答下方业务问题后继续。'
+                  ? '请回答下方问题后继续。'
                   : message.artifact
-                    ? '已生成并保存候选成果。请打开审阅，点击“采用”更新工作稿，或回复具体修改意见。'
-                    : message.content && structured(message.content)
-                      ? '本轮回复只有技术输出，没有完成讨论。请重试，或补充说明后重新发送。'
-                      : message.rendered
-                        ? '已完成可读文档转换。可下载 Markdown；阅读稿不会自动覆盖当前成果。'
-                        : development
-                          ? '已完成本轮开发讨论。可继续补充，或回复“生成开发内容”进入下一步。'
-                          : '已完成本轮需求讨论。可继续补充，或回复“生成FSD”进入草稿生成。'
+                    ? '已保存新版本。可在右侧“成果”中阅读，选中文字添加批注后让助手修改。'
+                    : '可以继续补充需求，或提出修改意见。'
           }}
         </p>
         <MessageActions v-if="message.role === 'assistant'" class="items-center">
