@@ -30,6 +30,8 @@
     "format:check": "prettier --check .",
     "check": "npm run check:architecture && npm run typecheck && npm run build",
     "bootstrap": "node --env-file=.env scripts/database/bootstrap.mjs",
+    "audit:export": "node --env-file=.env scripts/maintenance/export-assistant-logs.mjs",
+    "audit:publish": "node --env-file=.env scripts/maintenance/publish-proposal.mjs",
     "test": "node scripts/testing/run-tests.mjs",
     "verify:sap": "node --env-file=.env scripts/checks/verify-sap-mcp.mjs",
     "setup:sap": "node scripts/vendor/setup-sap-mcp.mjs",

@@ -4,6 +4,8 @@
     "abap-fsd-agent->item-workspace",
     "abap-fsd-agent->models",
     "abap-fsd-agent->sap",
+    "audit->abap-fsd-agent",
+    "audit->admin",
     "delivery->admin",
     "item-workspace->delivery",
     "models->admin",

@@ -3,11 +3,13 @@ import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
 import { connectDatabase } from '../../../apps/api/src/platform/database.mjs';
 
-test('runtime can read business tables and append audit but cannot change audit or schema', async () => {
+test('runtime can read business tables, read and append audit but cannot change audit or schema', async () => {
   const client = await connectDatabase({ runtime: true });
   try {
     await client.query('BEGIN');
     await client.query('SELECT id FROM app.project LIMIT 1');
+    // The audit page reads events; rows stay append-only.
+    await client.query('SELECT id FROM app.audit_event LIMIT 1');
     await client.query(
       "INSERT INTO app.audit_event(action,outcome,request_id) VALUES('test.runtime','success',$1)",
       [randomUUID()],

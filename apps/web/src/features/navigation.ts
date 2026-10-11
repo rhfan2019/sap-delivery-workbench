@@ -72,7 +72,12 @@ export const groups = [
       ),
       item('workflows', '提示词与流程', 'workflow', '维护受限提示词、模板版本与交付流程规则。'),
       item('tasks', '运行任务', 'activity', '跟踪 AI 与工具任务的执行状态、错误与重试。'),
-      item('audit', '审计日志', 'history', '按授权检索登录、配置和交付操作的脱敏审计记录。'),
+      item(
+        'audit',
+        '审计日志',
+        'history',
+        '复核 FSD 设计助手运行并记录评论，查看操作审计与优化建议。',
+      ),
     ],
   },
 ];

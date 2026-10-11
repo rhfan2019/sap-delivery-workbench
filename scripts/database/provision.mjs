@@ -30,7 +30,8 @@ try {
   );
   await client.query('GRANT DELETE ON app.auth_session, app.login_throttle TO sap_workbench_app');
   await client.query('REVOKE ALL ON app.audit_event FROM sap_workbench_app');
-  await client.query('GRANT INSERT ON app.audit_event TO sap_workbench_app');
+  // The audit page reads events; the app may never update or delete them.
+  await client.query('GRANT SELECT, INSERT ON app.audit_event TO sap_workbench_app');
   const delivery = await client.query("SELECT to_regclass('app.development_item') AS name");
   if (delivery.rows[0].name) {
     await client.query(

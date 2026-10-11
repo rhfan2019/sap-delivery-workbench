@@ -37,12 +37,12 @@ test('model transport blocks SSRF, validates actual text and hides provider erro
   ])
     assert.equal(isPublicAddress(ip), false, ip);
   assert.equal(isPublicAddress('8.8.8.8'), true);
-  assert.throws(() => allowedEndpoint('https://notallowed.example/v1', 'api.example.com'));
-  assert.throws(() => allowedEndpoint('https://api.example.com.evil.org/v1', 'api.example.com'));
-  assert.equal(
-    allowedEndpoint('https://api.example.com/v1', 'api.example.com').hostname,
-    'api.example.com',
-  );
+  // No host allowlist: any public HTTPS host is accepted; addresses are checked on request.
+  assert.equal(allowedEndpoint('https://api.siliconflow.cn/v1').hostname, 'api.siliconflow.cn');
+  assert.throws(() => allowedEndpoint('http://api.example.com/v1'));
+  assert.throws(() => allowedEndpoint('https://user:pw@api.example.com/v1'));
+  assert.throws(() => allowedEndpoint('https://api.example.com:8443/v1'));
+  assert.throws(() => allowedEndpoint('https://api.example.com/v1?key=x'));
   const config = {
     modelId: 'test',
     protocol: 'openai_chat',

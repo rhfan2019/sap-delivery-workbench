@@ -175,7 +175,8 @@ export async function runTurn({ pool, scope, sessionId, turnId, model, emit, sig
             ? { ...args, content: undefined, new_text: undefined }
             : args,
           status: outcome.status,
-          summary: summarize(outcome.content),
+          // The audit page and log exports read this; keep enough to diagnose failures.
+          summary: String(outcome.content).slice(0, 2000),
           durationMs,
         });
         await repo.appendMessage(pool, sessionId, {

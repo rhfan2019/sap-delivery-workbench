@@ -33,53 +33,46 @@ test('model persistence accepts only connection fields and discards removed lega
 });
 
 test('Anthropic buffered and streaming requests use provider-reported maximum', async () => {
-  const old = process.env.LLM_ALLOWED_HOSTS;
-  process.env.LLM_ALLOWED_HOSTS = 'api.example.com';
-  try {
-    for (const streaming of [false, true]) {
-      const calls = [];
-      const options = {
-        resolve: async () => [{ address: '8.8.8.8', family: 4 }],
-        request: (url, opts, callback) => {
-          const req = new EventEmitter();
-          req.destroy = () => {};
-          req.end = (bytes) => {
-            calls.push({
-              path: url.pathname,
-              method: opts.method,
-              payload: bytes.length ? JSON.parse(bytes) : null,
-            });
-            const res = new PassThrough();
-            res.statusCode = 200;
-            res.headers = {
-              'content-type':
-                streaming && opts.method === 'POST' ? 'text/event-stream' : 'application/json',
-            };
-            callback(res);
-            res.end(
-              opts.method === 'GET'
-                ? JSON.stringify({ id: 'claude-test', max_tokens: 128000 })
-                : streaming
-                  ? 'data: [DONE]\n\n'
-                  : JSON.stringify({ content: [{ type: 'text', text: 'ok' }] }),
-            );
+  for (const streaming of [false, true]) {
+    const calls = [];
+    const options = {
+      resolve: async () => [{ address: '8.8.8.8', family: 4 }],
+      request: (url, opts, callback) => {
+        const req = new EventEmitter();
+        req.destroy = () => {};
+        req.end = (bytes) => {
+          calls.push({
+            path: url.pathname,
+            method: opts.method,
+            payload: bytes.length ? JSON.parse(bytes) : null,
+          });
+          const res = new PassThrough();
+          res.statusCode = 200;
+          res.headers = {
+            'content-type':
+              streaming && opts.method === 'POST' ? 'text/event-stream' : 'application/json',
           };
-          return req;
-        },
-      };
-      const c = { ...base, protocol: 'anthropic_messages', modelId: 'claude-test' };
-      if (streaming) {
-        for await (const chunk of requestModelStream(c, 'fake', streamPayload(c, 'hello'), options))
-          assert.ok(chunk.length);
-      } else await requestModel(c, 'fake', probePayload(c), options);
-      assert.equal(calls[0].method, 'GET');
-      assert.equal(calls[0].path, '/v1/models/claude-test');
-      assert.equal(calls[1].payload.max_tokens, 128000);
-      assert.equal(Object.hasOwn(calls[1].payload, 'temperature'), false);
-    }
-  } finally {
-    if (old === undefined) delete process.env.LLM_ALLOWED_HOSTS;
-    else process.env.LLM_ALLOWED_HOSTS = old;
+          callback(res);
+          res.end(
+            opts.method === 'GET'
+              ? JSON.stringify({ id: 'claude-test', max_tokens: 128000 })
+              : streaming
+                ? 'data: [DONE]\n\n'
+                : JSON.stringify({ content: [{ type: 'text', text: 'ok' }] }),
+          );
+        };
+        return req;
+      },
+    };
+    const c = { ...base, protocol: 'anthropic_messages', modelId: 'claude-test' };
+    if (streaming) {
+      for await (const chunk of requestModelStream(c, 'fake', streamPayload(c, 'hello'), options))
+        assert.ok(chunk.length);
+    } else await requestModel(c, 'fake', probePayload(c), options);
+    assert.equal(calls[0].method, 'GET');
+    assert.equal(calls[0].path, '/v1/models/claude-test');
+    assert.equal(calls[1].payload.max_tokens, 128000);
+    assert.equal(Object.hasOwn(calls[1].payload, 'temperature'), false);
   }
 });
 test('probe, dialogue, structured and text requests omit optional generation controls', async () => {

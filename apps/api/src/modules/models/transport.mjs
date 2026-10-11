@@ -22,25 +22,21 @@ export function isPublicAddress(ip) {
   if (isIP(ip) === 6) return /^2[0-9a-f]{3}:/i.test(ip) && !/^200[12]:/i.test(ip);
   return false;
 }
-export function allowedEndpoint(raw, allowlist = process.env.LLM_ALLOWED_HOSTS ?? '') {
+// Any public HTTPS host may serve a model; the real guard is resolving it to a public
+// address (prepareModelRequest), so no deployment-maintained host list is needed.
+export function allowedEndpoint(raw) {
   const url = new URL(raw);
-  const hosts = allowlist
-    .split(',')
-    .map((x) => x.trim().toLowerCase())
-    .filter(Boolean);
   if (
     url.protocol !== 'https:' ||
     url.username ||
     url.password ||
     url.search ||
     url.hash ||
-    (url.port && url.port !== '443') ||
-    !hosts.includes(url.hostname.toLowerCase())
+    (url.port && url.port !== '443')
   )
-    throw Object.assign(
-      failure(400, '接入域名未获授权。请联系部署管理员配置 LLM_ALLOWED_HOSTS。'),
-      { code: 'MODEL_ENDPOINT_NOT_ALLOWED' },
-    );
+    throw Object.assign(failure(400, '接入地址只支持 HTTPS 默认端口，不得包含凭据、查询或片段。'), {
+      code: 'MODEL_ENDPOINT_INVALID',
+    });
   return url;
 }
 export function probePayload(c) {

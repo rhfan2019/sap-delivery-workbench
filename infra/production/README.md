@@ -22,7 +22,7 @@ chmod 600 production.env
 openssl rand -hex 32
 ```
 
-编辑 production.env：四次独立执行 `openssl rand -hex 32`，分别填写 POSTGRES_PASSWORD、APP_DB_PASSWORD、SAP_CREDENTIAL_KEY、LLM_CREDENTIAL_KEY；后两项必须是 64 位十六进制。设置真实 APP_ORIGIN（HTTPS origin，无尾部斜杠）、RELEASE（不可变发布编号）和 LLM_ALLOWED_HOSTS（必填非空，逗号分隔精确域名，无通配；Compose 拒绝空白名单）。不要将真实值写入命令参数、日志、工单或 VITE_*。首次 DEFAULT_ORGANIZATION_ID 暂留空。数据密钥与加密数据必须共同可恢复；轮换前需实现旧数据重加密，不能直接替换密钥。
+编辑 production.env：四次独立执行 `openssl rand -hex 32`，分别填写 POSTGRES_PASSWORD、APP_DB_PASSWORD、SAP_CREDENTIAL_KEY、LLM_CREDENTIAL_KEY；后两项必须是 64 位十六进制。设置真实 APP_ORIGIN（HTTPS origin，无尾部斜杠）和 RELEASE（不可变发布编号）。不要将真实值写入命令参数、日志、工单或 VITE_*。首次 DEFAULT_ORGANIZATION_ID 暂留空。数据密钥与加密数据必须共同可恢复；轮换前需实现旧数据重加密，不能直接替换密钥。
 
 Docker 管理权限可读取容器环境，因此部署主机与 production.env 是受控密钥边界；环境文件不能当作专用秘密管理服务。后续可接入腾讯云 Secrets Manager 注入。容器日志不输出正文/凭据，Nginx 关闭访问日志避免路径查询泄露；Docker 日志每服务最多 3×10 MiB。业务审计留在数据库。
 

@@ -9,6 +9,7 @@
 - [FSD 设计助手方案审视](architecture/2026-10-11-fsd-assistant-approach-review.md)：重构前设计助手的现状、问题和待讨论方向（决策前记录）。
 - [FSD 设计助手方向决策](architecture/2026-10-11-fsd-assistant-direction-decision.md)：转为模型主导智能体的决策、目标形态、完全重构方式与实施顺序。
 - [abap-fsd-agent 重构实施计划](plans/2026-10-11-abap-fsd-agent-refactor.md)：历史助手清除清单、新模块与前端改接、DEV-0024 验收。
+- [审计日志与优化建议](specs/audit.md)：后台审计页面口径、运行评论与 Claude Code 优化建议流程。
 - `guides/`：当前维护与操作说明。
 - `specs/`：版本化设计规格。
 - `plans/`：实施计划；历史计划不自动代表当前完成状态。

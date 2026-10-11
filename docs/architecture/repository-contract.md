@@ -1,6 +1,8 @@
 # 仓库目录与依赖契约
 
-版本：1.3。日期：2026-10-11。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.4。日期：2026-10-12。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.4 变更：新增 audit 模块（平台审计与日志分析），承载后台“审计日志”页面的接口、助手运行评论和优化建议；助手运行数据仍归 abap-fsd-agent，audit 只通过 `abap-fsd-agent/public.mjs` 读取。优化建议由 Claude Code 按需分析后经维护脚本发布，平台不内置定时分析。见 3.2 节。
 
 1.3 变更：依据 [FSD 设计助手方向决策](2026-10-11-fsd-assistant-direction-decision.md)，FSD 设计助手改为模型主导的智能体，在现有项目中完全重构，统一命名为 abap-fsd-agent，开发助手预留命名 abap-dev-agent。智能助手只保留一个版本：不设版本目录、版本化 API 路径或版本化表名。历史各代 FS/FSD 助手（design-assistant 的 LangGraph 链路、gem-fsd-v2、agent、旧 abap-fsd-agent 引擎即 agent-runtime、fs-workspace 功能规格工作区、开发助手后端、“FS助手测试”）及其 410 边界、契约、表与数据全部清除，不保留转发壳或停用边界；现行设计助手前端界面保留并迁入新 feature。此项为用户明确授权，替代 1.1、1.2 中关于 LangGraph 后端、`work/design/fsd/v1` 入口、agent-runtime 公开入口和“旧 unavailable 边界不变”的规定。新边界见 3.1 节；新增检查规则见第 9 节。
 
@@ -56,7 +58,7 @@ apps/
       modules/<business>/    # 业务模块与其自有运行资源
 ```
 
-后端现有模块：admin（组织/用户/项目管理）、delivery（交付台账）、item-workspace（开发项工作区）、models（模型配置与调用）、sap（SAP 连接）、technical（技术验证）、abap-fsd-agent（FSD 设计助手，见 3.1）。开发助手实现时使用模块名 abap-dev-agent，在此之前不创建空目录。
+后端现有模块：admin（组织/用户/项目管理）、delivery（交付台账）、item-workspace（开发项工作区）、models（模型配置与调用）、sap（SAP 连接）、technical（技术验证）、abap-fsd-agent（FSD 设计助手，见 3.1）、audit（平台审计与日志分析，见 3.2）。开发助手实现时使用模块名 abap-dev-agent，在此之前不创建空目录。
 
 fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3.1 授权的设计助手重构外，URL、数据库表名和历史协议字段不因内部目录改名而改变。
 
@@ -71,6 +73,13 @@ fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3
 - **跨模块调用**：abap-fsd-agent 只通过 item-workspace、models、sap 的 `public.mjs` 调用其他模块，登记见 module-dependencies.json；不得深层导入。模型工具调用能力由 models 模块的公开接口提供。SAP 工具只向模型暴露预置的只读能力。
 - **共享契约**：`packages/contracts/abap-fsd-agent` 只放前后端共同需要的纯协议（如对话事件、文档与批注结构）；不放执行器、提示词或模型调用。
 - **日志分析**：智能助手日志分析基于新表重建，不读取已删除的表。
+
+### 3.2 平台审计与日志分析（audit）
+
+- **职责**：后台“审计日志”页面：助手运行日志（统计、筛选、单轮下钻）、操作审计（`app.audit_event`）、对助手运行的评论、优化建议的展示。仅企业管理员可用。
+- **数据归属**：评论与优化建议表归 audit（`app.audit_` 前缀）。助手运行的轮次、消息、工具调用仍归 abap-fsd-agent，audit 只通过 `abap-fsd-agent/public.mjs` 读取，不直接查询其表。
+- **优化建议**：由 Claude Code 在用户要求时，用 `scripts/maintenance/export-assistant-logs.mjs` 导出日志与评论、分析后，用 `scripts/maintenance/publish-proposal.mjs` 发布到页面。平台不调用模型生成建议，也不设定时任务。
+- **跨模块调用**：audit → abap-fsd-agent（`public.mjs`）、audit → admin（管理员授权），登记见 module-dependencies.json。
 
 认证和连接配置属于 platform；只供一个业务使用的提示词、模板和资源放该业务模块内。禁止为单一消费者新增 packages/agents。开发助手主提示词归 item-workspace/prompts。
 

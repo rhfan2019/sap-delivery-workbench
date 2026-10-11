@@ -4,6 +4,7 @@ import { databaseConfig } from './platform/database.mjs';
 import { createAuth, failure } from './platform/auth.mjs';
 import { registerAdminRoutes } from './modules/admin/routes.mjs';
 import { registerAbapFsdAgent } from './modules/abap-fsd-agent/routes.mjs';
+import { registerAuditRoutes } from './modules/audit/routes.mjs';
 import { registerDeliveryRoutes } from './modules/delivery/routes.mjs';
 import { registerTechnicalRoutes } from './modules/technical/routes.mjs';
 import { registerSapRoutes } from './modules/sap/routes.mjs';
@@ -131,6 +132,7 @@ export async function createApp({
   registerAdminRoutes(app, pool, organizationId, requireSession);
   registerDeliveryRoutes(app, pool, organizationId, requireSession);
   registerAbapFsdAgent(app, pool, organizationId, requireSession, abapFsdAgent);
+  registerAuditRoutes(app, pool, organizationId, requireSession);
 
   registerTechnicalRoutes(app, pool, organizationId, requireSession);
   registerSapRoutes(app, pool, organizationId, requireSession);

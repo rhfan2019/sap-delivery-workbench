@@ -43,6 +43,18 @@ export const router = createRouter({
           path: 'workspace/development-items',
           component: () => import('../features/delivery/DeliveryView.vue'),
         },
+        {
+          path: 'workspace/audit',
+          component: () => import('../features/audit/AuditView.vue'),
+        },
+        {
+          path: 'workspace/audit/runs/:id',
+          component: () => import('../features/audit/AuditRunView.vue'),
+        },
+        {
+          path: 'workspace/audit/sessions/:id',
+          component: () => import('../features/audit/AuditSessionView.vue'),
+        },
         { path: 'workspace/:module', component: WorkspaceView },
         { path: 'settings', component: () => import('../views/SettingsView.vue') },
         { path: ':pathMatch(.*)*', component: WorkspaceView },
