@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { apiFixture } from '../../fixtures/fs-workspace/api.mjs';
+import { apiFixture } from '../../fixtures/api.mjs';
 test('clone endpoint is idempotent, isolated and permission checked', async () => {
   const f = await apiFixture();
   try {
@@ -34,10 +34,9 @@ test('clone endpoint is idempotent, isolated and permission checked', async () =
     const {
       rows: [counts],
     } = await f.db.query(
-      "SELECT (SELECT count(*) FROM app.fsd_agent_session WHERE selection->>'itemId'=$1) sessions,(SELECT count(*) FROM app.development_file WHERE item_id=$1::uuid) attachments",
+      'SELECT (SELECT count(*) FROM app.development_file WHERE item_id=$1::uuid) attachments',
       [c.id],
     );
-    assert.equal(counts.sessions, '0');
     assert.equal(counts.attachments, '0');
   } finally {
     await f.close();

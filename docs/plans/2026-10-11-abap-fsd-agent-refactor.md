@@ -1,6 +1,6 @@
 # abap-fsd-agent 重构实施计划
 
-> 2026-10-11。状态：已确认（第 9 节五项均按建议执行），准备阶段执行中。依据：[方向决策](../architecture/2026-10-11-fsd-assistant-direction-decision.md)、[目录与依赖契约 1.3](../architecture/repository-contract.md) 第 3.1 节、[系统指令草稿](../specs/fsd-assistant-system-prompt.md)。计划确认前不改代码。
+> 2026-10-11。状态：已确认（第 9 节五项均按建议执行）。准备阶段、阶段 A 已完成；下一步阶段 B。依据：[方向决策](../architecture/2026-10-11-fsd-assistant-direction-decision.md)、[目录与依赖契约 1.3](../architecture/repository-contract.md) 第 3.1 节、[系统指令草稿](../specs/fsd-assistant-system-prompt.md)。计划确认前不改代码。
 
 ## 1. 目标与完成标准
 
@@ -194,3 +194,18 @@ apps/api/src/modules/abap-fsd-agent/
 3. **Word 导出**：第一版只导出 Markdown，Word 导出在验收后单独实现。
 4. **ISC001 与 DEV-0024 样例**：`tests/fixtures/design-assistant/fsd-report/isc001.*` 随旧测试删除；`docs/samples/` 下的 DEV-0024 保留作为验收题与参考答案。
 5. **delivery 的 FS 台账**（`fs_draft`、`fs_version`、`FsEditor`）不属于助手，保留不动。
+
+## 10. 执行记录
+
+### 阶段 A（2026-10-11）
+
+- 按第 3 节完成清除；检查器启用契约 1.3 规则并补反例测试。`npm run check`、单元测试 55 项、隔离集成测试 33 项通过；新迁移已在隔离测试库执行，主库未迁移。
+- 与计划的偏差：
+  - 新表不在阶段 A 的迁移中创建，改由阶段 B 单独新增迁移；阶段 A 迁移 `1791720000000_remove-legacy-assistants.sql` 只做删除。
+  - `apps/api/src/worker.mjs` 已无任务，直接删除；契约第 3、6 节同步修改。
+  - item-workspace 只保留 `context.mjs`（`createWorkContext`，阶段由调用方显式传入），其路由与工作稿接口全部删除。
+  - 模型流式传输迁入 `models/stream.mjs` 并由 `models/public.mjs` 导出；附件解析迁入 `abap-fsd-agent/attachments/`。前端仍需的 SSE 解析与类型迁入 `packages/contracts/abap-fsd-agent/`。
+  - 原先由已删除依赖间接提供的 `@types/node` 显式加入 web 的 devDependencies；`docx`、`@playwright/test`、LangGraph、OpenTelemetry、`json-schema-to-typescript` 删除。
+  - 通用测试夹具从 `tests/fixtures/fs-workspace/` 重建为 `tests/fixtures/api.mjs`、`database.mjs`（去掉 FS 工作区初始化）。
+- 事故与修复：准备阶段删除的未提交迁移 `1791676800000_fsd-v1-insights-indexes.sql` 实际已在主库与测试库执行，导致迁移顺序校验失败。已按两个库中的索引定义重建该文件（7 个索引），未修改任何库的迁移记录。
+- 待办：主库尚未执行 `npm run db:migrate`，执行后旧助手数据将被删除，由用户决定执行时机。界面在阶段 C 改接前不可用。

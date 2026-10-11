@@ -6,18 +6,37 @@ import ts from 'typescript';
 import { spawnSync } from 'node:child_process';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
-const browserContracts = new Set([
-  'design-assistant/protocol',
-  'design-assistant/fsd-report-refs',
-  'design-assistant/fsd-report-render',
-  'design-assistant/fsd-report-wire',
-  'design-assistant/fsd-report-patch',
-  'fs-workspace/canonical',
-  'fs-workspace/types',
-  'agent-runtime/types',
-  'agent-runtime/sse',
-  'agent-runtime/fsd/v1/r.schema.json',
-]);
+const browserContracts = new Set(['abap-fsd-agent/types', 'abap-fsd-agent/sse']);
+// Contract 1.3: one assistant version; earlier generations stay deleted.
+const agentRoots = [
+  'apps/api/src/modules/abap-fsd-agent/',
+  'apps/web/src/features/abap-fsd-agent/',
+  'packages/contracts/abap-fsd-agent/',
+];
+const removedModules =
+  /^(apps|packages|scripts|tools|infra)\/(.+\/)?(design-assistant|agent-runtime|fs-workspace|fs-assistant-test)(\/|$)/;
+const legacyIdentifiers = [
+  'fsd_v1_',
+  '/work/design/fsd',
+  'gem-fsd-v2',
+  'work/design/agent',
+  '/api/admin/abap-fsd-agent',
+  'DESIGN_ASSISTANT_REMOVED',
+  'fsd_checkpoint',
+];
+export function checkLegacy(file, content = '') {
+  const errors = [];
+  if (agentRoots.some((root) => file.startsWith(root)) && /\/v\d+\//.test(file))
+    errors.push(`${file}: Version directory in assistant code`);
+  if (removedModules.test(file)) errors.push(`${file}: Removed assistant module path`);
+  if (
+    /^(apps|packages|scripts|tools|infra)\//.test(file) &&
+    file !== 'scripts/checks/architecture.mjs'
+  )
+    for (const id of legacyIdentifiers)
+      if (content.includes(id)) errors.push(`${file}: Legacy assistant identifier ${id}`);
+  return errors;
+}
 const workspace = (file) =>
   file.startsWith('apps/web/')
     ? 'web'
@@ -133,14 +152,12 @@ export function checkImport(file, specifier, { files, allowedModuleEdges }) {
   const fromModule = moduleName(file),
     toModule = moduleName(target);
   if (
-    fromModule === 'design-assistant' &&
+    fromModule === 'abap-fsd-agent' &&
     toModule &&
     toModule !== fromModule &&
-    !/^apps\/api\/src\/modules\/(item-workspace|models|agent-runtime|sap)\/public\.mjs$/.test(
-      target,
-    )
+    !/^apps\/api\/src\/modules\/(item-workspace|models|sap)\/public\.mjs$/.test(target)
   )
-    errors.push('Design assistant must use an explicit module public facade');
+    errors.push('abap-fsd-agent must use an explicit module public facade');
   if (
     fromModule &&
     toModule &&
@@ -163,25 +180,16 @@ async function walk(directory, relative = '') {
   return files;
 }
 
-export function checkTestDiscovery(files, specDirectory, scripts) {
+export function checkTestDiscovery(files) {
   const errors = [];
   for (const file of files) {
-    if (file.endsWith('.spec.ts') && !file.startsWith(specDirectory + '/'))
-      errors.push(`Playwright test not discovered: ${file}`);
+    if (file.endsWith('.spec.ts')) errors.push(`Playwright test not discovered: ${file}`);
     if (
       file.endsWith('.test.mjs') &&
       !/^tests\/(unit\/(api|web|contracts|tooling)|integration\/(api|database)|e2e)\//.test(file)
     )
       errors.push(`Node test not discovered: ${file}`);
   }
-  if (
-    files.some((f) => f.endsWith('.spec.ts')) &&
-    (!scripts['test:e2e']?.includes('test:playwright') ||
-      !scripts['test:e2e']?.includes('test:e2e:node') ||
-      scripts['test:playwright'] !==
-        'node scripts/testing/test-elements-e2e.mjs node_modules/@playwright/test/cli.js test --config playwright.fs.config.mjs')
-  )
-    errors.push('Playwright all-spec command and combined E2E entry must be registered');
   return errors;
 }
 
@@ -211,7 +219,6 @@ export async function checkRepository(directory = root) {
     'start.cmd',
     'stop.cmd',
     'compose.yaml',
-    'playwright.fs.config.mjs',
     'sap-delivery-workbench.code-workspace',
     '.dockerignore',
     '.editorconfig',
@@ -291,15 +298,17 @@ export async function checkRepository(directory = root) {
     if (/^(apps|packages)\//.test(file) && /(?:\.\.\/)+(?:docs|tests)\//.test(content))
       errors.push(`${file}: Product resource depends on docs/tests`);
   }
-  const playwright = await readFile(resolve(directory, 'playwright.fs.config.mjs'), 'utf8');
-  const specDirectory = playwright.match(/testDir:\s*['"]\.\/([^'"]+)['"]/)?.[1] ?? '';
   errors.push(
     ...checkTestDiscovery(
       list.filter((p) => p.startsWith('tests/') && /\.(?:test\.mjs|spec\.ts)$/.test(p)),
-      specDirectory,
-      manifests[0][1].scripts,
     ),
   );
+  for (const file of list.filter((p) => /^(apps|packages|scripts|tools|infra)\//.test(p))) {
+    const text = /\.(mjs|cjs|js|ts|mts|vue|json|ya?ml|sql|cmd)$/.test(file)
+      ? await readFile(resolve(directory, file), 'utf8')
+      : '';
+    errors.push(...checkLegacy(file, text));
+  }
   return errors;
 }
 

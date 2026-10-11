@@ -180,7 +180,7 @@ onMounted(load);
       <p v-else-if="!writable" class="delivery-hint">
         当前仅可阅读，FS 由业务负责人或项目内企业管理员维护。
       </p>
-      <div class="fs-workspace">
+      <div class="fs-editor">
         <nav aria-label="FS 章节">
           <button
             v-for="(c, index) in chapters"

@@ -6,7 +6,7 @@ import { loadEnvFile } from 'node:process';
 import { createApp } from '@sap-delivery-workbench/api';
 
 loadEnvFile(new URL('../../.env', import.meta.url));
-const api = await createApp({fsWorker:true});
+const api = await createApp();
 await api.listen({ host: '127.0.0.1', port: 3001 });
 
 const stateFile = new URL('../../.runtime/web.json', import.meta.url);

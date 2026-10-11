@@ -3,16 +3,13 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import ts from 'typescript';
 import * as vue from 'vue';
-import { createSseParser } from '@sap-delivery-workbench/contracts/agent-runtime/sse';
-import { reconnectingChatStream } from '../../../apps/web/src/features/fs-assistant-test/chatStream.mjs';
-const source = await fs.readFile(
-  'apps/web/src/features/fs-assistant-test/useAssistantRun.ts',
-  'utf8',
-);
+import { createSseParser } from '@sap-delivery-workbench/contracts/abap-fsd-agent/sse';
+import { reconnectingChatStream } from '../../../apps/web/src/features/abap-fsd-agent/chatStream.mjs';
+const source = await fs.readFile('apps/web/src/features/abap-fsd-agent/useAssistantRun.ts', 'utf8');
 const js = ts.transpileModule(source.replace(/import .*from .*;\r?\n/g, ''), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const base = '/projects/p/development-items/i/work/design/fsd/v1/chat';
+const base = '/projects/p/development-items/i/abap-fsd-agent';
 const frame = (seq, type, data = {}) =>
   `data: ${JSON.stringify({ runId: 'r', seq, type, data })}\n\n`;
 const reply = (text) => new Response(text, { headers: { 'content-type': 'text/event-stream' } });

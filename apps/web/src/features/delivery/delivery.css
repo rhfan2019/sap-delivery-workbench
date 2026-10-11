@@ -416,15 +416,15 @@
   margin-left: 8px;
   max-width: 170px;
 }
-.fs-workspace {
+.fs-editor {
   display: flex;
   margin: 18px 0;
   gap: 18px;
 }
-.fs-workspace nav {
+.fs-editor nav {
   flex: 0 0 130px;
 }
-.delivery-page .fs-workspace nav button {
+.delivery-page .fs-editor nav button {
   display: flex;
   justify-content: space-between;
   gap: 8px;
@@ -436,7 +436,7 @@
   padding: 11px 7px;
   color: #536b84;
 }
-.delivery-page .fs-workspace nav button.active {
+.delivery-page .fs-editor nav button.active {
   background: #e7eff8;
   color: #174b7a;
   font-weight: 700;
@@ -557,7 +557,7 @@
     max-height: none;
     border-top: 2px solid #b6c9dc;
   }
-  .fs-workspace nav {
+  .fs-editor nav {
     flex-basis: 140px;
   }
 }
@@ -584,15 +584,15 @@
   .fs-editor {
     padding: 14px;
   }
-  .fs-workspace {
+  .fs-editor {
     display: block;
   }
-  .fs-workspace nav {
+  .fs-editor nav {
     display: flex;
     overflow: auto;
     margin-bottom: 15px;
   }
-  .delivery-page .fs-workspace nav button {
+  .delivery-page .fs-editor nav button {
     min-width: 110px;
   }
   .fs-comparison {

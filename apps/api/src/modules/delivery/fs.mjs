@@ -22,15 +22,6 @@ export function fsRoutes(app, c) {
       (item.business_owner_id ?? item.created_by) !== current.user.id
     )
       throw failure(403, 'FS 仅可由业务负责人或本项目内的企业管理员维护。');
-    const migrated = await db.query(
-      'SELECT 1 FROM app.fs_workspace WHERE organization_id=$1 AND project_id=$2 AND item_id=$3 AND legacy_imported_at IS NOT NULL LIMIT 1',
-      [c.organizationId, req.params.projectId, req.params.id],
-    );
-    if (migrated.rowCount) {
-      const error = failure(409, '该开发项已启用 FS 智能工作区，请通过新工作区操作。');
-      error.code = 'FS_WORKSPACE_ENABLED';
-      throw error;
-    }
     return item;
   }
   app.get(base + '/:id/fs', async (req) => {

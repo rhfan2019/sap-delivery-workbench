@@ -52,7 +52,6 @@ apps/
     src/
       app.mjs                # 组装应用，不放业务实现
       server.mjs             # 生产 HTTP 入口
-      worker.mjs             # 独立后台任务入口
       platform/              # 认证、密码、数据库与生产配置
       modules/<business>/    # 业务模块与其自有运行资源
 ```
@@ -107,9 +106,9 @@ contracts 区分 Node 校验入口与浏览器可用的纯函数/类型入口。
 
 ## 6. 工程脚本与文档
 
-scripts/dev：本地联合启动、受管进程控制；scripts/database：迁移、配置、初始化；scripts/contracts：类型生成；scripts/testing：测试发现、隔离环境和测试服务；scripts/maintenance：显式数据导入；scripts/vendor：第三方准备；scripts/checks：架构验证。按现有需要创建，不创建空目录。
+scripts/dev：本地联合启动、受管进程控制；scripts/database：迁移、配置、初始化；scripts/testing：测试发现、隔离环境和测试服务；scripts/maintenance：显式数据导入；scripts/vendor：第三方准备；scripts/checks：架构验证。按现有需要创建，不创建空目录。
 
-生产服务/worker 入口归 apps/api/src。scripts 可以编排应用，应用不能导入 scripts/lib。平台数据库/生产配置应由 api 的公开工具接口复用；只用于导入的解析工具留 maintenance。
+生产服务入口归 apps/api/src；需要独立后台进程时，入口同样放在 apps/api/src。scripts 可以编排应用，应用不能导入 scripts/lib。平台数据库/生产配置应由 api 的公开工具接口复用；只用于导入的解析工具留 maintenance。
 
 docs/architecture 放唯一架构契约与审计；docs/specs 放版本化设计规格；docs/plans 放实施计划；docs/guides 放现行说明；docs/archive 放历史报告。文档按内容归类，不按生成它的 AI 工具名称归类。测试需要的 JSON/Schema 示例迁入 tests/fixtures，不能继续依赖 docs 的布局。
 

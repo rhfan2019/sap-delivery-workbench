@@ -3,12 +3,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import ts from 'typescript';
 import * as vue from 'vue';
-import * as workflow from '../../../apps/web/src/features/fs-assistant-test/workflowActions.mjs';
+import * as workflow from '../../../apps/web/src/features/abap-fsd-agent/workflowActions.mjs';
 
 test('active chat workflow refreshes through completion and stops timers on disposal', async () => {
-  const source = (
-    await readFile('apps/web/src/features/fs-assistant-test/WorkflowPanel.vue', 'utf8')
-  )
+  const source = (await readFile('apps/web/src/features/abap-fsd-agent/WorkflowPanel.vue', 'utf8'))
     .split('<script setup lang="ts">')[1]
     .split('</script>')[0]
     .replace(/import[\s\S]*?from ['"][^'"]+['"];\s*/g, '');
@@ -25,7 +23,11 @@ test('active chat workflow refreshes through completion and stops timers on disp
     watch: () => {},
     onErrorCaptured: () => {},
     onBeforeUnmount: (fn) => (dispose = fn),
-    defineProps: () => ({ base: '/work/design/fsd/v1/chat', conversationId: 'c', busy: false }),
+    defineProps: () => ({
+      base: '/projects/p/development-items/i/abap-fsd-agent',
+      conversationId: 'c',
+      busy: false,
+    }),
     defineEmits: () => () => {},
     api: async () => ({
       phase: ++calls === 1 ? 'final_review' : 'completed',

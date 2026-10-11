@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { reconnectingChatStream } from '../../../apps/web/src/features/fs-assistant-test/chatStream.mjs';
+import { reconnectingChatStream } from '../../../apps/web/src/features/abap-fsd-agent/chatStream.mjs';
 
 test('network reconnect resumes after complete frames without duplicating a truncated delta', async () => {
   const urls = [];

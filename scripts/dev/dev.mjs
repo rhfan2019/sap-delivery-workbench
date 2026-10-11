@@ -3,7 +3,7 @@ import { createServer } from 'vite';
 import { createApp } from '@sap-delivery-workbench/api';
 import { fileURLToPath } from 'node:url';
 loadEnvFile('.env');
-const api = await createApp({fsWorker:true});
+const api = await createApp();
 await api.listen({ host: '127.0.0.1', port: 3001 });
 let web;
 try {

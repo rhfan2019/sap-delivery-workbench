@@ -4,16 +4,6 @@ import { test } from 'node:test';
 import { connectDatabase } from '../../../apps/api/src/platform/database.mjs';
 
 const expectedTables = [
-  'fsd_v1_task',
-  'fsd_v1_run',
-  'fsd_v1_request',
-  'fsd_v1_event',
-  'fsd_v1_commit',
-  'fsd_v1_operation',
-  'fsd_v1_attempt',
-  'fsd_v1_attachment',
-  'fsd_v1_chat_turn',
-  'fsd_v1_chat_event',
   'app_user',
   'audit_event',
   'auth_session',
@@ -23,38 +13,6 @@ const expectedTables = [
   'development_item',
   'fs_draft',
   'fs_version',
-  'fs_workspace',
-  'fs_template_version',
-  'fs_document_revision',
-  'fs_session',
-  'fs_message',
-  'fs_attachment',
-  'fs_parse_result',
-  'fs_evidence',
-  'fs_entity',
-  'fs_entity_revision',
-  'fs_dependency',
-  'fs_context_snapshot',
-  'fs_confirmation',
-  'fs_change_set',
-  'fs_run',
-  'fs_run_checkpoint',
-  'fs_run_event',
-  'fs_command_receipt',
-  'fs_review',
-  'fs_review_request',
-  'fs_approval',
-  'fs_project_role',
-  'fs_project_command_receipt',
-  'fs_export',
-  'fs_publication',
-  'fsd_agent_session',
-  'fsd_agent_run',
-  'fsd_agent_revision',
-  'fsd_agent_attachment',
-  'fsd_agent_workflow_event',
-  'item_work_version',
-  'gem_fsd_v2_run',
   'llm_credential',
   'llm_default',
   'llm_model',
@@ -121,7 +79,7 @@ async function expectViolation(client, sql, parameters, code) {
   await client.query('RELEASE SAVEPOINT constraint_check');
 }
 
-test('exactly the designed business tables including FS workspace exist', () =>
+test('exactly the designed business tables exist and legacy assistant storage is gone', () =>
   transaction(async (client) => {
     const result = await client.query(
       "SELECT table_name FROM information_schema.tables WHERE table_schema='app' AND table_type='BASE TABLE' ORDER BY table_name",
@@ -130,6 +88,10 @@ test('exactly the designed business tables including FS workspace exist', () =>
       result.rows.map((row) => row.table_name),
       expectedTables.toSorted(),
     );
+    const legacy = await client.query(
+      "SELECT 1 FROM information_schema.schemata WHERE schema_name='fsd_checkpoint'",
+    );
+    assert.equal(legacy.rowCount, 0);
   }));
 
 test('projects cannot reference a customer in another organization', () =>

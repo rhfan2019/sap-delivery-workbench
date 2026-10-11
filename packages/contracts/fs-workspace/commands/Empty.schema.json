@@ -1,9 +1,0 @@
-{
-  "type": "object",
-  "properties": {},
-  "required": [],
-  "additionalProperties": false,
-  "$id": "https://fs-workspace.example/http/Empty.schema.json",
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Empty"
-}

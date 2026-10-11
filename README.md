@@ -28,14 +28,11 @@ apps/
   api/                       Fastify 服务端应用
     src/app.mjs              应用组装
     src/server.mjs           生产服务入口
-    src/worker.mjs           独立后台任务入口
     src/platform/            认证、密码、数据库和运行配置
     src/modules/             业务模块及自有资源
 packages/
   contracts/                 前后端共享的数据结构、校验和协议
-    fs-workspace/            功能规格工作区契约
-    agent-runtime/           助手传输、历史文档协议与纯格式化
-    item-workspace/          开发项文档契约
+    abap-fsd-agent/          FSD 设计助手的共享协议与类型
 database/migrations/         版本化数据库变更
 scripts/                     开发、数据库、测试、维护和检查命令
 tests/
@@ -45,7 +42,6 @@ tests/
   fixtures/                  测试样本
 infra/production/            Docker 和 Nginx 部署
 vendor/abap-adt/              内置第三方 SAP MCP 运行时
-tools/                       独立工程辅助工具
 docs/                        架构、规格、计划、使用指南和历史报告
 .runtime/                    本机数据、凭据、日志、附件和验证产物
 ```
@@ -54,35 +50,30 @@ docs/                        架构、规格、计划、使用指南和历史报
 
 ## 功能边界
 
-保留登录与权限、企业/客户/项目管理、交付清单、设计与开发工作稿、独立 FS 工作区、开发助手、模型配置和 SAP 连接。
+保留登录与权限、企业/客户/项目管理、交付清单（含 FS 台账）、模型配置和 SAP 连接。
 
-旧设计助手和 Gem FSD v2 的设计生成接口已停用，返回 `410 DESIGN_ASSISTANT_REMOVED`。历史数据和读取能力保留；目录重构不恢复旧设计引擎。开发助手主提示词在 `apps/api/src/modules/item-workspace/prompts/system.md`。
-
-新的版本化 FSD 后端使用 `work/design/fsd/v1`。原 AgentWorkbench 通过其 `/chat` 协议接入 LangGraph，保留页面模板、样式、多轮对话与实时文本流；断线按持久事件游标续传。原页面的多轮、流式刷新恢复、停止、附件、澄清及两次确认已有隔离浏览器验收，旧设计入口仍返回 410。启动、迁移、检查点、Trace 与实际验收边界见 [ABAP FSD 运行指南](docs/guides/abap-fsd-backend.md)和[实施说明](docs/specs/abap-fsd-implementation.md)。真实 SAP 与业务 PoC 尚未验收。
+FSD 设计助手正在按[方向决策](docs/architecture/2026-10-11-fsd-assistant-direction-decision.md)重构为模型主导的智能体 `abap-fsd-agent`，进度见[重构实施计划](docs/plans/2026-10-11-abap-fsd-agent-refactor.md)。历史各代助手（LangGraph 版设计助手、FS 智能工作区、旧开发助手、FS助手测试）及其数据已删除；开发助手将以 `abap-dev-agent` 重建，在此之前开发阶段入口隐藏。
 
 ## 开发与验证
 
 所有命令从根目录运行：
 
-| 命令                         | 用途                                   |
-| ---------------------------- | -------------------------------------- |
-| `npm ci`                     | 按锁文件安装全部 workspace 依赖        |
-| `npm run setup:env`          | 创建本机环境配置，保留已有 .env        |
-| `npm run db:up`              | 启动开发 PostgreSQL                    |
-| `npm run db:migrate`         | 执行数据库迁移                         |
-| `npm run db:provision`       | 配置受限运行账号                       |
-| `npm run bootstrap`          | 幂等业务初始化                         |
-| `npm run dev`                | 前台联合运行 API 与 Vite，Ctrl+C 停止  |
-| `npm run check:architecture` | 校验目录、导入、包 exports 和测试归属  |
-| `npm run check`              | 架构、生成契约、类型与生产构建         |
-| `npm run test:unit`          | 无主数据库依赖的单元测试               |
-| `npm run test:setup`         | 准备独立测试数据库，保留主数据库       |
-| `npm test`                   | 全部单元和隔离集成测试                 |
-| `npm run test:integration`   | 仅隔离集成测试                         |
-| `npm run test:fs -- --unit`  | 仅 FS 范围单元测试                     |
-| `npm run test:e2e`           | 全部浏览器回归（Node + Playwright）    |
-| `npm run test:playwright`    | Playwright 的完整工作区和组件验收      |
-| `npm run generate:fs`        | 从 Schema 重新生成共享 TypeScript 类型 |
+| 命令                         | 用途                                  |
+| ---------------------------- | ------------------------------------- |
+| `npm ci`                     | 按锁文件安装全部 workspace 依赖       |
+| `npm run setup:env`          | 创建本机环境配置，保留已有 .env       |
+| `npm run db:up`              | 启动开发 PostgreSQL                   |
+| `npm run db:migrate`         | 执行数据库迁移                        |
+| `npm run db:provision`       | 配置受限运行账号                      |
+| `npm run bootstrap`          | 幂等业务初始化                        |
+| `npm run dev`                | 前台联合运行 API 与 Vite，Ctrl+C 停止 |
+| `npm run check:architecture` | 校验目录、导入、包 exports 和测试归属 |
+| `npm run check`              | 架构、类型与生产构建                  |
+| `npm run test:unit`          | 无主数据库依赖的单元测试              |
+| `npm run test:setup`         | 准备独立测试数据库，保留主数据库      |
+| `npm test`                   | 全部单元和隔离集成测试                |
+| `npm run test:integration`   | 仅隔离集成测试                        |
+| `npm run test:e2e`           | 浏览器回归                            |
 
 集成测试配置为 `.runtime/fs-tests.env`，数据库端口 55439，数据库名称必须满足 `sap_fs_test_*dev`。测试命令不会回退到主 `.env`。单元测试与集成测试不调用真实付费模型；实时 SAP 验证使用显式 `npm run verify:sap`。
 

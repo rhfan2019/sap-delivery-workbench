@@ -10,29 +10,18 @@
     "./platform/auth": "./src/platform/auth.mjs",
     "./platform/password": "./src/platform/password.mjs",
     "./sap-mcp": "./src/modules/technical/sap-mcp.mjs",
-    "./delivery-validation": "./src/modules/delivery/validation.mjs",
-    "./document-renderer": "./src/modules/agent-runtime/feedback.mjs",
-    "./diagnostics/recorder": "./src/modules/agent-runtime/diagnostics/recorder.mjs",
-    "./diagnostics/analyzer": "./src/modules/agent-runtime/diagnostics/analyzer.mjs"
+    "./delivery-validation": "./src/modules/delivery/validation.mjs"
   },
   "scripts": {
     "start": "node src/server.mjs"
   },
   "dependencies": {
     "@fastify/multipart": "10.1.2",
-    "@langchain/langgraph": "1.4.21",
-    "@langchain/langgraph-checkpoint-postgres": "1.0.6",
     "@modelcontextprotocol/sdk": "1.29.0",
-    "@opentelemetry/api": "1.9.0",
-    "@opentelemetry/exporter-trace-otlp-http": "0.223.0",
-    "@opentelemetry/resources": "2.8.0",
-    "@opentelemetry/sdk-node": "0.223.0",
-    "@opentelemetry/sdk-trace-base": "2.8.0",
     "@sap-delivery-workbench/contracts": "*",
     "ajv": "8.20.0",
     "ajv-formats": "3.0.1",
     "argon2": "^0.45.1",
-    "docx": "9.8.1",
     "fast-xml-parser": "^5.11.1",
     "fastify": "^5.12.5",
     "jszip": "3.10.2",

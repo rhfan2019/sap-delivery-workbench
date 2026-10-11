@@ -3,9 +3,12 @@ import assert from 'node:assert/strict';
 import { modelInput } from '../../../apps/api/src/modules/models/validation.mjs';
 import { probePayload } from '../../../apps/api/src/modules/models/transport.mjs';
 import { structuredPayload } from '../../../apps/api/src/modules/models/inference.mjs';
-import { streamPayload } from '../../../apps/api/src/modules/agent-runtime/model-stream.mjs';
+import { streamPayload } from '../../../apps/api/src/modules/models/stream.mjs';
 import { generateText } from '../../../apps/api/src/modules/models/text.mjs';
-import { requestModel, requestModelStream } from '../../../apps/api/src/modules/models/transport.mjs';
+import {
+  requestModel,
+  requestModelStream,
+} from '../../../apps/api/src/modules/models/transport.mjs';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
 const base = {

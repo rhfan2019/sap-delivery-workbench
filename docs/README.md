@@ -5,17 +5,15 @@
 - [目录与依赖契约](architecture/repository-contract.md)：新增、修改、移动、删除文件的唯一目录规范。
 - [目录重构记录](architecture/refactor-record.md)：原问题、迁移清单与实际验证结果。
 - [实施计划](plans/2026-10-08-repository-refactor.md)：本轮执行任务。
-- [ABAP FSD 运行指南](guides/abap-fsd-backend.md)：新版本后端启动、诊断、恢复、探针与评估。
-- [ABAP FSD 实施说明](specs/abap-fsd-implementation.md)：实现映射、工程证据和真实系统准入边界。
-- [ABAP FSD 开发计划](plans/2026-10-08-abap-fsd-backend.md)：本次后端实施进度。
-- [FSD 设计助手方案审视](architecture/2026-10-11-fsd-assistant-approach-review.md)：现行提示词、状态控制与 SAP 接入的现状、问题和待讨论方向（交接用）。
+- [ABAP FSD 开发计划](plans/2026-10-08-abap-fsd-backend.md)：LangGraph 版设计助手的实施记录（历史，该链路已删除）。
+- [FSD 设计助手方案审视](architecture/2026-10-11-fsd-assistant-approach-review.md)：重构前设计助手的现状、问题和待讨论方向（决策前记录）。
 - [FSD 设计助手方向决策](architecture/2026-10-11-fsd-assistant-direction-decision.md)：转为模型主导智能体的决策、目标形态、完全重构方式与实施顺序。
 - [FSD 设计助手系统指令（草稿）](specs/fsd-assistant-system-prompt.md)：新智能体的系统指令草稿，待审阅后迁入模块提示词目录。
 - [abap-fsd-agent 重构实施计划](plans/2026-10-11-abap-fsd-agent-refactor.md)：历史助手清除清单、新模块与前端改接、DEV-0024 验收。
 - `guides/`：当前维护与操作说明。
-- `specs/`：版本化设计规格；供测试读取的机器样本已归 `tests/fixtures/fs-workspace/specification`。
+- `specs/`：版本化设计规格。
 - `plans/`：实施计划；历史计划不自动代表当前完成状态。
-- `archive/`：历史方案、验收与旧助手停用记录，不作为现行运行配置。
+- `archive/`：历史方案、验收与已删除助手的文档（含 LangGraph 版运行指南、实施说明和 FS 智能工作区设计），不作为现行运行配置。
 - `design-options/` 与 `screenshots/`：设计参考和评审资料。
 
 运行方法、端口、测试命令以根目录 [README](../README.md) 为入口；目录规则以契约为准，旧说明若有冲突不覆盖契约。

@@ -8,7 +8,7 @@
 
 **Tech Stack:** 当前Node ESM、Vue 3、TypeScript、Vue Router、Fastify、pg、Tiptap、node:test；按详细设计引入Ajv2020、multipart、PDF/OCR与导出适配器，锁依赖版本并做兼容测试。
 
-**Spec:** [主设计](../specs/2026-10-03-fs-intelligent-workspace/design.md)、[前端设计](../specs/2026-10-03-fs-intelligent-workspace/frontend-design.md)、[工程详细设计](../specs/2026-10-03-fs-intelligent-workspace/engineering-design.md)、[OpenAPI](../../tests/fixtures/fs-workspace/specification/api.openapi.json)、[验收清单](../specs/2026-10-03-fs-intelligent-workspace/acceptance.md)。必须同时读Spec和本计划。
+**Spec:** [主设计](../archive/2026-10-03-fs-intelligent-workspace/design.md)、[前端设计](../archive/2026-10-03-fs-intelligent-workspace/frontend-design.md)、[工程详细设计](../archive/2026-10-03-fs-intelligent-workspace/engineering-design.md)、[OpenAPI](../../tests/fixtures/fs-workspace/specification/api.openapi.json)、[验收清单](../archive/2026-10-03-fs-intelligent-workspace/acceptance.md)。必须同时读Spec和本计划。
 
 ## Global Constraints
 
@@ -206,4 +206,4 @@
 
 每项完成更新checkbox，并记录`任务ID → 代码文件 → 测试命令 → 实际结果 → 对应验收ID`。中途遇到API或目录冲突，先更新契约/工程设计与受影响任务，不让文档和代码分叉。技术常规选择由执行AI处理；只有改变产品范围、授权边界、数据迁移风险或真实上线行为时才需要用户决定。
 
-2026-10-03 最新实施检查点：T01基础完成并修正生成类型缺陷；T02—T14已有不同程度的真实实现，但未满足完整任务完成条件，不勾选整项。已落地人工编辑/候选接受/历史版本、附件隔离与解析任务、租约与恢复/SSE、早期评审与发布拒绝门禁、结构化模型适配和能力探测、真实Word/PDF导出。前端已连接编辑、实时任务、上传。T12的FS SAP闭环、T13阶段编排、正向完整审批发布及T15三条端到端主路径仍需完成。最新代码/命令/失败修复/结果见 [实施证据](../../artifacts/fs-workspace/implementation-ledger.md)，启动和真实集成限制见 [运行记录](../guides/fs-workspace-operations.md)。设计检查不算产品完成。
+2026-10-03 最新实施检查点：T01基础完成并修正生成类型缺陷；T02—T14已有不同程度的真实实现，但未满足完整任务完成条件，不勾选整项。已落地人工编辑/候选接受/历史版本、附件隔离与解析任务、租约与恢复/SSE、早期评审与发布拒绝门禁、结构化模型适配和能力探测、真实Word/PDF导出。前端已连接编辑、实时任务、上传。T12的FS SAP闭环、T13阶段编排、正向完整审批发布及T15三条端到端主路径仍需完成。最新代码/命令/失败修复/结果见 [实施证据](../../artifacts/fs-workspace/implementation-ledger.md)，启动和真实集成限制见 [运行记录](../archive/fs-workspace-operations.md)。设计检查不算产品完成。

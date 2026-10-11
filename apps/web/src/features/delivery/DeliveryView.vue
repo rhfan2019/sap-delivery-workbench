@@ -921,10 +921,6 @@ function keyResize(event: KeyboardEvent) {
                     :to="`/projects/${currentProject}/development-items/${item.id}/design`"
                     @click="anyBusy && $event.preventDefault()"
                     >设计</RouterLink
-                  ><RouterLink
-                    :to="`/projects/${currentProject}/development-items/${item.id}/development`"
-                    @click="anyBusy && $event.preventDefault()"
-                    >开发</RouterLink
                   >
                 </div>
               </div>
@@ -954,13 +950,6 @@ function keyResize(event: KeyboardEvent) {
                   :class="{ 'suggested-action': item.stage === 'fs_draft' }"
                   @click="anyBusy && $event.preventDefault()"
                   >设计</RouterLink
-                >
-                <RouterLink
-                  :to="`/projects/${currentProject}/development-items/${item.id}/development`"
-                  :aria-disabled="anyBusy"
-                  :class="{ 'suggested-action': item.stage === 'ready' }"
-                  @click="anyBusy && $event.preventDefault()"
-                  >开发</RouterLink
                 >
               </div>
               <EditableField

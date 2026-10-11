@@ -1,10 +1,4 @@
 import Fastify from 'fastify';
-import { registerDesignUnavailable } from './modules/design-assistant/unavailable.mjs';
-import { registerDesignRoutes } from './modules/design-assistant/routes.mjs';
-import { startDesignWorker } from './modules/design-assistant/worker.mjs';
-import { createTelemetry } from './modules/design-assistant/telemetry.mjs';
-import { registerItemWorkspaceRoutes } from './modules/item-workspace/routes.mjs';
-import { registerWorkAgent } from './modules/item-workspace/agent.mjs';
 import pg from 'pg';
 import { databaseConfig } from './platform/database.mjs';
 import { createAuth, failure } from './platform/auth.mjs';
@@ -13,16 +7,11 @@ import { registerDeliveryRoutes } from './modules/delivery/routes.mjs';
 import { registerTechnicalRoutes } from './modules/technical/routes.mjs';
 import { registerSapRoutes } from './modules/sap/routes.mjs';
 import { registerModelRoutes } from './modules/models/routes.mjs';
-import { registerFsWorkspaceRoutes } from './modules/fs-workspace/routes.mjs';
-import { startFsWorker } from './modules/fs-workspace/runs/runner.mjs';
 
 export async function createApp({
   organizationId = process.env.DEFAULT_ORGANIZATION_ID,
   origin = process.env.APP_ORIGIN ?? 'http://127.0.0.1:5173',
   modelProbe,
-  agentStream,
-  agentConnect,
-  fsWorker = false,
 } = {}) {
   if (!organizationId) throw new Error('Run npm run bootstrap before starting the app.');
   const pool = new pg.Pool({ ...databaseConfig({ runtime: true }), max: 8 });
@@ -35,7 +24,6 @@ export async function createApp({
         ? process.env.TRUST_PROXY.split(',')
         : false,
   });
-  registerDesignUnavailable(app);
   const secure = origin.startsWith('https://');
   const cookieName = secure ? '__Host-sapwb_session' : 'sapwb_local_session';
   const getToken = (req) =>
@@ -46,17 +34,7 @@ export async function createApp({
       ?.slice(cookieName.length + 1);
   const cookie = (token, maxAge) =>
     `${cookieName}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure ? '; Secure' : ''}`;
-  let stopWorker, stopDesignWorker;
-  const designTelemetry = createTelemetry();
-  if (fsWorker)
-    app.addHook('onReady', async () => {
-      stopWorker = startFsWorker(pool, organizationId);
-      stopDesignWorker = startDesignWorker(pool, { telemetry: designTelemetry });
-    });
   app.addHook('onClose', async () => {
-    await stopWorker?.();
-    await stopDesignWorker?.();
-    await designTelemetry.shutdown();
     await pool.end();
   });
   if (process.env.NODE_ENV === 'production')
@@ -79,44 +57,6 @@ export async function createApp({
       throw failure(403, '请求来源不受信任，请从平台页面操作。');
   });
   app.setErrorHandler((error, req, reply) => {
-    if (req.routeOptions.url?.includes('/fsd/v1'))
-      return reply
-        .code(error.statusCode ?? 503)
-        .send({
-          code: error.statusCode ? (error.code ?? 'INVALID_INPUT') : 'SERVICE_UNAVAILABLE',
-          error_origin: error.error_origin ?? 'UNKNOWN',
-          message: error.statusCode ? (error.code ?? '请求无效') : '服务暂不可用',
-          request_id: req.id,
-        });
-    if (error.code === 'FS_WORKSPACE_ENABLED')
-      return reply
-        .code(409)
-        .send({ code: error.code, message: error.message, details: [], request_id: req.id });
-    if (
-      req.routeOptions.url?.includes('/fs-workspace') ||
-      req.routeOptions.url?.endsWith('/fs-roles')
-    ) {
-      const status = error.statusCode ?? 503;
-      const codes = {
-        400: 'INVALID_INPUT',
-        401: 'UNAUTHENTICATED',
-        403: 'FORBIDDEN',
-        404: 'NOT_FOUND',
-        409: 'VERSION_CONFLICT',
-        413: 'PAYLOAD_TOO_LARGE',
-        422: 'GATE_BLOCKED',
-        428: 'PRECONDITION_REQUIRED',
-      };
-      const code = ['IDEMPOTENCY_CONFLICT', 'EVENT_CURSOR_EXPIRED'].includes(error.code)
-        ? error.code
-        : (codes[status] ?? 'SERVICE_UNAVAILABLE');
-      return reply.code(status).send({
-        code,
-        message: status >= 500 ? '服务暂不可用，请稍后重试。' : error.message,
-        details: [],
-        request_id: req.id,
-      });
-    }
     if (error.code === '23505')
       return reply
         .code(409)
@@ -187,13 +127,9 @@ export async function createApp({
   });
   registerAdminRoutes(app, pool, organizationId, requireSession);
   registerDeliveryRoutes(app, pool, organizationId, requireSession);
-  registerItemWorkspaceRoutes(app, pool, organizationId, requireSession);
-  registerDesignRoutes(app, pool, organizationId, requireSession, { telemetry: designTelemetry });
 
   registerTechnicalRoutes(app, pool, organizationId, requireSession);
   registerSapRoutes(app, pool, organizationId, requireSession);
   registerModelRoutes(app, pool, organizationId, requireSession, modelProbe);
-  registerFsWorkspaceRoutes(app, pool, organizationId, requireSession);
-  registerWorkAgent(app, pool, organizationId, requireSession, agentStream, origin, agentConnect);
   return app;
 }

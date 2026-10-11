@@ -54,20 +54,6 @@ try {
       'GRANT SELECT,INSERT ON app.llm_model_version,app.llm_credential TO sap_workbench_app',
     );
   }
-  if ((await client.query("SELECT to_regclass('app.fs_workspace') AS name")).rows[0].name) {
-    await client.query(
-      'GRANT SELECT,INSERT,UPDATE ON app.fs_workspace,app.fs_session,app.fs_attachment,app.fs_entity,app.fs_run,app.fs_review_request,app.fs_project_role,app.fs_export TO sap_workbench_app',
-    );
-    await client.query(
-      'GRANT SELECT,INSERT ON app.fs_template_version,app.fs_document_revision,app.fs_message,app.fs_parse_result,app.fs_evidence,app.fs_entity_revision,app.fs_dependency,app.fs_context_snapshot,app.fs_confirmation,app.fs_run_checkpoint,app.fs_run_event,app.fs_command_receipt,app.fs_review,app.fs_approval,app.fs_publication,app.fs_change_set TO sap_workbench_app',
-    );
-    await client.query(
-      'GRANT UPDATE(status,result_revision_id) ON app.fs_change_set TO sap_workbench_app',
-    );
-    await client.query(
-      'GRANT SELECT,INSERT ON app.fs_project_command_receipt TO sap_workbench_app',
-    );
-  }
   await client.query('COMMIT');
   console.log('Provisioned sap_workbench_app with limited runtime grants. No password printed.');
 } catch (error) {

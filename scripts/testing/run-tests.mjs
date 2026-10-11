@@ -41,15 +41,10 @@ async function main() {
   const args = process.argv.slice(2);
   if (
     args.some(
-      (arg) =>
-        !['--unit', '--integration', '--e2e', '--fs', '--sap', '--database', '--list'].includes(
-          arg,
-        ),
+      (arg) => !['--unit', '--integration', '--e2e', '--sap', '--database', '--list'].includes(arg),
     )
   )
-    throw new Error(
-      'Supported options: --unit, --integration, --e2e, --fs, --sap, --database, --list',
-    );
+    throw new Error('Supported options: --unit, --integration, --e2e, --sap, --database, --list');
   if (
     args.filter((arg) => ['--unit', '--integration', '--e2e', '--database'].includes(arg)).length >
     1
@@ -67,7 +62,6 @@ async function main() {
   let files = (await Promise.all(groups.map((group) => discoverTests(join(root, 'tests', group)))))
     .flat()
     .sort();
-  if (args.includes('--fs')) files = files.filter((file) => file.includes('fs-workspace'));
   if (args.includes('--sap')) files = files.filter((file) => /sap-[^/\\]+\.test\.mjs$/.test(file));
   if (!files.length) throw new Error('No tests found for selected groups');
   console.log(files.map((file) => relative(root, file)).join('\n'));

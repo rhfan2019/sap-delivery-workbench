@@ -1,6 +1,6 @@
 // Real API + isolated PostgreSQL fixture for manual browser acceptance.
 // Invoke through scripts/testing/test-elements-e2e.mjs, never against the primary .env.
-import { apiFixture } from '../../tests/fixtures/fs-workspace/api.mjs';
+import { apiFixture } from '../../tests/fixtures/api.mjs';
 import { hashPassword } from '@sap-delivery-workbench/api/platform/password';
 import { createServer } from 'vite';
 import { writeFile, readFile } from 'node:fs/promises';

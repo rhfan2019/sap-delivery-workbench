@@ -18,13 +18,8 @@ export const router = createRouter({
         { path: 'home', component: WorkspaceView },
         { path: 'projects/:id?', component: WorkspaceView },
         {
-          path: 'projects/:projectId/development-items/:itemId/:stage(design|development)',
-          component: () => import('../features/item-workspace/ItemWorkspaceRoute.vue'),
-        },
-        {
-          path: 'projects/:projectId/development-items/:itemId/fs/:page?',
-          redirect: (to) =>
-            `/projects/${to.params.projectId}/development-items/${to.params.itemId}/design`,
+          path: 'projects/:projectId/development-items/:itemId/:stage(design)',
+          component: () => import('../features/abap-fsd-agent/ItemWorkspaceRoute.vue'),
         },
         {
           path: 'workspace/organization',
@@ -36,14 +31,6 @@ export const router = createRouter({
         },
         { path: 'workspace/members', component: () => import('../features/admin/MembersView.vue') },
         { path: 'workspace/models', component: () => import('../features/models/ModelsView.vue') },
-        {
-          path: 'workspace/assistant-runs/:runId',
-          component: () => import('../features/fs-assistant-test/RunDiagnosticsView.vue'),
-        },
-        {
-          path: 'workspace/fs-assistant-test',
-          component: () => import('../features/fs-assistant-test/FsAssistantTestView.vue'),
-        },
         {
           path: 'workspace/connections',
           component: () => import('../features/sap/SapSystemsView.vue'),

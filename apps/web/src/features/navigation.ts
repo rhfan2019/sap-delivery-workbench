@@ -65,12 +65,6 @@ export const groups = [
       item('connections', 'SAP系统', 'plug', '管理 SAP 后端系统、归属客户与临时使用授权。'),
       item('models', '大模型(LLM)', 'sparkles', '维护模型接入、测试与组织默认模型。'),
       item(
-        'fs-assistant-test',
-        'FS助手测试',
-        'message',
-        '选择已配置的大模型，准备 FS 助手对话测试。',
-      ),
-      item(
         'technical-verification',
         '技术验证（临时）',
         'plug',

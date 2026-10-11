@@ -1,0 +1,50 @@
+-- Up Migration
+-- Contract 1.3: every earlier FS/FSD assistant generation is removed with its data
+-- (user decision 2026-10-11, no backup). delivery's own fs_draft/fs_version stay.
+DROP FUNCTION IF EXISTS app.reset_legacy_assistant_content(uuid, uuid, uuid);
+DROP SCHEMA IF EXISTS fsd_checkpoint CASCADE;
+DROP TABLE
+  app.fsd_v1_chat_event,
+  app.fsd_v1_chat_turn,
+  app.fsd_v1_attachment,
+  app.fsd_v1_attempt,
+  app.fsd_v1_operation,
+  app.fsd_v1_commit,
+  app.fsd_v1_event,
+  app.fsd_v1_request,
+  app.fsd_v1_run,
+  app.fsd_v1_task,
+  app.gem_fsd_v2_run,
+  app.item_work_version,
+  app.fsd_agent_workflow_event,
+  app.fsd_agent_attachment,
+  app.fsd_agent_revision,
+  app.fsd_agent_run,
+  app.fsd_agent_session,
+  app.fs_project_command_receipt,
+  app.fs_publication,
+  app.fs_export,
+  app.fs_project_role,
+  app.fs_approval,
+  app.fs_review_request,
+  app.fs_review,
+  app.fs_command_receipt,
+  app.fs_run_event,
+  app.fs_run_checkpoint,
+  app.fs_run,
+  app.fs_change_set,
+  app.fs_confirmation,
+  app.fs_context_snapshot,
+  app.fs_dependency,
+  app.fs_entity_revision,
+  app.fs_entity,
+  app.fs_evidence,
+  app.fs_parse_result,
+  app.fs_attachment,
+  app.fs_message,
+  app.fs_session,
+  app.fs_document_revision,
+  app.fs_workspace,
+  app.fs_template_version;
+-- Down Migration
+DO $$ BEGIN RAISE EXCEPTION 'Legacy assistants are removed for good; there is nothing to restore.'; END $$;

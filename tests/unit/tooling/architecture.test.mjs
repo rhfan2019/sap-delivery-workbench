@@ -4,6 +4,7 @@ import {
   checkImport,
   importsOf,
   checkTestDiscovery,
+  checkLegacy,
 } from '../../../scripts/checks/architecture.mjs';
 
 const files = new Set([
@@ -11,27 +12,23 @@ const files = new Set([
   'apps/api/src/app.mjs',
   'apps/api/src/platform/database.mjs',
   'scripts/dev/dev.mjs',
-  'packages/contracts/fs-workspace/index.mjs',
+  'packages/contracts/abap-fsd-agent/node.mjs',
 ]);
 const options = { files, allowedModuleEdges: new Set() };
-test('new design module must use public facades even when the module edge is registered', () => {
+test('abap-fsd-agent must use public facades even when the module edge is registered', () => {
   const opts = {
     files: new Set([
       'apps/api/src/modules/models/store.mjs',
       'apps/api/src/modules/models/public.mjs',
     ]),
-    allowedModuleEdges: new Set(['design-assistant->models']),
+    allowedModuleEdges: new Set(['abap-fsd-agent->models']),
   };
   assert.match(
-    checkImport(
-      'apps/api/src/modules/design-assistant/model.mjs',
-      '../models/store.mjs',
-      opts,
-    ).join(),
+    checkImport('apps/api/src/modules/abap-fsd-agent/loop.mjs', '../models/store.mjs', opts).join(),
     /public facade/,
   );
   assert.deepEqual(
-    checkImport('apps/api/src/modules/design-assistant/model.mjs', '../models/public.mjs', opts),
+    checkImport('apps/api/src/modules/abap-fsd-agent/loop.mjs', '../models/public.mjs', opts),
     [],
   );
 });
@@ -44,7 +41,7 @@ test('architecture rejects frontend access to backend and Node-only contracts', 
   assert.match(
     checkImport(
       'apps/web/src/main.ts',
-      '@sap-delivery-workbench/contracts/fs-workspace',
+      '@sap-delivery-workbench/contracts/abap-fsd-agent/node',
       options,
     ).join(),
     /browser/,
@@ -62,7 +59,7 @@ test('architecture rejects physical cross-package imports and missing files', ()
   assert.match(
     checkImport(
       'apps/api/src/app.mjs',
-      '../../../packages/contracts/fs-workspace/index.mjs',
+      '../../../packages/contracts/abap-fsd-agent/node.mjs',
       options,
     ).join(),
     /public exports/,
@@ -73,7 +70,7 @@ test('architecture rejects physical cross-package imports and missing files', ()
 test('architecture rejects contracts depending on applications', () => {
   assert.match(
     checkImport(
-      'packages/contracts/fs-workspace/index.mjs',
+      'packages/contracts/abap-fsd-agent/node.mjs',
       '../../../apps/api/src/app.mjs',
       options,
     ).join(),
@@ -86,7 +83,7 @@ test('architecture accepts internal implementation and browser-safe contract imp
   assert.deepEqual(
     checkImport(
       'apps/web/src/main.ts',
-      '@sap-delivery-workbench/contracts/fs-workspace/canonical',
+      '@sap-delivery-workbench/contracts/abap-fsd-agent/sse',
       options,
     ),
     [],
@@ -118,34 +115,40 @@ test('CommonJS and aliased createRequire cannot bypass dependency checks', () =>
 });
 
 test('backend and contracts cannot depend on the frontend workspace by package name', () => {
-  for (const file of ['apps/api/src/app.mjs', 'packages/contracts/fs-workspace/index.mjs'])
+  for (const file of ['apps/api/src/app.mjs', 'packages/contracts/abap-fsd-agent/node.mjs'])
     assert.match(checkImport(file, '@sap-delivery-workbench/web', options).join(), /web/);
 });
 
-test('test discovery rejects a browser spec outside the configured directory or without an all-spec command', () => {
-  const scripts = {
-    'test:e2e': 'npm run test:e2e:node && npm run test:playwright',
-    'test:playwright':
-      'node scripts/testing/test-elements-e2e.mjs node_modules/@playwright/test/cli.js test --config playwright.fs.config.mjs',
-  };
+test('test discovery rejects browser specs and misplaced node tests', () => {
+  assert.match(checkTestDiscovery(['tests/e2e/other/lost.spec.ts']).join(), /Playwright/);
+  assert.match(checkTestDiscovery(['tests/misc/lost.test.mjs']).join(), /not discovered/);
+  assert.deepEqual(checkTestDiscovery(['tests/unit/api/models.test.mjs']), []);
+});
+
+test('contract 1.3 rejects assistant version directories, removed modules and legacy identifiers', () => {
+  assert.match(
+    checkLegacy('apps/api/src/modules/abap-fsd-agent/prompts/v1/system.md').join(),
+    /Version directory/,
+  );
+  assert.match(
+    checkLegacy('apps/web/src/features/fs-assistant-test/View.vue').join(),
+    /Removed assistant module/,
+  );
+  assert.match(
+    checkLegacy('apps/api/src/modules/design-assistant/graph.mjs').join(),
+    /Removed assistant module/,
+  );
+  assert.match(
+    checkLegacy('apps/api/src/app.mjs', "app.get('/api/admin/abap-fsd-agent/x')").join(),
+    /Legacy assistant identifier/,
+  );
+  assert.match(
+    checkLegacy('scripts/database/provision.mjs', 'GRANT SELECT ON app.fsd_v1_task').join(),
+    /Legacy assistant identifier/,
+  );
   assert.deepEqual(
-    checkTestDiscovery(
-      ['tests/e2e/fs-workspace/workspace.spec.ts'],
-      'tests/e2e/fs-workspace',
-      scripts,
-    ),
+    checkLegacy('apps/api/src/modules/abap-fsd-agent/loop.mjs', "const base = '/abap-fsd-agent';"),
     [],
   );
-  assert.match(
-    checkTestDiscovery(['tests/e2e/other/lost.spec.ts'], 'tests/e2e/fs-workspace', scripts).join(),
-    /not discovered/,
-  );
-  assert.match(
-    checkTestDiscovery(
-      ['tests/e2e/fs-workspace/workspace.spec.ts'],
-      'tests/e2e/fs-workspace',
-      {},
-    ).join(),
-    /Playwright/,
-  );
+  assert.deepEqual(checkLegacy('database/migrations/1.sql', 'DROP TABLE app.fsd_v1_task;'), []);
 });
