@@ -149,6 +149,24 @@ test('TOOL-05/06 old evidence is not revived by a matching hash', () => {
     ),
   );
 });
+test('TOOL-05 a table structure stays valid for a day, other reads for an hour', () => {
+  const now = Date.parse('2026-10-11T12:00:00Z');
+  const read = (hoursAgo, data) => ({
+    target_ref: 't',
+    client: '000',
+    source_version: '1',
+    observed_at: new Date(now - hoursAgo * 3600000).toISOString(),
+    coverage: { complete: true, properties: ['type'] },
+    validity: 'VALID',
+    data,
+  });
+  const target = { target_ref: 't', client: '000' };
+  const structure = { fields: [{ name: 'VBELN' }] };
+  assert.equal(validateEvidence(read(2, structure), target, ['type'], now).valid, true);
+  assert.equal(validateEvidence(read(25, structure), target, ['type'], now).valid, false);
+  assert.equal(validateEvidence(read(0.5, { source: 'x' }), target, ['type'], now).valid, true);
+  assert.equal(validateEvidence(read(2, { source: 'x' }), target, ['type'], now).valid, false);
+});
 test('TOOL-01 URL and argument validation deny unknown fields before transport', () => {
   const item = {
     target_ref: 't',

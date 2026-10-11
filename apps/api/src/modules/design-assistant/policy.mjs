@@ -392,6 +392,10 @@ export function withoutSupersededFields(evidence) {
     );
   });
 }
+// How long a SAP read stays usable. 15 min let the evidence of a run expire while its FSD was
+// still being written (STALE_EVIDENCE at N08). Table structures change with transports, not
+// within a working day; source and configuration reads are kept for an hour.
+export const EVIDENCE_TTL = { structure: 86400000, other: 3600000 };
 export function validateEvidence(e, target, required = [], now = Date.now()) {
   const reasons = [];
   if (e.target_ref !== target.target_ref || e.client !== target.client)
@@ -402,7 +406,8 @@ export function validateEvidence(e, target, required = [], now = Date.now()) {
   if (missing.length) reasons.push('MISSING_PROPERTIES');
   if (
     !Number.isFinite(Date.parse(e.observed_at)) ||
-    now - Date.parse(e.observed_at) > 900000 ||
+    now - Date.parse(e.observed_at) >
+      (Array.isArray(e.data?.fields) ? EVIDENCE_TTL.structure : EVIDENCE_TTL.other) ||
     e.validity !== 'VALID'
   )
     reasons.push('STALE_EVIDENCE');
