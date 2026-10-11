@@ -9,7 +9,7 @@
 - 变更目录必须同步修改引用、测试发现、npm 命令、Docker COPY 和目录导航；不得留下旧路径转发壳。
 - 提交前运行 npm run check:architecture，并完成契约规定的相关验证；失败必须如实报告。
 - 需要改变规则时，先修改契约及对应检查规则，再迁移消费者。不得临时绕过检查器。
-- 已停用的设计助手继续返回 410；目录整理不授权恢复旧设计引擎、删除历史数据或改变公开 API。
+- FSD 设计助手按[方向决策](docs/architecture/2026-10-11-fsd-assistant-direction-decision.md)完全重构：只保留一个版本，历史设计助手各代（含 410 边界、旧表与数据）按契约 3.1 清除，不恢复旧设计引擎。其他模块的目录整理仍不授权删除历史数据或改变公开 API。
 - 本机 .env、.runtime 中的凭据与附件、数据库卷和用户备份受保护，不做批量清理。
 
 2026-10-08 的重构记录见 docs/architecture/refactor-record.md；执行计划见 docs/plans/2026-10-08-repository-refactor.md。
