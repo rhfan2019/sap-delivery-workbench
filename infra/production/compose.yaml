@@ -18,6 +18,7 @@ x-app: &app
   LLM_CREDENTIAL_KEY: ${LLM_CREDENTIAL_KEY:?required}
   LLM_ALLOWED_HOSTS: ${LLM_ALLOWED_HOSTS:?required}
   DELIVERY_FILES_DIR: /data/files
+  ABAP_FSD_AGENT_FILES_DIR: /data/files/abap-fsd-agent
   TRUST_PROXY: 172.30.80.10
 services:
   postgres:

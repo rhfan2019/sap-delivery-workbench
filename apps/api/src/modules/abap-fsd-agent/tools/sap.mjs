@@ -1,0 +1,136 @@
+import { connectMcp, decodeResult, resolveProjectSap } from '../../sap/public.mjs';
+
+// Read-only abap-adt tools the model may use (system prompt part 4). Everything else the
+// MCP server offers (writes, code execution, debugger, transports...) never reaches the model.
+export const SAP_TOOLS = [
+  'searchObject',
+  'findObjectPath',
+  'objectTypes',
+  'ddicElement',
+  'ddicRepositoryAccess',
+  'tableContents',
+  'runQuery',
+  'getObjectSource',
+  'objectStructure',
+  'classComponents',
+  'findDefinition',
+  'usageReferences',
+  'abapDocumentation',
+];
+const MAX_ROWS = 100;
+const MAX_SOURCE_LINES = 400;
+const MAX_RESULT_CHARS = 24000;
+const SELECT_ONLY = /^\s*SELECT\b/i;
+const FORBIDDEN_SQL =
+  /;|--|\/\*|\b(INSERT|UPDATE|DELETE|MODIFY|DROP|ALTER|CREATE|EXEC|CALL|COMMIT|GRANT)\b/i;
+
+// Returns a problem description, or null when the call is allowed; may tighten limits in place.
+export function guardSapCall(name, args) {
+  if (!SAP_TOOLS.includes(name)) return '该工具不在只读白名单中。';
+  // tableContents also accepts free SQL, so both tools get the same SELECT-only rule.
+  if (name === 'runQuery' || (name === 'tableContents' && args.sqlQuery !== undefined)) {
+    const sql = String(args.sqlQuery ?? '');
+    if (!SELECT_ONLY.test(sql) || FORBIDDEN_SQL.test(sql))
+      return `${name} 只允许单条 SELECT 语句。`;
+  }
+  if (name === 'runQuery' || name === 'tableContents')
+    args.rowNumber = Math.min(Number(args.rowNumber) || MAX_ROWS, MAX_ROWS);
+  if (name === 'getObjectSource')
+    args.maxLines = Math.min(Number(args.maxLines) || MAX_SOURCE_LINES, MAX_SOURCE_LINES);
+  return null;
+}
+
+export function truncate(text, limit = MAX_RESULT_CHARS) {
+  return text.length <= limit
+    ? text
+    : text.slice(0, limit) + `\n…（结果已截断，共 ${text.length} 字符；请缩小查询范围）`;
+}
+
+// Opens one MCP connection for a turn. Never throws: when SAP is not usable the agent
+// keeps working without SAP tools and tells the model why.
+export async function openSap(
+  db,
+  scope,
+  { budgetMs, connect = connectMcp, resolve = resolveProjectSap } = {},
+) {
+  let resolved;
+  try {
+    resolved = await resolve(db, scope);
+  } catch (error) {
+    return { available: false, reason: '项目未配置可用的 DEV SAP 系统：' + error.message };
+  }
+  let connection;
+  try {
+    connection = await connect(resolved.env, { deadlineMs: budgetMs });
+  } catch (error) {
+    return { available: false, target: resolved.target, reason: 'SAP 连接失败：' + error.message };
+  }
+  const offered = new Map(connection.tools.map((t) => [t.name, t]));
+  const tools = SAP_TOOLS.filter((n) => offered.has(n)).map((name) => ({
+    type: 'function',
+    function: {
+      name,
+      description: offered.get(name).description ?? name,
+      parameters: schemaOf(offered.get(name)),
+    },
+  }));
+  return {
+    available: true,
+    target: resolved.target,
+    tools,
+    async call(name, args) {
+      const problem = guardSapCall(name, args);
+      if (problem) return { status: 'denied', content: problem };
+      try {
+        const envelope = await connection.call(name, args);
+        let value;
+        try {
+          value = await decodeResult(envelope, connection.call);
+        } catch {
+          // Not every tool answers with the paged JSON envelope; fall back to its text.
+          if (envelope?.isError) throw new Error(textOf(envelope) || 'SAP 工具返回错误');
+          value = textOf(envelope);
+        }
+        return { status: 'ok', content: truncate(formatResult(name, value)) };
+      } catch (error) {
+        return { status: 'error', content: 'SAP 查询失败：' + String(error.message).slice(0, 500) };
+      }
+    },
+    close: () => connection.close().catch(() => {}),
+  };
+}
+
+// ddicElement answers with verbose JSON (EBAN alone is ~24k characters); the model only
+// needs the field list, so tables and structures are reduced to one line per field.
+export function formatResult(name, value) {
+  if (typeof value === 'string') return value;
+  const r = value?.result;
+  if (name === 'ddicElement' && Array.isArray(r?.children) && r.children.length) {
+    const lines = r.children.map((c) => {
+      const p = c.properties?.elementProps || {};
+      return [
+        String(c.name).toUpperCase(),
+        p.ddicIsKey ? '键' : '',
+        p.ddicDataElement ? String(p.ddicDataElement).toUpperCase() : '',
+        p.ddicDataType ? `${p.ddicDataType}(${p.ddicLength ?? ''})` : c.type,
+      ]
+        .filter(Boolean)
+        .join(' ');
+    });
+    return `${String(r.name).toUpperCase()}（${r.type}）共 ${lines.length} 个字段：\n${lines.join('\n')}`;
+  }
+  return JSON.stringify(value);
+}
+
+// Providers reject JSON Schema meta keys in function parameters.
+function schemaOf(tool) {
+  const { $schema, ...schema } = tool.inputSchema ?? {};
+  return schema.type ? schema : { type: 'object', properties: {} };
+}
+
+function textOf(envelope) {
+  return (envelope?.content ?? [])
+    .filter((c) => c.type === 'text')
+    .map((c) => c.text)
+    .join('\n');
+}

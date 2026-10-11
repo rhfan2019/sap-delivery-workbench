@@ -8,7 +8,6 @@
 - [ABAP FSD 开发计划](plans/2026-10-08-abap-fsd-backend.md)：LangGraph 版设计助手的实施记录（历史，该链路已删除）。
 - [FSD 设计助手方案审视](architecture/2026-10-11-fsd-assistant-approach-review.md)：重构前设计助手的现状、问题和待讨论方向（决策前记录）。
 - [FSD 设计助手方向决策](architecture/2026-10-11-fsd-assistant-direction-decision.md)：转为模型主导智能体的决策、目标形态、完全重构方式与实施顺序。
-- [FSD 设计助手系统指令（草稿）](specs/fsd-assistant-system-prompt.md)：新智能体的系统指令草稿，待审阅后迁入模块提示词目录。
 - [abap-fsd-agent 重构实施计划](plans/2026-10-11-abap-fsd-agent-refactor.md)：历史助手清除清单、新模块与前端改接、DEV-0024 验收。
 - `guides/`：当前维护与操作说明。
 - `specs/`：版本化设计规格。

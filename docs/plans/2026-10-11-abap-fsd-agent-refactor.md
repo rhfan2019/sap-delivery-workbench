@@ -1,6 +1,6 @@
 # abap-fsd-agent 重构实施计划
 
-> 2026-10-11。状态：已确认（第 9 节五项均按建议执行）。准备阶段、阶段 A 已完成；下一步阶段 B。依据：[方向决策](../architecture/2026-10-11-fsd-assistant-direction-decision.md)、[目录与依赖契约 1.3](../architecture/repository-contract.md) 第 3.1 节、[系统指令草稿](../specs/fsd-assistant-system-prompt.md)。计划确认前不改代码。
+> 2026-10-11。状态：已确认（第 9 节五项均按建议执行）。准备阶段、阶段 A、阶段 B 已完成；下一步阶段 C。依据：[方向决策](../architecture/2026-10-11-fsd-assistant-direction-decision.md)、[目录与依赖契约 1.3](../architecture/repository-contract.md) 第 3.1 节、系统指令（已迁入 `apps/api/src/modules/abap-fsd-agent/prompts/system.md`）。计划确认前不改代码。
 
 ## 1. 目标与完成标准
 
@@ -165,7 +165,7 @@ apps/api/src/modules/abap-fsd-agent/
 
 ## 6. 阶段 D：收尾
 
-- 系统指令定稿迁入 `abap-fsd-agent/prompts/system.md`，删除 `docs/specs/fsd-assistant-system-prompt.md`。
+- 系统指令已在阶段 B 迁入 `abap-fsd-agent/prompts/system.md`，草稿已删除。
 - 更新 README（运行入口、命令）、`docs/README.md`、新增 `docs/guides/abap-fsd-agent.md`（启动、配置 SAP 与模型、查日志）。
 - 方向决策与契约中的状态更新为“已实施”。
 
@@ -209,3 +209,14 @@ apps/api/src/modules/abap-fsd-agent/
   - 通用测试夹具从 `tests/fixtures/fs-workspace/` 重建为 `tests/fixtures/api.mjs`、`database.mjs`（去掉 FS 工作区初始化）。
 - 事故与修复：准备阶段删除的未提交迁移 `1791676800000_fsd-v1-insights-indexes.sql` 实际已在主库与测试库执行，导致迁移顺序校验失败。已按两个库中的索引定义重建该文件（7 个索引），未修改任何库的迁移记录。
 - 待办：主库尚未执行 `npm run db:migrate`，执行后旧助手数据将被删除，由用户决定执行时机。界面在阶段 C 改接前不可用。
+
+### 阶段 B（2026-10-11）
+
+- 新模块 `apps/api/src/modules/abap-fsd-agent/`：`routes.mjs`（HTTP 与 SSE）、`loop.mjs`（智能体循环）、`context.mjs`（系统指令、会话事实、历史）、`events.mjs`（进程内事件缓冲，支持断线续传）、`document.mjs`（章节拆分、局部替换、修改声明比对）、`repository.mjs`、`tools/`（SAP 只读工具、文档/出题/批注工具、`check_document`）、`prompts/system.md`。
+- 迁移 `1791730000000_abap-fsd-agent.sql` 新建 7 张表；models 模块新增 `resolveAgentModel`、`streamChat`（OpenAI 兼容协议的流式工具调用）；sap 模块新增 `resolveProjectSap`（按项目 DEV 配置），`connectMcp` 支持更长的连接时限；删除不再使用的 `resolveReadEnvironment`。
+- API 与第 4.6 节基本一致；实际路径：会话事件为 `GET /sessions/:id/turns/:turnId/events?after=n`，标签为 `PUT /sessions/:id/documents/:version/labels`，附件以 JSON（Base64）上传，单文件上限 10MB。
+- 验证：单元测试新增 6 个文件、集成测试新增 3 项（假模型跑通提问→答复→出稿→批注修订→定稿标签→导出、未声明修改识别、并发占用与取消、访问控制）；`npm run check`、单元 73 项、隔离集成 36 项通过。
+- 真实环境探针（临时脚本，未入库）：
+  - SAP（`.env` 中的 DEV 连接）：13 个白名单工具全部可用；`searchObject`、`ddicElement`、`runQuery`（TVAK、DD07T）、`tableContents` 均在约 1 秒内返回；写语句被拒绝。发现 EBAN 表定义原始 JSON 达 24,028 字符，超过截断上限，已改为“一行一字段”的清单（6,479 字符）；发现 `tableContents` 也接受 `sqlQuery`，已加同样的 SELECT 限制。
+  - 默认模型（SiliconFlow DeepSeek-V4-Pro）：工具调用与 `reasoning_content` 回传均正常。速度：开启深度思考时一次工具决策 46 秒（389 个输出 token，其中思考 311 个）；关闭思考时 7 秒。可通过 `ABAP_FSD_AGENT_THINKING=off` 关闭思考，`ABAP_FSD_AGENT_MAX_OUTPUT_TOKENS` 设置单次输出上限。
+- 已知限制：主库尚未执行迁移；前端尚未改接（阶段 C）；S/4 中 VBUP 等兼容对象仍可读取，字段核对不会把它们判为不存在。

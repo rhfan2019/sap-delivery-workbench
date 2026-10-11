@@ -78,7 +78,7 @@ export async function decodeResult(envelope, call) {
 
 // Only server-controlled environment is accepted. No browser-supplied command,
 // URL, credential, tool name or SQL can reach the MCP process.
-export async function connectMcp(env = process.env, { onProtocol } = {}) {
+export async function connectMcp(env = process.env, { onProtocol, deadlineMs = 90000 } = {}) {
   const entry =
     env.SAP_MCP_ENTRY ||
     fileURLToPath(new URL('../../../../../vendor/abap-adt/dist/index.js', import.meta.url));
@@ -136,7 +136,8 @@ export async function connectMcp(env = process.env, { onProtocol } = {}) {
     };
   }
   const client = new Client({ name: 'sap-delivery-workbench-verification', version: '0.1.0' });
-  const deadline = Date.now() + 90000;
+  // One connection serves a bounded piece of work; agents pass a longer turn budget.
+  const deadline = Date.now() + deadlineMs;
   const options = () => ({ timeout: Math.max(1, Math.min(65000, deadline - Date.now())) });
   try {
     await client.connect(transport, { timeout: 15000 });
