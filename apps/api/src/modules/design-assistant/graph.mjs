@@ -19,6 +19,7 @@ import {
 } from './policy.mjs';
 import { setTimeout as delay } from 'node:timers/promises';
 import { executeChatNode } from './chat-node.mjs';
+import { qualityIssue } from './quality.mjs';
 import { parseFsdWire } from '@sap-delivery-workbench/contracts/design-assistant/fsd-report-wire';
 import {
   draftSkeleton,
@@ -28,6 +29,7 @@ import {
   WRITE_JOBS,
   jobForPath,
   dropDanglingReferences,
+  salvageDocument,
   stampVersion,
 } from './document.mjs';
 import {
@@ -65,6 +67,9 @@ export function buildGraph(
   // Write jobs (by key) already rewritten once; the content check does not rewrite them again.
   const rewritten = new Set();
   const current = () => tx((db) => guard(db, lease, { allowWaiting: true }));
+  // A failed content check: recorded, and the run goes on unless QUALITY_POLICY blocks it.
+  const quality = (check, details) =>
+    tx((db) => qualityIssue(db, lease.task_id, lease.id, check, details));
   // part (FSD wire calls): { key, parts?, section?, outline?, draft?, reason?, issues?,
   // problems?, check? }; key separates the parallel calls of one node in the ledger.
   // A wire answer is returned as { text, parsed }; check(parsed) lists problems that make
@@ -367,9 +372,25 @@ export function buildGraph(
     'N03',
     node('N03', async (s) => {
       const { t, r } = await current();
-      if (s.round >= r.assets.budget.query_rounds) throw fault('NO_PROGRESS', 'SAP_ADAPTER');
+      // Without (further) SAP reads the FSD is written from what is known; open points stay 推断.
+      if (s.round >= r.assets.budget.query_rounds) {
+        await quality('NO_PROGRESS', { node_id: 'N03', reason: 'query_rounds', round: s.round });
+        return { route: 'N07' };
+      }
       const plan = await call('QueryPlan', s);
-      plan.items.forEach((i) => validateTool(i, t.target));
+      const rejected = [];
+      plan.items = plan.items.filter((i) => {
+        try {
+          validateTool(i, t.target);
+          return true;
+        } catch (e) {
+          rejected.push({ tool_name: i.tool_name, arguments: i.arguments, code: e.code });
+          return false;
+        }
+      });
+      if (rejected.length)
+        await quality('TOOL_REJECTED', { node_id: 'N03', items: rejected.slice(0, 20) });
+      if (!plan.items.length) return { route: 'N07' };
       const signature = hash(
         plan.items
           .map((i) => [
@@ -381,9 +402,11 @@ export function buildGraph(
           .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))),
       );
       const ref = hash([r.id, 'query', s.round]);
+      if ((r.state.query_signatures ?? []).includes(signature)) {
+        await quality('NO_PROGRESS', { node_id: 'N03', reason: 'repeated_plan', round: s.round });
+        return { route: 'N07' };
+      }
       await commit('N03:' + s.round, plan, (task, run) => {
-        if ((run.state.query_signatures ?? []).includes(signature))
-          throw fault('NO_PROGRESS', 'SAP_ADAPTER');
         task.phase = 3;
         run.state.query_signatures = [...(run.state.query_signatures ?? []), signature];
         run.state.query_plan = plan;
@@ -549,13 +572,20 @@ export function buildGraph(
     'N05',
     node('N05', async (s) => {
       const out = await call('EvidenceAssessment', s);
-      const { t, r } = await current();
-      // Evidence from earlier runs ages out after 15 minutes (e.g. while the customer answers
-      // questions); it is simply not used, it must not force another clarification round.
-      const sufficient =
-        t.evidence.some((e) => checkEvidence(e, t.target, e.required_properties).valid) &&
-        r.state.query_results?.every((x) => x.status === 'SUCCESS');
-      if (!sufficient) return { route: 'N06' };
+      const { r } = await current();
+      // A failed or partial SAP read is not the customer's question: it is recorded and the
+      // model decides with the evidence it has (what is missing stays 推断 in the FSD).
+      const failed = (r.state.query_results ?? []).filter((x) => x.status !== 'SUCCESS');
+      if (failed.length)
+        await quality('QUERY_FAILED', {
+          node_id: 'N05',
+          results: failed.slice(0, 20).map((x) => ({
+            gap_id: x.gap_id ?? null,
+            status: x.status,
+            error: x.error ?? null,
+            missing_properties: x.missing_properties ?? [],
+          })),
+        });
       // Real models keep finding one more field to read; after the last query round the
       // remaining gaps go into the proposal as unresolved issues instead of NO_PROGRESS.
       const lastRound = s.round + 1 >= r.assets.budget.query_rounds;
@@ -704,7 +734,7 @@ export function buildGraph(
       const failing = new Map();
       for (const e of check.ok ? [] : check.errors) {
         const job = jobForPath(e.path, draft);
-        if (!job) throw fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION', 422, [e]);
+        if (!job) continue; // program-owned part: left to salvageDocument below
         failing.set(job.key, { job, problems: [...(failing.get(job.key)?.problems ?? []), e] });
       }
       for (const { job, problems } of failing.values()) {
@@ -721,15 +751,23 @@ export function buildGraph(
         changed = [...new Set([...changed, ...merged.changed])];
       }
       ({ doc: draft } = dropDanglingReferences(draft));
-      check = validateFsdReport(draft);
-      if (!check.ok) {
+      // What still fails the content model is cut out and listed as an open issue; the user
+      // sees the rest of the FSD instead of an error. Only a broken skeleton stops the run.
+      const salvaged = salvageDocument(draft);
+      if (salvaged.removed.length)
+        await quality('DOCUMENT_INVALID', {
+          node_id: 'N07',
+          removed: salvaged.removed.slice(0, 40),
+        });
+      if (salvaged.errors.length) {
         await tx((db) =>
           event(db, lease.task_id, lease.id, 'document.invalid', {
-            errors: check.errors.slice(0, 40),
+            errors: salvaged.errors.slice(0, 40),
           }),
         );
-        throw fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION', 422, check.errors);
+        throw fault('INVALID_OUTPUT', 'OUTPUT_VALIDATION', 422, salvaged.errors);
       }
+      draft = salvaged.doc;
       const ref = hash(draft);
       await commit('N07:' + s.round + ':' + (s.cycle ?? 0), { draft_hash: ref }, (_t, run) => {
         run.state.draft = draft;
@@ -763,7 +801,16 @@ export function buildGraph(
       if (!draft) throw fault('UNKNOWN_REFERENCE', 'BUSINESS_COMMIT');
       // A revision answering review findings must actually change the document (09 FLOW-06).
       if (!exhausted && r.state.review_open?.length && !r.state.last_changed?.length)
-        throw fault('REVIEW_NOT_APPLIED', 'OUTPUT_VALIDATION');
+        await quality('REVIEW_NOT_APPLIED', {
+          node_id: 'N08',
+          issues: r.state.review_open.map((i) => i.issue_id).slice(0, 20),
+        });
+      const { t: before } = await current();
+      if (
+        !before.target.sap_disabled &&
+        !before.evidence.some((e) => checkEvidence(e, before.target, e.required_properties).valid)
+      )
+        await quality('STALE_EVIDENCE', { node_id: 'N08', evidence: before.evidence.length });
       await commit(
         'N08:' + s.round + ':' + (s.cycle ?? 0),
         { draft_hash: hash(draft) },
@@ -773,8 +820,6 @@ export function buildGraph(
           const valid = task.evidence.filter(
             (e) => checkEvidence(e, task.target, e.required_properties).valid,
           );
-          if (!valid.length && !task.target.sap_disabled)
-            throw fault('STALE_EVIDENCE', 'RETRIEVAL');
           const version = (task.artifact_version ?? 0) + 1;
           const kind = s.cycle === 1 ? 'FSD' : 'PLAN';
           const document = stampVersion(draft, version, kind);
@@ -895,19 +940,29 @@ export function buildGraph(
   g.addNode(
     'N11',
     node('N11', async () => {
+      const { t: before } = await current();
+      const last = before.artifacts.at(-1);
+      if (
+        !before.target.sap_disabled &&
+        (!before.evidence.length ||
+          !last?.evidence_refs.length ||
+          last.evidence_refs.some((id) => !before.evidence.some((e) => e.id === id)) ||
+          before.evidence.some(
+            (e) => !checkEvidence(e, before.target, e.required_properties).valid,
+          ))
+      )
+        await quality('STALE_EVIDENCE', { node_id: 'N11', evidence: before.evidence.length });
+      if (before.blocking_issues.length)
+        await quality('BLOCKING_ISSUES', {
+          node_id: 'N11',
+          issues: before.blocking_issues.map((i) => i.id).slice(0, 20),
+        });
       await commit('N11', {}, (t) => {
         const a = t.artifacts.at(-1);
         const plan = t.artifacts.find((p) => p.id === a.plan_artifact_id);
-        // No-SAP mode has no evidence by construction; the FSD carries that as open items.
-        const evidenceMissing =
-          !t.target.sap_disabled &&
-          (!t.evidence.length ||
-            !a.evidence_refs.length ||
-            a.evidence_refs.some((id) => !t.evidence.some((e) => e.id === id)) ||
-            t.evidence.some((e) => !checkEvidence(e, t.target, e.required_properties).valid));
+        // Evidence and blocking issues are checked above (QUALITY_POLICY); what remains are
+        // the human confirmations of the plan and the FSD, which delivery always needs.
         if (
-          t.blocking_issues.length ||
-          evidenceMissing ||
           !plan ||
           !t.confirmations.some(
             (c) =>

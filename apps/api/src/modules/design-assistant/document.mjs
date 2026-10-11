@@ -2,7 +2,10 @@
 // what the program fills itself, which wire parts each call writes, and how a failing
 // part of a merged draft is traced back to the call that writes it.
 import { emptyWireDoc } from '@sap-delivery-workbench/contracts/design-assistant/fsd-report-wire';
-import { checkReferences } from '@sap-delivery-workbench/contracts/design-assistant/fsd-report';
+import {
+  checkReferences,
+  validateFsdReport,
+} from '@sap-delivery-workbench/contracts/design-assistant/fsd-report';
 import { evidenceAlias } from './model.mjs';
 
 const PRODUCTS = new Set(['ECC', 'S4_OP', 'S4_PCE']);
@@ -180,6 +183,62 @@ export function dropDanglingReferences(doc) {
     },
   ];
   return { doc: clean, removed: [...gone] };
+}
+
+/**
+ * Keeps a draft the content model rejects: removes the smallest list entry (row, item,
+ * block, section) each error points into, until the document is valid, and lists what was
+ * removed in one open issue. Returns the errors left when an error is not inside a list
+ * (the document skeleton itself is broken); the caller decides then.
+ */
+export function salvageDocument(doc) {
+  let clean = structuredClone(doc);
+  const removed = [];
+  for (let round = 0; round < 200; round++) {
+    // A removed section leaves references to it; those go, not the rows that cite it.
+    clean = dropDanglingReferences(clean).doc;
+    const check = validateFsdReport(clean);
+    if (check.ok) break;
+    const hit = check.errors
+      .map((e) => ({ e, at: lastListEntry(clean, e.path) }))
+      .find((x) => x.at);
+    if (!hit) return { doc: clean, removed, errors: check.errors };
+    const [item] = hit.at.list.splice(hit.at.index, 1);
+    removed.push({
+      path: hit.e.path,
+      message: hit.e.message,
+      // Quoted, not cited: [[ID]] in the removed text would count as a reference again.
+      content: JSON.stringify(item)
+        .replace(/\[\[|\]\]/g, '')
+        .slice(0, 300),
+    });
+  }
+  if (!removed.length) return { doc: clean, removed, errors: [] };
+  clean.working ??= {};
+  clean.working.open_issues = [
+    ...(clean.working.open_issues ?? []).filter((i) => i.id !== 'ISS-QC-REMOVED'),
+    {
+      id: 'ISS-QC-REMOVED',
+      title: `程序检查剔除了 ${removed.length} 处不符合文档格式的内容，需复核后补充`,
+      impact: removed.map((r) => `- ${r.path}：${r.message}；原内容 ${r.content}`).join('\n'),
+      blocking: false,
+      status: 'OPEN',
+    },
+  ];
+  const check = validateFsdReport(clean);
+  return { doc: clean, removed, errors: check.ok ? [] : check.errors };
+}
+// The innermost array element a JSON pointer passes through, e.g. /output/fields/3/ref.
+function lastListEntry(doc, path) {
+  let value = doc,
+    at = null;
+  for (const key of path.split('/').slice(1)) {
+    if (Array.isArray(value) && /^\d+$/.test(key) && Number(key) < value.length)
+      at = { list: value, index: Number(key) };
+    value = value?.[key];
+    if (value === undefined) break;
+  }
+  return at;
 }
 
 /** Artifact version n is document version V1.(n-1); later versions are logged. */

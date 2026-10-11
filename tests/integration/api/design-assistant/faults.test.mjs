@@ -334,27 +334,61 @@ test('REC-06 remote success followed by lost response retains UNKNOWN and re-rea
     await f.pool.end();
   }
 });
-test('MODEL-03 repeated semantic query with renamed gap stops before a second SAP call', async () => {
+test('MODEL-03 repeated semantic query stops before a second SAP call and writes the proposal', async () => {
   const f = await setup();
   let query = 0;
   try {
-    await assert.rejects(
-      () =>
-        executeRun(f.pool, f.lease, {
-          model: async (args) => {
-            const out = await syntheticModel(args);
-            if (args.kind === 'EvidenceAssessment') out.output.decision = 'NEED_QUERY';
-            if (args.kind === 'QueryPlan') out.output.items[0].gap_id = 'renamed-' + ++query;
-            return out;
-          },
-          tool: syntheticTool,
-        }),
-      /NO_PROGRESS/,
-    );
+    await executeRun(f.pool, f.lease, {
+      model: async (args) => {
+        const out = await syntheticModel(args);
+        if (args.kind === 'EvidenceAssessment') out.output.decision = 'NEED_QUERY';
+        if (args.kind === 'QueryPlan') out.output.items[0].gap_id = 'renamed-' + ++query;
+        return out;
+      },
+      tool: syntheticTool,
+    });
     const t = await loadTask(f.pool, f.scope, f.task.id);
     assert.equal(t.budget.tool_calls, 1);
-    assert.equal(t.artifacts.length, 0);
-    assert.equal(t.status, 'WAITING');
+    assert.equal(t.artifacts.length, 1);
+    assert.equal(t.wait_reason, 'PLAN_CONFIRM');
+    const issue = (
+      await f.pool.query(
+        "SELECT data FROM app.fsd_v1_event WHERE run_id=$1 AND event_type='quality.issue'",
+        [f.lease.id],
+      )
+    ).rows.map((r) => r.data);
+    assert.ok(issue.some((d) => d.check === 'NO_PROGRESS' && d.severity === 'PASS'));
+  } finally {
+    await f.pool.end();
+  }
+});
+test('TOOL-01 a planned read outside the approved tools is dropped and the proposal is written', async () => {
+  const f = await setup();
+  let tools = 0;
+  try {
+    await executeRun(f.pool, f.lease, {
+      model: async (args) => {
+        const out = await syntheticModel(args);
+        if (args.kind === 'QueryPlan')
+          out.output.items = out.output.items.map((i) => ({ ...i, tool_name: 'deleteObject' }));
+        return out;
+      },
+      tool: async (...a) => {
+        tools++;
+        return syntheticTool(...a);
+      },
+    });
+    const t = await loadTask(f.pool, f.scope, f.task.id);
+    assert.equal(tools, 0);
+    assert.equal(t.artifacts.length, 1);
+    assert.equal(t.wait_reason, 'PLAN_CONFIRM');
+    const issue = (
+      await f.pool.query(
+        "SELECT data FROM app.fsd_v1_event WHERE run_id=$1 AND event_type='quality.issue' AND data->>'check'='TOOL_REJECTED'",
+        [f.lease.id],
+      )
+    ).rows[0].data;
+    assert.equal(issue.items[0].code, 'TOOL_DENIED');
   } finally {
     await f.pool.end();
   }
@@ -601,7 +635,7 @@ test('TOOL-03 missing unit metadata is excluded from model facts and prevents ar
     await f.pool.end();
   }
 });
-test('TOOL-06 version-unknown evidence is reread on successor input and remains blocked', async () => {
+test('TOOL-06 version-unknown evidence is reread on successor input and does not block the proposal', async () => {
   const f = await setup();
   let calls = 0;
   const tool = async (item, ctx) => {
@@ -644,8 +678,17 @@ test('TOOL-06 version-unknown evidence is reread on successor input and remains 
     assert.notEqual(t.evidence[0].id, oldId);
     assert.ok(t.evidence[0].limitations.includes('VERSION_UNKNOWN'));
     assert.equal(t.evidence[0].validity, 'PENDING_REVIEW');
-    assert.equal(t.artifacts.length, 0);
-    assert.equal(t.wait_reason, 'CLARIFICATION');
+    // No valid evidence is a recorded quality issue, not a reason to withhold the proposal.
+    assert.equal(t.artifacts.length, 1);
+    assert.equal(t.wait_reason, 'PLAN_CONFIRM');
+    assert.ok(
+      (
+        await f.pool.query(
+          "SELECT 1 FROM app.fsd_v1_event WHERE run_id=$1 AND event_type='quality.issue' AND data->>'check'='STALE_EVIDENCE'",
+          [next.id],
+        )
+      ).rowCount,
+    );
   } finally {
     await f.pool.end();
   }

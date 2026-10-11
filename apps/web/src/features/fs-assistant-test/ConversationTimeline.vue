@@ -330,11 +330,13 @@ async function copy(text: string) {
                   ? '已完成当前需求分析。请回答下方业务问题后继续。'
                   : message.artifact
                     ? '已生成并保存候选成果。请打开审阅，点击“采用”更新工作稿，或回复具体修改意见。'
-                    : message.rendered
-                      ? '已完成可读文档转换。可下载 Markdown；阅读稿不会自动覆盖当前成果。'
-                      : development
-                        ? '已完成本轮开发讨论。可继续补充，或回复“生成开发内容”进入下一步。'
-                        : '已完成本轮需求讨论。可继续补充，或回复“生成FSD”进入草稿生成。'
+                    : message.content && structured(message.content)
+                      ? '本轮回复只有技术输出，没有完成讨论。请重试，或补充说明后重新发送。'
+                      : message.rendered
+                        ? '已完成可读文档转换。可下载 Markdown；阅读稿不会自动覆盖当前成果。'
+                        : development
+                          ? '已完成本轮开发讨论。可继续补充，或回复“生成开发内容”进入下一步。'
+                          : '已完成本轮需求讨论。可继续补充，或回复“生成FSD”进入草稿生成。'
           }}
         </p>
         <MessageActions v-if="message.role === 'assistant'" class="items-center">

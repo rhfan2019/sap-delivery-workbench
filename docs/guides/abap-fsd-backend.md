@@ -31,14 +31,14 @@ npm run dev
 
 ## 配置
 
-| 键                           | 含义                                                               |
-| ---------------------------- | ------------------------------------------------------------------ |
-| `FSD_OTLP_URL`               | OTLP HTTP traces 地址；本地 `http://127.0.0.1:4318/v1/traces`      |
-| `FSD_REAL_INPUT_APPROVED`    | 只有明确资料出域许可后配置 `true`，才能创建 REAL 任务              |
-| `FSD_TARGET_MANIFEST`        | 本机受控 SAP 目标登记 JSON 路径，不提交账号、口令或真实材料        |
+| 键                           | 含义                                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `FSD_OTLP_URL`               | OTLP HTTP traces 地址；本地 `http://127.0.0.1:4318/v1/traces`                                                |
+| `FSD_REAL_INPUT_APPROVED`    | 只有明确资料出域许可后配置 `true`，才能创建 REAL 任务                                                        |
+| `FSD_TARGET_MANIFEST`        | 本机受控 SAP 目标登记 JSON 路径，不提交账号、口令或真实材料                                                  |
 | `FSD_SAP_MODE`               | 设为 `off` 时不接入 SAP：不登记目标、不调用工具，系统结论全部作为待核实推断进入 FSD 未决项（PoC 跑通流程用） |
-| `FSD_REAL_DELIVERY_APPROVED` | 两确认门、交付格式与业务准入明确后才允许真实交付                   |
-| 现有模型/SAP 配置            | 复用管理界面的版本化模型及凭据、组织/项目 SAP 连接；不另设明文密钥 |
+| `FSD_REAL_DELIVERY_APPROVED` | 两确认门、交付格式与业务准入明确后才允许真实交付                                                             |
+| 现有模型/SAP 配置            | 复用管理界面的版本化模型及凭据、组织/项目 SAP 连接；不另设明文密钥                                           |
 
 目标登记包含 organization_id、project_id、target_ref、system_id、client、environment（DEV/QAS）、deployment_version、data_egress_approved、allowed_urls、capabilities。能力条目必须覆盖 SAP-C01..07，具备真实 PASS 证据；NOT_APPLICABLE 必须有 reason 和 approved_by。空能力清单不准入。固定配置查询只接受服务器审核的 SELECT 模板，拒绝自由 SQL、写工具及外部 URL。
 
@@ -53,6 +53,22 @@ npm run dev
 `npm run fsd:sap:probe` 默认不联网，保存 SAP-C01..07 的阻塞清单。复制 `infra/fsd-probe.example.json` 到本机受控位置，填写批准人/时间、精确目标 origin/client、只读代表对象及所需属性，用 `FSD_PROBE_PLAN` 指定路径。仅在批准后使用 `npm run fsd:sap:probe -- --execute`；探针读取本地 SAP_URL/SAP_CLIENT/SAP_USER/SAP_PASSWORD，目标 origin/client 必须匹配。每能力最多 8 个精确只读样本，不接受写工具或自由 SQL，记录摘要/hash/覆盖和结构化失败，不导出业务正文。
 
 读请求成功仅是观察结果，探针不会自动修改准入清单或标记能力 PASS。认证拒绝、证书、账号交叉隔离、分页 TTL、超时远端结果及完整依赖仍需目标环境配对试验和责任人审查。批准的 `FSD_TARGET_MANIFEST` 中，每个 PASS 条目必须有 approved_by、相对 evidence_ref 和文件原文 SHA-256；对应 JSON 需包含 capability_id、target_ref、system_id、client、deployment_version、status=PASS、approved_by、observed_at。适配器校验文件 hash 与目标绑定；管理者仍对真实证据内容及审批负责。证据路径不得逃出 manifest 所在目录。探针结果目录为 `.runtime/artifacts/abap-backend-2026-10-08/sap-probes`。
+
+## 质量问题放行
+
+内容检查不合格不再中断运行：按 `apps/api/src/modules/design-assistant/quality.mjs` 的 `QUALITY_POLICY` 记录一条 `quality.issue` 事件（check、severity、node_id、详情），流程继续，由用户在对话中补充修正，事后按日志复核。
+
+| check              | 何时出现                               | 默认处理                                                                                     |
+| ------------------ | -------------------------------------- | -------------------------------------------------------------------------------------------- |
+| TOOL_REJECTED      | 查询计划中有白名单外的对象或不合法参数 | 放行：去掉这些查询；一条也不剩时直接编写 FSD                                                 |
+| QUERY_FAILED       | SAP 读取失败或不完整                   | 放行：模型按已有证据决定，缺失部分在 FSD 中标“推断”                                          |
+| NO_PROGRESS        | 查询轮次用完或重复同样的查询           | 放行：直接编写 FSD                                                                           |
+| STALE_EVIDENCE     | 保存草稿或交付时没有仍有效的 SAP 证据  | 放行                                                                                         |
+| DOCUMENT_INVALID   | 合并后的文档仍不符合内容模型           | 放行：剔除不合格的最小条目，汇总为未决事项 `ISS-QC-REMOVED`（阻断=否）；文档骨架损坏时仍中断 |
+| REVIEW_NOT_APPLIED | 针对审查意见的修订没有改动正文         | 放行                                                                                         |
+| BLOCKING_ISSUES    | 交付时仍有“阻断=是”的未决事项          | 阻断（DELIVERY_BLOCKED）                                                                     |
+
+权限、租约、版本冲突、检查点、只读防护和方案/FSD 的人工确认不在此列，始终中断或等待。
 
 ## Trace 与诊断
 

@@ -75,7 +75,7 @@ test('FLOW-05 title and formula revisions preserve untouched objects and invalid
   }
 });
 for (const repairBody of [false, true])
-  test('FLOW-06 resolved review requires actual body change: ' + repairBody, async () => {
+  test('FLOW-06 a review revision that changes nothing is recorded: ' + repairBody, async () => {
     const w = await workflow();
     let reviews = 0;
     try {
@@ -111,9 +111,17 @@ for (const repairBody of [false, true])
         assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
         assert.ok(section(w.task.document, 'LOG-OPEN').blocks[0].items.at(-1).includes('修复了'));
       } else {
-        await assert.rejects(execute, /REVIEW_NOT_APPLIED/);
-        assert.equal(w.task.artifacts.length, 0);
-        assert.equal(w.task.wait_reason, 'TECHNICAL');
+        await execute();
+        assert.equal(w.task.artifacts.length, 1);
+        assert.equal(w.task.wait_reason, 'PLAN_CONFIRM');
+        assert.ok(
+          (
+            await w.pool.query(
+              "SELECT 1 FROM app.fsd_v1_event WHERE task_id=$1 AND event_type='quality.issue' AND data->>'check'='REVIEW_NOT_APPLIED'",
+              [w.task.id],
+            )
+          ).rowCount,
+        );
       }
     } finally {
       await w.close();
@@ -136,7 +144,7 @@ test('FLOW-08 withdrawn premise and explicit end never become delivered and pres
     await w.close();
   }
 });
-test('FLOW-08 explicit final confirmation cannot publish an artifact after critical evidence disappears', async () => {
+test('FLOW-08 a confirmed FSD is delivered without valid evidence, and the gap is recorded', async () => {
   const w = await workflow();
   try {
     await w.run();
@@ -148,9 +156,17 @@ test('FLOW-08 explicit final confirmation cannot publish an artifact after criti
     );
     await w.refresh();
     await w.command({ command: 'confirm', ...w.task.wait, confirmed: true });
-    await assert.rejects(() => w.run(), /DELIVERY_BLOCKED/);
-    assert.equal(w.task.delivered_artifact_id, undefined);
+    await w.run();
+    assert.equal(w.task.delivered_artifact_id, w.task.artifacts.at(-1).id);
     assert.equal(w.task.artifacts.length, 2);
+    assert.ok(
+      (
+        await w.pool.query(
+          "SELECT 1 FROM app.fsd_v1_event WHERE task_id=$1 AND event_type='quality.issue' AND data->>'check'='STALE_EVIDENCE' AND data->>'node_id'='N11'",
+          [w.task.id],
+        )
+      ).rowCount,
+    );
   } finally {
     await w.close();
   }

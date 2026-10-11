@@ -8,6 +8,7 @@ import {
   outlineProblems,
   partProblems,
   pickParts,
+  salvageDocument,
   stampVersion,
 } from '../../../../apps/api/src/modules/design-assistant/document.mjs';
 import { validateFsdReport } from '@sap-delivery-workbench/contracts/design-assistant/fsd-report';
@@ -80,6 +81,31 @@ test('DOC-04 dangling references are removed and listed as one open item', async
   const issue = clean.working.open_issues.find((i) => i.id === 'ISS-DANGLING-REFS');
   assert.equal(issue.blocking, false);
   assert.deepEqual(validateFsdReport(clean), { ok: true, errors: [] });
+});
+
+test('DOC-07 content the model got wrong is cut out and listed, the rest is kept', async () => {
+  const doc = await isc001();
+  const bad = doc.output.fields[2];
+  bad.id = 'not an id';
+  const sections = doc.logic.sections.length;
+  const { doc: clean, removed, errors } = salvageDocument(doc);
+  assert.deepEqual(errors, []);
+  assert.equal(removed.length, 1);
+  assert.equal(removed[0].path, '/output/fields/2/id');
+  assert.ok(!clean.output.fields.some((f) => f.id === 'not an id'));
+  assert.equal(clean.output.fields.length, doc.output.fields.length - 1);
+  assert.equal(clean.logic.sections.length, sections);
+  const issue = clean.working.open_issues.find((i) => i.id === 'ISS-QC-REMOVED');
+  assert.equal(issue.blocking, false);
+  assert.match(issue.impact, /\/output\/fields\/2\/id/);
+  assert.deepEqual(validateFsdReport(clean), { ok: true, errors: [] });
+});
+
+test('DOC-08 a broken skeleton is not salvaged but reported', async () => {
+  const doc = await isc001();
+  doc.doc.version = 7;
+  const { errors } = salvageDocument(doc);
+  assert.ok(errors.some((e) => e.path === '/doc/version'));
 });
 
 test('DOC-05 outline and part checks name what is missing', () => {
