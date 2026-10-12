@@ -161,7 +161,10 @@ export function useAgentSession(base: string) {
       if (status.value !== 'stopping') status.value = 'streaming';
       generationNote.value = '';
     } else if (event.type === 'delta' && d.type === 'reasoning') generationNote.value = '正在思考…';
-    else if (event.type === 'step') generationNote.value = `正在分析（第 ${d.step} 步）…`;
+    else if (event.type === 'step')
+      generationNote.value = d.retry
+        ? `模型服务繁忙，${Math.round(d.waitMs / 1000)} 秒后第 ${d.retry} 次重试…`
+        : `正在分析（第 ${d.step} 步）…`;
     else if (event.type === 'tool.start') {
       steps.value.push({
         ...stepFromToolCall({ id: d.id, name: d.name, status: 'running' }),

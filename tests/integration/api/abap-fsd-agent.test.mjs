@@ -57,6 +57,7 @@ async function setup() {
       loop: {
         streamChat: model.streamChat,
         openSap: async () => ({ available: false, reason: '测试环境不连接 SAP' }),
+        wait: async () => {},
       },
     },
   });
@@ -250,6 +251,27 @@ test('one turn at a time; a running turn can be cancelled; strangers are rejecte
     assert.equal(anonymous.status, 401);
     const missing = await call('GET', '/sessions/00000000-0000-4000-8000-000000000000');
     assert.equal(missing.status, 404);
+  } finally {
+    await f.close();
+  }
+});
+
+test('a busy provider is retried before the turn fails', async () => {
+  const { f, model, call, send } = await setup();
+  const busy = () => {
+    throw Object.assign(new Error('模型服务繁忙'), { code: 'PROVIDER_BUSY' });
+  };
+  try {
+    const sid = (await call('POST', '/sessions', {})).json().id;
+    model.queue.push(busy, busy, async () => reply('好的。'));
+    const ok = await send(sid, { content: '你好' });
+    assert.equal(ok.end.status, 'completed');
+    assert.match(ok.events, /"retry":2/);
+
+    model.queue.push(busy, busy, busy, busy);
+    const failed = await send(sid, { content: '再来' });
+    assert.equal(failed.end.status, 'failed');
+    assert.equal(model.queue.length, 0);
   } finally {
     await f.close();
   }

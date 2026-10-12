@@ -74,4 +74,6 @@ test('model transport blocks SSRF, validates actual text and hides provider erro
   assert.equal(failure.code, 'AUTH_FAILED');
   assert.ok(!JSON.stringify(failure).includes('supersecret'));
   assert.equal(interpretResponse('openai_chat', 302, {}).code, 'REDIRECT_BLOCKED');
+  assert.equal(interpretResponse('openai_chat', 503, {}).code, 'PROVIDER_BUSY');
+  assert.equal(interpretResponse('openai_chat', 500, {}).code, 'PROVIDER_ERROR');
 });

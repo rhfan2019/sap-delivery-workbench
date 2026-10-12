@@ -54,6 +54,13 @@ export function interpretResponse(protocol, status, data) {
   if (status === 404)
     return failed('MODEL_NOT_FOUND', '接口路径或模型不存在，请检查协议、地址和模型标识。');
   if (status === 429) return failed('RATE_LIMITED', '提供方限流或额度不足，请稍后重试。');
+  if ([502, 503, 504, 529].includes(status))
+    return failed(
+      'PROVIDER_BUSY',
+      `模型服务繁忙或暂不可用（HTTP ${status}），请稍后重试，或在后台切换默认模型。`,
+    );
+  if (status >= 500)
+    return failed('PROVIDER_ERROR', `模型服务内部错误（HTTP ${status}），请稍后重试。`);
   if (status < 200 || status >= 300)
     return failed('PROVIDER_ERROR', `提供方返回 HTTP ${status}，请检查模型与参数兼容性。`);
   const content =
@@ -256,6 +263,31 @@ export async function probeModel(config, key) {
 
 // Shares buffered-request security. Streaming uses first-byte and idle deadlines only.
 // These budgets belong to the application, never to model registry records.
+// The provider's own error text from a failed response (first 4 KB), as one short line.
+async function providerMessage(response) {
+  let text = '';
+  try {
+    for await (const chunk of response) {
+      text += chunk;
+      if (text.length > 4096) break;
+    }
+  } catch {
+    return '';
+  }
+  let said = text;
+  try {
+    const data = JSON.parse(text);
+    said = data?.error?.message ?? data?.message ?? data?.error ?? '';
+  } catch {
+    // Plain-text or HTML body: keep the text itself.
+  }
+  return String(typeof said === 'string' ? said : '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 160);
+}
+
 export async function* requestModelStream(
   config,
   key,
@@ -343,7 +375,8 @@ export async function* requestModelStream(
     onResponse?.(responseInfo);
     if (response.statusCode !== 200) {
       const checked = interpretResponse(config.protocol, response.statusCode ?? 502, {});
-      throw Object.assign(failure(502, checked.message), {
+      const said = await providerMessage(response);
+      throw Object.assign(failure(502, checked.message + (said ? `提供方说明：${said}` : '')), {
         code: checked.code,
         diagnostics: responseInfo,
       });

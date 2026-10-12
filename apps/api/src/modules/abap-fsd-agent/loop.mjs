@@ -18,6 +18,34 @@ const env = () => ({
   thinking: process.env.ABAP_FSD_AGENT_THINKING === 'off' ? false : undefined,
 });
 
+// A busy or rate-limited provider rejects the request before any output, so it is safe to resend.
+export const BUSY_RETRY_MS = [3000, 8000, 15000];
+const BUSY_CODES = new Set(['PROVIDER_BUSY', 'RATE_LIMITED']);
+const sleep = (ms, signal) =>
+  new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        reject(signal.reason);
+      },
+      { once: true },
+    );
+  });
+
+async function withBusyRetry(call, { signal, wait = sleep, onRetry }) {
+  for (let retry = 0; ; retry++) {
+    try {
+      return await call();
+    } catch (e) {
+      if (!BUSY_CODES.has(e.code) || retry >= BUSY_RETRY_MS.length || signal?.aborted) throw e;
+      onRetry(retry + 1, BUSY_RETRY_MS[retry]);
+      await wait(BUSY_RETRY_MS[retry], signal);
+    }
+  }
+}
+
 function parseArguments(raw) {
   if (!raw || !raw.trim()) return {};
   const value = JSON.parse(raw);
@@ -99,13 +127,21 @@ export async function runTurn({ pool, scope, sessionId, turnId, model, emit, sig
         break;
       }
       emit('step', { step: step + 1 });
-      const result = await chat(model.config, model.key, {
-        messages,
-        tools,
-        signal,
-        ...env(),
-        onDelta: (delta) => emit('delta', delta),
-      });
+      const result = await withBusyRetry(
+        () =>
+          chat(model.config, model.key, {
+            messages,
+            tools,
+            signal,
+            ...env(),
+            onDelta: (delta) => emit('delta', delta),
+          }),
+        {
+          signal,
+          wait: deps.wait,
+          onRetry: (retry, waitMs) => emit('step', { step: step + 1, retry, waitMs }),
+        },
+      );
       usage.prompt_tokens += result.usage?.prompt_tokens ?? 0;
       usage.completion_tokens += result.usage?.completion_tokens ?? 0;
       const calls = result.toolCalls;
