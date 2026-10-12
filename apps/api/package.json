@@ -25,6 +25,7 @@
     "argon2": "^0.45.1",
     "fast-xml-parser": "^5.11.1",
     "fastify": "^5.12.5",
+    "https-proxy-agent": "^9.1.0",
     "jszip": "3.10.2",
     "pdfjs-dist": "6.3.289",
     "pg": "^8.23.1",

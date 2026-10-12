@@ -1,8 +1,20 @@
 import https from 'node:https';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 import { failure } from '../../platform/auth.mjs';
 import { MODEL_REQUEST_TIMEOUT_MS, MODEL_CONNECTION_TIMEOUT_MS } from './runtime.mjs';
+
+// Optional HTTP(S) proxy for reaching model providers that are not directly
+// reachable from the deployment host (e.g. api.ofox.ai behind a local Karing
+// proxy). Set LLM_PROXY_URL=http://127.0.0.1:3067 to route model traffic through
+// the proxy; leave unset (or empty) to keep the original direct-connect behavior.
+// `https-proxy-agent` performs the HTTP CONNECT tunnel and lets the proxy resolve
+// the target host itself, so no custom `lookup` is used when proxied.
+const proxyUrl = (process.env.LLM_PROXY_URL ?? '').trim();
+
+// Resolved once so every model request reuses a single tunnel agent.
+const tunnelAgent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : null;
 export function isPublicAddress(ip) {
   if (isIP(ip) === 4) {
     const [a, b] = ip.split('.').map(Number);
@@ -108,20 +120,26 @@ async function prepareModelRequest(
     ...(callerSignal ? [callerSignal] : []),
   ]);
   signal.throwIfAborted();
-  // Buffered requests have a deadline; streams use first-byte and idle cancellation.
-  let stop;
-  const timeout = new Promise((_, reject) => {
-    stop = () => reject(signal.reason);
-    signal.addEventListener('abort', stop, { once: true });
-  });
+  // When a proxy tunnel is configured, the proxy resolves the target host itself;
+  // skip the local DNS resolution and public-address guard (which would otherwise
+  // resolve to an unreachable/poisoned address and defeat the proxy).
+  const proxied = tunnelAgent !== null;
   let addresses;
-  try {
-    addresses = await Promise.race([resolve(url.hostname, { all: true }), timeout]);
-  } finally {
-    signal.removeEventListener('abort', stop);
+  if (!proxied) {
+    // Buffered requests have a deadline; streams use first-byte and idle cancellation.
+    let stop;
+    const timeout = new Promise((_, reject) => {
+      stop = () => reject(signal.reason);
+      signal.addEventListener('abort', stop, { once: true });
+    });
+    try {
+      addresses = await Promise.race([resolve(url.hostname, { all: true }), timeout]);
+    } finally {
+      signal.removeEventListener('abort', stop);
+    }
+    if (!addresses.length || addresses.some((x) => !isPublicAddress(x.address)))
+      throw failure(400, '接入域名解析到非公网地址，已阻止请求。');
   }
-  if (!addresses.length || addresses.some((x) => !isPublicAddress(x.address)))
-    throw failure(400, '接入域名解析到非公网地址，已阻止请求。');
   url.pathname =
     url.pathname.replace(/\/$/, '') +
     (modelMetadata
@@ -173,7 +191,7 @@ async function prepareModelRequest(
     headers['x-api-key'] = key;
     headers['anthropic-version'] = '2023-06-01';
   } else headers.Authorization = 'Bearer ' + key;
-  return { url, signal, addresses, bytes, headers };
+  return { url, signal, addresses, bytes, headers, proxied };
 }
 export async function requestModel(
   config,
@@ -189,7 +207,7 @@ export async function requestModel(
     request: send = https.request,
   } = {},
 ) {
-  const { url, signal, addresses, bytes, headers } = await prepareModelRequest(
+  const { url, signal, addresses, bytes, headers, proxied } = await prepareModelRequest(
     config,
     key,
     payload,
@@ -204,13 +222,17 @@ export async function requestModel(
       url,
       {
         method: modelMetadata ? 'GET' : 'POST',
-        agent: false,
+        ...(proxied
+          ? { agent: tunnelAgent }
+          : {
+              agent: false,
+              lookup: (_host, options, callback) =>
+                options.all
+                  ? callback(null, [addresses[0]])
+                  : callback(null, addresses[0].address, addresses[0].family),
+            }),
         signal,
         headers,
-        lookup: (_host, options, callback) =>
-          options.all
-            ? callback(null, [addresses[0]])
-            : callback(null, addresses[0].address, addresses[0].family),
       },
       (res) => {
         const chunks = [];
@@ -346,20 +368,24 @@ export async function* requestModelStream(
       false,
       send,
     );
-    const { url, addresses, bytes, headers } = prepared;
+    const { url, addresses, bytes, headers, proxied } = prepared;
     signal = prepared.signal;
     response = await new Promise((resolve, reject) => {
       request = send(
         url,
         {
           method: 'POST',
-          agent: false,
+          ...(proxied
+            ? { agent: tunnelAgent }
+            : {
+                agent: false,
+                lookup: (_host, options, callback) =>
+                  options.all
+                    ? callback(null, [addresses[0]])
+                    : callback(null, addresses[0].address, addresses[0].family),
+              }),
           signal,
           headers: { ...headers, Accept: 'text/event-stream' },
-          lookup: (_host, options, callback) =>
-            options.all
-              ? callback(null, [addresses[0]])
-              : callback(null, addresses[0].address, addresses[0].family),
         },
         resolve,
       );
