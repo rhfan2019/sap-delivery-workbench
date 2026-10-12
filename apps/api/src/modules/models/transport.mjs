@@ -1,4 +1,5 @@
 import https from 'node:https';
+import { readFileSync } from 'node:fs';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
@@ -11,7 +12,28 @@ import { MODEL_REQUEST_TIMEOUT_MS, MODEL_CONNECTION_TIMEOUT_MS } from './runtime
 // the proxy; leave unset (or empty) to keep the original direct-connect behavior.
 // `https-proxy-agent` performs the HTTP CONNECT tunnel and lets the proxy resolve
 // the target host itself, so no custom `lookup` is used when proxied.
-const proxyUrl = (process.env.LLM_PROXY_URL ?? '').trim();
+//
+// NOTE: resolved from BOTH the process environment AND the project .env file.
+// `process.loadEnvFile` does NOT overwrite already-defined variables, so a stray
+// empty `LLM_PROXY_URL` injected by the launcher would silently shadow the .env
+// value and force a direct (unreachable) connection. Reading the file directly
+// here makes the proxy setting robust to that ordering.
+function resolveProxyUrl() {
+  const fromEnv = (process.env.LLM_PROXY_URL ?? '').trim();
+  if (fromEnv) return fromEnv;
+  try {
+    // transport.mjs is at apps/api/src/modules/models/; five levels up is the project root.
+    const envText = readFileSync(new URL('../../../../../.env', import.meta.url), 'utf8');
+    const line = envText
+      .split(/\r?\n/)
+      .find((l) => /^\s*LLM_PROXY_URL\s*=/.test(l));
+    const value = line?.split('=').slice(1).join('=').trim();
+    return (value ?? '').replace(/^["']|["']$/g, '');
+  } catch {
+    return '';
+  }
+}
+const proxyUrl = resolveProxyUrl();
 
 // Resolved once so every model request reuses a single tunnel agent.
 const tunnelAgent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : null;
