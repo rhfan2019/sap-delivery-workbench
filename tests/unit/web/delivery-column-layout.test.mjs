@@ -12,7 +12,7 @@ test('name absorbs spare width after a persisted resize; auxiliary widths remain
     const columns = [
       { key: 'code', width: 112 },
       { key: 'name', width: 300, minWidth: 240, flex: true },
-      { key: 'stage', width: 112 },
+      { key: 'module', width: 112 },
       { key: 'actions', width: 124 },
     ];
     const wide = layoutColumns(columns, 1500);

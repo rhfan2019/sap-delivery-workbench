@@ -3,9 +3,20 @@ import assert from 'node:assert/strict';
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
-import { readFile } from 'node:fs/promises';
 
-test('delivery table: selection, navigation semantics, personalization and responsive layout', async (t) => {
+const phase = (status = 'not_started', extra = {}) => ({
+  assigneeId: null,
+  effortDays: null,
+  plannedStart: null,
+  plannedEnd: null,
+  actualEnd: null,
+  progress: status === 'completed' ? 100 : 0,
+  status,
+  notes: '',
+  ...extra,
+});
+
+test('development list: page/batch/row actions, inline edit, grouped drawer, columns', async (t) => {
   const server = await createServer({
     root: 'apps/web',
     server: { port: 5193, strictPort: true, hmr: false },
@@ -22,29 +33,40 @@ test('delivery table: selection, navigation semantics, personalization and respo
     if (msg.type() === 'error' && /vxe|Vue warn/i.test(msg.text())) errors.push(msg.text());
   });
   let rejectSave = true;
-  let readOnly = false;
-  let failDeleteId = '';
-  let holdRead, releaseRead;
-  let denied = false;
+  const batches = [];
   let items = Array.from({ length: 25 }, (_, n) => ({
     id: `i${n}`,
-    code: `DEV-${String(n + 1).padStart(4, '0')}`,
-    name: ['采购订单执行清单', '供应商未清项批量清账', '交货到期清单与逾期分析'][n % 3],
+    code: String(n + 1).padStart(5, '0'),
+    itemNo: n + 1,
+    rowVersion: '1',
     module: ['MM', 'FICO', 'SD'][n % 3],
     kind: 'report',
+    name: ['采购订单执行清单', '供应商未清项批量清账', '交货到期清单与逾期分析'][n % 3],
+    businessFunction: '<p>完整需求<strong>说明</strong></p>',
     priority: n % 3 === 0 ? 'high' : 'low',
-    stage: n % 2 ? 'ready' : 'fs_draft',
-    rowVersion: '1',
-    businessOwnerId: 'u',
-    developerId: null,
-    plannedDevDate: '2026-10-20',
-    blockedReason: n === 0 ? '等待业务确认' : null,
-    summary: '完整需求说明',
-    summaryFormat: 'plain',
+    difficulty: 'medium',
+    changeType: 'new',
+    registeredOn: '2026-10-01',
+    businessOwner: '业务甲',
+    notes: '',
+    transactionCode: '',
+    phases: {
+      fsd: phase(n % 2 ? 'completed' : 'in_progress', {
+        assigneeId: 'u',
+        plannedEnd: '2026-01-01',
+      }),
+      development: phase(),
+      consultant_test: phase(),
+      user_test: phase(),
+    },
+    objects: n === 0 ? [{ pgmid: 'R3TR', objectType: 'PROG', objectName: 'ZMM_PO_TRACK' }] : [],
+    tags: n === 0 ? ['t1'] : [],
+    custom: {},
   }));
-  const deleted = [];
   await page.route('**/api/**', async (route) => {
-    const path = new URL(route.request().url()).pathname;
+    const request = route.request();
+    const path = new URL(request.url()).pathname;
+    const method = request.method();
     let data = {};
     if (path === '/api/session')
       data = {
@@ -53,208 +75,133 @@ test('delivery table: selection, navigation semantics, personalization and respo
         canManageOrganization: true,
       };
     else if (path === '/api/projects')
-      data = [{ id: 'p1', name: '虚拟测试项目', status: 'active' }];
+      data = [{ id: 'p1', code: 'P1', name: '虚拟测试项目', status: 'active' }];
     else if (path === '/api/project-preference') data = { projectId: 'p1' };
-    else if (path === '/api/projects/p1/development-items') {
-      if (holdRead) await holdRead;
-      if (denied) {
-        await route.fulfill({ status: 404, json: { message: '项目不存在或无权访问。' } });
-        return;
-      }
+    else if (path === '/api/projects/p1/development-items' && method === 'GET')
       data = {
         items,
         members: [{ id: 'u', displayName: '张顾问', active: true }],
-        readOnly,
+        tags: [{ id: 't1', name: '紧急', color: 'red', usage: 1 }],
+        fields: [],
+        readOnly: false,
         isAdmin: true,
       };
-    } else if (route.request().method() === 'PATCH') {
+    else if (path === '/api/projects/p1/development-items/batch') {
+      const body = request.postDataJSON();
+      batches.push(body);
+      if (body.action === 'delete') items = items.filter((i) => !body.ids.includes(i.id));
+      data = { count: body.ids.length, ids: body.ids };
+    } else if (method === 'PATCH') {
       if (rejectSave) {
         await route.fulfill({ status: 409, json: { message: '测试保存冲突，输入应保留' } });
         return;
       }
-      const id = path.split('/').at(-1),
-        body = route.request().postDataJSON();
-      assert.equal(body.rowVersion, '1');
-      items = items.map((i) => (i.id === id ? { ...i, ...body.changes, rowVersion: '2' } : i));
-      data = items.find((i) => i.id === id);
-    } else if (route.request().method() === 'DELETE') {
       const id = path.split('/').at(-1);
-      if (id === failDeleteId) {
-        await route.fulfill({ status: 409, json: { message: '版本冲突' } });
-        return;
-      }
-      deleted.push(id);
-      items = items.filter((i) => i.id !== id);
-      data = { ok: true };
-    } else if (path.endsWith('/files') || path.endsWith('/events')) data = [];
+      const body = request.postDataJSON();
+      items = items.map((i) => {
+        if (i.id !== id) return i;
+        const next = structuredClone(i);
+        for (const [key, value] of Object.entries(body.changes)) {
+          const [a, b] = key.split('.');
+          if (b) next.phases[a][b] = value;
+          else next[a] = value;
+        }
+        next.rowVersion = String(Number(i.rowVersion) + 1);
+        return next;
+      });
+      data = items.find((i) => i.id === id);
+    } else if (path === '/api/projects/p1/development-tags')
+      data = [{ id: 't1', name: '紧急', color: 'red', usage: 1 }];
+    else if (path.endsWith('/files') || path.endsWith('/events')) data = [];
     await route.fulfill({ json: data });
   });
   await page.goto('http://127.0.0.1:5193/workspace/development-items');
   await page.getByRole('button', { name: '新建开发项', exact: true }).waitFor();
-  assert.equal(await page.getByRole('button', { name: '删除', exact: true }).count(), 0);
-  assert.equal(await page.getByRole('button', { name: '复制', exact: true }).count(), 0);
-  // Background refresh must retain usable rows while the real fetch is outstanding.
-  holdRead = new Promise((resolve) => {
-    releaseRead = resolve;
-  });
-  await page.getByRole('button', { name: '刷新', exact: true }).click();
-  await page.getByText('更新中…', { exact: true }).waitFor();
-  assert.equal(await page.getByRole('button', { name: /^查看 DEV-/ }).count(), 20);
-  assert.equal(
-    await page.getByRole('button', { name: /^编辑开发名称/ }).count(),
-    0,
-    'refresh must not allow stale GET to race with PATCH',
-  );
-  releaseRead();
-  holdRead = null;
-  await page.getByText('清单已更新', { exact: true }).waitFor();
-  await page.locator('.vxe-table--main-wrapper .vxe-table--body-inner-wrapper').hover();
-  await page.mouse.wheel(0, 300);
-  await page.waitForFunction(
-    () =>
-      document.querySelector('.vxe-table--main-wrapper .vxe-table--body-inner-wrapper').scrollTop >
-      200,
-  );
-  await page.reload();
-  await page.waitForFunction(
-    () =>
-      document.querySelector('.vxe-table--main-wrapper .vxe-table--body-inner-wrapper')?.scrollTop >
-      200,
-  );
-  await page.locator('.vxe-table--main-wrapper .vxe-table--body-inner-wrapper').hover();
-  await page.mouse.wheel(0, -2000);
-  await page.getByRole('checkbox', { name: '选择 DEV-0001', exact: true }).check();
-  await page.getByRole('checkbox', { name: '选择 DEV-0002', exact: true }).check();
-  await page.getByText('已选择 2 项', { exact: true }).waitFor();
-  assert.equal(await page.locator('.delivery-detail').count(), 0);
-  assert.equal(await page.getByRole('button', { name: '删除', exact: true }).isEnabled(), true);
+
+  await mkdir('.runtime/artifacts/delivery-table', { recursive: true });
+  await page.screenshot({ path: '.runtime/artifacts/delivery-table/list.png' });
+  // Page actions live in the heading; batch actions appear only after selection.
+  for (const name of ['清单设置', '导入 / 导出'])
+    await page.getByRole('button', { name, exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: '批量修改' }).count(), 0);
+  await page.getByRole('checkbox', { name: '选择 00001', exact: true }).check();
+  await page.getByRole('checkbox', { name: '选择 00002', exact: true }).check();
+  await page.getByText('已选 2 项', { exact: true }).waitFor();
+  await page.screenshot({ path: '.runtime/artifacts/delivery-table/batch.png' });
+  for (const name of ['批量修改', '批量复制', '导出选中项', '删除'])
+    assert.equal(await page.getByRole('button', { name, exact: true }).isEnabled(), true);
+  await page.getByRole('button', { name: '删除', exact: true }).click();
+  await page.getByText(/00001《采购订单执行清单》/).waitFor();
+  await page.getByRole('button', { name: '取消，保留当前内容' }).click();
+  assert.equal(batches.length, 0);
+  await page.getByRole('button', { name: '取消选择', exact: true }).click();
+
+  // Row actions: design navigates; the other agents are announced as coming soon.
   assert.match(
     await page.getByRole('link', { name: '设计', exact: true }).first().getAttribute('href'),
-    /\/i0\/design$/,
+    /\/development-items\/i0\/design$/,
   );
-  await page.getByRole('button', { name: '下一页', exact: true }).click();
-  assert.equal(await page.getByRole('button', { name: '删除', exact: true }).count(), 0);
-  await page.getByRole('button', { name: '上一页', exact: true }).click();
-  await page.getByRole('button', { name: '编辑开发名称 DEV-0001', exact: true }).click();
-  const input = page.locator('.inline-editor input').filter({ visible: true });
-  await input.fill('修改后的采购报表');
-  await page.getByRole('button', { name: '保存', exact: true }).click();
-  await page.getByRole('alert').filter({ hasText: '测试保存冲突' }).waitFor();
-  assert.equal(await input.inputValue(), '修改后的采购报表');
-  assert.equal(items[0].name, '采购订单执行清单');
-  await page.getByRole('link', { name: '设计', exact: true }).first().click();
-  await page.getByRole('button', { name: '取消，保留当前内容' }).click();
-  assert.match(page.url(), /workspace\/development-items/);
-  assert.equal(await input.inputValue(), '修改后的采购报表');
+  await page.getByRole('button', { name: '顾问测试', exact: true }).first().click();
+  await page.getByText('“顾问测试”Agent 即将开发').waitFor();
+
+  // Inline edit: a choice saves on change; a failure stays in the cell with the value.
+  const row = page.locator('.vxe-body--row').filter({ hasText: '00001' }).first();
+  await row.locator('.column-priority .inline-cell').click();
+  await row.locator('.column-priority select').selectOption('medium');
+  await row.getByRole('alert').filter({ hasText: '测试保存冲突' }).waitFor();
+  assert.equal(await row.locator('.column-priority select').inputValue(), 'medium');
   rejectSave = false;
-  await page.getByRole('button', { name: '保存', exact: true }).click();
-  await page.getByRole('status').filter({ hasText: '字段已保存' }).waitFor();
+  await row.locator('.column-priority select').selectOption('low');
+  await row.locator('.column-priority select').waitFor({ state: 'detached' });
+  assert.equal(items[0].priority, 'low');
+  // Open phases past their planned end are flagged without changing data.
+  assert.ok((await row.locator('.column-fsd\\.status').innerText()).includes('逾期'));
+
+  // Drawer: one page grouped by section, no tabs; edit and save the changed fields only.
+  await page.getByRole('button', { name: '查看 00001', exact: true }).click();
+  const drawer = page.locator('.item-drawer[open]');
+  await drawer.waitFor();
+  assert.equal(await drawer.getByRole('tab').count(), 0);
+  for (const name of [
+    '基本信息',
+    'FSD相关',
+    '开发顾问相关',
+    '顾问测试相关',
+    'IT顾问/用户测试相关',
+    '关联附件',
+    '最近活动',
+  ])
+    await drawer.getByRole('heading', { name, exact: true }).waitFor();
+  await drawer.getByText('ZMM_PO_TRACK').waitFor();
+  await drawer.getByRole('button', { name: '编辑', exact: true }).click();
+  await drawer.getByLabel('开发名称', { exact: true }).fill('修改后的采购报表');
+  await drawer.getByLabel('业务Owner', { exact: true }).fill('业务乙');
+  await page.screenshot({ path: '.runtime/artifacts/delivery-table/drawer-edit.png' });
+  await drawer.getByRole('button', { name: '保存', exact: true }).click();
+  await page.getByRole('status').filter({ hasText: '已保存 00001' }).waitFor();
   assert.equal(items[0].name, '修改后的采购报表');
-  await page.getByRole('button', { name: '查看 DEV-0001', exact: true }).click();
-  await page.locator('.delivery-detail').waitFor();
+  assert.equal(items[0].businessOwner, '业务乙');
   await mkdir('.runtime/artifacts/delivery-table', { recursive: true });
-  await page.screenshot({ path: '.runtime/artifacts/delivery-table/detail.png', fullPage: true });
-  await page.getByRole('button', { name: '关闭详情', exact: true }).click();
-  await page.getByRole('button', { name: '按编号排序', exact: true }).click();
-  await page.getByRole('button', { name: '按编号排序', exact: true }).click();
-  assert.equal(
-    await page
-      .getByRole('button', { name: /^查看 DEV-/ })
-      .first()
-      .innerText(),
-    'DEV-0025',
-  );
-  const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: '导出 CSV', exact: true }).click();
-  const download = await downloadPromise;
-  const csv = await readFile(await download.path(), 'utf8');
-  assert.equal(csv.trim().split('\r\n').length, 26);
-  assert.match(csv.split('\r\n')[1], /DEV-0025/);
-  await page.getByRole('button', { name: '按编号排序', exact: true }).click();
+  await page.screenshot({ path: '.runtime/artifacts/delivery-table/drawer.png' });
+  await drawer.getByRole('button', { name: '关闭开发项抽屉' }).click();
+  await drawer.waitFor({ state: 'detached' });
+
+  // Column settings persist per user and project.
   await page.getByRole('button', { name: '列设置', exact: true }).click();
-  await page.getByRole('dialog', { name: '列设置' }).waitFor();
-  await page.getByLabel('显示需求描述', { exact: true }).check();
+  await page.getByLabel('显示业务功能点', { exact: true }).check();
   await page.getByRole('button', { name: '完成', exact: true }).click();
   await page.reload();
   await page.getByRole('button', { name: '列设置', exact: true }).click();
-  assert.equal(await page.getByLabel('显示需求描述', { exact: true }).isChecked(), true);
+  assert.equal(await page.getByLabel('显示业务功能点', { exact: true }).isChecked(), true);
   await page.getByRole('button', { name: '恢复默认', exact: true }).click();
   await page.getByRole('button', { name: '完成', exact: true }).click();
-  await page.getByLabel('搜索开发清单').fill('不存在的条目');
-  await page
-    .getByText('没有符合筛选条件的开发项', { exact: true })
-    .filter({ visible: true })
-    .first()
-    .waitFor();
-  assert.equal(await page.getByRole('button', { name: '删除', exact: true }).count(), 0);
-  await page.getByRole('button', { name: '清除全部', exact: true }).click();
-  await page.getByRole('checkbox', { name: '选择 DEV-0001', exact: true }).check();
-  await page.getByRole('checkbox', { name: '选择 DEV-0002', exact: true }).check();
-  await page.getByRole('button', { name: '删除', exact: true }).click();
-  await page.getByRole('button', { name: '取消，保留当前内容' }).click();
-  assert.equal(deleted.length, 0);
+
+  // Batch delete names the affected items and runs once for the whole selection.
+  await page.getByRole('checkbox', { name: '选择 00001', exact: true }).check();
+  await page.getByRole('checkbox', { name: '选择 00002', exact: true }).check();
   await page.getByRole('button', { name: '删除', exact: true }).click();
   await page.getByRole('button', { name: '确认继续' }).click();
   await page.getByRole('status').filter({ hasText: '已删除 2 项' }).waitFor();
-  assert.deepEqual(deleted, ['i0', 'i1']);
-  await page.getByRole('checkbox', { name: '选择 DEV-0003', exact: true }).check();
-  await page.getByRole('checkbox', { name: '选择 DEV-0004', exact: true }).check();
-  failDeleteId = 'i3';
-  await page.getByRole('button', { name: '删除', exact: true }).click();
-  await page.getByRole('button', { name: '确认继续' }).click();
-  await page.getByRole('alert').filter({ hasText: '有 1 项删除失败' }).waitFor();
-  assert.equal(
-    await page.getByRole('checkbox', { name: '选择 DEV-0004', exact: true }).isChecked(),
-    true,
-  );
-  failDeleteId = '';
-  await page.getByRole('button', { name: '取消选择', exact: true }).click();
-  await page.getByRole('button', { name: '刷新', exact: true }).click();
-  await page.getByRole('checkbox', { name: '选择 DEV-0004', exact: true }).waitFor();
-  await mkdir('.runtime/artifacts/delivery-table', { recursive: true });
-  await page.screenshot({ path: '.runtime/artifacts/delivery-table/desktop.png', fullPage: true });
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-  assert.equal(
-    await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 1),
-    true,
-  );
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.waitForFunction(
-    () =>
-      getComputedStyle(document.querySelector('.main-shell')).marginLeft === '0px' &&
-      document.querySelector('.workbench-mobile')?.getBoundingClientRect().height < 500,
-  );
-  await page.screenshot({ path: '.runtime/artifacts/delivery-table/mobile.png', fullPage: true });
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-  await page.locator('.workbench-mobile').hover();
-  await page.mouse.wheel(0, 300);
-  await page.waitForFunction(() => document.querySelector('.workbench-mobile')?.scrollTop > 200);
-  await page.reload();
-  await page.waitForFunction(() => document.querySelector('.workbench-mobile')?.scrollTop > 200);
-  await page.setViewportSize({ width: 1440, height: 900 });
-  readOnly = true;
-  await page.reload();
-  await page.getByText('此项目已归档，只能查看历史资料。').waitFor();
-  await page.getByRole('checkbox', { name: '选择 DEV-0004', exact: true }).check();
-  assert.equal(
-    await page.getByRole('button', { name: '新建开发项', exact: true }).isDisabled(),
-    true,
-  );
-  assert.equal(await page.getByRole('button', { name: '删除', exact: true }).isDisabled(), true);
-  await page.getByRole('button', { name: '取消选择', exact: true }).click();
-  await page.getByRole('button', { name: '查看 DEV-0004', exact: true }).click();
-  await page.getByRole('button', { name: '展开详情', exact: true }).click();
-  denied = true;
-  await page.getByRole('button', { name: '刷新', exact: true }).click();
-  await page.getByRole('alert').filter({ hasText: '项目不存在或无权访问' }).waitFor();
-  assert.equal(await page.getByRole('button', { name: /^查看 DEV-/ }).count(), 0);
-  assert.equal(
-    await page.getByRole('button', { name: '新建开发项', exact: true }).isDisabled(),
-    true,
-  );
-  assert.equal(await page.locator('.delivery-list').isVisible(), true, 'denial exits full detail');
-  denied = false;
-  await page.getByRole('button', { name: '重试加载', exact: true }).click();
-  await page.getByRole('button', { name: '查看 DEV-0004', exact: true }).waitFor();
+  assert.deepEqual(batches, [{ action: 'delete', ids: ['i0', 'i1'] }]);
   assert.deepEqual(errors, []);
 });

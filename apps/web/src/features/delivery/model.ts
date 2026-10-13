@@ -1,100 +1,245 @@
-import { requirementText } from './richText';
+import {
+  FIELDS,
+  PHASES,
+  GROUPS,
+  OPTIONS,
+  customField,
+  fieldValue,
+  richText,
+  type FieldDef,
+  type CustomFieldDefinition,
+  type PhaseKey,
+} from '@sap-delivery-workbench/contracts/delivery/fields';
+
+export { FIELDS, PHASES, GROUPS, OPTIONS, fieldValue, richText };
+export type { FieldDef, CustomFieldDefinition, PhaseKey };
+
+export interface Phase {
+  assigneeId: string | null;
+  effortDays: number | null;
+  plannedStart: string | null;
+  plannedEnd: string | null;
+  actualEnd: string | null;
+  progress: number;
+  status: string;
+  notes: string;
+}
+export interface SapObject {
+  pgmid: string;
+  objectType: string;
+  objectName: string;
+}
 export interface Item {
   id: string;
   code: string;
-  stage: string;
+  itemNo: number;
   rowVersion: string;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
-  name: string;
   module: string;
   kind: string;
-  changeType: string;
+  name: string;
+  businessFunction: string;
   priority: string;
-  businessOwnerId: string | null;
-  developerId: string | null;
-  testerId: string | null;
-  plannedFsDate: string | null;
-  plannedDevDate: string | null;
-  plannedTestDate: string | null;
-  summary: string | null;
-  summaryFormat: 'plain' | 'html';
-  acceptance: string | null;
-  notes: string | null;
-  blockedReason: string | null;
+  difficulty: string;
+  changeType: string;
+  registeredOn: string;
+  businessOwner: string;
+  notes: string;
+  transactionCode: string;
+  phases: Record<PhaseKey, Phase>;
+  objects: SapObject[];
+  tags: string[];
+  custom: Record<string, unknown>;
 }
 export interface Member {
   id: string;
   displayName: string;
   active: boolean;
 }
-export interface Field {
-  key: keyof Item;
-  label: string;
-  type?: 'date' | 'long' | 'member' | 'rich';
-  options?: Record<string, string>;
-}
-export const kinds = {
-  function: '功能',
-  interface: '接口',
-  report: '报表',
-  enhancement: '增强',
-  form: '表单',
-};
-export const fields: Field[] = [
-  { key: 'name', label: '开发名称' },
-  { key: 'module', label: '模块' },
-  { key: 'kind', label: '类型', options: kinds },
-  {
-    key: 'changeType',
-    label: '变更类型',
-    options: { new: '新增', optimize: '优化', rebuild: '重构' },
-  },
-  { key: 'priority', label: '优先级', options: { high: '高', medium: '中', low: '低' } },
-  { key: 'businessOwnerId', label: '业务顾问', type: 'member' },
-  { key: 'developerId', label: '开发人员', type: 'member' },
-  { key: 'testerId', label: '测试负责人', type: 'member' },
-  { key: 'plannedFsDate', label: 'FS 计划完成', type: 'date' },
-  { key: 'plannedDevDate', label: '开发计划完成', type: 'date' },
-  { key: 'plannedTestDate', label: '测试计划完成', type: 'date' },
-  { key: 'summary', label: '需求描述', type: 'rich' },
-  { key: 'acceptance', label: '验收条件', type: 'long' },
-  { key: 'blockedReason', label: '阻塞原因', type: 'long' },
-  { key: 'notes', label: '备注', type: 'long' },
-];
-export const chapters = [
-  { key: 'background', label: '业务背景', hint: '描述当前业务、痛点与预期收益。' },
-  { key: 'scope', label: '范围与边界', hint: '明确本次包含与不包含的功能、组织范围和前提。' },
-  { key: 'inputs', label: '输入与选择条件', hint: '记录字段、类型、必填性、默认值与校验规则。' },
-  { key: 'rules', label: '业务规则', hint: '按场景描述处理逻辑、取数关系、计算规则和 SAP 对象。' },
-  { key: 'outputs', label: '输出与界面', hint: '列明输出字段、布局、排序和消息。' },
-  { key: 'authorization', label: '权限与控制', hint: '描述组织权限、授权对象与敏感操作。' },
-  { key: 'exceptions', label: '异常处理', hint: '列出错误场景、提示、回滚或重试规则。' },
-  { key: 'acceptance', label: '验收条件', hint: '用可验证的条件说明业务通过标准。' },
-  { key: 'cases', label: '初版测试案例', hint: '手工填写前置条件、测试数据、步骤与预期结果。' },
-];
-export interface Version {
+export interface Tag {
   id: string;
-  number: number;
-  fsNumber: string;
-  sections: Record<string, string>;
-  note: string;
-  authorName: string;
-  createdAt: string;
+  name: string;
+  color: string;
+  usage: number;
 }
-export interface Fs {
-  fsNumber: string;
-  sections: Record<string, string>;
-  rowVersion: string;
-  submittedVersionId: string | null;
-  versions: Version[];
+export interface ListContext {
+  members: Member[];
+  tags: Tag[];
 }
-export function display(item: Item, field: Field, members: Member[]) {
-  const value = item[field.key];
-  if (!value) return '—';
-  if (field.key === 'summary') return requirementText(value, item.summaryFormat);
-  return field.type === 'member'
-    ? (members.find((m) => m.id === value)?.displayName ?? '历史成员')
-    : (field.options?.[value] ?? value);
+export type Changes = Record<string, unknown>;
+
+export const phaseLabel = Object.fromEntries(PHASES.map((p) => [p.key, p.label])) as Record<
+  PhaseKey,
+  string
+>;
+
+// Built-in fields followed by live custom columns, each placed in its group.
+export function catalog(custom: CustomFieldDefinition[], { archived = false } = {}): FieldDef[] {
+  const extra = custom.filter((f) => archived || !f.archivedAt).map(customField);
+  return GROUPS.flatMap((g) => [
+    ...FIELDS.filter((f) => f.group === g.key),
+    ...extra.filter((f) => f.group === g.key),
+  ]);
+}
+
+// Table header text: phase fields carry their phase so "状态" stays unambiguous.
+export function columnLabel(field: FieldDef) {
+  if (!field.phase || field.type === 'member') return field.label;
+  return phaseLabel[field.phase] + field.label.replace(/日期$/, '');
+}
+
+export const editableInline = (field: FieldDef) =>
+  ['text', 'select', 'member', 'date', 'percent', 'effort'].includes(field.type) ||
+  (field.type === 'custom' &&
+    ['text', 'number', 'date', 'select', 'member', 'checkbox', 'url'].includes(
+      field.customType ?? '',
+    ));
+
+export function memberName(id: unknown, ctx: ListContext) {
+  if (!id) return '';
+  return ctx.members.find((m) => m.id === id)?.displayName ?? '历史成员';
+}
+
+// Plain display text for a field; used by cells, sorting, filtering and confirmations.
+export function displayText(item: Item, field: FieldDef, ctx: ListContext): string {
+  const value = fieldValue(item, field.key);
+  if (value === null || value === undefined || value === '') return '';
+  switch (field.type) {
+    case 'select':
+      return (field.options as Record<string, string>)[String(value)] ?? String(value);
+    case 'member':
+      return memberName(value, ctx);
+    case 'rich':
+      return richText(String(value));
+    case 'percent':
+      return value + '%';
+    case 'tags':
+      return (value as string[])
+        .map((id) => ctx.tags.find((t) => t.id === id)?.name)
+        .filter(Boolean)
+        .join('、');
+    case 'objects':
+      return (value as SapObject[]).map((o) => `${o.objectType} ${o.objectName}`).join('、');
+    case 'custom': {
+      const options = (field.options ?? []) as { id: string; label: string }[];
+      if (field.customType === 'select') return options.find((o) => o.id === value)?.label ?? '';
+      if (field.customType === 'multi_select')
+        return (value as string[])
+          .map((id) => options.find((o) => o.id === id)?.label)
+          .filter(Boolean)
+          .join('、');
+      if (field.customType === 'member') return memberName(value, ctx);
+      if (field.customType === 'checkbox') return value ? '是' : '否';
+      return String(value);
+    }
+    default:
+      return String(value);
+  }
+}
+
+// Sort key: raw values for numbers and dates, display text otherwise.
+export function sortValue(item: Item, field: FieldDef, ctx: ListContext): string | number {
+  const value = fieldValue(item, field.key);
+  if (field.key === 'code') return item.itemNo;
+  if (['percent', 'effort'].includes(field.type) || field.customType === 'number')
+    return typeof value === 'number' ? value : -1;
+  if (field.key === 'priority') return { high: 1, medium: 2, low: 3 }[String(value)] ?? 9;
+  if (field.key === 'difficulty') return { hard: 1, medium: 2, easy: 3 }[String(value)] ?? 9;
+  if (field.key.endsWith('.status')) return Object.keys(OPTIONS.status).indexOf(String(value));
+  if (field.type === 'date' || field.customType === 'date') return String(value ?? '');
+  return displayText(item, field, ctx);
+}
+
+export const today = () => {
+  const d = new Date();
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, '0'),
+    String(d.getDate()).padStart(2, '0'),
+  ].join('-');
+};
+
+// Planned end passed while the phase is still open: shown as a reminder, data is not changed.
+export function overdue(phase: Phase) {
+  return (
+    !!phase.plannedEnd &&
+    phase.plannedEnd < today() &&
+    !['completed', 'cancelled', 'delayed'].includes(phase.status)
+  );
+}
+
+// Deep copy that also works on reactive proxies (structuredClone rejects them).
+export const cloneItem = (item: Item): Item => JSON.parse(JSON.stringify(item));
+
+export function emptyItem(): Item {
+  const phase = (): Phase => ({
+    assigneeId: null,
+    effortDays: null,
+    plannedStart: null,
+    plannedEnd: null,
+    actualEnd: null,
+    progress: 0,
+    status: 'not_started',
+    notes: '',
+  });
+  return {
+    id: '',
+    code: '',
+    itemNo: 0,
+    rowVersion: '',
+    createdBy: '',
+    createdAt: '',
+    updatedAt: '',
+    module: '',
+    kind: 'report',
+    name: '',
+    businessFunction: '',
+    priority: 'medium',
+    difficulty: 'medium',
+    changeType: 'new',
+    registeredOn: today(),
+    businessOwner: '',
+    notes: '',
+    transactionCode: '',
+    phases: {
+      fsd: phase(),
+      development: phase(),
+      consultant_test: phase(),
+      user_test: phase(),
+    },
+    objects: [],
+    tags: [],
+    custom: {},
+  };
+}
+
+// Writes one field value into a draft copy of an item (used by the drawer form).
+export function setFieldValue(item: Item, key: string, value: unknown) {
+  if (key.startsWith('custom.')) {
+    item.custom = { ...item.custom, [key.slice(7)]: value };
+    return;
+  }
+  const dot = key.indexOf('.');
+  if (dot > 0) {
+    const phase = key.slice(0, dot) as PhaseKey;
+    const name = key.slice(dot + 1) as keyof Phase;
+    item.phases[phase] = { ...item.phases[phase], [name]: value };
+    if (name === 'status' && value === 'completed') item.phases[phase].progress = 100;
+    return;
+  }
+  (item as unknown as Record<string, unknown>)[key] = value;
+}
+
+// Keys whose value differs between two item states (compared as JSON).
+export function changedKeys(before: Item, after: Item, fields: FieldDef[]) {
+  return fields
+    .filter((f) => f.type !== 'readonly')
+    .filter(
+      (f) =>
+        JSON.stringify(fieldValue(before, f.key) ?? null) !==
+        JSON.stringify(fieldValue(after, f.key) ?? null),
+    )
+    .map((f) => f.key);
 }

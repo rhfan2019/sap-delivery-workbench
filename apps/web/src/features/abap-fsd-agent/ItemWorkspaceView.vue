@@ -24,6 +24,7 @@ import {
   Maximize2,
 } from '@lucide/vue';
 import { useMediaQuery } from '@vueuse/core';
+import { OPTIONS, richText } from '@sap-delivery-workbench/contracts/delivery/fields';
 import './workspace.css';
 
 const props = defineProps<{ projectId: string; itemId: string; stage: string }>();
@@ -36,8 +37,7 @@ const state = ref<{
     name: string;
     module: string;
     kind: string;
-    summary: string;
-    acceptance: string;
+    businessFunction: string;
   };
   canEdit: boolean;
   model: string | null;
@@ -263,12 +263,13 @@ function resizePanel(event: PointerEvent) {
         </header>
         <div class="work-panel-scroll">
           <section v-if="pane === 'info'" class="work-info">
-            <span class="work-eyebrow">{{ state.item.module }} · {{ state.item.kind }}</span>
+            <span class="work-eyebrow"
+              >{{ state.item.code }} · {{ state.item.module }} ·
+              {{ OPTIONS.kind[state.item.kind] ?? state.item.kind }}</span
+            >
             <h2>{{ state.item.name }}</h2>
-            <h3>需求摘要</h3>
-            <p>{{ state.item.summary?.replace(/<[^>]*>/g, '') || '尚未填写需求摘要' }}</p>
-            <h3>验收要求</h3>
-            <p>{{ state.item.acceptance || '尚未填写验收要求' }}</p>
+            <h3>业务功能点</h3>
+            <p>{{ richText(state.item.businessFunction) || '尚未填写业务功能点' }}</p>
             <h3>模型</h3>
             <p>{{ state.model ?? '尚未配置组织默认模型' }}</p>
           </section>

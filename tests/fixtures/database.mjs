@@ -51,30 +51,14 @@ export async function fixture(db) {
     [scope.sessionId, o, u, randomBytes(32)],
   );
   await db.query(
-    "INSERT INTO app.development_item(id,organization_id,project_id,code,name,module,kind,created_by) VALUES($1,$2,$3,'I','Item','FI','report',$4)",
+    "INSERT INTO app.development_item(id,organization_id,project_id,item_no,name,module,kind,created_by) VALUES($1,$2,$3,1,'Item','FICO','report',$4)",
     [i, o, p, u],
   );
-  await db.query(
-    'INSERT INTO app.fs_draft(item_id,organization_id,project_id,fs_number,sections,updated_by) VALUES($1,$2,$3,$4,$5,$6)',
-    [
-      i,
-      o,
-      p,
-      'FS-I',
-      {
-        background: '保留原文',
-        scope: '原始范围',
-        inputs: '中文输入',
-        outputs: '输出字段',
-        rules: '容差零',
-        exceptions: '未归属例外',
-        authorization: '权限待核实',
-        acceptance: '验收原文',
-        cases: '测试案例原文',
-      },
-      u,
-    ],
-  );
+  for (const phase of ['fsd', 'development', 'consultant_test', 'user_test'])
+    await db.query(
+      'INSERT INTO app.development_item_phase(organization_id,project_id,item_id,phase) VALUES($1,$2,$3,$4)',
+      [o, p, i, phase],
+    );
   return scope;
 }
 

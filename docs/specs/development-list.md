@@ -1,6 +1,6 @@
 # 开发清单重构设计
 
-> 2026-10-12。状态：设计待审阅（本版只定数据库与功能边界，界面细节在数据库确认后补充）。字段口径以用户提供的字段表（5 组、43 个字段）为准，表中没有的现有字段全部删除。
+> 2026-10-12 设计，2026-10-13 实施。状态：已实施（第 8 节待确认问题均按建议执行）。字段口径以用户提供的字段表（5 组、43 个字段）为准，表中没有的现有字段全部删除。界面约定见[表格页面模板](../guides/table-page-template.md)。
 
 ## 1. 已确认的需求
 
@@ -249,3 +249,24 @@ Excel 读写需要新增一个依赖（候选 `exceljs`），实施前按契约�
 | Q5   | 抽屉里的“关联附件”和“最近活动”是否保留？它们不在字段表里，但不是字段                               | 都保留，放在抽屉最后两组                                                              |
 | Q6   | 事务码一个开发项可能有多个吗？`TADIR` 中事务码本身是对象类型 `TRAN`                                | 保留文本字段，允许逗号分隔多个；以后可从开发对象中类型为 `TRAN` 的行自动带出          |
 | Q7   | 按用户保存的视图（列顺序、显示列、筛选条件）是否要存数据库、能否共享给项目成员？目前存在浏览器本地 | 本轮保持浏览器本地；需要共享视图时再加 `development_view` 表                          |
+
+## 9. 实施结果（2026-10-13）
+
+- **迁移**：`database/migrations/1791900000000_development-list-rebuild.sql`，按第 6 节执行；目录契约升级为 1.6（3.3 节）。
+- **共享字段目录**：`packages/contracts/delivery/fields.mjs`。字段键：基本字段用名称（如 `name`），阶段字段用 `阶段.字段`（如 `fsd.status`、`development.effortDays`），自定义列用 `custom.<id>`，另有 `tags`、`objects`。
+- **接口**（前缀 `/api/projects/:projectId`）：
+
+  | 接口                                                      | 说明                                                                      |
+  | --------------------------------------------------------- | ------------------------------------------------------------------------- |
+  | `GET /development-items`                                  | 清单：开发项（含阶段、对象、标签、自定义值）、成员、标签、自定义列        |
+  | `POST /development-items`、`PATCH /development-items/:id` | 新建；按字段键修改（带 `rowVersion`）                                     |
+  | `DELETE /development-items/:id`                           | 软删除，编号不复用                                                        |
+  | `POST /development-items/batch`                           | `action`：`update`（含 `addTags`/`removeTags`）、`copy`、`delete`；单事务 |
+  | `POST /development-items/export`                          | 导出 Excel（指定 `ids` 与列 `keys`）                                      |
+  | `GET /development-items/import-template`                  | 导入模板（含下拉选项与填写说明）                                          |
+  | `POST /development-items/import/preview`、`/import`       | 导入检查预览；确认导入（全部通过才写入）                                  |
+  | `/development-tags`                                       | 标签增删改                                                                |
+  | `/development-fields`                                     | 自定义列定义（项目管理员）；删除即归档                                    |
+
+- **测试副本**（`/:id/test-copy`）：编号取新流水号，名称加测试前缀，FSD 负责人为发起人。
+- **删除**：旧的报表案例导入脚本 `scripts/maintenance/import-report-cases.mjs` 由 Excel 导入替代后删除。

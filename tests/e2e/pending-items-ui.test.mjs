@@ -41,13 +41,38 @@ test('pending items: customer tabs, model drawer/default, menu navigation and de
   let items = [
     {
       id: 'i1',
-      code: 'DEV-0001',
+      code: '00001',
+      itemNo: 1,
       name: '采购报表',
       module: 'MM',
       kind: 'report',
       priority: 'low',
-      stage: 'fs_draft',
+      difficulty: 'medium',
+      changeType: 'new',
+      registeredOn: '2026-10-01',
+      businessFunction: '',
+      businessOwner: '',
+      notes: '',
+      transactionCode: '',
       rowVersion: '1',
+      phases: Object.fromEntries(
+        ['fsd', 'development', 'consultant_test', 'user_test'].map((k) => [
+          k,
+          {
+            assigneeId: null,
+            effortDays: null,
+            plannedStart: null,
+            plannedEnd: null,
+            actualEnd: null,
+            progress: 0,
+            status: 'not_started',
+            notes: '',
+          },
+        ]),
+      ),
+      objects: [],
+      tags: [],
+      custom: {},
     },
   ];
   const models = [1, 2].map((i) => ({
@@ -124,43 +149,13 @@ test('pending items: customer tabs, model drawer/default, menu navigation and de
       defaultModel = { id: m.id, versionId: m.versionId, name: m.name };
       data = { ok: true };
     } else if (path === '/api/projects/p1/development-items')
-      data = { items, members: [], readOnly: false, isAdmin: true };
-    else if (path === '/api/projects/p1/development-items/i1' && method === 'DELETE') {
-      items = [];
-      deleted++;
-      data = { ok: true };
-    } else if (/\/work\/(design|development)\/sessions$/.test(path)) data = { items: [] };
-    else if (/\/work\/(design|development)\/models$/.test(path)) data = { items: models };
-    else if (/\/work\/(design|development)$/.test(path)) {
-      const stage = path.split('/').at(-1);
-      data = {
-        stage,
-        canEdit: true,
-        project: projects[0],
-        item: items[0],
-        head: {
-          id: 'v1',
-          revision: 1,
-          document:
-            stage === 'design'
-              ? { kind: 'design', spec: null, notes: '' }
-              : {
-                  kind: 'development',
-                  title: '采购报表',
-                  overview: '',
-                  technicalDesign: '',
-                  code: '',
-                  tests: '',
-                  notes: '',
-                },
-          markdown: '',
-        },
-        versions: [],
-        designHead: null,
-        designBasis: null,
-      };
+      data = { items, members: [], tags: [], fields: [], readOnly: false, isAdmin: true };
+    else if (path === '/api/projects/p1/development-items/batch' && method === 'POST') {
+      const ids = route.request().postDataJSON().ids;
+      items = items.filter((i) => !ids.includes(i.id));
+      deleted += ids.length;
+      data = { count: ids.length, ids };
     } else if (path.endsWith('/files') || path.endsWith('/events')) data = [];
-    else if (path.endsWith('/fs')) data = { sections: {}, versions: [] };
     await route.fulfill({ json: data });
   });
   try {
@@ -220,15 +215,13 @@ test('pending items: customer tabs, model drawer/default, menu navigation and de
     await page.getByRole('link', { name: '设计', exact: true }).waitFor();
     // Bulk deletion is only offered after selecting rows.
     assert.equal(await page.getByRole('button', { name: '删除', exact: true }).count(), 0);
-    await page.getByRole('link', { name: '开发', exact: true }).click();
-    await page.waitForURL('**/projects/p1/development-items/i1/development');
-    await page.getByLabel('输入消息', { exact: true }).waitFor();
-    await page.getByRole('link', { name: '返回开发清单', exact: true }).click();
-    await page.getByRole('link', { name: '设计', exact: true }).click();
-    await page.waitForURL('**/projects/p1/development-items/i1/design');
-    await page.getByLabel('输入消息', { exact: true }).waitFor();
-    await page.getByRole('link', { name: '返回开发清单', exact: true }).click();
-    await page.getByRole('checkbox', { name: '选择 DEV-0001', exact: true }).check();
+    assert.match(
+      await page.getByRole('link', { name: '设计', exact: true }).getAttribute('href'),
+      /\/projects\/p1\/development-items\/i1\/design$/,
+    );
+    await page.getByRole('button', { name: '开发', exact: true }).click();
+    await page.getByText('“开发”Agent 即将开发').waitFor();
+    await page.getByRole('checkbox', { name: '选择 00001', exact: true }).check();
     await page.getByRole('button', { name: '删除', exact: true }).click();
     await page.getByRole('button', { name: '确认继续' }).click();
     await page.getByRole('status').filter({ hasText: '已删除 1 项' }).waitFor();
@@ -244,7 +237,10 @@ test('pending items: customer tabs, model drawer/default, menu navigation and de
     await page.getByRole('button', { name: '关闭弹窗' }).click();
     await page.reload();
     await page.getByText('SAP_BASIS 758', { exact: true }).waitFor();
-    await page.screenshot({ path: '.runtime/artifacts/todo-implementation-20261004/sap.png', fullPage: true });
+    await page.screenshot({
+      path: '.runtime/artifacts/todo-implementation-20261004/sap.png',
+      fullPage: true,
+    });
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();

@@ -20,7 +20,11 @@ await f.db.query('UPDATE app.user_password SET password_hash=$2 WHERE user_id=$1
 ]);
 await f.db.query("UPDATE app.project SET name='交付工作台 · 隔离验收' WHERE id=$1", [projectId]);
 await f.db.query(
-  "UPDATE app.development_item SET code='DEV-0001',name='采购订单执行进度与异常跟踪',module='MM',business_owner_id=$2 WHERE id=$1",
+  "UPDATE app.development_item SET name='采购订单执行进度与异常跟踪',module='MM' WHERE id=$1",
+  [itemId],
+);
+await f.db.query(
+  "UPDATE app.development_item_phase SET assignee_id=$2 WHERE item_id=$1 AND phase='fsd'",
   [itemId, actorId],
 );
 for (let n = 2; n <= 45; n++) {
@@ -34,12 +38,13 @@ for (let n = 2; n <= 45; n++) {
           ? '跨公司采购订单与供应商对账异常处理及多组织审批追溯的长名称开发任务验收'
           : ['销售交货到期与逾期分析', '生产订单成本归集报表', '供应商未清项核对'][n % 3] +
             ` · ${String(n).padStart(2, '0')}`,
-      module: ['MM', 'SD', 'FI'][n % 3],
+      module: ['MM', 'SD', 'FICO'][n % 3],
       kind: 'report',
       priority: n % 7 === 0 ? 'high' : 'low',
-      businessOwnerId: n % 2 ? actorId : '',
-      developerId: n % 3 ? '' : actorId,
-      plannedDevDate: n % 4 ? '2026-10-20' : '',
+      'fsd.assigneeId': n % 2 ? actorId : null,
+      'development.assigneeId': n % 3 ? null : actorId,
+      'development.plannedEnd': n % 4 ? '2026-10-20' : null,
+      'fsd.status': ['not_started', 'in_progress', 'completed'][n % 3],
     },
   });
   if (res.statusCode !== 201) throw Error(res.body);

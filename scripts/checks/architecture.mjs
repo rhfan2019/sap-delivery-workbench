@@ -6,7 +6,7 @@ import ts from 'typescript';
 import { spawnSync } from 'node:child_process';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
-const browserContracts = new Set(['abap-fsd-agent/types', 'abap-fsd-agent/sse']);
+const browserContracts = new Set(['abap-fsd-agent/types', 'abap-fsd-agent/sse', 'delivery/fields']);
 // Contract 1.3: one assistant version; earlier generations stay deleted.
 const agentRoots = [
   'apps/api/src/modules/abap-fsd-agent/',
@@ -23,6 +23,9 @@ const legacyIdentifiers = [
   '/api/admin/abap-fsd-agent',
   'DESIGN_ASSISTANT_REMOVED',
   'fsd_checkpoint',
+  // Contract 1.6: the manual FS ledger is replaced by the design agent.
+  'app.fs_draft',
+  'app.fs_version',
 ];
 export function checkLegacy(file, content = '') {
   const errors = [];

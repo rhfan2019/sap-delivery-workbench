@@ -1,12 +1,16 @@
 import { deliveryContext } from './context.mjs';
 import { itemRoutes } from './items.mjs';
-import { fsRoutes } from './fs.mjs';
+import { batchRoutes } from './batch.mjs';
+import { catalogRoutes } from './catalog.mjs';
+import { excelRoutes } from './excel.mjs';
 import { fileRoutes } from './files.mjs';
 import { transaction } from '../../platform/auth.mjs';
 export function registerDeliveryRoutes(app, pool, organizationId, requireSession) {
   const c = deliveryContext(pool, organizationId, requireSession);
   itemRoutes(app, c);
-  fsRoutes(app, c);
+  batchRoutes(app, c);
+  catalogRoutes(app, c);
+  excelRoutes(app, c);
   fileRoutes(app, c);
   app.get('/api/project-preference', async (req) => {
     const current = await requireSession(req, true);

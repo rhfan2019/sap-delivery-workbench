@@ -15,10 +15,12 @@ export function createWorkContext(pool, organizationId, requireSession, stage) {
       { params: { ...req.params, id: req.params.itemId } },
       writing,
     );
-    const owner =
-      stage === 'design'
-        ? (item.business_owner_id ?? item.created_by)
-        : (item.developer_id ?? item.created_by);
+    // The phase assignee owns the work (fsd for design, development for development).
+    const { rows: phase } = await db.query(
+      'SELECT assignee_id FROM app.development_item_phase WHERE item_id=$1 AND phase=$2',
+      [item.id, stage === 'design' ? 'fsd' : 'development'],
+    );
+    const owner = phase[0]?.assignee_id ?? item.created_by;
     const canEdit =
       project.status !== 'archived' &&
       (project.access_level === 'admin' || owner === current.user.id);

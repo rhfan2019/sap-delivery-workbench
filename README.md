@@ -50,9 +50,11 @@ docs/                        架构、规格、计划、使用指南和历史报
 
 ## 功能边界
 
-保留登录与权限、企业/客户/项目管理、交付清单（含 FS 台账）、模型配置和 SAP 连接。
+保留登录与权限、企业/客户/项目管理、开发清单、模型配置和 SAP 连接。
 
-FSD 设计助手已按[方向决策](docs/architecture/2026-10-11-fsd-assistant-direction-decision.md)重构为模型主导的智能体 `abap-fsd-agent`（开发项工作区“设计”阶段），目前处于批量测试与优化阶段：进度见[重构实施计划](docs/plans/2026-10-11-abap-fsd-agent-refactor.md)，端到端测试结论与待处理问题见[测试记录](docs/plans/2026-10-12-abap-fsd-agent-e2e-test.md)，接手说明见[交接文档](docs/plans/2026-10-12-abap-fsd-agent-handover.md)。助手运行可在“后台管理 → 审计日志”复核。历史各代助手（LangGraph 版设计助手、FS 智能工作区、旧开发助手、FS助手测试）及其数据已删除；开发助手将以 `abap-dev-agent` 重建，在此之前开发阶段入口隐藏。
+开发清单按[重构设计](docs/specs/development-list.md)组织：基本信息与 FSD、开发、顾问测试、IT/用户测试四个阶段，开发对象（TADIR 主键）、标签、项目级自定义列、批量修改 / 复制 / 删除、Excel 导入导出；行内的“设计”进入 FSD 设计助手，开发、顾问测试、IT/用户测试 Agent 尚未开放。旧的手工 FS 台账已删除。
+
+FSD 设计助手已按[方向决策](docs/architecture/2026-10-11-fsd-assistant-direction-decision.md)重构为模型主导的智能体 `abap-fsd-agent`（开发项工作区“设计”阶段），目前处于批量测试与优化阶段：进度见[重构实施计划](docs/plans/2026-10-11-abap-fsd-agent-refactor.md)，端到端测试结论与待处理问题见[测试记录](docs/plans/2026-10-12-abap-fsd-agent-e2e-test.md)，接手说明见[交接文档](docs/plans/2026-10-12-abap-fsd-agent-handover.md)。助手运行可在“后台管理 → 审计日志”复核。历史各代助手（LangGraph 版设计助手、FS 智能工作区、旧开发助手、FS助手测试）及其数据已删除；开发助手将以 `abap-dev-agent` 重建，在此之前开发清单中的“开发”按钮只提示即将开放。
 
 ## 开发与验证
 

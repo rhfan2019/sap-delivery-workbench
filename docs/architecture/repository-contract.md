@@ -1,6 +1,8 @@
 # 仓库目录与依赖契约
 
-版本：1.5。日期：2026-10-12。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.6。日期：2026-10-12。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.6 变更：依据[开发清单重构设计](../specs/development-list.md)（用户 2026-10-12 确认），delivery 模块的开发清单按新字段口径重建：删除 delivery 自有的手工 FS 台账（`fs_draft`、`fs_version` 表、`/fs` 接口与前端 FS 章节编辑器），替代 3.1 节“保留”的规定；现有开发项及其关联数据（含设计助手会话）按用户授权清除；新增共享契约 `packages/contracts/delivery`（字段目录与选项，前后端共用）；Excel 导入导出在后端完成，新增依赖 `exceljs`。见 3.3 节。
 
 1.5 变更（勘误，不改规则与检查器）：删除第 3 节末尾已失效的“开发助手主提示词归 item-workspace/prompts”。按 1.3 与 3.1 节，item-workspace 中的开发助手后端及其提示词已清除，开发助手预留为 abap-dev-agent，实现时其系统指令归该模块的 `prompts/`。
 
@@ -71,7 +73,7 @@ fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3
 - **单一版本**：上述各处不得出现 `v1`、`v2` 等版本层级。API 入口为 `/api/projects/:projectId/development-items/:itemId/abap-fsd-agent`；开发助手预留 `/api/projects/:projectId/development-items/:itemId/abap-dev-agent`。系统指令归 `apps/api/src/modules/abap-fsd-agent/prompts/`。
 - **历史清除**：以下资产全部删除，不保留 410、转发或兼容壳：design-assistant 模块（含 `unavailable.mjs`）；agent-runtime 模块（旧 abap-fsd-agent 引擎，含 `/api/admin/abap-fsd-agent` 与开发助手挂载）；fs-workspace 模块及其前端、契约；item-workspace 中的开发助手后端；“FS助手测试”菜单、页面与诊断页；`packages/contracts` 下 design-assistant、agent-runtime、fs-workspace 及空的旧 abap-fsd-agent 目录；上述各代迁移所建的表与数据（含 `fsd_checkpoint` 模式）；仅服务这些代码的测试、工具、脚本、npm 命令和部署配置。删除前按第 8 节检查引用。
 - **保留的前端**：现行设计助手界面（开发项工作区设计阶段及其使用的对话、附件、决策卡片等组件）保留，迁入 `apps/web/src/features/abap-fsd-agent/` 后改接新 API；只删除仅服务“FS助手测试”和已删除后端的部分。
-- **数据库**：已执行的迁移文件不改写、不删除；以新增迁移删除旧表并创建新表。旧表数据不备份（用户已明确放弃）。delivery 模块自有的 FS 台账表（`fs_draft`、`fs_version`）不属于助手，保留。
+- **数据库**：已执行的迁移文件不改写、不删除；以新增迁移删除旧表并创建新表。旧表数据不备份（用户已明确放弃）。delivery 模块自有的 FS 台账表（`fs_draft`、`fs_version`）不属于助手，由 1.6 / 3.3 节删除。
 - **跨模块调用**：abap-fsd-agent 只通过 item-workspace、models、sap 的 `public.mjs` 调用其他模块，登记见 module-dependencies.json；不得深层导入。模型工具调用能力由 models 模块的公开接口提供。SAP 工具只向模型暴露预置的只读能力。
 - **共享契约**：`packages/contracts/abap-fsd-agent` 只放前后端共同需要的纯协议（如对话事件、文档与批注结构）；不放执行器、提示词或模型调用。
 - **日志分析**：智能助手日志分析基于新表重建，不读取已删除的表。
@@ -82,6 +84,14 @@ fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3
 - **数据归属**：评论与优化建议表归 audit（`app.audit_` 前缀）。助手运行的轮次、消息、工具调用仍归 abap-fsd-agent，audit 只通过 `abap-fsd-agent/public.mjs` 读取，不直接查询其表。
 - **优化建议**：由 Claude Code 在用户要求时，用 `scripts/maintenance/export-assistant-logs.mjs` 导出日志与评论、分析后，用 `scripts/maintenance/publish-proposal.mjs` 发布到页面。平台不调用模型生成建议，也不设定时任务。
 - **跨模块调用**：audit → abap-fsd-agent（`public.mjs`）、audit → admin（管理员授权），登记见 module-dependencies.json。
+
+### 3.3 开发清单（delivery）
+
+- **职责**：项目开发清单：开发项（基本信息与四个阶段）、开发对象、标签、项目级自定义列、批量操作、Excel 导入导出、附件与变更历史。表结构以[开发清单重构设计](../specs/development-list.md)为准。
+- **数据归属**：`app.development_item`、`app.development_item_phase`、`app.development_item_object`、`app.development_tag`、`app.development_item_tag`、`app.development_field`、`app.development_event`、`app.development_file` 归 delivery。其他模块只读开发项，经 delivery 的 `context.mjs`（登记于 module-dependencies.json）取得。
+- **阶段负责人**：设计助手的编辑权限取 `fsd` 阶段负责人，开发助手取 `development` 阶段负责人；未指定时为创建人。
+- **共享契约**：`packages/contracts/delivery` 只放字段目录、选项和纯函数（浏览器可用），不放校验副作用、数据库查询或权限决策。
+- **不保留**：手工 FS 章节编辑（由设计助手替代）、开发项“阶段 / 验收条件 / 阻塞原因”等旧字段及其兼容接口。
 
 认证和连接配置属于 platform；只供一个业务使用的提示词、模板和资源放该业务模块内。禁止为单一消费者新增 packages/agents。
 

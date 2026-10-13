@@ -86,7 +86,7 @@ test('admins review assistant runs, comment on them and read proposals', async (
     assert.equal(done.tool_calls, 2);
     assert.equal(done.tool_failures, 1);
     assert.equal(done.model, 'Fake-Model');
-    assert.equal(done.item.code, 'I');
+    assert.equal(done.item.code, '00001');
     assert.equal(
       (await call('GET', '/api/audit/runs?status=FAILED'))
         .json()

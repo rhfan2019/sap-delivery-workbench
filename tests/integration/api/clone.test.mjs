@@ -10,7 +10,9 @@ test('clone endpoint is idempotent, isolated and permission checked', async () =
     const first = await f.app.inject({ method: 'POST', url, headers: f.headers, payload });
     assert.equal(first.statusCode, 201, first.body);
     const c = first.json();
-    assert.equal(c.code, '261006-200000-I');
+    assert.equal(c.code, '00002');
+    assert.equal(c.name, '261006-200000-Item');
+    assert.equal(c.module, 'FICO');
     assert.notEqual(c.id, f.scope.itemId);
     const again = await f.app.inject({ method: 'POST', url, headers: f.headers, payload });
     assert.equal(again.statusCode, 200, again.body);

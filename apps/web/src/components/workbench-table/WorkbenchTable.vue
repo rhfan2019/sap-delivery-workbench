@@ -45,7 +45,7 @@ const mobile = computed(() => availableWidth.value > 0 && availableWidth.value <
 const dialog = ref<HTMLDialogElement>();
 const configuration = ref<WorkbenchColumn[]>([]);
 watch(
-  () => props.storageKey,
+  [() => props.storageKey, () => props.columns.map((c) => c.key + ':' + c.label).join('|')],
   () => {
     let saved: WorkbenchColumn[] = [];
     try {
@@ -291,6 +291,7 @@ defineExpose({ openColumns: () => dialog.value?.showModal() });
         :fixed="compact ? undefined : column.fixed"
         :sortable="false"
         :class-name="'column-' + column.key"
+        :header-class-name="column.group ? 'header-group-' + column.group : undefined"
       >
         <template #header
           ><button

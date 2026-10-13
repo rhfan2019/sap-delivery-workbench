@@ -9,4 +9,6 @@ export interface WorkbenchColumn {
   sortable?: boolean;
   hideBelow?: number;
   flex?: boolean;
+  /** Visual group shown as a coloured stripe on the header. */
+  group?: string;
 }

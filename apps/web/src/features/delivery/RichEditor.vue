@@ -3,15 +3,19 @@ import { onBeforeUnmount, watch } from 'vue';
 import { EditorContent, useEditor } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import { TableKit } from '@tiptap/extension-table';
-import { safeRequirement } from './richText';
-const props = defineProps<{ modelValue: string; disabled?: boolean }>();
+import { safeHtml } from './richText';
+const props = defineProps<{ modelValue: string; disabled?: boolean; label?: string }>();
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
 const editor = useEditor({
   extensions: [StarterKit.configure({ heading: { levels: [2, 3] }, link: false }), TableKit],
-  content: safeRequirement(props.modelValue, 'html'),
+  content: safeHtml(props.modelValue),
   editable: !props.disabled,
   editorProps: {
-    attributes: { 'aria-label': '需求描述', role: 'textbox', 'aria-multiline': 'true' },
+    attributes: {
+      'aria-label': props.label ?? '富文本',
+      role: 'textbox',
+      'aria-multiline': 'true',
+    },
   },
   onUpdate: ({ editor }) => emit('update:modelValue', editor.getHTML()),
 });
@@ -22,8 +26,8 @@ watch(
 onBeforeUnmount(() => editor.value?.destroy());
 </script>
 <template>
-  <div class="requirement-editor" @keydown.enter.stop>
-    <div class="requirement-toolbar" role="toolbar" aria-label="需求描述格式">
+  <div class="rich-editor" @keydown.enter.stop>
+    <div class="rich-toolbar" role="toolbar" :aria-label="(label ?? '富文本') + '格式'">
       <button
         type="button"
         :disabled="disabled"
@@ -122,6 +126,6 @@ onBeforeUnmount(() => editor.value?.destroy());
         重做
       </button>
     </div>
-    <EditorContent :editor="editor" class="requirement-content" />
+    <EditorContent :editor="editor" class="rich-content" />
   </div>
 </template>

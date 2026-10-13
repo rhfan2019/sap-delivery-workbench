@@ -151,4 +151,10 @@ test('contract 1.3 rejects assistant version directories, removed modules and le
     [],
   );
   assert.deepEqual(checkLegacy('database/migrations/1.sql', 'DROP TABLE app.fsd_v1_task;'), []);
+  // Contract 1.6: the manual FS ledger stays removed.
+  assert.match(
+    checkLegacy('apps/api/src/modules/delivery/items.mjs', 'INSERT INTO app.fs_draft').join(),
+    /Legacy assistant identifier app.fs_draft/,
+  );
+  assert.deepEqual(checkLegacy('database/migrations/2.sql', 'DROP TABLE app.fs_version;'), []);
 });

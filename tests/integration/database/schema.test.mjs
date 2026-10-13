@@ -18,10 +18,13 @@ const expectedTables = [
   'auth_session',
   'customer',
   'development_event',
+  'development_field',
   'development_file',
   'development_item',
-  'fs_draft',
-  'fs_version',
+  'development_item_object',
+  'development_item_phase',
+  'development_item_tag',
+  'development_tag',
   'llm_credential',
   'llm_default',
   'llm_model',
@@ -247,4 +250,55 @@ test('referenced business records cannot be cascade-deleted', () =>
   transaction(async (client) => {
     const f = await fixture(client);
     await expectViolation(client, 'DELETE FROM app.customer WHERE id=$1', [f.customer], '23503');
+  }));
+
+test('development items: per-project numbers, phase rules and normalized SAP objects', () =>
+  transaction(async (client) => {
+    const f = await fixture(client);
+    const item = randomUUID();
+    const insert =
+      "INSERT INTO app.development_item(id,organization_id,project_id,item_no,name,module,kind,created_by) VALUES($1,$2,$3,$4,'Item','MM','report',$5)";
+    await client.query(insert, [item, f.org, f.project, 1, f.user]);
+    assert.equal(
+      (await client.query('SELECT code FROM app.development_item WHERE id=$1', [item])).rows[0]
+        .code,
+      '00001',
+    );
+    await expectViolation(client, insert, [randomUUID(), f.org, f.project, 1, f.user], '23505');
+    await expectViolation(
+      client,
+      insert,
+      [randomUUID(), f.org, f.project, 100000, f.user],
+      '23514',
+    );
+    const phase =
+      'INSERT INTO app.development_item_phase(organization_id,project_id,item_id,phase,status,progress,effort_days) VALUES($1,$2,$3,$4,$5,$6,$7)';
+    await expectViolation(
+      client,
+      phase,
+      [f.org, f.project, item, 'fsd', 'completed', 80, null],
+      '23514',
+    );
+    await expectViolation(
+      client,
+      phase,
+      [f.org, f.project, item, 'user_test', 'not_started', 0, 1],
+      '23514',
+    );
+    await client.query(phase, [f.org, f.project, item, 'fsd', 'completed', 100, 1.5]);
+    const object =
+      'INSERT INTO app.development_item_object(organization_id,project_id,item_id,object_type,object_name,created_by) VALUES($1,$2,$3,$4,$5,$6)';
+    await expectViolation(
+      client,
+      object,
+      [f.org, f.project, item, 'PROG', 'zlower', f.user],
+      '23514',
+    );
+    await client.query(object, [f.org, f.project, item, 'PROG', 'ZPROG', f.user]);
+    await expectViolation(
+      client,
+      object,
+      [f.org, f.project, item, 'PROG', 'ZPROG', f.user],
+      '23505',
+    );
   }));

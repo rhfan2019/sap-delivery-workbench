@@ -35,10 +35,16 @@ try {
   const delivery = await client.query("SELECT to_regclass('app.development_item') AS name");
   if (delivery.rows[0].name) {
     await client.query(
-      'GRANT SELECT,INSERT,UPDATE ON app.development_item,app.fs_draft,app.project_preference TO sap_workbench_app',
+      'GRANT SELECT,INSERT,UPDATE ON app.development_item,app.development_item_phase,app.development_field,app.project_preference TO sap_workbench_app',
     );
     await client.query(
-      'GRANT SELECT,INSERT ON app.fs_version,app.development_event,app.development_file TO sap_workbench_app',
+      'GRANT SELECT,INSERT ON app.development_event,app.development_file TO sap_workbench_app',
+    );
+    await client.query(
+      'GRANT SELECT,INSERT,DELETE ON app.development_item_object,app.development_item_tag TO sap_workbench_app',
+    );
+    await client.query(
+      'GRANT SELECT,INSERT,UPDATE,DELETE ON app.development_tag TO sap_workbench_app',
     );
   }
   await client.query('REVOKE ALL ON public.pgmigrations FROM sap_workbench_app');

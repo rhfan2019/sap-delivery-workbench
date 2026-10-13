@@ -26,7 +26,7 @@ try {
     console.log(
       (
         await db.query(
-          "SELECT code,name,deleted_at IS NOT NULL AS deleted,row_version FROM app.development_item WHERE project_id=$1 AND (code='DEV-0046' OR id=$2)",
+          "SELECT code,name,deleted_at IS NOT NULL AS deleted,row_version FROM app.development_item WHERE project_id=$1 AND (code='00046' OR id=$2)",
           [scope.projectId, scope.itemId],
         )
       ).rows,
