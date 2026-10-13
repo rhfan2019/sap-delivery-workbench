@@ -1,6 +1,8 @@
 # 仓库目录与依赖契约
 
-版本：1.4。日期：2026-10-12。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.5。日期：2026-10-12。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.5 变更（勘误，不改规则与检查器）：删除第 3 节末尾已失效的“开发助手主提示词归 item-workspace/prompts”。按 1.3 与 3.1 节，item-workspace 中的开发助手后端及其提示词已清除，开发助手预留为 abap-dev-agent，实现时其系统指令归该模块的 `prompts/`。
 
 1.4 变更：新增 audit 模块（平台审计与日志分析），承载后台“审计日志”页面的接口、助手运行评论和优化建议；助手运行数据仍归 abap-fsd-agent，audit 只通过 `abap-fsd-agent/public.mjs` 读取。优化建议由 Claude Code 按需分析后经维护脚本发布，平台不内置定时分析。见 3.2 节。
 
@@ -81,7 +83,7 @@ fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3
 - **优化建议**：由 Claude Code 在用户要求时，用 `scripts/maintenance/export-assistant-logs.mjs` 导出日志与评论、分析后，用 `scripts/maintenance/publish-proposal.mjs` 发布到页面。平台不调用模型生成建议，也不设定时任务。
 - **跨模块调用**：audit → abap-fsd-agent（`public.mjs`）、audit → admin（管理员授权），登记见 module-dependencies.json。
 
-认证和连接配置属于 platform；只供一个业务使用的提示词、模板和资源放该业务模块内。禁止为单一消费者新增 packages/agents。开发助手主提示词归 item-workspace/prompts。
+认证和连接配置属于 platform；只供一个业务使用的提示词、模板和资源放该业务模块内。禁止为单一消费者新增 packages/agents。
 
 同一模块允许相对路径。模块间只依赖明确的公开入口；本轮先消除应用/包/工具之间的越界，现有业务模块间调用在依赖清单中显式登记，不能借重命名声称业务解耦已经完成。新增跨业务深层导入须先调整公开接口与契约。
 
