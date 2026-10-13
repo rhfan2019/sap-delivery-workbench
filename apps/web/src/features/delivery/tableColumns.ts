@@ -29,7 +29,8 @@ const widthOf = (f: FieldDef) =>
                 ? 80
                 : 140;
 
-// Table columns follow the field catalog; the agent/actions column stays fixed on the right.
+// Table columns follow the field catalog; a narrow actions column on the right holds the
+// hover action bar (design, development, more).
 export function tableColumns(fields: FieldDef[]): WorkbenchColumn[] {
   return [
     { key: 'code', label: '编号', width: 84, fixed: 'left', required: true, group: 'basic' },
@@ -52,6 +53,6 @@ export function tableColumns(fields: FieldDef[]): WorkbenchColumn[] {
         visible: defaultVisible.has(f.key),
         sortable: !['tags', 'objects'].includes(f.type),
       })),
-    { key: 'actions', label: '操作', width: 244, fixed: 'right', required: true, sortable: false },
+    { key: 'actions', label: '操作', width: 104, fixed: 'right', required: true, sortable: false },
   ];
 }

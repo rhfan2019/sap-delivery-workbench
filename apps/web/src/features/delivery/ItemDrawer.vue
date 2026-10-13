@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
-import { X, PenLine, Trash2, Sparkles } from '@lucide/vue';
+import {
+  X,
+  PenLine,
+  Trash2,
+  Sparkles,
+  Code2,
+  MoreHorizontal,
+  ClipboardCheck,
+  UserCheck,
+} from '@lucide/vue';
 import { api } from '../../services/session';
 import FieldEditor from './FieldEditor.vue';
 import FieldValue from './FieldValue.vue';
@@ -36,7 +45,9 @@ const emit = defineEmits<{
   close: [];
   saved: [item: Item];
   delete: [item: Item];
+  agent: [label: string];
 }>();
+const more = ref(false);
 const dialog = ref<HTMLDialogElement>();
 const body = ref<HTMLElement>();
 const creating = computed(() => !props.item);
@@ -150,18 +161,49 @@ defineExpose({ dirty, busy });
               >{{ p.label
               }}<span class="status-pill" :data-status="item.phases[p.key].status">{{
                 OPTIONS.status[item.phases[p.key].status]
-              }}</span
-              ><small>{{ item.phases[p.key].progress }}%</small></span
+              }}</span></span
             >
           </div>
         </div>
         <div class="drawer-tools">
-          <RouterLink
-            v-if="item"
-            class="secondary-button compact"
-            :to="`/projects/${projectId}/development-items/${item.id}/design`"
-            ><Sparkles :size="15" />设计</RouterLink
-          >
+          <template v-if="item">
+            <RouterLink
+              class="secondary-button compact"
+              :to="`/projects/${projectId}/development-items/${item.id}/design`"
+              ><Sparkles :size="15" />设计</RouterLink
+            >
+            <button type="button" class="secondary-button compact" @click="emit('agent', '开发')">
+              <Code2 :size="15" />开发
+            </button>
+            <div class="menu-anchor">
+              <button
+                type="button"
+                class="icon-button"
+                aria-label="更多 Agent"
+                :aria-expanded="more"
+                @click="more = !more"
+                @blur="more = false"
+              >
+                <MoreHorizontal :size="18" />
+              </button>
+              <div v-if="more" class="menu-panel align-right" role="menu">
+                <button
+                  type="button"
+                  role="menuitem"
+                  @mousedown.prevent="((more = false), emit('agent', '顾问测试'))"
+                >
+                  <ClipboardCheck :size="15" />顾问测试
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  @mousedown.prevent="((more = false), emit('agent', 'IT/用户测试'))"
+                >
+                  <UserCheck :size="15" />IT/用户测试
+                </button>
+              </div>
+            </div>
+          </template>
           <button
             type="button"
             class="icon-button"
@@ -232,9 +274,12 @@ defineExpose({ dirty, busy });
             {{ busy ? '保存中…' : creating ? '创建开发项' : '保存' }}
           </button>
         </template>
-        <button v-else-if="!readOnly" type="button" class="primary-button" @click="startEdit">
-          <PenLine :size="15" />编辑
-        </button>
+        <template v-else>
+          <button type="button" class="secondary-button" @click="emit('close')">关闭</button>
+          <button v-if="!readOnly" type="button" class="primary-button" @click="startEdit">
+            <PenLine :size="15" />编辑
+          </button>
+        </template>
       </footer>
     </form>
   </dialog>

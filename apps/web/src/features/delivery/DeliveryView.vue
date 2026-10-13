@@ -17,6 +17,10 @@ import {
   FileSpreadsheet,
   Settings2,
   MoreHorizontal,
+  Sparkles,
+  Code2,
+  ClipboardCheck,
+  UserCheck,
 } from '@lucide/vue';
 import WorkbenchTable from '../../components/workbench-table/WorkbenchTable.vue';
 import { api, ApiError, identity } from '../../services/session';
@@ -426,6 +430,24 @@ async function removeOne(item: Item) {
   }
 }
 const comingSoon = (label: string) => showToast(`“${label}”Agent 即将开发`);
+// Row menu is rendered at page level: table cells clip overflowing content.
+const rowMenu = ref<{ item: Item; x: number; y: number } | null>(null);
+function toggleRowMenu(item: Item, event: MouseEvent) {
+  if (rowMenu.value?.item.id === item.id) return closeRowMenu();
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  const width = 200;
+  rowMenu.value = {
+    item,
+    x: Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8)),
+    y: rect.bottom + 4 + 260 > window.innerHeight ? rect.top - 264 : rect.bottom + 4,
+  };
+}
+const closeRowMenu = () => (rowMenu.value = null);
+function takeRowMenu() {
+  const item = rowMenu.value!.item;
+  rowMenu.value = null;
+  return item;
+}
 
 // --- batch actions -----------------------------------------------------------------------
 const selectedItems = computed(() => items.value.filter((i) => checked.value.includes(i.id)));
@@ -519,8 +541,20 @@ async function imported(summary: string) {
   say(summary);
 }
 function closeMenus(event: MouseEvent) {
-  if (!(event.target as HTMLElement).closest('.menu-anchor')) menu.value = '';
+  const target = event.target as HTMLElement;
+  if (!target.closest('.menu-anchor')) menu.value = '';
+  if (!target.closest('.row-menu, .row-actions')) rowMenu.value = null;
 }
+// Clicking outside the drawer and the table rows closes the drawer (rows switch it instead).
+function outsideDrawer(event: MouseEvent) {
+  if (drawerId.value === null || dialog.value) return;
+  const target = event.target as HTMLElement;
+  if (!target.isConnected || target === document.documentElement) return;
+  if (target.closest('dialog, .vxe-body--row, .menu-panel, .toast, [data-keep-drawer]')) return;
+  void closeDrawer();
+}
+onMounted(() => document.addEventListener('mousedown', outsideDrawer));
+onBeforeUnmount(() => document.removeEventListener('mousedown', outsideDrawer));
 onMounted(() => document.addEventListener('click', closeMenus));
 onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
 </script>
@@ -574,7 +608,12 @@ onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
             </button>
           </div>
         </div>
-        <button class="primary-button compact" :disabled="readOnly || !loaded" @click="openCreate">
+        <button
+          class="primary-button compact"
+          data-keep-drawer
+          :disabled="readOnly || !loaded"
+          @click="openCreate"
+        >
           <Plus :size="16" />新建开发项
         </button>
       </div>
@@ -779,45 +818,29 @@ onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
             </button>
             <div v-else-if="column.key === 'actions'" class="row-actions" @click.stop>
               <RouterLink
-                class="agent-link"
+                class="row-icon"
                 :to="`/projects/${currentProject}/development-items/${item.id}/design`"
-                >设计</RouterLink
+                :aria-label="'设计 ' + item.code"
+                title="设计"
+                ><Sparkles :size="16"
+              /></RouterLink>
+              <button
+                class="row-icon"
+                :aria-label="'开发 ' + item.code"
+                title="开发"
+                @click="comingSoon('开发')"
               >
-              <button class="agent-link" @click="comingSoon('开发')">开发</button>
-              <button class="agent-link" @click="comingSoon('顾问测试')">顾问测试</button>
-              <button class="agent-link" title="IT/用户测试" @click="comingSoon('IT/用户测试')">
-                IT/用户测试
+                <Code2 :size="16" />
               </button>
-              <div class="menu-anchor">
-                <button
-                  class="icon-button"
-                  :aria-label="item.code + ' 的更多操作'"
-                  :aria-expanded="menu === item.id"
-                  @click="menu = menu === item.id ? '' : item.id"
-                >
-                  <MoreHorizontal :size="17" />
-                </button>
-                <div v-if="menu === item.id" class="menu-panel align-right" role="menu">
-                  <button role="menuitem" @click="open(item.id)">
-                    <PenSquare :size="15" />查看 / 编辑
-                  </button>
-                  <button
-                    role="menuitem"
-                    :disabled="readOnly || busy"
-                    @click="((menu = ''), (checked = [item.id]), batchCopy())"
-                  >
-                    <Copy :size="15" />复制
-                  </button>
-                  <button
-                    role="menuitem"
-                    class="danger"
-                    :disabled="readOnly || busy"
-                    @click="removeOne(item)"
-                  >
-                    <Trash2 :size="15" />删除
-                  </button>
-                </div>
-              </div>
+              <button
+                class="row-icon"
+                :aria-label="item.code + ' 的更多操作'"
+                title="更多"
+                :aria-expanded="rowMenu?.item.id === item.id"
+                @click="toggleRowMenu(item, $event)"
+              >
+                <MoreHorizontal :size="16" />
+              </button>
             </div>
             <InlineCell
               v-else-if="fields.find((f) => f.key === column.key)"
@@ -833,6 +856,7 @@ onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
               清除所有筛选
             </button>
             <button
+              data-keep-drawer
               v-else-if="currentProject && !items.length && !readOnly && loaded"
               class="text-button"
               @click="openCreate"
@@ -880,6 +904,7 @@ onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
       @close="closeDrawer"
       @saved="saved"
       @delete="removeOne"
+      @agent="comingSoon"
     />
     <BatchEditDialog
       v-if="dialog === 'batch'"
@@ -908,6 +933,38 @@ onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
       @close="dialog = ''"
       @changed="load()"
     />
+    <div
+      v-if="rowMenu"
+      class="menu-panel row-menu"
+      role="menu"
+      :style="{ top: rowMenu.y + 'px', left: rowMenu.x + 'px' }"
+    >
+      <button role="menuitem" @click="(closeRowMenu(), comingSoon('顾问测试'))">
+        <ClipboardCheck :size="15" />顾问测试
+      </button>
+      <button role="menuitem" @click="(closeRowMenu(), comingSoon('IT/用户测试'))">
+        <UserCheck :size="15" />IT/用户测试
+      </button>
+      <hr />
+      <button role="menuitem" @click="(open(rowMenu.item.id), closeRowMenu())">
+        <PenSquare :size="15" />查看 / 编辑
+      </button>
+      <button
+        role="menuitem"
+        :disabled="readOnly || busy"
+        @click="((checked = [rowMenu.item.id]), closeRowMenu(), batchCopy())"
+      >
+        <Copy :size="15" />复制
+      </button>
+      <button
+        role="menuitem"
+        class="danger"
+        :disabled="readOnly || busy"
+        @click="removeOne(takeRowMenu())"
+      >
+        <Trash2 :size="15" />删除
+      </button>
+    </div>
     <div v-if="toast" class="toast" role="status">{{ toast }}</div>
   </div>
 </template>

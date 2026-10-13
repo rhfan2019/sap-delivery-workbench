@@ -371,24 +371,53 @@
 .code-link:hover {
   text-decoration: underline;
 }
+/* Row actions: hidden until the row is hovered, focused, selected or open in the drawer;
+   always visible on touch screens, which have no hover. */
 .row-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 2px;
+  opacity: 0;
+  transition: opacity 0.12s;
 }
-.agent-link {
+.vxe-body--row:is(.row--hover, .is-current, .is-checked) .row-actions,
+.row-actions:focus-within {
+  opacity: 1;
+}
+@media (hover: none) {
+  .row-actions {
+    opacity: 1;
+  }
+}
+.row-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   border: 0;
+  border-radius: 6px;
   background: none;
-  padding: 4px 5px;
-  border-radius: 5px;
   color: var(--link);
-  font-size: 12px;
   cursor: pointer;
-  text-decoration: none;
-  white-space: nowrap;
 }
-.agent-link:hover {
-  background: var(--hover);
+.row-icon:hover,
+.row-icon[aria-expanded='true'] {
+  background: var(--active);
+}
+.vxe-header--column.header-actions .vxe-cell {
+  visibility: hidden;
+}
+.row-menu {
+  position: fixed;
+  width: 200px;
+  min-width: 0;
+}
+.menu-panel hr {
+  border: 0;
+  border-top: 1px solid #e6ecf2;
+  margin: 4px 2px;
 }
 
 /* Inline cells */

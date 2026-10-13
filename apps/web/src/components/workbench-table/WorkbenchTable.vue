@@ -291,7 +291,11 @@ defineExpose({ openColumns: () => dialog.value?.showModal() });
         :fixed="compact ? undefined : column.fixed"
         :sortable="false"
         :class-name="'column-' + column.key"
-        :header-class-name="column.group ? 'header-group-' + column.group : undefined"
+        :header-class-name="
+          ['header-' + column.key, column.group ? 'header-group-' + column.group : '']
+            .join(' ')
+            .trim()
+        "
       >
         <template #header
           ><button

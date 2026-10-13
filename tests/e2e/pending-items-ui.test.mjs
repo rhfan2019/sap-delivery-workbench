@@ -212,14 +212,17 @@ test('pending items: customer tabs, model drawer/default, menu navigation and de
       fullPage: true,
     });
     await page.getByRole('link', { name: '开发清单', exact: true }).click();
-    await page.getByRole('link', { name: '设计', exact: true }).waitFor();
+    await page
+      .getByRole('link', { name: '设计 00001', exact: true })
+      .waitFor({ state: 'attached' });
     // Bulk deletion is only offered after selecting rows.
     assert.equal(await page.getByRole('button', { name: '删除', exact: true }).count(), 0);
     assert.match(
-      await page.getByRole('link', { name: '设计', exact: true }).getAttribute('href'),
+      await page.getByRole('link', { name: '设计 00001', exact: true }).getAttribute('href'),
       /\/projects\/p1\/development-items\/i1\/design$/,
     );
-    await page.getByRole('button', { name: '开发', exact: true }).click();
+    await page.locator('.vxe-body--row').filter({ hasText: '00001' }).first().hover();
+    await page.getByRole('button', { name: '开发 00001', exact: true }).first().click();
     await page.getByText('“开发”Agent 即将开发').waitFor();
     await page.getByRole('checkbox', { name: '选择 00001', exact: true }).check();
     await page.getByRole('button', { name: '删除', exact: true }).click();

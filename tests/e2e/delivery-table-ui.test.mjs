@@ -138,10 +138,17 @@ test('development list: page/batch/row actions, inline edit, grouped drawer, col
 
   // Row actions: design navigates; the other agents are announced as coming soon.
   assert.match(
-    await page.getByRole('link', { name: '设计', exact: true }).first().getAttribute('href'),
+    await page.getByRole('link', { name: '设计 00001', exact: true }).first().getAttribute('href'),
     /\/development-items\/i0\/design$/,
   );
-  await page.getByRole('button', { name: '顾问测试', exact: true }).first().click();
+  // Row actions are a hover bar: design and development icons, the rest under "more".
+  const firstRow = page.locator('.vxe-body--row').filter({ hasText: '00001' }).first();
+  await firstRow.hover();
+  await page.getByRole('button', { name: '开发 00001', exact: true }).first().click();
+  await page.getByText('“开发”Agent 即将开发').waitFor();
+  await firstRow.hover();
+  await page.getByRole('button', { name: '00001 的更多操作', exact: true }).first().click();
+  await page.getByRole('menuitem', { name: '顾问测试' }).click();
   await page.getByText('“顾问测试”Agent 即将开发').waitFor();
 
   // Inline edit: a choice saves on change; a failure stays in the cell with the value.
@@ -183,7 +190,11 @@ test('development list: page/batch/row actions, inline edit, grouped drawer, col
   assert.equal(items[0].businessOwner, '业务乙');
   await mkdir('.runtime/artifacts/delivery-table', { recursive: true });
   await page.screenshot({ path: '.runtime/artifacts/delivery-table/drawer.png' });
-  await drawer.getByRole('button', { name: '关闭开发项抽屉' }).click();
+  // Clicking another row switches the drawer; clicking elsewhere on the page closes it.
+  await page.getByRole('button', { name: '查看 00002', exact: true }).click();
+  await drawer.getByRole('heading', { name: '供应商未清项批量清账' }).waitFor();
+  assert.doesNotMatch(await drawer.locator('.phase-strip').innerText(), /%/);
+  await page.getByRole('heading', { name: '开发清单', exact: true }).click();
   await drawer.waitFor({ state: 'detached' });
 
   // Column settings persist per user and project.
