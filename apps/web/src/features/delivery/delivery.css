@@ -86,16 +86,27 @@
 .delivery-heading {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   gap: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
+}
+.heading-title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
 }
 .delivery-heading h1 {
   margin: 0;
+  font-size: 22px;
+  white-space: nowrap;
 }
 .delivery-heading .muted {
-  margin: 6px 0 0;
+  margin: 0;
   font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .page-actions {
   display: flex;
@@ -158,14 +169,14 @@
   display: flex;
   gap: 22px;
   border-bottom: 1px solid #e1e7ef;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   overflow-x: auto;
 }
 .scope-tabs button {
   border: 0;
   border-bottom: 3px solid transparent;
   background: none;
-  padding: 11px 2px;
+  padding: 8px 2px;
   color: var(--muted);
   cursor: pointer;
   white-space: nowrap;
@@ -1243,7 +1254,7 @@
 .toast {
   position: fixed;
   left: 50%;
-  top: 24px;
+  top: 12px;
   transform: translateX(-50%);
   z-index: 60;
   padding: 10px 18px;

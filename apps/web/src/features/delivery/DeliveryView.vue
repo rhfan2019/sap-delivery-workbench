@@ -56,7 +56,6 @@ const readOnly = ref(true),
   loaded = ref(false),
   busy = ref(false);
 const error = ref(''),
-  notice = ref(''),
   toast = ref('');
 const checked = ref<string[]>([]);
 const table = ref<{ openColumns: () => void }>();
@@ -328,8 +327,9 @@ function replace(item: Item) {
   if (index >= 0) items.value[index] = item;
   else items.value.unshift(item);
 }
+// Success messages float briefly instead of pushing the table down.
 function say(message: string) {
-  notice.value = message;
+  showToast(message);
   error.value = '';
 }
 let toastTimer = 0;
@@ -562,9 +562,9 @@ onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
 <template>
   <div class="delivery-page" :class="{ 'drawer-open': drawerId !== null }">
     <div class="delivery-heading">
-      <div>
+      <div class="heading-title">
         <h1>开发清单</h1>
-        <p class="muted">{{ projectName }}</p>
+        <span class="muted">{{ projectName }}</span>
       </div>
       <div class="page-actions">
         <button class="secondary-button compact" :disabled="!loaded" @click="dialog = 'settings'">
@@ -620,12 +620,6 @@ onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
     </div>
     <p v-if="error" class="error-note" role="alert">
       {{ error }}<button class="text-button" @click="load()">重新加载</button>
-    </p>
-    <p v-if="notice" class="success-note" role="status">
-      {{ notice
-      }}<button class="icon-button" aria-label="关闭提示" @click="notice = ''">
-        <X :size="14" />
-      </button>
     </p>
     <p v-if="readOnly && loaded" class="help-note">此项目已归档，只能查看。</p>
 

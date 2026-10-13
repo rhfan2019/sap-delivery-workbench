@@ -68,7 +68,7 @@ p {
   margin: 0;
 }
 h1 {
-  font-size: 30px;
+  font-size: 26px;
   line-height: 1.35;
   letter-spacing: -0.6px;
   font-weight: 650;
@@ -726,17 +726,19 @@ input::placeholder {
   font-size: 11px;
   color: var(--muted);
 }
+/* The shell is exactly one viewport tall; only the content area scrolls, so pages with
+   their own scrolling regions (tables) never produce a second page scrollbar. */
 .main-shell {
   margin-left: 270px;
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100dvh;
   transition: margin-left 0.2s;
 }
 .topbar {
-  height: 72px;
+  height: 56px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -793,8 +795,10 @@ input::placeholder {
   font-size: 10px;
 }
 .main-content {
-  padding: 36px 36px 24px;
+  padding: 20px 32px 16px;
   flex: 1;
+  min-height: 0;
+  overflow: auto;
   max-width: 1600px;
   width: 100%;
   margin: 0 auto;
@@ -804,15 +808,15 @@ input::placeholder {
   justify-content: space-between;
   align-items: center;
   gap: 18px;
-  margin-bottom: 30px;
+  margin-bottom: 18px;
 }
 .page-heading .eyebrow {
   font-size: 9px;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 .page-heading .muted {
   font-size: 12px;
-  margin-top: 10px;
+  margin-top: 4px;
 }
 .greeting-dot {
   color: var(--muted);
@@ -1123,8 +1127,9 @@ input::placeholder {
 }
 .app-footer {
   display: flex;
+  flex-shrink: 0;
   justify-content: space-between;
-  padding: 18px 36px;
+  padding: 6px 32px;
   color: var(--muted);
   font-size: 9px;
 }
@@ -1341,10 +1346,10 @@ input::placeholder {
 }
 @media (min-width: 1600px) {
   .main-content {
-    padding: 44px 52px;
+    padding: 24px 44px 16px;
   }
   .topbar {
-    padding: 0 52px;
+    padding: 0 44px;
   }
   .quick-card p {
     font-size: 12px;
