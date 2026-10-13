@@ -8,7 +8,7 @@ FSD 设计助手已按[方向决策](../architecture/2026-10-11-fsd-assistant-di
 
 ## 2. 代码与分支
 
-- 分支 `abap-fsd-agent-refactor`（未合并到 `main`）。提交顺序：
+- 2026-10-12 已将分支 `abap-fsd-agent-refactor` 快进合并到 `main` 并删除其他分支，此后只在 `main` 上开发。合并前的提交顺序：
   - `a5729b2` 方向决策与重构计划
   - `33f1ff9` 阶段 A：清除所有旧 FS/FSD 助手
   - `0afcb26` 阶段 B：后端智能体
@@ -93,4 +93,4 @@ FSD 设计助手已按[方向决策](../architecture/2026-10-11-fsd-assistant-di
 
 ## 9. 新会话开场提示（可直接复制）
 
-> 请先阅读 AGENTS.md、docs/architecture/repository-contract.md 和 docs/plans/2026-10-12-abap-fsd-agent-handover.md。我们在分支 abap-fsd-agent-refactor 上继续 FSD 设计助手（abap-fsd-agent）的批量测试与优化。先确认服务状态和当前默认模型，然后等我的具体指令。
+> 请先阅读 AGENTS.md、docs/architecture/repository-contract.md 和 docs/plans/2026-10-12-abap-fsd-agent-handover.md。我们在 main 上继续 FSD 设计助手（abap-fsd-agent）的批量测试与优化。先确认服务状态和当前默认模型，然后等我的具体指令。
