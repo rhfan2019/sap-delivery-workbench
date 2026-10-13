@@ -10,6 +10,7 @@
 - [FSD 设计助手方向决策](architecture/2026-10-11-fsd-assistant-direction-decision.md)：转为模型主导智能体的决策、目标形态、完全重构方式与实施顺序。
 - [abap-fsd-agent 重构实施计划](plans/2026-10-11-abap-fsd-agent-refactor.md)：历史助手清除清单、新模块与前端改接、DEV-0024 验收。
 - [审计日志与优化建议](specs/audit.md)：后台审计页面口径、运行评论与 Claude Code 优化建议流程。
+- [开发清单重构设计](specs/development-list.md)：字段口径、数据库表设计、标签与自定义列、旧数据清除（设计待审阅）。
 - [abap-fsd-agent 端到端测试](plans/2026-10-12-abap-fsd-agent-e2e-test.md)：DEV-0031 测试脚本、结果、结论与问题分析（E2E-01～06，本轮问题的唯一权威清单）。
 - [abap-fsd-agent 交接文档](plans/2026-10-12-abap-fsd-agent-handover.md)：新会话接手入口：现状、运行方法、待办与协作约定。
 - [待办与问题清单](plans/backlog.md)：日常发现的小问题和零散改进，攒批统一处理。
