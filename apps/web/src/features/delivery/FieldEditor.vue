@@ -52,9 +52,7 @@ function toggleOption(id: string, on: boolean) {
     :value="modelValue ?? ''"
     @change="emit('update:modelValue', text($event))"
   >
-    <option v-if="!field.required && !field.key.endsWith('.status')" value="" disabled>
-      请选择
-    </option>
+    <option v-if="!modelValue" value="" disabled>请选择</option>
     <option v-for="[key, label] in builtInOptions" :key="key" :value="key">{{ label }}</option>
   </select>
   <select

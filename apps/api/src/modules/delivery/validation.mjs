@@ -201,8 +201,11 @@ export function normalizeChanges(changes, customFields = []) {
       value = text(raw ?? '', field.label, field.max, { optional: !field.required });
     else if (field.type === 'rich') value = richHtml(raw, field.label);
     else if (field.type === 'date') value = date(raw);
-    else if (field.type === 'select') value = choice(raw, Object.keys(field.options), field.label);
-    else if (field.type === 'member') value = raw ? uuid(raw) : null;
+    else if (field.type === 'select') {
+      if (raw === '' || raw === null || raw === undefined)
+        throw failure(400, `请选择${field.label}。`);
+      value = choice(raw, Object.keys(field.options), field.label);
+    } else if (field.type === 'member') value = raw ? uuid(raw) : null;
     else if (field.type === 'effort') value = effort(raw, field.label);
     else if (field.type === 'percent') value = percent(raw, field.label);
     else if (field.type === 'tags') value = tagList(raw);
