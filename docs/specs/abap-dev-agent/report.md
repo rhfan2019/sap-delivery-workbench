@@ -196,6 +196,7 @@ START-OF-SELECTION.
 
 - **默认值**：在 `initialize` 中赋值。给 `SELECT-OPTIONS` 设通配符默认值时填充 `sign = 'I'`、`option = 'CP'`。
 - **校验**：`selscr_check` 只做逻辑防呆：联动必填、日期区间合理性、互斥条件。不为校验输入值是否存在而查询配置表。
+- `selscr_check` 开头写 `CHECK sy-ucomm NP 'FC*'.`，选择屏幕功能键（FC01～FC05）不触发校验。
 - 校验失败用 `MESSAGE '...'(mxx) TYPE 'E'.`，停留在选择屏幕。
 
 ## 三、取数与加工
@@ -205,7 +206,7 @@ START-OF-SELECTION.
 - `process` 只做数据库无法完成的加工。不要在 `process` 中做本可在 SQL 中完成的算术。
 - 选择条件需要权限过滤的，查询只绑定影子范围表 `s_xxx1`，不绑定原选择条件（第四部分）。
 - 拆分复杂逻辑时用 `select1`、`select2`、`process1` 等私有方法，在 `PRIVATE SECTION` 中声明，配中文注释。
-- 取数后没有数据时：`MESSAGE '没有符合条件的数据'(m01) TYPE 'S' DISPLAY LIKE 'E'.`，然后返回，不显示空清单。
+- 取数后没有数据时：`MESSAGE '未找到符合条件的数据'(mxx) TYPE 'S'.` 后 `LEAVE LIST-PROCESSING.`，回到选择屏幕，不显示空清单。
 - 数据量大时，用 `set_progress( )` 提示进度。
 
 ## 四、权限检查（SRI 影子范围协议）
@@ -245,6 +246,8 @@ START-OF-SELECTION.
 - **数量与金额**：设置 `qfieldname` / `cfieldname` 绑定单位与币种字段；不同单位不能合计时不设 `do_sum`。
 - **表头**：重定义 `on_grid_top_of_page`，组装 `slis_t_listheader` 后调用 `REUSE_ALV_COMMENTARY_WRITE`。
 - **热点与跳转**：`ref_fcat( ... )->hotspot = abap_true`，重定义 `on_grid_hotspot_click`，用 `call_transaction( )` 跳转。
+- **双击**：重定义 `on_grid_double_click`，用 `READ TABLE gt_out INTO DATA(ls_out) INDEX e_row-index` 取行；`e_row-rowtype` 不为空表示合计行，直接返回。显示单据优先用标准的显示函数（如采购凭证 `ME_DISPLAY_PURCHASE_DOCUMENT`），调用前查签名；失败时 `MESSAGE ... TYPE 'S' DISPLAY LIKE 'E'`。
+- **默认排序**：在 `build_alv_grid_paras` 中设置 `me->ms_alv_grid_paras-sort`。
 - 布局、斑马线、变式等已由基类处理，不要重复设置。
 
 ## 六、可编辑 ALV 与写回（功能类）
@@ -278,3 +281,7 @@ START-OF-SELECTION.
 | SRI      | 每个需权限检查的 `s_xxx` 都有 `s_xxx1`，用 `get_util_auth( )->check_authority`，异常只写 `check_failed` 与 `OTHERS`；SELECT 只绑定影子范围表 |
 | 字段目录 | 只在 `build_alv_grid_fcat` 中调整，使用 `ref_fcat`，无宏                                                                                     |
 | 写回     | 勾选检查、`check_changed_data`、提交回滚、逐行结果、刷新都已实现                                                                             |
+
+## 九、完整范例
+
+本规范之后附有一个完整的报表范例（采购订单执行情况清单），展示程序头、选择屏幕、类定义、CTE 汇总取数、字段目录调整、默认排序、双击跳转和程序事件的写法。生成代码时参照它的结构与风格，业务内容以开发方案为准。

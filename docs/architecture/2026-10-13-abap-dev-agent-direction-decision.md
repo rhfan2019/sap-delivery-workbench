@@ -202,6 +202,14 @@ YTCA 用于核对框架约定，已据此修正 `report.md`：
 
 YTCA 与现行规范不一致、需用户决定的两处见第 12 节。
 
+### 4.5 范例程序 YDEMO_FRH_0021
+
+用户提供了简单报表 YDEMO_FRH_0021（采购订单执行情况清单，267 行、约 9 KB、约 3 千 token），**作为报表规范的完整范例**，草稿期放在 [report-example.abap](../specs/abap-dev-agent/report-example.abap)，实现时随 `report.md` 一起拼入系统指令。用户的方针是先用简单报表把智能体做出来，复杂情况（可编辑 ALV、写回、ALV 树等）以后逐步增加范例与规范。
+
+据此补充了 `report.md`：`selscr_check` 开头 `CHECK sy-ucomm NP 'FC*'`；无数据时 `MESSAGE ... TYPE 'S'` 后 `LEAVE LIST-PROCESSING` 回到选择屏幕；双击取行并跳过合计行；默认排序在 `build_alv_grid_paras` 中设置；带变量的文本符号用 `&1` 占位后 `replace`。范例的消息用文本符号（`MESSAGE '...'(m03) TYPE 'S'`），与规范一致，生成的程序默认不建消息类。
+
+范例与现行规范有三处不一致，见第 12 节；在用户决定前，范例原样保存。
+
 ## 5. 系统指令
 
 系统指令以设计助手的 [system.md](../../apps/api/src/modules/abap-fsd-agent/prompts/system.md) 和用户经过检验的 GEM 提示词为蓝本，各取其长，独立成文，不与设计助手共用片段。
@@ -238,6 +246,7 @@ YTCA 与现行规范不一致、需用户决定的两处见第 12 节。
 apps/api/src/modules/abap-dev-agent/
   prompts/system.md                 角色、工作方法、业务分析、技术方案、开发方案结构、通用 ABAP 规范
   prompts/report.md                 报表专属规范：基类用法、SRI 权限、选择屏幕、ALV、文本符号
+  prompts/report-example.abap       报表完整范例，拼接在 report.md 之后
   frameworks/*.abap                 框架各类的内置副本，每个类一个文件（运行资源，不是提示词）
 ```
 
@@ -344,11 +353,12 @@ apps/api/src/modules/abap-dev-agent/
 ## 12. 待用户确认
 
 1. **系统指令草稿**（5.1）：`system.md` 与 `report.md` 待审阅。
-2. **消息写法**：YTCA 用程序消息类（`REPORT ytca MESSAGE-ID ytca`，`MESSAGE e019`），需要先建消息类；GEM 与 `report.md` 用文本符号（`MESSAGE '...'(m01) TYPE 'E'`），粘贴即可运行。建议生成的程序默认用文本符号；FSD 或用户指定消息类时改用消息类，并把消息清单列入手工步骤。
-3. **字段目录写法**：YTCA 在 `build_alv_grid_fcat` 中整体重建字段目录（`ct_fcat = VALUE #( ... )`）；基类方法中的示例代码与 `report.md` 是在自动生成的目录上逐列调整（`ref_fcat`）。建议以基类示例为准，只调整需要改的列。
-4. **范例程序**：请另选一个 200～400 行的典型查询报表（最好再有一个可编辑 ALV 写回的功能），作为 `report.md` 的完整范例。
-5. **`report.md` 中仍由推断写出的约定**：状态灯字段 `LIGHT` 的类型与取值（YTCA 中为 `abap_bool` 且未使用）及 `excp_fname` 设置；后台作业时清单不输出，是否需要其他输出方式。
-6. **公共运行模块名称**：建议 `agent-core`（契约已禁用 `agent-runtime`）。
-7. **SAP 同步读哪一版**：建议以未激活版为准，读不到时退回激活版；版本上注明读的是哪一版，对未激活版打“定稿”标签时提示。
-8. **开发清单衔接**（2.8）：变更类型“优化”由助手告知不支持；对象名取开发清单的程序对象，助手不写开发清单。
-9. **批注锚定**（2.6）：按原文片段锚定，新版本中找不到时标为“原文已变”。
+2. **字段目录写法**：整体重建（YTCA）还是逐列调整（基类示例、YDEMO_FRH_0021 的 `MODIFY ... WHERE`），用户决定后续再细化；当前 `report.md` 按逐列调整写。
+3. **范例的权限写法**：YDEMO_FRH_0021 在 `selscr_check` 中读 T024E 后逐个 `AUTHORITY-CHECK`，遇到无权限的采购组织即报错，取数直接绑定 `s_ekorg`；规范要求 SRI：定义 `s_ekorg1`，调用 `check_authority`（权限字段 `EKORG` 可自动推导主数据表 T024E），取数绑定 `s_ekorg1`，范围中无权限的值被过滤而不报错。范例作为模型的学习对象，两种写法并存会让模型无所适从。建议把范例改为 SRI 写法。
+4. **范例的计算位置**：范例在 `process` 中逐行计算未清数量并过滤“仅显示未清”；规范（源自 GEM）要求这类算术下推到 SQL，且恰好以“未清数量”为例。建议放宽规范：关联、过滤、汇总必须在 SQL 中完成；逐行的简单派生计算（含条件分支）可以在 `process` 中完成。这也更符合“以用户代码为准”。
+5. **范例的列标题**：`open_qty` 参照 `ekpo-menge`，列标题会与订单数量相同；`lifnr_name`、`werks_name` 都参照 `name1`，两列标题都是“名称”。建议在 `build_alv_grid_fcat` 中用文本符号覆盖这三列标题（如 `'未清数量'(f01)`）。另：程序头写 `YDEMO_FRH_0021`，`REPORT` 语句是 `ytest_frh_0021`。
+6. **`report.md` 中仍由推断写出的约定**（随复杂范例再定，不阻塞首版）：状态灯字段 `LIGHT` 的类型与取值（YTCA 中为 `abap_bool` 且未使用）及 `excp_fname` 设置；后台作业时清单不输出，是否需要其他输出方式。
+7. **公共运行模块名称**：建议 `agent-core`（契约已禁用 `agent-runtime`）。
+8. **SAP 同步读哪一版**：建议以未激活版为准，读不到时退回激活版；版本上注明读的是哪一版，对未激活版打“定稿”标签时提示。
+9. **开发清单衔接**（2.8）：变更类型“优化”由助手告知不支持；对象名取开发清单的程序对象，助手不写开发清单。
+10. **批注锚定**（2.6）：按原文片段锚定，新版本中找不到时标为“原文已变”。
