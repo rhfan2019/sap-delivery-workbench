@@ -10,6 +10,7 @@
 - 提交前运行 npm run check:architecture，并完成契约规定的相关验证；失败必须如实报告。
 - 需要改变规则时，先修改契约及对应检查规则，再迁移消费者。不得临时绕过检查器。
 - FSD 设计助手按[方向决策](docs/architecture/2026-10-11-fsd-assistant-direction-decision.md)完全重构：只保留一个版本，历史设计助手各代（含 410 边界、旧表与数据）按契约 3.1 清除，不恢复旧设计引擎。其他模块的目录整理仍不授权删除历史数据或改变公开 API。
+- ABAP 开发助手按[方向决策](docs/architecture/2026-10-13-abap-dev-agent-direction-decision.md)与[实施计划](docs/plans/2026-10-14-abap-dev-agent-implementation.md)实施；智能体共用能力归 agent-core，提示词与运行资源按契约 3.1 放置和命名。
 - 本机 .env、.runtime 中的凭据与附件、数据库卷和用户备份受保护，不做批量清理。
 
 2026-10-08 的重构记录见 docs/architecture/refactor-record.md；执行计划见 docs/plans/2026-10-08-repository-refactor.md。

@@ -6,13 +6,25 @@ import ts from 'typescript';
 import { spawnSync } from 'node:child_process';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
-const browserContracts = new Set(['abap-fsd-agent/types', 'abap-fsd-agent/sse', 'delivery/fields']);
-// Contract 1.3: one assistant version; earlier generations stay deleted.
+const browserContracts = new Set([
+  'abap-fsd-agent/types',
+  'abap-fsd-agent/sse',
+  'abap-dev-agent/types',
+  'agent-core/sse',
+  'delivery/fields',
+]);
+// Contract 1.3/1.7: one assistant version; earlier generations stay deleted.
+const agentModules = ['agent-core', 'abap-fsd-agent', 'abap-dev-agent'];
 const agentRoots = [
-  'apps/api/src/modules/abap-fsd-agent/',
-  'apps/web/src/features/abap-fsd-agent/',
-  'packages/contracts/abap-fsd-agent/',
+  ...agentModules.map((m) => `apps/api/src/modules/${m}/`),
+  ...['agent-workbench', 'abap-fsd-agent', 'abap-dev-agent'].map(
+    (f) => `apps/web/src/features/${f}/`,
+  ),
+  ...agentModules.map((m) => `packages/contracts/${m}/`),
 ];
+// Contract 1.7: prompts hold system.md, <kind>.md and <kind>-example.abap; framework copies are .abap.
+const agentResource =
+  /^apps\/api\/src\/modules\/(agent-core|abap-fsd-agent|abap-dev-agent)\/(prompts|frameworks)\/(.+)$/;
 const removedModules =
   /^(apps|packages|scripts|tools|infra)\/(.+\/)?(design-assistant|agent-runtime|fs-workspace|fs-assistant-test)(\/|$)/;
 const legacyIdentifiers = [
@@ -32,6 +44,15 @@ export function checkLegacy(file, content = '') {
   if (agentRoots.some((root) => file.startsWith(root)) && /\/v\d+\//.test(file))
     errors.push(`${file}: Version directory in assistant code`);
   if (removedModules.test(file)) errors.push(`${file}: Removed assistant module path`);
+  const resource = file.match(agentResource);
+  if (resource) {
+    const [, , kind, name] = resource;
+    const valid =
+      kind === 'prompts'
+        ? /^[a-z]+(-[a-z]+)*\.md$/.test(name) || /^[a-z]+-example\.abap$/.test(name)
+        : /^[a-z0-9_]+\.abap$/.test(name);
+    if (!valid) errors.push(`${file}: Agent ${kind} file outside the naming rule`);
+  }
   if (
     /^(apps|packages|scripts|tools|infra)\//.test(file) &&
     file !== 'scripts/checks/architecture.mjs'
@@ -49,6 +70,7 @@ const workspace = (file) =>
         ? 'contracts'
         : null;
 const moduleName = (file) => file.match(/^apps\/api\/src\/modules\/([^/]+)\//)?.[1];
+const featureName = (file) => file.match(/^apps\/web\/src\/features\/([^/]+)\//)?.[1];
 
 export function importsOf(file, content) {
   const sourceText = file.endsWith('.vue')
@@ -155,12 +177,20 @@ export function checkImport(file, specifier, { files, allowedModuleEdges }) {
   const fromModule = moduleName(file),
     toModule = moduleName(target);
   if (
-    fromModule === 'abap-fsd-agent' &&
+    agentModules.includes(fromModule) &&
     toModule &&
     toModule !== fromModule &&
-    !/^apps\/api\/src\/modules\/(item-workspace|models|sap)\/public\.mjs$/.test(target)
+    !/^apps\/api\/src\/modules\/[^/]+\/public\.mjs$/.test(target)
   )
-    errors.push('abap-fsd-agent must use an explicit module public facade');
+    errors.push(`${fromModule} must use an explicit module public facade`);
+  const fromFeature = featureName(file),
+    toFeature = featureName(target);
+  if (
+    ['abap-fsd-agent', 'abap-dev-agent'].includes(fromFeature) &&
+    ['abap-fsd-agent', 'abap-dev-agent'].includes(toFeature) &&
+    fromFeature !== toFeature
+  )
+    errors.push('Assistant features share code through agent-workbench, not each other');
   if (
     fromModule &&
     toModule &&

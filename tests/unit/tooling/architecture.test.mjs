@@ -158,3 +158,100 @@ test('contract 1.3 rejects assistant version directories, removed modules and le
   );
   assert.deepEqual(checkLegacy('database/migrations/2.sql', 'DROP TABLE app.fs_version;'), []);
 });
+
+test('contract 1.7 makes every agent module import other modules through public facades', () => {
+  const opts = {
+    files: new Set([
+      'apps/api/src/modules/sap/service.mjs',
+      'apps/api/src/modules/sap/public.mjs',
+      'apps/api/src/modules/abap-fsd-agent/repository.mjs',
+      'apps/api/src/modules/abap-fsd-agent/public.mjs',
+    ]),
+    allowedModuleEdges: new Set(['agent-core->sap', 'abap-dev-agent->abap-fsd-agent']),
+  };
+  assert.match(
+    checkImport('apps/api/src/modules/agent-core/loop.mjs', '../sap/service.mjs', opts).join(),
+    /agent-core must use an explicit module public facade/,
+  );
+  assert.deepEqual(
+    checkImport('apps/api/src/modules/agent-core/loop.mjs', '../sap/public.mjs', opts),
+    [],
+  );
+  assert.match(
+    checkImport(
+      'apps/api/src/modules/abap-dev-agent/materials.mjs',
+      '../abap-fsd-agent/repository.mjs',
+      opts,
+    ).join(),
+    /abap-dev-agent must use an explicit module public facade/,
+  );
+  assert.deepEqual(
+    checkImport(
+      'apps/api/src/modules/abap-dev-agent/materials.mjs',
+      '../abap-fsd-agent/public.mjs',
+      opts,
+    ),
+    [],
+  );
+  // The core never reaches back into an agent unless the edge is registered.
+  assert.match(
+    checkImport(
+      'apps/api/src/modules/agent-core/loop.mjs',
+      '../abap-fsd-agent/public.mjs',
+      opts,
+    ).join(),
+    /Unregistered module dependency: agent-core->abap-fsd-agent/,
+  );
+});
+
+test('contract 1.7 keeps the two assistant features apart', () => {
+  const opts = {
+    files: new Set([
+      'apps/web/src/features/abap-fsd-agent/ChatComposer.vue',
+      'apps/web/src/features/agent-workbench/ChatComposer.vue',
+    ]),
+    allowedModuleEdges: new Set(),
+  };
+  assert.match(
+    checkImport(
+      'apps/web/src/features/abap-dev-agent/CodePanel.vue',
+      '../abap-fsd-agent/ChatComposer.vue',
+      opts,
+    ).join(),
+    /agent-workbench/,
+  );
+  assert.deepEqual(
+    checkImport(
+      'apps/web/src/features/abap-dev-agent/CodePanel.vue',
+      '../agent-workbench/ChatComposer.vue',
+      opts,
+    ),
+    [],
+  );
+});
+
+test('contract 1.7 names agent prompts and framework copies', () => {
+  for (const file of [
+    'apps/api/src/modules/abap-dev-agent/prompts/system.md',
+    'apps/api/src/modules/abap-dev-agent/prompts/report.md',
+    'apps/api/src/modules/abap-dev-agent/prompts/report-example.abap',
+    'apps/api/src/modules/abap-dev-agent/frameworks/ycl_frh_report.abap',
+    'apps/api/src/modules/abap-fsd-agent/prompts/system.md',
+  ])
+    assert.deepEqual(checkLegacy(file), [], file);
+  for (const file of [
+    'apps/api/src/modules/abap-dev-agent/prompts/dev-system.txt',
+    'apps/api/src/modules/abap-dev-agent/prompts/report/example.abap',
+    'apps/api/src/modules/abap-dev-agent/prompts/YDEMO.abap',
+    'apps/api/src/modules/abap-dev-agent/frameworks/ycl_frh_report.txt',
+  ])
+    assert.match(checkLegacy(file).join(), /naming rule/, file);
+  assert.match(
+    checkLegacy('apps/api/src/modules/agent-core/v2/loop.mjs').join(),
+    /Version directory/,
+  );
+  assert.match(
+    checkLegacy('apps/web/src/features/agent-workbench/v1/Shell.vue').join(),
+    /Version directory/,
+  );
+});

@@ -1,9 +1,16 @@
 {
   "description": "Existing module dependencies retained; new edges require contract review.",
   "allowedEdges": [
+    "abap-dev-agent->abap-fsd-agent",
+    "abap-dev-agent->agent-core",
+    "abap-dev-agent->item-workspace",
+    "abap-dev-agent->models",
+    "abap-fsd-agent->agent-core",
     "abap-fsd-agent->item-workspace",
     "abap-fsd-agent->models",
     "abap-fsd-agent->sap",
+    "agent-core->models",
+    "agent-core->sap",
     "audit->abap-fsd-agent",
     "audit->admin",
     "delivery->admin",

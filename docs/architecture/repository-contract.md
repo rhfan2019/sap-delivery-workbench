@@ -1,6 +1,8 @@
 # 仓库目录与依赖契约
 
-版本：1.6。日期：2026-10-12。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.7。日期：2026-10-14。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.7 变更：依据 [ABAP 开发助手方向决策](2026-10-13-abap-dev-agent-direction-decision.md) 与[实施计划](../plans/2026-10-14-abap-dev-agent-implementation.md)（用户 2026-10-14 确认），新增两个后端模块：`agent-core`（智能体公共运行层）与 `abap-dev-agent`（开发助手）；预留 `abap-test-agent`；规定智能体提示词与运行资源的放置和命名；两个助手共用的前端工作台外壳归 `features/agent-workbench/`，共用的流事件协议归 `packages/contracts/agent-core/`。设计助手的循环、事件缓冲、附件解析、SAP 只读工具在实施计划阶段 A 迁入 `agent-core`，迁出后不保留转发。见 3.1 节；新增检查规则见第 9 节。
 
 1.6 变更：依据[开发清单重构设计](../specs/development-list.md)（用户 2026-10-12 确认），delivery 模块的开发清单按新字段口径重建：删除 delivery 自有的手工 FS 台账（`fs_draft`、`fs_version` 表、`/fs` 接口与前端 FS 章节编辑器），替代 3.1 节“保留”的规定；现有开发项及其关联数据（含设计助手会话）按用户授权清除；新增共享契约 `packages/contracts/delivery`（字段目录与选项，前后端共用）；Excel 导入导出在后端完成，新增依赖 `exceljs`。见 3.3 节。
 
@@ -62,20 +64,23 @@ apps/
       modules/<business>/    # 业务模块与其自有运行资源
 ```
 
-后端现有模块：admin（组织/用户/项目管理）、delivery（交付台账）、item-workspace（开发项工作区）、models（模型配置与调用）、sap（SAP 连接）、technical（技术验证）、abap-fsd-agent（FSD 设计助手，见 3.1）、audit（平台审计与日志分析，见 3.2）。开发助手实现时使用模块名 abap-dev-agent，在此之前不创建空目录。
+后端现有模块：admin（组织/用户/项目管理）、delivery（交付台账）、item-workspace（开发项工作区）、models（模型配置与调用）、sap（SAP 连接）、technical（技术验证）、abap-fsd-agent（FSD 设计助手，见 3.1）、abap-dev-agent（ABAP 开发助手，见 3.1）、agent-core（智能体公共运行层，见 3.1）、audit（平台审计与日志分析，见 3.2）。各模块在第一次放入真实文件时创建，不创建空目录。
 
 fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3.1 授权的设计助手重构外，URL、数据库表名和历史协议字段不因内部目录改名而改变。
 
-### 3.1 智能助手边界（abap-fsd-agent / abap-dev-agent）
+### 3.1 智能助手边界（agent-core / abap-fsd-agent / abap-dev-agent）
 
-- **命名**：FSD 设计助手在后端模块、前端 feature、共享契约、提示词、API 路径和数据库表中统一使用 `abap-fsd-agent`（表名用 `abap_fsd_agent_` 前缀）；开发助手统一使用 `abap-dev-agent`。不再使用 design-assistant、fsd、fsd-agent、fs-workspace、agent-runtime 等同义名称。
-- **职责**：abap-fsd-agent 是模型主导的 FSD 设计智能体，负责对话、FSD 文档及其版本、批注、模型调用编排、SAP 只读查询与文档校验。业务方法论与交付标准写在系统指令中，不写成固定流程节点或阶段状态机。
-- **单一版本**：上述各处不得出现 `v1`、`v2` 等版本层级。API 入口为 `/api/projects/:projectId/development-items/:itemId/abap-fsd-agent`；开发助手预留 `/api/projects/:projectId/development-items/:itemId/abap-dev-agent`。系统指令归 `apps/api/src/modules/abap-fsd-agent/prompts/`。
+- **命名**：FSD 设计助手在后端模块、前端 feature、共享契约、提示词、API 路径和数据库表中统一使用 `abap-fsd-agent`（表名用 `abap_fsd_agent_` 前缀）；开发助手统一使用 `abap-dev-agent`（表名用 `abap_dev_agent_` 前缀）；测试助手预留 `abap-test-agent`，设计前不建目录。不再使用 design-assistant、fsd、fsd-agent、fs-workspace、agent-runtime 等同义名称。
+- **职责**：abap-fsd-agent 是模型主导的 FSD 设计智能体，负责对话、FSD 文档及其版本、批注、模型调用编排、SAP 只读查询与文档校验。abap-dev-agent 是模型主导的开发智能体，负责对话、开发方案与代码及其版本与依据、批注、框架加载、代码交回（上传与 SAP 同步）与代码静态校验。业务方法论与交付标准写在系统指令中，不写成固定流程节点或阶段状态机。
+- **公共运行层**：agent-core 承载各智能体共用、且与产物无关的能力：智能体循环（步数与工具调用上限、繁忙重试、重复调用拦截、取消）、进程内事件缓冲与续传、附件解析、SAP 只读工具（白名单、SELECT 限制、结果截断）、历史消息投影。它不含任何智能体的提示词、产物、表或路由，通过参数接收工具、系统指令与持久化回调；不依赖任何智能体模块。判断标准：各智能体都用、并且与产物无关的才放这里，不为假想的智能体设计扩展点。
+- **提示词与运行资源**：系统指令放在各智能体模块的 `prompts/`，不跨模块共享，业务分析方法在各助手中各写一份。主指令统一命名 `system.md`；按开发类型加载的部分以开发类型命名（如 `report.md`），该类型的完整范例命名为 `<类型>-example.abap`；模块名即命名空间，文件名不加 `fsd-`、`dev-` 等前缀；`prompts/` 下不建子目录。参考源码等运行资源不放进 `prompts/`：开发助手的框架类内置副本放 `abap-dev-agent/frameworks/`，每个类一个 `.abap` 文件。
+- **单一版本**：上述各处不得出现 `v1`、`v2` 等版本层级。API 入口为 `/api/projects/:projectId/development-items/:itemId/abap-fsd-agent` 与 `/api/projects/:projectId/development-items/:itemId/abap-dev-agent`。
 - **历史清除**：以下资产全部删除，不保留 410、转发或兼容壳：design-assistant 模块（含 `unavailable.mjs`）；agent-runtime 模块（旧 abap-fsd-agent 引擎，含 `/api/admin/abap-fsd-agent` 与开发助手挂载）；fs-workspace 模块及其前端、契约；item-workspace 中的开发助手后端；“FS助手测试”菜单、页面与诊断页；`packages/contracts` 下 design-assistant、agent-runtime、fs-workspace 及空的旧 abap-fsd-agent 目录；上述各代迁移所建的表与数据（含 `fsd_checkpoint` 模式）；仅服务这些代码的测试、工具、脚本、npm 命令和部署配置。删除前按第 8 节检查引用。
 - **保留的前端**：现行设计助手界面（开发项工作区设计阶段及其使用的对话、附件、决策卡片等组件）保留，迁入 `apps/web/src/features/abap-fsd-agent/` 后改接新 API；只删除仅服务“FS助手测试”和已删除后端的部分。
 - **数据库**：已执行的迁移文件不改写、不删除；以新增迁移删除旧表并创建新表。旧表数据不备份（用户已明确放弃）。delivery 模块自有的 FS 台账表（`fs_draft`、`fs_version`）不属于助手，由 1.6 / 3.3 节删除。
-- **跨模块调用**：abap-fsd-agent 只通过 item-workspace、models、sap 的 `public.mjs` 调用其他模块，登记见 module-dependencies.json；不得深层导入。模型工具调用能力由 models 模块的公开接口提供。SAP 工具只向模型暴露预置的只读能力。
-- **共享契约**：`packages/contracts/abap-fsd-agent` 只放前后端共同需要的纯协议（如对话事件、文档与批注结构）；不放执行器、提示词或模型调用。
+- **跨模块调用**：agent-core、abap-fsd-agent、abap-dev-agent 调用其他模块一律经对方的 `public.mjs`，依赖边登记见 module-dependencies.json；不得深层导入。abap-dev-agent 经 item-workspace 取得开发项、开发清单字段与开发项文件（不直接依赖 delivery），经 `abap-fsd-agent/public.mjs` 读取 FSD 版本。模型工具调用能力由 models 模块的公开接口提供。SAP 工具只向模型暴露预置的只读能力。
+- **共享契约**：`packages/contracts/agent-core` 放各助手共用的流事件协议；`packages/contracts/abap-fsd-agent`、`packages/contracts/abap-dev-agent` 只放各自特有的前后端纯协议（如文档、版本、来源、依据与批注结构）；不放执行器、提示词或模型调用。
+- **前端**：各助手共用的工作台外壳与组件（对话时间线、输入框、附件、提问卡片、运行步骤）放 `apps/web/src/features/agent-workbench/`；`features/abap-fsd-agent/`、`features/abap-dev-agent/` 只放各自的产物面板与配置，二者不得互相导入。
 - **日志分析**：智能助手日志分析基于新表重建，不读取已删除的表。
 
 ### 3.2 平台审计与日志分析（audit）
@@ -155,6 +160,8 @@ docs/architecture 放唯一架构契约与审计；docs/specs 放版本化设计
 ## 9. 可执行验收
 
 npm run check:architecture 必须检查：受控根目录、workspace 清单、跨应用违规依赖、应用反向导入 scripts、contracts 反向依赖、跨包物理路径、缺失本地导入、前端 Node 校验入口，以及测试文件是否被发现。检查器自身必须有违规反例测试。
+
+1.7 新增检查：版本目录禁令扩展到 agent-core、abap-dev-agent、agent-workbench 的后端模块、前端 feature 与共享契约；agent-core、abap-fsd-agent、abap-dev-agent 跨模块导入必须指向对方的 `public.mjs`（原只约束 abap-fsd-agent）；智能体模块 `prompts/` 下只允许 `.md` 与 `<类型>-example.abap` 文件且不得有子目录，`frameworks/` 下只允许 `.abap` 文件；前端 `features/abap-fsd-agent` 与 `features/abap-dev-agent` 不得互相导入。
 
 1.3 新增检查（与历史助手清除在同一变更中启用，因为清除完成前现有代码必然违反）：abap-fsd-agent 的后端模块、前端 feature、共享契约与提示词目录中不得出现版本目录段（`/v<数字>/`）；`apps`、`packages`、`scripts`、`tools`、`infra` 中不得出现已清除的模块目录（design-assistant、agent-runtime、fs-workspace、fs-assistant-test），现行源码不得引用历史助手标识（`fsd_v1_`、`/work/design/fsd`、`gem-fsd-v2`、`work/design/agent`、`/api/admin/abap-fsd-agent`、`DESIGN_ASSISTANT_REMOVED`、`fsd_checkpoint`），已执行的历史迁移文件除外。前端可用契约清单随契约导出同步更新。
 
