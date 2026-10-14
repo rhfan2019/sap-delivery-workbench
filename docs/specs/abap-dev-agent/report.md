@@ -16,7 +16,7 @@
 | ------------------ | ---------------------------- | -------------------------------------------- |
 | 程序启动           | `INITIALIZATION`             | 创建 `lcl_report` 对象，调用 `initialize( )` |
 | 选择屏幕输出前     | `AT SELECTION-SCREEN OUTPUT` | `selscr_modify( )`                           |
-| 选择屏幕回车或执行 | `AT SELECTION-SCREEN`        | `selscr_ucomm( )`，然后 `selscr_check( )`    |
+| 选择屏幕回车或执行 | `AT SELECTION-SCREEN`        | `selscr_check( )`，然后 `selscr_ucomm( )`    |
 | 执行               | `START-OF-SELECTION`         | `run( )`                                     |
 
 `run( )` 由基类实现，依次调用 `prepare( )` → `select( )` → `process( )` → `display( )`。`display( )` 在后台作业（`sy-batch`）中直接返回，前台时自动把 `gt_out` 关联为输出表、构建字段目录与 ALV 参数，并调用 `YALV_DISPLAY_ALV_GRID` 显示。
@@ -34,7 +34,7 @@
 | `process`                       | PROTECTED | 数据库无法完成的加工（状态灯、文本拼接、跨来源合并）                |
 | `build_alv_grid_fcat`           | PROTECTED | 调整字段目录：标题、隐藏、合计、可编辑、热点等                      |
 | `build_alv_grid_paras`          | PROTECTED | 调整 ALV 参数（`ms_alv_grid_paras`），如排序、标题                  |
-| `on_grid_toolbar`               | PUBLIC    | 在 ALV 工具栏增加按钮（`e_object->mt_toolbar`）                     |
+| `on_grid_toolbar`               | PUBLIC    | 在 ALV 工具栏增加按钮；按钮通常放在 GUI 状态中（见第六部分）        |
 | `on_grid_pf_status_set`         | PUBLIC    | 调整 GUI 状态中排除的功能（`ct_extab`）                             |
 | `on_grid_user_command`          | PUBLIC    | 处理按钮功能码（`e_ucomm`），如保存、审批                           |
 | `on_grid_top_of_page`           | PUBLIC    | 表头信息                                                            |
@@ -118,6 +118,14 @@ PUBLIC 方法在 `PUBLIC SECTION` 中用 `METHODS 方法名 REDEFINITION.` 声�
 ### 2. 代码顺序
 
 ```abap
+*$-------------------------------------------------------------------$*
+* Program Name    :   ZXXX                                            *
+* Program Title   :   程序标题                                        *
+* Application     :   MM                                              *
+* Description     :   功能简述                                        *
+* Author          :   （开发顾问填写）                                *
+* Req Date        :   YYYY.MM.DD                                      *
+*$-------------------------------------------------------------------$*
 REPORT zxxx.
 
 *--- 数据库表声明（选择条件参照） ---*
@@ -149,35 +157,40 @@ CLASS lcl_report DEFINITION FINAL INHERITING FROM ycl_frh_report.
     METHODS build_alv_grid_fcat REDEFINITION.
 ENDCLASS.
 
-DATA go_report TYPE REF TO lcl_report.
+*--- 报表类实现 ---*
+CLASS lcl_report IMPLEMENTATION.
+  METHOD initialize.
+    super->initialize( ).
+    ...
+  ENDMETHOD.
+  ...
+ENDCLASS.
 
 *--- 程序事件 ---*
 INITIALIZATION.
-  go_report = NEW #( ).
+  DATA(go_report) = NEW lcl_report( ).
   go_report->initialize( ).
 
 AT SELECTION-SCREEN OUTPUT.
   go_report->selscr_modify( ).
 
 AT SELECTION-SCREEN.
-  go_report->selscr_ucomm( ).
   go_report->selscr_check( ).
+  go_report->selscr_ucomm( ).
 
 START-OF-SELECTION.
   go_report->run( ).
-
-*--- 报表类实现 ---*
-CLASS lcl_report IMPLEMENTATION.
-  ...
-ENDCLASS.
 ```
 
 以上是结构示意，`...` 处在实际代码中必须写完整。
 
+- **程序头**：第一行起是程序头注释块（程序名、标题、应用模块、简述、作者、需求日期），作者由开发顾问填写。
+- **重定义 `initialize` 时先调用 `super->initialize( )`**。
+- **值帮助**：需要自定义 F4 时，在类中定义 PUBLIC 方法，由 `AT SELECTION-SCREEN ON VALUE-REQUEST FOR 字段` 事件调用。
 - **事件块只做调用**：`INITIALIZATION` 只允许创建对象和调用 `initialize( )`；其他事件块只调用对应方法。默认值、通配符等逻辑全部放进 `initialize`。
 - 选择屏幕用 `SELECTION-SCREEN BEGIN OF BLOCK ... WITH FRAME TITLE TEXT-bxx` 分组。
 - 选择条件参照的表在 `TABLES` 中显式声明。
-- 全局只有选择屏幕、`TABLES` 和 `go_report`，其他数据都是类的属性或方法内的局部变量。
+- 全局只有选择屏幕、`TABLES` 和 `go_report`（在 `INITIALIZATION` 中内联声明），其他数据都是类的属性或方法内的局部变量。
 
 ### 3. 选择屏幕
 
@@ -230,6 +243,7 @@ ENDCLASS.
 - **字段目录**：在 `build_alv_grid_fcat` 中用 `me->ref_fcat( '字段名' )` 调整单列；批量调整用 `MODIFY ct_fcat FROM VALUE #( ... ) TRANSPORTING ... WHERE ...`。不用宏，不写冗余的 `ref_field` / `ref_table`。
 - **列标题**：需要覆盖 DDIC 标题时，`coltext` 使用文本符号 `'...'(fxx)`。
 - **数量与金额**：设置 `qfieldname` / `cfieldname` 绑定单位与币种字段；不同单位不能合计时不设 `do_sum`。
+- **表头**：重定义 `on_grid_top_of_page`，组装 `slis_t_listheader` 后调用 `REUSE_ALV_COMMENTARY_WRITE`。
 - **热点与跳转**：`ref_fcat( ... )->hotspot = abap_true`，重定义 `on_grid_hotspot_click`，用 `call_transaction( )` 跳转。
 - 布局、斑马线、变式等已由基类处理，不要重复设置。
 
@@ -237,13 +251,13 @@ ENDCLASS.
 
 - **可编辑栏位**：在 `build_alv_grid_fcat` 中设置 `edit = abap_true`。
 - **录入校验**：重定义 `on_grid_data_changed`，用 `er_data_changed` 逐单元格校验并添加错误协议。
-- **按钮**：在 `on_grid_toolbar` 中向 `e_object->mt_toolbar` 追加按钮，在 `on_grid_user_command` 中按 `e_ucomm` 分派。
+- **按钮**：放在程序自己的 GUI 状态中。重定义 `on_grid_pf_status_set`，按当前状态把不可用的功能码追加到 `ct_extab`，然后 `SET PF-STATUS 'STANDARD_FULLSCREEN' EXCLUDING ct_extab.`；在 `on_grid_user_command` 中按 `e_ucomm` 分派到各处理方法。GUI 状态 `STANDARD_FULLSCREEN` 由开发顾问从程序 `SAPLKKBL` 复制后增加功能码，功能码、图标与文本列入开发方案 3.4 节。
 - **处理前**：调用 `mo_alv_grid->check_changed_data( )` 取得最新录入；确认勾选行（`mark = abap_true`）；无勾选时给出提示。
 - **处理单位**：按开发方案 1.5 节归集（按行或按单据）。
 - **提交与回滚**：调用 BAPI 后检查 `RETURN` 中的 E/A 消息；成功则 `BAPI_TRANSACTION_COMMIT`（`wait = abap_true`），失败则 `BAPI_TRANSACTION_ROLLBACK`。按开发方案确定是逐对象提交还是整体提交，单个对象失败不影响其他对象（逐对象提交时）。
 - **逐对象结果**：每行记录处理结果（状态灯 `light` 与结果消息字段）；BAPI 返回消息用 `get_util_logger( )->add_from_bapitab( )` 收集；处理结束汇总成功、失败数量，并用 `get_util_logger( )->display( )` 显示本次消息。
 - **锁**：直接更新或需要防并发时，先调用对应的锁对象函数（`ENQUEUE_*`），失败时记为该对象失败。BAPI 自带锁的不重复加锁。
-- **刷新**：处理后按开发方案的规则更新 `gt_out` 中对应行，调用 `mo_alv_grid->refresh_table_display( )`；需要整体重新取数时调用 `restart( )`。
+- **刷新**：处理后按开发方案的规则更新 `gt_out` 中对应行，重定义 `refresh_ui`，在其中调用 `mo_alv_grid->refresh_table_display( is_stable = VALUE #( row = abap_true col = abap_true ) )`，保持滚动位置；需要整体重新取数时调用 `restart( )`。
 
 ## 七、开发方案的手工步骤
 
