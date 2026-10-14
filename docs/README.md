@@ -13,6 +13,8 @@
 - [开发清单重构设计](specs/development-list.md)：字段口径、数据库表设计、标签与自定义列、接口与实施结果（已实施）。
 - [abap-fsd-agent 端到端测试](plans/2026-10-12-abap-fsd-agent-e2e-test.md)：DEV-0031 测试脚本、结果、结论与问题分析（E2E-01～06，本轮问题的唯一权威清单）。
 - [abap-fsd-agent 交接文档](plans/2026-10-12-abap-fsd-agent-handover.md)：新会话接手入口：现状、运行方法、待办与协作约定。
+- [ABAP 开发助手方向决策](architecture/2026-10-13-abap-dev-agent-direction-decision.md)：abap-dev-agent 的工作模式、产物、基类加载、工具、校验与模块拆分（草案）。
+- [abap-dev-agent 系统指令草稿](specs/abap-dev-agent/system.md)：主指令与[可执行程序规范](specs/abap-dev-agent/report.md)，以及基类 `YCL_FRH_REPORT` 的[内置副本](specs/abap-dev-agent/ycl_frh_report.abap)；实现时迁入模块。
 - [待办与问题清单](plans/backlog.md)：日常发现的小问题和零散改进，攒批统一处理。
 - [表格页面模板：开发清单](guides/table-page-template.md)：按钮分类、行内编辑、详情抽屉与新表格页面接入约定。
 - `guides/`：当前维护与操作说明。

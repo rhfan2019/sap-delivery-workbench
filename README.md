@@ -29,7 +29,15 @@ apps/
     src/app.mjs              应用组装
     src/server.mjs           生产服务入口
     src/platform/            认证、密码、数据库和运行配置
-    src/modules/             业务模块及自有资源
+    src/modules/             业务模块及自有资源（提示词、模板等只供本模块使用的资源也放这里）
+      admin/                 组织、用户、项目管理
+      delivery/              开发清单：开发项、四个阶段、开发对象、标签、自定义列、Excel
+      item-workspace/        开发项工作区的访问上下文
+      abap-fsd-agent/        FSD 设计助手：智能体循环、工具、文档与批注；prompts/system.md 为系统指令
+      audit/                 后台审计日志与助手运行评论
+      models/                模型配置与调用
+      sap/                   SAP 连接与 MCP
+      technical/             技术验证
 packages/
   contracts/                 前后端共享的数据结构、校验和协议
     abap-fsd-agent/          FSD 设计助手的共享协议与类型
@@ -46,7 +54,7 @@ docs/                        架构、规格、计划、使用指南和历史报
 .runtime/                    本机数据、凭据、日志、附件和验证产物
 ```
 
-目录按职责归属，不按某次聊天或生成工具归属。`packages/contracts` 是必需源码，不是缓存。FS 指 Functional Specification（功能规格）。后端模块清单和依赖方向见目录契约。
+目录按职责归属，不按某次聊天或生成工具归属。上图只到主要目录；每个目录的归属规则、模块职责与依赖方向以[目录与依赖契约](docs/architecture/repository-contract.md)第 2～4 节为准，模块之间的调用登记在 `docs/architecture/module-dependencies.json`。`packages/contracts` 是必需源码，不是缓存。FS 指 Functional Specification（功能规格）。后端模块清单和依赖方向见目录契约。
 
 ## 功能边界
 
@@ -54,7 +62,9 @@ docs/                        架构、规格、计划、使用指南和历史报
 
 开发清单按[重构设计](docs/specs/development-list.md)组织：基本信息与 FSD、开发、顾问测试、IT/用户测试四个阶段，开发对象（TADIR 主键）、标签、项目级自定义列、批量修改 / 复制 / 删除、Excel 导入导出；行内的“设计”进入 FSD 设计助手，开发、顾问测试、IT/用户测试 Agent 尚未开放。旧的手工 FS 台账已删除。
 
-FSD 设计助手已按[方向决策](docs/architecture/2026-10-11-fsd-assistant-direction-decision.md)重构为模型主导的智能体 `abap-fsd-agent`（开发项工作区“设计”阶段），目前处于批量测试与优化阶段：进度见[重构实施计划](docs/plans/2026-10-11-abap-fsd-agent-refactor.md)，端到端测试结论与待处理问题见[测试记录](docs/plans/2026-10-12-abap-fsd-agent-e2e-test.md)，接手说明见[交接文档](docs/plans/2026-10-12-abap-fsd-agent-handover.md)。助手运行可在“后台管理 → 审计日志”复核。历史各代助手（LangGraph 版设计助手、FS 智能工作区、旧开发助手、FS助手测试）及其数据已删除；开发助手将以 `abap-dev-agent` 重建，在此之前开发清单中的“开发”按钮只提示即将开放。
+FSD 设计助手已按[方向决策](docs/architecture/2026-10-11-fsd-assistant-direction-decision.md)重构为模型主导的智能体 `abap-fsd-agent`（开发项工作区“设计”阶段），目前处于批量测试与优化阶段：进度见[重构实施计划](docs/plans/2026-10-11-abap-fsd-agent-refactor.md)，端到端测试结论与待处理问题见[测试记录](docs/plans/2026-10-12-abap-fsd-agent-e2e-test.md)，接手说明见[交接文档](docs/plans/2026-10-12-abap-fsd-agent-handover.md)。助手运行可在“后台管理 → 审计日志”复核。历史各代助手（LangGraph 版设计助手、FS 智能工作区、旧开发助手、FS助手测试）及其数据已删除。
+
+ABAP 开发助手 `abap-dev-agent` 处于设计阶段：按[方向决策](docs/architecture/2026-10-13-abap-dev-agent-direction-decision.md)，它与设计助手同构，输入可以是 FSD 也可以只是自然语言需求，产出开发方案和一份继承 `YCL_FRH_REPORT` 的完整可执行程序；首版只做报表与功能类。系统指令与基类源码的草稿在 `docs/specs/abap-dev-agent/`，模块实现后迁入 `apps/api/src/modules/abap-dev-agent/`。在此之前开发清单中的“开发”按钮只提示即将开放。
 
 ## 开发与验证
 
