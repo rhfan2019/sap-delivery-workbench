@@ -74,7 +74,7 @@ PUBLIC 方法在 `PUBLIC SECTION` 中用 `METHODS 方法名 REDEFINITION.` 声�
 - 单值参数：传 `iv_parameter`，不传 `it_sel_opt` 与 `ct_sel_opt`。两者不能同时传，也不能都不传。
 - 主数据表：默认由权限字段的数据元素推导（如 `WERKS` → `T001W`）；推导不出或需要指定时，传 `iv_table_field = 'T001W-WERKS'`。
 - 活动：默认 `iv_actvt_field = 'ACTVT'`、`iv_actvt_value = '03'`（显示）；修改、审批等其他活动显式传入。
-- 唯一的异常是 `check_failed`。调用时不写 `EXCEPTIONS`，失败消息会直接作为 E 类消息发出（第四部分）。
+- 唯一的异常是 `check_failed`，失败时已设置好 `sy-msg*`；调用方捕获后以 `MESSAGE ID sy-msgid ...` 发出（第四部分）。
 
 **日志：`me->get_util_logger( )`**
 
@@ -223,10 +223,15 @@ START-OF-SELECTION.
        iv_auth_object = 'M_BANF_WRK'
        iv_auth_field  = 'WERKS'
      CHANGING
-       ct_sel_opt     = s_werks1[] ).                 " 查询条件 S_WERKS 的影子
+       ct_sel_opt     = s_werks1[]                    " 查询条件 S_WERKS 的影子
+     EXCEPTIONS
+       check_failed   = 1
+       OTHERS         = 2 ).
+   IF sy-subrc <> 0.
+     MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+       WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+   ENDIF.
    ```
-
-   不写 `EXCEPTIONS`：`check_authority` 以 `MESSAGE ... RAISING check_failed` 报错，调用方不处理该异常时，消息作为 E 类消息发出，用户停留在选择屏幕。
 
 3. **隔离**：所有 SELECT 只绑定影子范围表（`IN @s_werks1`），不绑定原选择条件。
 4. 权限对象和字段先用 SAP 工具核实，写入开发方案 2.3 节。

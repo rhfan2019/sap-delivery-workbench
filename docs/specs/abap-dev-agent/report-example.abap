@@ -92,13 +92,22 @@ CLASS lcl_report IMPLEMENTATION.
 *$--------------------------------------------$*
     me->get_util_auth( )->check_authority(
       EXPORTING
-        it_sel_opt = s_ekorg[]
-        iv_auth_object = 'M_BEST_EKO'
-        iv_auth_field = 'EKORG'
-        iv_actvt_value = '03'
+        it_sel_opt      = s_ekorg[]
+        iv_auth_object  = 'M_BEST_EKO'
+        iv_auth_field   = 'EKORG'
+        iv_actvt_field  = 'ACTVT'
+        iv_actvt_value  = '03'
       CHANGING
-        ct_sel_opt = s_ekorg1[]
+        ct_sel_opt      = s_ekorg1[]
+      EXCEPTIONS
+        check_failed    = 1
+        OTHERS          = 2
     ).
+
+    IF sy-subrc <> 0.
+      MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+          WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+    ENDIF.
   ENDMETHOD.
 
 
