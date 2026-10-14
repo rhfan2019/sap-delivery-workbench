@@ -50,7 +50,7 @@ PUBLIC 方法在 `PUBLIC SECTION` 中用 `METHODS 方法名 REDEFINITION.` 声�
 
 | 能力             | 用法                                                                                                     |
 | ---------------- | -------------------------------------------------------------------------------------------------------- |
-| 字段目录单列引用 | `me->ref_fcat( 'MATNR' )->coltext = '物料'(f01).` 字段名不存在时以 A 类消息终止，开发阶段即可暴露错误    |
+| 字段目录单列引用 | `me->ref_fcat( 'MATNR' )` 取得某列的引用，字段名不存在时以 A 类消息终止；需要在显示前动态修改某列时使用  |
 | 进度提示         | `me->set_progress( iv_text = '正在读取采购申请'(c01) iv_perc = 30 ).`                                    |
 | 跳转事务         | `me->call_transaction( iv_tcode = 'ME53N' it_spagpa = VALUE #( ( parid = 'BAN' parval = lv_banfn ) ) ).` |
 | 当前 ALV 控件    | 受保护属性 `mo_alv_grid`，用于 `check_changed_data( )`、`refresh_table_display( )` 等                    |
@@ -60,7 +60,7 @@ PUBLIC 方法在 `PUBLIC SECTION` 中用 `METHODS 方法名 REDEFINITION.` 声�
 ### 4. 基类已经处理、子类不要重复的
 
 - **选择文本**：参照 DDIC 字段的参数和选择条件（`PARAMETERS ... TYPE 表-字段`、`SELECT-OPTIONS ... FOR 表-字段`），基类在运行时自动以字段描述作为选择文本。只有没有 DDIC 参照的字段才需要手工维护选择文本。
-- **字段目录**：基类按 `ts_out` 的组件自动生成字段目录，标题来自数据元素。子类在 `build_alv_grid_fcat` 中只做调整，不从头构建，不用宏。
+- **字段目录的检查**：基类会核对字段目录中的每个字段名都存在于 `gt_out`，不存在时以 A 类消息终止。（基类也会按 `ts_out` 自动生成一份字段目录，但它完全依赖内表定义，标题常不达意，**不使用**，见第五部分。）
 - **ALV 布局**：斑马线、选择列（`MARK`）、布局变式与保存权限、默认标题都由基类设置，子类不要重复设置。
 - **技术字段**：`MARK` 和 `LIGHT` 自动设为技术字段，不显示。
 
@@ -74,7 +74,7 @@ PUBLIC 方法在 `PUBLIC SECTION` 中用 `METHODS 方法名 REDEFINITION.` 声�
 - 单值参数：传 `iv_parameter`，不传 `it_sel_opt` 与 `ct_sel_opt`。两者不能同时传，也不能都不传。
 - 主数据表：默认由权限字段的数据元素推导（如 `WERKS` → `T001W`）；推导不出或需要指定时，传 `iv_table_field = 'T001W-WERKS'`。
 - 活动：默认 `iv_actvt_field = 'ACTVT'`、`iv_actvt_value = '03'`（显示）；修改、审批等其他活动显式传入。
-- 唯一的异常是 `check_failed`，失败时已设置好 `sy-msg*`。
+- 唯一的异常是 `check_failed`。调用时不写 `EXCEPTIONS`，失败消息会直接作为 E 类消息发出（第四部分）。
 
 **日志：`me->get_util_logger( )`**
 
@@ -111,7 +111,7 @@ PUBLIC 方法在 `PUBLIC SECTION` 中用 `METHODS 方法名 REDEFINITION.` 声�
 ### 1. 输出表约定
 
 - `lcl_report` 必须有一个 **PUBLIC** 实例属性 `gt_out`，类型为内表 `tt_out`。基类通过 RTTI 按名称查找该属性，名称或可见性不符时以 A 类消息终止。
-- `ts_out` 的组件尽量参照 DDIC 字段（`TYPE 表-字段`），以便字段目录自动带出标题和格式，每个参照字段同行写中文注释。
+- `ts_out` 的组件尽量参照 DDIC 字段（`TYPE 表-字段`），每个参照字段同行写中文注释。
 - 需要行选择（勾选后执行操作）时，`ts_out` 第一个组件为 `mark TYPE c LENGTH 1`；需要状态灯时增加 `light TYPE c LENGTH 1`（取值 `'1'` 红、`'2'` 黄、`'3'` 绿），并在 `build_alv_grid_paras` 中设置 `ms_alv_grid_paras-layout-excp_fname = 'LIGHT'`。
 - 有明细时，明细内表为 PUBLIC 属性 `gt_dtl`。
 
@@ -132,11 +132,10 @@ REPORT zxxx.
 TABLES: ...
 
 *--- 选择屏幕 ---*
-SELECTION-SCREEN BEGIN OF BLOCK b01 WITH FRAME TITLE TEXT-b01.
-  SELECT-OPTIONS: s_werks FOR t001w-werks.            " 工厂
-SELECTION-SCREEN END OF BLOCK b01.
-*--- 权限影子范围表（不显示） ---*
-SELECT-OPTIONS: s_werks1 FOR t001w-werks NO-DISPLAY.
+SELECTION-SCREEN BEGIN OF BLOCK b10 WITH FRAME TITLE TEXT-b10.
+  SELECT-OPTIONS s_werks  FOR t001w-werks.              " 工厂
+  SELECT-OPTIONS s_werks1 FOR t001w-werks NO-DISPLAY.   " 工厂（权限校验后的影子）
+SELECTION-SCREEN END OF BLOCK b10.
 
 *--- 报表类定义 ---*
 CLASS lcl_report DEFINITION FINAL INHERITING FROM ycl_frh_report.
@@ -202,8 +201,8 @@ START-OF-SELECTION.
 ## 三、取数与加工
 
 - `prepare` 读取 TVARVC 参数等取数前准备。
-- `select` 负责取数，尽量在 SQL 中完成关联、过滤、计算和汇总（通用规范第十部分第 3 条），结果直接放入 `gt_out`。
-- `process` 只做数据库无法完成的加工。不要在 `process` 中做本可在 SQL 中完成的算术。
+- `select` 负责取数，**关联、过滤、汇总和计算全部在 SQL 中完成，下推到 HANA**（通用规范第十部分第 3 条），结果直接放入 `gt_out`。范例中的未清数量就是在 SQL 中用 `CASE` 表达式算出的。
+- `process` 只做数据库确实无法完成的加工（如依赖选择屏幕开关的过滤、调用函数取得的值、状态灯）。不得在 `process` 的 `LOOP` 中做本可在 SQL 中完成的算术。
 - 选择条件需要权限过滤的，查询只绑定影子范围表 `s_xxx1`，不绑定原选择条件（第四部分）。
 - 拆分复杂逻辑时用 `select1`、`select2`、`process1` 等私有方法，在 `PRIVATE SECTION` 中声明，配中文注释。
 - 取数后没有数据时：`MESSAGE '未找到符合条件的数据'(mxx) TYPE 'S'.` 后 `LEAVE LIST-PROCESSING.`，回到选择屏幕，不显示空清单。
@@ -213,7 +212,7 @@ START-OF-SELECTION.
 
 只针对 `SELECT-OPTIONS`：
 
-1. **影子范围表**：每个需要权限检查的选择条件 `s_xxx`，定义一个同参照、后缀为 `1` 的不显示范围表 `s_xxx1`（`NO-DISPLAY`）。不得使用 `gr_xxx` 等其他命名。
+1. **影子范围表**：每个需要权限检查的选择条件 `s_xxx`，紧跟其后定义一个同参照、后缀为 `1` 的不显示范围表 `s_xxx1`（`NO-DISPLAY`）。不得使用 `gr_xxx` 等其他命名。
 2. **检查方法**：在重定义的 `selscr_check` 中调用基类工具，不手写 `AUTHORITY-CHECK` 循环。参数与行为见第一部分第 5 节：
 
    ```abap
@@ -224,15 +223,10 @@ START-OF-SELECTION.
        iv_auth_object = 'M_BANF_WRK'
        iv_auth_field  = 'WERKS'
      CHANGING
-       ct_sel_opt     = s_werks1[]                    " 查询条件 S_WERKS 的影子
-     EXCEPTIONS
-       check_failed   = 1
-       OTHERS         = 2 ).
-   IF sy-subrc <> 0.
-     MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
-       WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
-   ENDIF.
+       ct_sel_opt     = s_werks1[] ).                 " 查询条件 S_WERKS 的影子
    ```
+
+   不写 `EXCEPTIONS`：`check_authority` 以 `MESSAGE ... RAISING check_failed` 报错，调用方不处理该异常时，消息作为 E 类消息发出，用户停留在选择屏幕。
 
 3. **隔离**：所有 SELECT 只绑定影子范围表（`IN @s_werks1`），不绑定原选择条件。
 4. 权限对象和字段先用 SAP 工具核实，写入开发方案 2.3 节。
@@ -241,11 +235,12 @@ START-OF-SELECTION.
 
 ## 五、ALV 输出
 
-- **字段目录**：在 `build_alv_grid_fcat` 中用 `me->ref_fcat( '字段名' )` 调整单列；批量调整用 `MODIFY ct_fcat FROM VALUE #( ... ) TRANSPORTING ... WHERE ...`。不用宏，不写冗余的 `ref_field` / `ref_table`。
-- **列标题**：需要覆盖 DDIC 标题时，`coltext` 使用文本符号 `'...'(fxx)`。
+- **字段目录逐项填充**：在 `build_alv_grid_fcat` 中用 `ct_fcat = VALUE #( ( ... ) ( ... ) )` 重建整个字段目录，按显示顺序**逐列列出要显示的字段**，不依赖基类自动生成的目录。不在目录中的 `gt_out` 字段（如 `mark`、只用于计算的字段）不显示。不用宏。
+- **每列的写法**：`fieldname` 加 `ref_table`；内表字段名与参照字段名不同时再加 `ref_field`（如 `lifnr_name` 参照 `LFA1-NAME1`）。
+- **列标题**：参照字段的 DDIC 标题不达意或会与其他列重复时（如两列都参照 `NAME1`、计算列参照 `MENGE`），用 `coltext = '...'(fxx)` 覆盖。
 - **数量与金额**：设置 `qfieldname` / `cfieldname` 绑定单位与币种字段；不同单位不能合计时不设 `do_sum`。
 - **表头**：重定义 `on_grid_top_of_page`，组装 `slis_t_listheader` 后调用 `REUSE_ALV_COMMENTARY_WRITE`。
-- **热点与跳转**：`ref_fcat( ... )->hotspot = abap_true`，重定义 `on_grid_hotspot_click`，用 `call_transaction( )` 跳转。
+- **热点与跳转**：在字段目录中设 `hotspot = abap_true`，重定义 `on_grid_hotspot_click`，用 `call_transaction( )` 跳转。
 - **双击**：重定义 `on_grid_double_click`，用 `READ TABLE gt_out INTO DATA(ls_out) INDEX e_row-index` 取行；`e_row-rowtype` 不为空表示合计行，直接返回。显示单据优先用标准的显示函数（如采购凭证 `ME_DISPLAY_PURCHASE_DOCUMENT`），调用前查签名；失败时 `MESSAGE ... TYPE 'S' DISPLAY LIKE 'E'`。
 - **默认排序**：在 `build_alv_grid_paras` 中设置 `me->ms_alv_grid_paras-sort`。
 - 布局、斑马线、变式等已由基类处理，不要重复设置。
@@ -273,15 +268,16 @@ START-OF-SELECTION.
 
 在系统指令第十二部分的自查表之外，逐项确认：
 
-| 检查项   | 达标                                                                                                                                         |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| 基类对齐 | 重定义的方法都在框架接口中存在，可见性与签名一致；没有重定义未用的方法                                                                       |
-| 输出表   | `gt_out` 为 PUBLIC 内表属性；需要勾选时有 `mark`                                                                                             |
-| 事件块   | `INITIALIZATION` 只有创建对象和 `initialize( )`；默认值都在 `initialize` 中                                                                  |
-| SRI      | 每个需权限检查的 `s_xxx` 都有 `s_xxx1`，用 `get_util_auth( )->check_authority`，异常只写 `check_failed` 与 `OTHERS`；SELECT 只绑定影子范围表 |
-| 字段目录 | 只在 `build_alv_grid_fcat` 中调整，使用 `ref_fcat`，无宏                                                                                     |
-| 写回     | 勾选检查、`check_changed_data`、提交回滚、逐行结果、刷新都已实现                                                                             |
+| 检查项   | 达标                                                                                                                                                            |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 基类对齐 | 重定义的方法都在框架接口中存在，可见性与签名一致；没有重定义未用的方法                                                                                          |
+| 输出表   | `gt_out` 为 PUBLIC 内表属性；需要勾选时有 `mark`                                                                                                                |
+| 事件块   | `INITIALIZATION` 只有创建对象和 `initialize( )`；默认值都在 `initialize` 中                                                                                     |
+| SRI      | 每个需权限检查的 `s_xxx` 都有 `s_xxx1`，用 `get_util_auth( )->check_authority`，`iv_auth_field` 是业务字段（如 `EKORG`）而不是 `ACTVT`；SELECT 只绑定影子范围表 |
+| 计算下推 | 计算列在 SQL 中用表达式算出，`process` 中没有可下推的算术                                                                                                       |
+| 字段目录 | 在 `build_alv_grid_fcat` 中逐项填充全部显示列；每列有 `ref_table`，重名或不达意的列有 `coltext` 文本符号；无宏                                                  |
+| 写回     | 勾选检查、`check_changed_data`、提交回滚、逐行结果、刷新都已实现                                                                                                |
 
 ## 九、完整范例
 
-本规范之后附有一个完整的报表范例（采购订单执行情况清单），展示程序头、选择屏幕、类定义、CTE 汇总取数、字段目录调整、默认排序、双击跳转和程序事件的写法。生成代码时参照它的结构与风格，业务内容以开发方案为准。
+本规范之后附有一个完整的报表范例（采购订单执行情况清单），展示程序头、选择屏幕与影子范围表、SRI 权限检查、类定义、CTE 汇总与 SQL 计算、逐项填充的字段目录、默认排序、双击跳转和程序事件的写法。生成代码时参照它的结构与风格，业务内容以开发方案为准。

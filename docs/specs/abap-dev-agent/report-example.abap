@@ -6,7 +6,7 @@
 * Author          :   范瑞辉                                          *
 * Req Date        :   2026.10.14                                      *
 *$-------------------------------------------------------------------$*
-REPORT ytest_frh_0021.
+REPORT ydemo_frh_0021.
 
 *&---------------------------------------------------------------------*
 *&      Tables
@@ -19,8 +19,9 @@ TABLES ekpo.
 *&      选择屏幕
 *&---------------------------------------------------------------------*
 SELECTION-SCREEN BEGIN OF BLOCK b10 WITH FRAME TITLE TEXT-b10.
-  SELECT-OPTIONS s_ekorg FOR ekko-ekorg.                " 采购组织
-  SELECT-OPTIONS s_bedat FOR ekko-bedat.                " 凭证日期
+  SELECT-OPTIONS s_ekorg  FOR ekko-ekorg.                " 采购组织
+  SELECT-OPTIONS s_ekorg1 FOR ekko-ekorg NO-DISPLAY.     " 采购组织（仅权限校验）
+  SELECT-OPTIONS s_bedat  FOR ekko-bedat.                " 凭证日期
   SELECT-OPTIONS s_lifnr FOR ekko-lifnr.                " 供应商
   SELECT-OPTIONS s_matnr FOR ekpo-matnr.                " 物料
   SELECT-OPTIONS s_werks FOR ekpo-werks.                " 工厂
@@ -89,23 +90,15 @@ CLASS lcl_report IMPLEMENTATION.
 *$--------------------------------------------$*
 *$  检查采购组织的显示权限
 *$--------------------------------------------$*
-    SELECT FROM t024e
-      FIELDS ekorg
-      WHERE ekorg IN @s_ekorg[]
-      INTO TABLE @DATA(lt_t024e).
-
-    LOOP AT lt_t024e INTO DATA(ls_t024e).
-      AUTHORITY-CHECK OBJECT 'M_BEST_EKO'
-        ID 'EKORG' FIELD ls_t024e-ekorg
-        ID 'ACTVT' FIELD '03'.         " 03 = 显示
-      IF sy-subrc <> 0.
-*        您没有采购组织 &1 的查询权限
-        DATA(lv_text) = replace( val  = '您没有采购组织 &1 的查询权限'(m02)
-                                 sub  = '&1'
-                                 with = ls_t024e-ekorg ).
-        MESSAGE lv_text TYPE 'E'.
-      ENDIF.
-    ENDLOOP.
+    me->get_util_auth( )->check_authority(
+      EXPORTING
+        it_sel_opt = s_ekorg[]
+        iv_auth_object = 'M_BEST_EKO'
+        iv_auth_field = 'EKORG'
+        iv_actvt_value = '03'
+      CHANGING
+        ct_sel_opt = s_ekorg1[]
+    ).
   ENDMETHOD.
 
 
@@ -130,7 +123,7 @@ CLASS lcl_report IMPLEMENTATION.
             ekpo~ebelp,
             SUM( eket~wemng ) AS wemng,
             MIN( eket~eindt ) AS eindt
-          WHERE ekko~ekorg IN @s_ekorg[]
+          WHERE ekko~ekorg IN @s_ekorg1[]   "采购组织（使用权限检查的范围表影子）
             AND ekko~bedat IN @s_bedat[]
             AND ekko~lifnr IN @s_lifnr[]
             AND ekko~bstyp =  'F'          " 'F' = 采购订单
@@ -163,7 +156,10 @@ CLASS lcl_report IMPLEMENTATION.
           +item~wemng,
           ekko~bedat,
           +item~eindt,
-          ekpo~elikz
+          ekpo~elikz,
+          ( CASE WHEN ekpo~elikz = @abap_true THEN 0
+                 WHEN +item~wemng > ekpo~menge THEN 0
+                 ELSE ekpo~menge - +item~wemng END ) AS open_qty
         ORDER BY ekko~ebeln, ekpo~ebelp
         INTO CORRESPONDING FIELDS OF TABLE @gt_out.
   ENDMETHOD.
@@ -172,18 +168,9 @@ CLASS lcl_report IMPLEMENTATION.
 *&---------------------------------------------------------------------*
 *&      METHOD  process
 *&---------------------------------------------------------------------*
-*&      计算未清交货数量，并按“仅显示未清”过滤
+*&      按“仅显示未清”过滤；没有数据时回到选择屏幕
 *&---------------------------------------------------------------------*
   METHOD process.
-    LOOP AT gt_out ASSIGNING FIELD-SYMBOL(<ls_out>).
-*      (1). 交货已完成：未清为0
-*      (2). 超交（已收货 >= 订单数量）：未清为0
-*      (3). 其余：订单数量 - 已收货数量
-      <ls_out>-open_qty = COND #( WHEN <ls_out>-elikz = abap_true          THEN 0
-                                  WHEN <ls_out>-wemng >= <ls_out>-menge    THEN 0
-                                  ELSE <ls_out>-menge - <ls_out>-wemng ).
-    ENDLOOP.
-
 *    仅显示未清
     IF p_open = abap_true.
       DELETE gt_out WHERE open_qty = 0.
@@ -201,17 +188,25 @@ CLASS lcl_report IMPLEMENTATION.
 
 
   METHOD build_alv_grid_fcat.
-*    数量绑定单位，按单位合计
-    MODIFY ct_fcat FROM VALUE #( qfieldname = 'MEINS' do_sum = abap_true )
-      TRANSPORTING qfieldname do_sum
-      WHERE fieldname = 'MENGE'
-         OR fieldname = 'WEMNG'
-         OR fieldname = 'OPEN_QTY'.
-
-    MODIFY ct_fcat FROM VALUE #( key = 'X' )
-      TRANSPORTING key
-      WHERE fieldname = 'EBELN'
-         OR fieldname = 'EBELP'.
+    ct_fcat = VALUE #(
+          ( fieldname = 'EBELN'      ref_table = 'EKKO' key = abap_true )
+          ( fieldname = 'EBELP'      ref_table = 'EKPO' key = abap_true )
+          ( fieldname = 'LIFNR'      ref_table = 'EKKO' )
+          ( fieldname = 'LIFNR_NAME' ref_table = 'LFA1'  ref_field = 'NAME1'
+                                     coltext = '供应商名称'(f01) )
+          ( fieldname = 'MATNR'      ref_table = 'EKPO' )
+          ( fieldname = 'MAKTX'      ref_table = 'MAKT' )
+          ( fieldname = 'WERKS'      ref_table = 'EKPO' )
+          ( fieldname = 'WERKS_NAME' ref_table = 'T001W' ref_field = 'NAME1'
+                                     coltext = '工厂名称'(f02) )
+          ( fieldname = 'MENGE'      ref_table = 'EKPO' qfieldname = 'MEINS' do_sum = abap_true )
+          ( fieldname = 'MEINS'      ref_table = 'EKPO' )
+          ( fieldname = 'WEMNG'      ref_table = 'EKET' qfieldname = 'MEINS' do_sum = abap_true )
+          ( fieldname = 'OPEN_QTY'   ref_table = 'EKPO' ref_field = 'MENGE' qfieldname = 'MEINS' do_sum = abap_true
+                                     coltext = '还差多少'(f03) )
+          ( fieldname = 'BEDAT'      ref_table = 'EKKO'
+                                     coltext = '订单日期'(f04) )
+          ( fieldname = 'EINDT'      ref_table = 'EKET' ) ).
   ENDMETHOD.
 
 
