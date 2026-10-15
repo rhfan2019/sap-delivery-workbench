@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { failure } from '../../platform/auth.mjs';
 import { createWorkContext } from '../item-workspace/public.mjs';
 import { resolveAgentModel } from '../models/public.mjs';
-import { parseFile, openTurn, subscribe } from '../agent-core/public.mjs';
+import { parseFile, openTurn, streamTurnEvents, answersText } from '../agent-core/public.mjs';
 import { runTurn } from './loop.mjs';
 import * as repo from './repository.mjs';
 
@@ -20,19 +20,7 @@ const text = (value, name, max) => {
   return value.trim();
 };
 
-// Answers to ask_user questions become the next user message, in plain words.
-export function answersText(answers) {
-  return (
-    '对问题的答复：\n' +
-    answers
-      .map(
-        (a, i) =>
-          `${i + 1}. ${String(a.question ?? '').slice(0, 500)}\n   答复：${String(a.choice ?? '').slice(0, 500)}` +
-          (a.note ? `\n   补充：${String(a.note).slice(0, 2000)}` : ''),
-      )
-      .join('\n')
-  );
-}
+export { answersText };
 
 export function registerAbapFsdAgent(app, pool, organizationId, requireSession, deps = {}) {
   const c = createWorkContext(pool, organizationId, requireSession, 'design');
@@ -177,41 +165,9 @@ export function registerAbapFsdAgent(app, pool, organizationId, requireSession, 
     const s = await session(req, false);
     if (!UUID.test(req.params.turnId)) throw failure(404, '运行不存在。');
     const after = Math.max(0, Number(req.query?.after) || 0);
-    reply.hijack();
-    reply.raw.writeHead(200, {
-      'Content-Type': 'text/event-stream; charset=utf-8',
-      'Cache-Control': 'no-store',
-      Connection: 'keep-alive',
-      'X-Content-Type-Options': 'nosniff',
-    });
-    // data carries the whole event so clients can resume by sequence.
-    const send = (event) =>
-      reply.raw.write(`id: ${event.seq}\nevent: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
-    let keepAlive;
-    const unsubscribe = subscribe(req.params.turnId, after, (event) => {
-      if (event) return send(event);
-      clearInterval(keepAlive);
-      reply.raw.end();
-    });
-    if (!unsubscribe) {
-      // Not live here: finished (or interrupted by a restart). Report the stored outcome.
-      const turn = (await repo.listTurns(pool, s.id)).find((t) => t.id === req.params.turnId);
-      send({
-        seq: after + 1,
-        type: 'turn.end',
-        data: { status: turn?.status ?? 'interrupted', stopReason: turn?.stopReason },
-      });
-      reply.raw.end();
-      return;
-    }
-    if (!reply.raw.writableEnded) {
-      keepAlive = setInterval(() => reply.raw.write(': keep-alive\n\n'), 15000);
-      keepAlive.unref();
-    }
-    reply.raw.on('close', () => {
-      clearInterval(keepAlive);
-      unsubscribe();
-    });
+    await streamTurnEvents(reply, req.params.turnId, after, async () =>
+      (await repo.listTurns(pool, s.id)).find((t) => t.id === req.params.turnId),
+    );
   });
 
   app.get(base + '/sessions/:sessionId/comments', async (req) => {

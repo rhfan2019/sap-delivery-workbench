@@ -1,19 +1,12 @@
 import { randomUUID, createHash } from 'node:crypto';
 import { mkdir, writeFile, readFile, unlink } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
-import { join, isAbsolute } from 'node:path';
+import { join } from 'node:path';
 import { failure } from '../../platform/auth.mjs';
 import { text, uuid } from '../admin/validation.mjs';
 import { base } from './items.mjs';
+import { deliveryFilesFolder } from './context.mjs';
 export function fileRoutes(app, c) {
-  const folder =
-    process.env.DELIVERY_FILES_DIR ??
-    fileURLToPath(new URL('../../../../../.runtime/delivery-files/', import.meta.url));
-  if (
-    process.env.NODE_ENV === 'production' &&
-    (!process.env.DELIVERY_FILES_DIR || !isAbsolute(folder))
-  )
-    throw new Error('Production requires an absolute DELIVERY_FILES_DIR.');
+  const folder = deliveryFilesFolder();
   app.get(base + '/:id/files', async (req) => {
     await c.read(req);
     await c.item(c.pool, req);

@@ -104,6 +104,15 @@ export async function openSap(
         return { status: 'error', content: 'SAP 查询失败：' + String(error.message).slice(0, 500) };
       }
     },
+    // Full source of one object for the program itself (framework loading, code sync);
+    // never offered to the model, so the line limit above does not apply. Throws on failure.
+    async readSource(objectSourceUrl) {
+      const value = await decodeResult(
+        await connection.call('getObjectSource', { objectSourceUrl }),
+        connection.call,
+      );
+      return { source: String(value.source ?? ''), totalLines: value.totalLines ?? null };
+    },
     close: () => connection.close().catch(() => {}),
   };
 }

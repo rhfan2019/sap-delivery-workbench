@@ -261,3 +261,27 @@ export async function listAttachments(db, sessionId, { withText = false } = {}) 
     )
   ).rows;
 }
+
+// FSD versions of every design session of an item, newest first (read by abap-dev-agent).
+export async function itemDocuments(db, organizationId, itemId) {
+  return (
+    await db.query(
+      `SELECT d.session_id AS "sessionId",s.title AS "sessionTitle",d.version,d.labels,
+        length(d.markdown) AS "length",md5(d.markdown) AS "digest",d.created_at AS "createdAt"
+       FROM ${T}document d JOIN ${T}session s ON s.id=d.session_id
+       WHERE s.organization_id=$1 AND s.item_id=$2 ORDER BY d.created_at DESC`,
+      [organizationId, itemId],
+    )
+  ).rows;
+}
+
+export async function itemDocument(db, organizationId, itemId, sessionId, version) {
+  return (
+    await db.query(
+      `SELECT d.session_id AS "sessionId",d.version,d.markdown,d.labels,md5(d.markdown) AS "digest"
+       FROM ${T}document d JOIN ${T}session s ON s.id=d.session_id
+       WHERE s.organization_id=$1 AND s.item_id=$2 AND d.session_id=$3 AND d.version=$4`,
+      [organizationId, itemId, sessionId, version],
+    )
+  ).rows[0];
+}

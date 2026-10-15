@@ -33,7 +33,9 @@ apps/
       admin/                 组织、用户、项目管理
       delivery/              开发清单：开发项、四个阶段、开发对象、标签、自定义列、Excel
       item-workspace/        开发项工作区的访问上下文
-      abap-fsd-agent/        FSD 设计助手：智能体循环、工具、文档与批注；prompts/system.md 为系统指令
+      agent-core/            智能体公共运行层：循环、事件推送、附件解析、SAP 只读工具
+      abap-fsd-agent/        FSD 设计助手：文档工具、版本与批注；prompts/system.md 为系统指令
+      abap-dev-agent/        ABAP 开发助手：开发方案与代码、框架加载、代码校验；prompts/ 与 frameworks/
       audit/                 后台审计日志与助手运行评论
       models/                模型配置与调用
       sap/                   SAP 连接与 MCP
@@ -64,7 +66,7 @@ docs/                        架构、规格、计划、使用指南和历史报
 
 FSD 设计助手已按[方向决策](docs/architecture/2026-10-11-fsd-assistant-direction-decision.md)重构为模型主导的智能体 `abap-fsd-agent`（开发项工作区“设计”阶段），目前处于批量测试与优化阶段：进度见[重构实施计划](docs/plans/2026-10-11-abap-fsd-agent-refactor.md)，端到端测试结论与待处理问题见[测试记录](docs/plans/2026-10-12-abap-fsd-agent-e2e-test.md)，接手说明见[交接文档](docs/plans/2026-10-12-abap-fsd-agent-handover.md)。助手运行可在“后台管理 → 审计日志”复核。历史各代助手（LangGraph 版设计助手、FS 智能工作区、旧开发助手、FS助手测试）及其数据已删除。
 
-ABAP 开发助手 `abap-dev-agent` 处于设计阶段：按[方向决策](docs/architecture/2026-10-13-abap-dev-agent-direction-decision.md)，它与设计助手同构，输入可以是 FSD 也可以只是自然语言需求，产出开发方案和一份继承 `YCL_FRH_REPORT` 的完整可执行程序；首版只做报表与功能类。系统指令与框架源码的草稿在 `docs/specs/abap-dev-agent/`，模块实现后迁入 `apps/api/src/modules/abap-dev-agent/`。在此之前开发清单中的“开发”按钮只提示即将开放。
+ABAP 开发助手 `abap-dev-agent` 处于设计阶段：按[方向决策](docs/architecture/2026-10-13-abap-dev-agent-direction-decision.md)，它与设计助手同构，输入可以是 FSD 也可以只是自然语言需求，产出开发方案和一份继承 `YCL_FRH_REPORT` 的完整可执行程序；首版只做报表与功能类。后端模块 `apps/api/src/modules/abap-dev-agent/` 已实现（系统指令在其 `prompts/`，框架类内置副本在 `frameworks/`），智能体共用的循环、事件、附件解析和 SAP 只读工具在 `agent-core`；进度见[实施计划](docs/plans/2026-10-14-abap-dev-agent-implementation.md)。在此之前开发清单中的“开发”按钮只提示即将开放。
 
 ## 开发与验证
 

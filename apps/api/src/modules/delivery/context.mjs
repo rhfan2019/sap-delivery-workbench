@@ -1,5 +1,20 @@
+import { fileURLToPath } from 'node:url';
+import { join, isAbsolute } from 'node:path';
 import { failure, transaction } from '../../platform/auth.mjs';
 import { uuid } from '../admin/validation.mjs';
+
+// Where uploaded item files are stored; the file id is the file name.
+export function deliveryFilesFolder() {
+  const folder =
+    process.env.DELIVERY_FILES_DIR ??
+    fileURLToPath(new URL('../../../../../.runtime/delivery-files/', import.meta.url));
+  if (
+    process.env.NODE_ENV === 'production' &&
+    (!process.env.DELIVERY_FILES_DIR || !isAbsolute(folder))
+  )
+    throw new Error('Production requires an absolute DELIVERY_FILES_DIR.');
+  return folder;
+}
 
 export function deliveryContext(pool, organizationId, requireSession) {
   async function access(db, current, projectId, write = false) {
@@ -62,5 +77,25 @@ export function deliveryContext(pool, organizationId, requireSession) {
       ],
     );
   }
-  return { pool, organizationId, requireSession, access, read, write, item, event };
+  // Read-only views other modules use through item-workspace.
+  async function objects(db, itemId) {
+    return (
+      await db.query(
+        `SELECT pgmid,object_type AS "objectType",object_name AS "objectName" FROM app.development_item_object
+         WHERE organization_id=$1 AND item_id=$2 ORDER BY sort_order`,
+        [organizationId, itemId],
+      )
+    ).rows;
+  }
+  async function files(db, itemId) {
+    const folder = deliveryFilesFolder();
+    return (
+      await db.query(
+        `SELECT id,name,size,checksum,created_at AS "createdAt" FROM app.development_file
+         WHERE organization_id=$1 AND item_id=$2 ORDER BY created_at`,
+        [organizationId, itemId],
+      )
+    ).rows.map((f) => ({ ...f, path: join(folder, f.id) }));
+  }
+  return { pool, organizationId, requireSession, access, read, write, item, event, objects, files };
 }

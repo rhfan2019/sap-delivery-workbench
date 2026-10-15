@@ -158,7 +158,7 @@ GEM 用阶段锁和阻断短语控制节奏，是因为它没有工具、没有�
 - 按类逐个判断：某个类在 SAP 中读不到时，该类用内置副本。
 - 每个会话加载一次。两份源码不一致时以 SAP 为准，内置副本只是兜底。
 - 有目标系统但缺少框架对象时，程序在开发方案的手工步骤中加一条：先在 SAP 中部署框架。
-- 内置副本已由用户提供，草稿期放在 `docs/specs/abap-dev-agent/frameworks/`，每个类一个文件。
+- 内置副本已由用户提供，放在 [`apps/api/src/modules/abap-dev-agent/frameworks/`](../../apps/api/src/modules/abap-dev-agent/frameworks/)，每个类一个文件。
 
 ### 4.2 交给模型的是接口，不是全文
 
@@ -204,7 +204,7 @@ YTCA 与现行规范不一致、需用户决定的两处见第 12 节。
 
 ### 4.5 范例程序 YDEMO_FRH_0021
 
-用户提供了简单报表 YDEMO_FRH_0021（采购订单执行情况清单，267 行、约 9 KB、约 3 千 token），**作为报表规范的完整范例**，草稿期放在 [report-example.abap](../specs/abap-dev-agent/report-example.abap)，实现时随 `report.md` 一起拼入系统指令。用户的方针是先用简单报表把智能体做出来，复杂情况（可编辑 ALV、写回、ALV 树等）以后逐步增加范例与规范。
+用户提供了简单报表 YDEMO_FRH_0021（采购订单执行情况清单，267 行、约 9 KB、约 3 千 token），**作为报表规范的完整范例**，放在 [report-example.abap](../../apps/api/src/modules/abap-dev-agent/prompts/report-example.abap)，实现时随 `report.md` 一起拼入系统指令。用户的方针是先用简单报表把智能体做出来，复杂情况（可编辑 ALV、写回、ALV 树等）以后逐步增加范例与规范。
 
 据此补充了 `report.md`：`selscr_check` 开头 `CHECK sy-ucomm NP 'FC*'`；无数据时 `MESSAGE ... TYPE 'S'` 后 `LEAVE LIST-PROCESSING` 回到选择屏幕；双击取行并跳过合计行；默认排序在 `build_alv_grid_paras` 中设置；带变量的文本符号用 `&1` 占位后 `replace`。范例的消息用文本符号（`MESSAGE '...'(m03) TYPE 'S'`），与规范一致，生成的程序默认不建消息类。
 
@@ -263,7 +263,7 @@ apps/api/src/modules/abap-dev-agent/
 
 程序按开发清单的开发类型拼接 `system.md` 与对应的类型规范；第一版只有 `report.md`（报表与功能共用），以后的增强、接口各加一个文件。
 
-**草稿**：模块实现前，这些文件放在 `docs/specs/abap-dev-agent/`（[system.md](../specs/abap-dev-agent/system.md)、[report.md](../specs/abap-dev-agent/report.md)、[frameworks/](../specs/abap-dev-agent/frameworks/)），用户审阅；实现时迁入上述位置并删除草稿，同设计助手的做法。
+**位置**：草稿经用户审阅后已于 2026-10-14 迁入模块：[system.md](../../apps/api/src/modules/abap-dev-agent/prompts/system.md)、[report.md](../../apps/api/src/modules/abap-dev-agent/prompts/report.md)、[report-example.abap](../../apps/api/src/modules/abap-dev-agent/prompts/report-example.abap)、[frameworks/](../../apps/api/src/modules/abap-dev-agent/frameworks/)。
 
 ## 6. 工具
 

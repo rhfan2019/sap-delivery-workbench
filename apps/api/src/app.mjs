@@ -4,6 +4,7 @@ import { databaseConfig } from './platform/database.mjs';
 import { createAuth, failure } from './platform/auth.mjs';
 import { registerAdminRoutes } from './modules/admin/routes.mjs';
 import { registerAbapFsdAgent } from './modules/abap-fsd-agent/routes.mjs';
+import { registerAbapDevAgent } from './modules/abap-dev-agent/routes.mjs';
 import { registerAuditRoutes } from './modules/audit/routes.mjs';
 import { registerDeliveryRoutes } from './modules/delivery/routes.mjs';
 import { registerTechnicalRoutes } from './modules/technical/routes.mjs';
@@ -16,6 +17,7 @@ export async function createApp({
   modelProbe,
   // Test seam: replaces the model, SAP and parsing collaborators of abap-fsd-agent.
   abapFsdAgent,
+  abapDevAgent,
 } = {}) {
   if (!organizationId) throw new Error('Run npm run bootstrap before starting the app.');
   const pool = new pg.Pool({ ...databaseConfig({ runtime: true }), max: 8 });
@@ -132,6 +134,7 @@ export async function createApp({
   registerAdminRoutes(app, pool, organizationId, requireSession);
   registerDeliveryRoutes(app, pool, organizationId, requireSession);
   registerAbapFsdAgent(app, pool, organizationId, requireSession, abapFsdAgent);
+  registerAbapDevAgent(app, pool, organizationId, requireSession, abapDevAgent);
   registerAuditRoutes(app, pool, organizationId, requireSession);
 
   registerTechnicalRoutes(app, pool, organizationId, requireSession);

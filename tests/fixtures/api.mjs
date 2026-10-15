@@ -6,7 +6,11 @@ import { createApp } from '../../apps/api/src/app.mjs';
 import { digest } from '../../apps/api/src/platform/auth.mjs';
 
 // Real app on the isolated test database with one signed-in project member.
-export async function apiFixture({ origin = 'http://127.0.0.1:5173', abapFsdAgent } = {}) {
+export async function apiFixture({
+  origin = 'http://127.0.0.1:5173',
+  abapFsdAgent,
+  abapDevAgent,
+} = {}) {
   assertIsolatedDatabase(process.env);
   const db = await connectDatabase();
   const scope = await fixture(db),
@@ -19,7 +23,12 @@ export async function apiFixture({ origin = 'http://127.0.0.1:5173', abapFsdAgen
     scope.sessionId,
     digest(token),
   ]);
-  const app = await createApp({ organizationId: scope.organizationId, origin, abapFsdAgent });
+  const app = await createApp({
+    organizationId: scope.organizationId,
+    origin,
+    abapFsdAgent,
+    abapDevAgent,
+  });
   const headers = { origin, cookie: 'sapwb_local_session=' + token };
   return {
     db,

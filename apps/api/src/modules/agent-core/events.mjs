@@ -33,3 +33,43 @@ export function subscribe(turnId, after, onEvent) {
   state.listeners.add(onEvent);
   return () => state.listeners.delete(onEvent);
 }
+
+// Streams one turn's events as SSE on a hijacked Fastify reply. `after` resumes after the
+// last sequence the client saw. When the turn is not live in this process (finished, or
+// interrupted by a restart), `storedTurn()` supplies the outcome to report instead.
+export async function streamTurnEvents(reply, turnId, after, storedTurn) {
+  reply.hijack();
+  reply.raw.writeHead(200, {
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-store',
+    Connection: 'keep-alive',
+    'X-Content-Type-Options': 'nosniff',
+  });
+  // data carries the whole event so clients can resume by sequence.
+  const send = (event) =>
+    reply.raw.write(`id: ${event.seq}\nevent: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
+  let keepAlive;
+  const unsubscribe = subscribe(turnId, after, (event) => {
+    if (event) return send(event);
+    clearInterval(keepAlive);
+    reply.raw.end();
+  });
+  if (!unsubscribe) {
+    const turn = await storedTurn();
+    send({
+      seq: after + 1,
+      type: 'turn.end',
+      data: { status: turn?.status ?? 'interrupted', stopReason: turn?.stopReason },
+    });
+    reply.raw.end();
+    return;
+  }
+  if (!reply.raw.writableEnded) {
+    keepAlive = setInterval(() => reply.raw.write(': keep-alive\n\n'), 15000);
+    keepAlive.unref();
+  }
+  reply.raw.on('close', () => {
+    clearInterval(keepAlive);
+    unsubscribe();
+  });
+}

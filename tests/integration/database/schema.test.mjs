@@ -4,6 +4,13 @@ import { test } from 'node:test';
 import { connectDatabase } from '../../../apps/api/src/platform/database.mjs';
 
 const expectedTables = [
+  'abap_dev_agent_attachment',
+  'abap_dev_agent_comment',
+  'abap_dev_agent_message',
+  'abap_dev_agent_session',
+  'abap_dev_agent_tool_call',
+  'abap_dev_agent_turn',
+  'abap_dev_agent_version',
   'abap_fsd_agent_attachment',
   'abap_fsd_agent_comment',
   'abap_fsd_agent_document',

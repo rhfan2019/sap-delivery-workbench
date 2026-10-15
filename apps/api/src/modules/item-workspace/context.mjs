@@ -36,6 +36,9 @@ export function createWorkContext(pool, organizationId, requireSession, stage) {
         itemId: item.id,
         itemCode: item.code,
         itemName: item.name,
+        itemKind: item.kind,
+        changeType: item.change_type,
+        transactionCode: item.transaction_code ?? '',
         actorId: current.user.id,
         sessionId: current.sessionId,
       },
@@ -60,5 +63,9 @@ export function createWorkContext(pool, organizationId, requireSession, stage) {
       transactionOptions,
     );
   }
-  return { pool, organizationId, delivery, authorize, write };
+  // Development-list facts an agent reads as materials: SAP objects and uploaded files
+  // (each file carries the local path its bytes are stored at).
+  const itemObjects = (db, itemId) => delivery.objects(db, itemId);
+  const itemFiles = (db, itemId) => delivery.files(db, itemId);
+  return { pool, organizationId, delivery, authorize, write, itemObjects, itemFiles };
 }

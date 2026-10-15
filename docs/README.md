@@ -15,7 +15,7 @@
 - [abap-fsd-agent 交接文档](plans/2026-10-12-abap-fsd-agent-handover.md)：新会话接手入口：现状、运行方法、待办与协作约定。
 - [ABAP 开发助手方向决策](architecture/2026-10-13-abap-dev-agent-direction-decision.md)：abap-dev-agent 的工作模式、产物、框架加载、工具、校验与模块拆分（已确认）。
 - [abap-dev-agent 实施计划](plans/2026-10-14-abap-dev-agent-implementation.md)：契约修订、抽取 agent-core、开发助手后端与前端、端到端验证（草案）。
-- [abap-dev-agent 系统指令草稿](specs/abap-dev-agent/system.md)：主指令与[可执行程序规范](specs/abap-dev-agent/report.md)，以及框架（`YCL_FRH_REPORT` 及其工具类）的[内置副本](specs/abap-dev-agent/frameworks/)；实现时迁入模块。
+- abap-dev-agent 系统指令：[主指令](../apps/api/src/modules/abap-dev-agent/prompts/system.md)、[可执行程序规范](../apps/api/src/modules/abap-dev-agent/prompts/report.md)与[范例](../apps/api/src/modules/abap-dev-agent/prompts/report-example.abap)，框架类内置副本在 [frameworks/](../apps/api/src/modules/abap-dev-agent/frameworks/)。
 - [待办与问题清单](plans/backlog.md)：日常发现的小问题和零散改进，攒批统一处理。
 - [表格页面模板：开发清单](guides/table-page-template.md)：按钮分类、行内编辑、详情抽屉与新表格页面接入约定。
 - `guides/`：当前维护与操作说明。
