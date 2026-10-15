@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import ChatMarkdown from '../abap-fsd-agent/ChatMarkdown.vue';
+import ChatMarkdown from '../agent-workbench/ChatMarkdown.vue';
 import { auditApi, type Proposal } from './api';
 
 const items = ref<Proposal[]>([]),

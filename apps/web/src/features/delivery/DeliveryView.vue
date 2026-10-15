@@ -430,6 +430,8 @@ async function removeOne(item: Item) {
   }
 }
 const comingSoon = (label: string) => showToast(`“${label}”Agent 即将开发`);
+// Development types the development agent can generate code for (reports and functions).
+const DEV_AGENT_KINDS = ['report', 'function'];
 // Row menu is rendered at page level: table cells clip overflowing content.
 const rowMenu = ref<{ item: Item; x: number; y: number } | null>(null);
 function toggleRowMenu(item: Item, event: MouseEvent) {
@@ -818,7 +820,16 @@ onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
                 title="设计"
                 ><Sparkles :size="16"
               /></RouterLink>
+              <RouterLink
+                v-if="DEV_AGENT_KINDS.includes(item.kind)"
+                class="row-icon"
+                :to="`/projects/${currentProject}/development-items/${item.id}/development`"
+                :aria-label="'开发 ' + item.code"
+                title="开发"
+                ><Code2 :size="16"
+              /></RouterLink>
               <button
+                v-else
                 class="row-icon"
                 :aria-label="'开发 ' + item.code"
                 title="开发"

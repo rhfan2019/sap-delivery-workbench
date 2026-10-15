@@ -26,8 +26,8 @@ import ChatMarkdown from './ChatMarkdown.vue';
 import RunSteps from './RunSteps.vue';
 import type {
   AgentMessage,
-  AgentArtifact,
-} from '@sap-delivery-workbench/contracts/abap-fsd-agent/types';
+  AgentArtifactRef,
+} from '@sap-delivery-workbench/contracts/agent-core/types';
 defineProps<{
   messages: AgentMessage[];
   busy: boolean;
@@ -42,9 +42,15 @@ defineProps<{
 const emit = defineEmits<{
   retry: [];
   suggestion: [text: string];
-  openArtifact: [artifact: AgentArtifact];
+  openArtifact: [artifact: AgentArtifactRef];
 }>();
 const copyNotice = ref('');
+// Sections or parts the agent changed without saying why (FSD: list; development: plan and code).
+function undeclared(artifact: AgentArtifactRef) {
+  const c = artifact.comparison ?? {};
+  if (Array.isArray(c.undeclared)) return c.undeclared as string[];
+  return [...(c.plan?.undeclared ?? []), ...(c.code?.undeclared ? ['代码'] : [])];
+}
 const now = ref(Date.now());
 let ticker: ReturnType<typeof setInterval>;
 onMounted(() => {
@@ -90,25 +96,41 @@ async function copy(text: string) {
         :title="development ? '一起完成开发' : '一起把需求说明白'"
         :description="
           development
-            ? '依据已保存的设计，讨论技术方案与代码。'
+            ? '描述需求、上传 FSD 或资料，助手会查询 SAP、提出必要问题，写出开发方案和代码。'
             : '描述需求或上传资料，助手会查询 SAP、提出必要问题并编写 FSD。'
         "
       >
         <template #icon><Sparkles class="size-8" /></template>
       </ConversationEmptyState>
       <div v-if="!messages.length" class="flex flex-wrap justify-center gap-2">
-        <Suggestion
-          suggestion="请分析这个开发项的需求，先找出需要客户确认的问题。"
-          :disabled="readonly"
-          @click="emit('suggestion', $event)"
-          >梳理需求与待确认问题</Suggestion
-        >
-        <Suggestion
-          suggestion="需求已经比较清楚，请直接查询 SAP 并起草 FSD 初稿。"
-          :disabled="readonly"
-          @click="emit('suggestion', $event)"
-          >直接起草 FSD 初稿</Suggestion
-        >
+        <template v-if="development">
+          <Suggestion
+            suggestion="请分析这个开发项的资料，先写开发方案，并列出需要我确认的问题。"
+            :disabled="readonly"
+            @click="emit('suggestion', $event)"
+            >梳理需求并出开发方案</Suggestion
+          >
+          <Suggestion
+            suggestion="需求已经清楚，请查询 SAP 后直接写开发方案和代码。"
+            :disabled="readonly"
+            @click="emit('suggestion', $event)"
+            >直接写方案和代码</Suggestion
+          >
+        </template>
+        <template v-else>
+          <Suggestion
+            suggestion="请分析这个开发项的需求，先找出需要客户确认的问题。"
+            :disabled="readonly"
+            @click="emit('suggestion', $event)"
+            >梳理需求与待确认问题</Suggestion
+          >
+          <Suggestion
+            suggestion="需求已经比较清楚，请直接查询 SAP 并起草 FSD 初稿。"
+            :disabled="readonly"
+            @click="emit('suggestion', $event)"
+            >直接起草 FSD 初稿</Suggestion
+          >
+        </template>
       </div>
       <Message
         v-for="(message, index) in messages"
@@ -200,21 +222,23 @@ async function copy(text: string) {
               <ArtifactHeader
                 ><div class="flex items-center gap-3">
                   <FileText class="size-5" /><ArtifactTitle
-                    >功能说明书已保存 · 第 {{ message.artifact.revision }} 版</ArtifactTitle
+                    >{{ development ? '开发方案与代码已保存' : '功能说明书已保存' }} · 第
+                    {{ message.artifact.revision }} 版</ArtifactTitle
                   >
                 </div></ArtifactHeader
               >
               <ArtifactContent class="space-y-3">
-                <ArtifactDescription v-if="message.artifact.comparison?.undeclared?.length"
-                  >注意：以下章节有改动但助手没有说明原因，请重点核对：{{
-                    message.artifact.comparison.undeclared.join('、')
+                <ArtifactDescription v-if="undeclared(message.artifact).length"
+                  >注意：以下部分有改动但助手没有说明原因，请重点核对：{{
+                    undeclared(message.artifact).join('、')
                   }}</ArtifactDescription
                 >
                 <ArtifactDescription v-else
                   >可在右侧“成果”中阅读；选中文字即可添加批注，让助手按批注修改。</ArtifactDescription
                 >
                 <Button variant="outline" size="sm" @click="emit('openArtifact', message.artifact)"
-                  >打开功能说明书 · 第 {{ message.artifact.revision }} 版</Button
+                  >{{ development ? '打开' : '打开功能说明书 · ' }}第
+                  {{ message.artifact.revision }} 版</Button
                 >
               </ArtifactContent>
             </Artifact>

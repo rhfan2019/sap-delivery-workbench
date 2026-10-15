@@ -10,6 +10,7 @@ const browserContracts = new Set([
   'abap-fsd-agent/types',
   'abap-dev-agent/types',
   'agent-core/sse',
+  'agent-core/types',
   'delivery/fields',
 ]);
 // Contract 1.3/1.7: one assistant version; earlier generations stay deleted.

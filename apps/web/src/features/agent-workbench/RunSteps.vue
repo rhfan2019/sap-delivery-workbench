@@ -11,7 +11,7 @@ import {
 } from '@/components/ai-elements/plan';
 import { Task, TaskTrigger, TaskContent, TaskItem } from '@/components/ai-elements/task';
 import { stepPresentation } from './presentation.mjs';
-import type { AgentStep } from '@sap-delivery-workbench/contracts/abap-fsd-agent/types';
+import type { AgentStep } from '@sap-delivery-workbench/contracts/agent-core/types';
 const props = defineProps<{ steps: AgentStep[]; reason?: string }>();
 const completed = computed(() => props.steps.filter((s) => s.status === 'succeeded').length);
 const current = computed(() =>

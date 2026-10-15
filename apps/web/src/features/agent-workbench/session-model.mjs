@@ -1,4 +1,4 @@
-// Pure mapping between the abap-fsd-agent API and the conversation components.
+// Pure mapping between the agent APIs and the conversation components.
 
 const TOOL_LABELS = {
   searchObject: '搜索 SAP 对象',
@@ -18,6 +18,14 @@ const TOOL_LABELS = {
   write_document: '编写文档',
   edit_document: '修改文档',
   check_document: '自动校验文档',
+  list_materials: '查看资料清单',
+  read_material: '读取资料',
+  read_artifact: '读取方案或代码',
+  write_artifact: '编写方案或代码',
+  edit_artifact: '修改方案或代码',
+  import_code: '保存上传的代码',
+  sync_from_sap: '从 SAP 同步代码',
+  check_code: '校验代码',
   ask_user: '整理待确认问题',
   reply_comment: '回复批注',
 };
@@ -72,7 +80,15 @@ const STATUS = {
 };
 
 // Rebuilds the visible conversation: one user message and one assistant message per turn.
-export function buildTimeline({ messages = [], turns = [], toolCalls = [], documents = [] }) {
+// Saved versions are `documents` (FSD) or `versions` (development plan and code).
+export function buildTimeline({
+  messages = [],
+  turns = [],
+  toolCalls = [],
+  documents = [],
+  versions = [],
+}) {
+  const saved = [...documents, ...versions];
   const out = [];
   const lastTurn = turns.at(-1);
   for (const turn of turns) {
@@ -96,7 +112,7 @@ export function buildTimeline({ messages = [], turns = [], toolCalls = [], docum
     const answers = next
       ? messages.find((m) => m.turnId === next.id && m.role === 'user')?.payload?.answers
       : undefined;
-    const doc = documents.find((d) => d.turnId === turn.id);
+    const doc = saved.filter((d) => d.turnId === turn.id).sort((a, b) => b.version - a.version)[0];
     const waiting = !!asked && turn === lastTurn && turn.status === 'completed';
     out.push({
       id: 'turn-' + turn.id,
@@ -116,7 +132,9 @@ export function buildTimeline({ messages = [], turns = [], toolCalls = [], docum
             answers: answers?.map((a) => ({ question: a.question, label: a.choice })),
           }
         : {}),
-      ...(doc ? { artifact: { id: 'v' + doc.version, revision: doc.version, markdown: '' } } : {}),
+      ...(doc
+        ? { artifact: { id: 'v' + doc.version, revision: doc.version, comparison: doc.comparison } }
+        : {}),
       ...(turn.status === 'failed' || turn.status === 'interrupted'
         ? {
             error:

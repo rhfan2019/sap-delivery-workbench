@@ -8,7 +8,7 @@ import {
   PlanContent,
 } from '@/components/ai-elements/plan';
 import { Button } from '@/components/ui/button';
-import type { AgentDecision } from '@sap-delivery-workbench/contracts/abap-fsd-agent/types';
+import type { AgentDecision } from '@sap-delivery-workbench/contracts/agent-core/types';
 import { identity } from '../../services/session';
 const props = defineProps<{ decision: AgentDecision; busy: boolean }>();
 const emit = defineEmits<{ answer: [values: Record<string, string>] }>();

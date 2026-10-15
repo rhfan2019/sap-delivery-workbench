@@ -15,7 +15,7 @@ import { api } from '../../services/session';
 import { restoreDraft } from './presentation.mjs';
 import { Button } from '@/components/ui/button';
 import type { ModelRecord } from '../models/types';
-import type { AgentArtifact } from '@sap-delivery-workbench/contracts/abap-fsd-agent/types';
+import type { AgentArtifactRef } from '@sap-delivery-workbench/contracts/agent-core/types';
 
 const props = withDefaults(
   defineProps<{
@@ -24,12 +24,13 @@ const props = withDefaults(
     modelName?: string | null;
     editable?: boolean;
     blocked?: boolean;
+    development?: boolean;
   }>(),
-  { editable: true, blocked: false, modelName: null },
+  { editable: true, blocked: false, modelName: null, development: false },
 );
 const emit = defineEmits<{
   busy: [value: boolean];
-  openArtifact: [artifact: AgentArtifact];
+  openArtifact: [artifact: AgentArtifactRef];
   filesChanged: [];
 }>();
 const run = props.session;
@@ -138,6 +139,7 @@ const previewOpen = computed(() => !!activeAttachment.value);
         <div class="assistant-chat">
           <ConversationTimeline
             quiet
+            :development="development"
             :readonly="blocked || !editable"
             :base="base"
             :messages="run.messages.value"

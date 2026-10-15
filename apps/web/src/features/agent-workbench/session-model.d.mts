@@ -2,7 +2,7 @@ import type {
   AgentDecision,
   AgentMessage,
   AgentStep,
-} from '@sap-delivery-workbench/contracts/abap-fsd-agent/types';
+} from '@sap-delivery-workbench/contracts/agent-core/types';
 
 export interface AskedQuestion {
   question: string;
@@ -27,5 +27,6 @@ export function buildTimeline(detail: {
   turns?: any[];
   toolCalls?: any[];
   documents?: any[];
+  versions?: any[];
 }): AgentMessage[];
 export function pendingQuestions(detail: any): { id: string; questions: AskedQuestion[] } | null;

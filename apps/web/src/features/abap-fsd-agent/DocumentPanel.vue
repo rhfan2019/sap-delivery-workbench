@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { api } from '../../services/session';
-import SpecificationPanel from './SpecificationPanel.vue';
-import type { useAgentSession, SessionDocument } from './useAgentSession';
+import DocumentView from '../agent-workbench/DocumentView.vue';
+import type { useAgentSession } from '../agent-workbench/useAgentSession';
+import type {
+  AgentArtifact,
+  AgentComment,
+} from '@sap-delivery-workbench/contracts/abap-fsd-agent/types';
+
+type SessionDocument = AgentArtifact & { changes?: unknown[] };
 
 const props = defineProps<{
   base: string;
@@ -18,9 +24,19 @@ const loading = ref(false),
   anchor = ref(''),
   body = ref(''),
   saving = ref(false);
-const latest = computed(() => run.document.value);
-const live = computed(() => run.busy.value && !!run.draftMarkdown.value);
-const openComments = computed(() => run.comments.value.filter((c) => c.status === 'open'));
+const asDocument = (doc: any): SessionDocument => ({
+  ...doc,
+  id: 'v' + doc.version,
+  revision: doc.version,
+});
+const latest = computed(() =>
+  run.detail.value?.document ? asDocument(run.detail.value.document) : null,
+);
+const documents = computed<{ version: number; labels: string[] }[]>(() => run.detail.value?.documents ?? []);
+const draftMarkdown = computed(() => run.drafts.value.document ?? '');
+const comments = computed(() => run.comments.value as AgentComment[]);
+const live = computed(() => run.busy.value && !!draftMarkdown.value);
+const openComments = computed(() => comments.value.filter((c) => c.status === 'open'));
 
 async function show() {
   error.value = '';
@@ -30,7 +46,9 @@ async function show() {
   }
   loading.value = true;
   try {
-    shown.value = await run.openVersion(props.version);
+    shown.value = asDocument(
+      await api<any>(`${props.base}/sessions/${run.sessionId.value}/documents/${props.version}`),
+    );
   } catch (e) {
     error.value = (e as Error).message;
   } finally {
@@ -44,7 +62,7 @@ const viewed = computed(() =>
     ? {
         id: 'draft',
         revision: (latest.value?.revision ?? 0) + 1,
-        markdown: run.draftMarkdown.value,
+        markdown: draftMarkdown.value,
       }
     : shown.value,
 );
@@ -127,7 +145,7 @@ async function handleComments() {
             "
           >
             <option value="">最新版本{{ latest ? ' · 第 ' + latest.revision + ' 版' : '' }}</option>
-            <option v-for="d in run.documents.value" :key="d.version" :value="d.version">
+            <option v-for="d in documents" :key="d.version" :value="d.version">
               第 {{ d.version }} 版{{ d.labels.length ? ' · ' + d.labels.join('、') : '' }}
             </option>
           </select></label
@@ -173,7 +191,7 @@ async function handleComments() {
           ><button type="button" @click="anchor = ''">取消</button>
         </div>
       </form>
-      <SpecificationPanel
+      <DocumentView
         v-if="viewed"
         class="document-reader"
         :artifact="viewed"

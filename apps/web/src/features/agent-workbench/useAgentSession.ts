@@ -1,12 +1,10 @@
 import { computed, onScopeDispose, ref, shallowRef } from 'vue';
 import type {
-  AgentArtifact,
   AgentAttachment,
-  AgentComment,
   AgentDecision,
   AgentMessage,
   AgentStep,
-} from '@sap-delivery-workbench/contracts/abap-fsd-agent/types';
+} from '@sap-delivery-workbench/contracts/agent-core/types';
 import { createSseParser } from '@sap-delivery-workbench/contracts/agent-core/sse';
 import { api, identity } from '../../services/session';
 import { reconnectingChatStream } from './chatStream.mjs';
@@ -28,11 +26,8 @@ type Status =
   | 'completed'
   | 'failed'
   | 'cancelled';
-export interface SessionDocument extends AgentArtifact {
-  changes?: unknown[];
-}
-
-// One abap-fsd-agent conversation: history, the live turn, the document and its comments.
+// One agent conversation: history, the live turn, its files and comments. What the agent
+// produces (an FSD, a plan and code) stays in `detail` and `drafts` for the agent's panel.
 export function useAgentSession(base: string) {
   const sessionId = ref('');
   const messages = ref<AgentMessage[]>([]);
@@ -41,12 +36,10 @@ export function useAgentSession(base: string) {
   const status = ref<Status>('idle');
   const error = ref('');
   const generationNote = ref('');
-  const document = shallowRef<SessionDocument | null>(null);
-  const documents = ref<
-    { version: number; labels: string[]; createdAt: string; turnId: string | null }[]
-  >([]);
-  const draftMarkdown = ref('');
-  const comments = ref<AgentComment[]>([]);
+  // The session as the API returned it, and the live text of artifacts being written.
+  const detail = shallowRef<any>(null);
+  const drafts = ref<Record<string, string>>({});
+  const comments = ref<any[]>([]);
   const attachments = ref<AgentAttachment[]>([]);
   const canEdit = ref(false);
   const busy = computed(() => ['waiting', 'streaming', 'stopping'].includes(status.value));
@@ -54,19 +47,16 @@ export function useAgentSession(base: string) {
   let reader: AbortController | null = null;
   let disposed = false;
 
-  function adopt(detail: any) {
-    canEdit.value = !!detail.canEdit;
-    messages.value = buildTimeline(detail);
-    const pending = pendingQuestions(detail);
+  function adopt(data: any) {
+    detail.value = data;
+    canEdit.value = !!data.canEdit;
+    messages.value = buildTimeline(data);
+    const pending = pendingQuestions(data);
     questions = pending?.questions ?? [];
     decision.value = pending ? decisionFromQuestions(pending.id, pending.questions) : null;
-    document.value = detail.document
-      ? { ...detail.document, id: 'v' + detail.document.version, revision: detail.document.version }
-      : null;
-    documents.value = detail.documents ?? [];
-    comments.value = detail.comments ?? [];
-    attachments.value = detail.attachments ?? [];
-    draftMarkdown.value = '';
+    comments.value = data.comments ?? [];
+    attachments.value = data.attachments ?? [];
+    drafts.value = {};
     steps.value = [];
   }
 
@@ -185,14 +175,12 @@ export function useAgentSession(base: string) {
         questions = d.questions;
         decision.value = decisionFromQuestions(d.id, d.questions);
       }
-    } else if (event.type === 'document.draft') draftMarkdown.value = d.markdown;
-    else if (event.type === 'document.saved')
-      message.artifact = {
-        id: 'v' + d.version,
-        revision: d.version,
-        markdown: '',
-        comparison: d.comparison,
-      };
+    } else if (event.type === 'document.draft')
+      drafts.value = { ...drafts.value, document: d.markdown };
+    else if (event.type === 'artifact.draft')
+      drafts.value = { ...drafts.value, [d.target]: d.text };
+    else if (event.type === 'document.saved' || event.type === 'version.saved')
+      message.artifact = { id: 'v' + d.version, revision: d.version, comparison: d.comparison };
     else if (event.type === 'turn.end') {
       message.status =
         d.status === 'completed' ? 'completed' : d.status === 'cancelled' ? 'cancelled' : 'failed';
@@ -248,11 +236,6 @@ export function useAgentSession(base: string) {
     }
   }
 
-  async function openVersion(version: number): Promise<SessionDocument> {
-    const doc = await api<any>(`${base}/sessions/${sessionId.value}/documents/${version}`);
-    return { ...doc, id: 'v' + doc.version, revision: doc.version };
-  }
-
   onScopeDispose(() => {
     disposed = true;
     reader?.abort();
@@ -282,9 +265,8 @@ export function useAgentSession(base: string) {
     busy,
     error,
     generationNote,
-    document,
-    documents,
-    draftMarkdown,
+    detail,
+    drafts,
     comments,
     attachments,
     canEdit,
@@ -294,6 +276,5 @@ export function useAgentSession(base: string) {
     send,
     answer,
     stop,
-    openVersion,
   };
 }

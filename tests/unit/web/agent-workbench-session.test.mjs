@@ -6,7 +6,7 @@ import {
   decisionFromQuestions,
   pendingQuestions,
   toolLabel,
-} from '../../../apps/web/src/features/abap-fsd-agent/session-model.mjs';
+} from '../../../apps/web/src/features/agent-workbench/session-model.mjs';
 
 const question = {
   question: '逾期按哪个日期判断？',

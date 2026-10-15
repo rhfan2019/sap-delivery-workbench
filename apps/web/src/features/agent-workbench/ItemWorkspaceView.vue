@@ -4,13 +4,13 @@ import { onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router';
 import { api, identity } from '../../services/session';
 import { askConfirmation } from '../../services/confirmation';
 import AgentWorkbench from './AgentWorkbench.vue';
-import DocumentPanel from './DocumentPanel.vue';
 import { useAgentSession } from './useAgentSession';
+import type { StageConfig } from './stage';
 import type {
-  AgentArtifact,
+  AgentArtifactRef,
   AgentAttachment,
   AgentSession,
-} from '@sap-delivery-workbench/contracts/abap-fsd-agent/types';
+} from '@sap-delivery-workbench/contracts/agent-core/types';
 import {
   ArrowLeft,
   MoreHorizontal,
@@ -27,8 +27,8 @@ import { useMediaQuery } from '@vueuse/core';
 import { OPTIONS, richText } from '@sap-delivery-workbench/contracts/delivery/fields';
 import './workspace.css';
 
-const props = defineProps<{ projectId: string; itemId: string; stage: string }>();
-const agentBase = `/projects/${props.projectId}/development-items/${props.itemId}/abap-fsd-agent`;
+const props = defineProps<{ projectId: string; itemId: string; config: StageConfig }>();
+const agentBase = `/projects/${props.projectId}/development-items/${props.itemId}/${props.config.agent}`;
 const run = useAgentSession(agentBase);
 const state = ref<{
   project: { name: string };
@@ -38,7 +38,11 @@ const state = ref<{
     module: string;
     kind: string;
     businessFunction: string;
+    changeType?: string;
+    transactionCode?: string;
+    objects?: { pgmid: string; objectType: string; objectName: string }[];
   };
+  supported?: boolean;
   canEdit: boolean;
   model: string | null;
 } | null>(null);
@@ -49,7 +53,7 @@ const error = ref(''),
   pane = ref(''),
   version = ref<number | null>(null),
   filePreview = ref<AgentAttachment | null>(null);
-const sessionKey = `abap-fsd-agent-session:${identity.value?.organization.id}:${identity.value?.user.id}:${props.projectId}:${props.itemId}`;
+const sessionKey = `${props.config.agent}-session:${identity.value?.organization.id}:${identity.value?.user.id}:${props.projectId}:${props.itemId}`;
 const remember = (id: string) => {
   try {
     localStorage.setItem(sessionKey, id);
@@ -120,8 +124,8 @@ async function inspectFile(id: string) {
     error.value = (e as Error).message;
   }
 }
-function openArtifact(a: AgentArtifact) {
-  version.value = a.revision === run.document.value?.revision ? null : a.revision;
+function openArtifact(a: AgentArtifactRef) {
+  version.value = a.revision === props.config.latestRevision(run.detail.value) ? null : a.revision;
   openPanel('document');
 }
 
@@ -144,7 +148,13 @@ const panels = [
   { id: 'document', label: '成果', icon: FileText },
   { id: 'sessions', label: '对话', icon: MessageSquare },
 ];
-const currentTitle = computed(() => `${state.value?.item.name || '开发项'} · 设计助手`);
+const changeTypeLabel = computed(
+  () =>
+    (OPTIONS.changeType as Record<string, string>)[state.value?.item.changeType ?? ''] ?? '未填写',
+);
+const currentTitle = computed(
+  () => `${state.value?.item.name || '开发项'} · ${props.config.assistantName}`,
+);
 function openPanel(id: string) {
   if (pane.value !== id) panelWidth.value = id === 'document' ? 680 : 400;
   pane.value = id;
@@ -174,7 +184,7 @@ function resizePanel(event: PointerEvent) {
         ><ArrowLeft :size="18" /><span>开发清单</span></RouterLink
       >
       <h1>{{ state?.item.code }} · {{ state?.item.name || '开发项' }}</h1>
-      <span class="stage-label">设计</span>
+      <span class="stage-label">{{ config.stageLabel }}</span>
       <div class="work-header-actions">
         <button
           class="work-icon"
@@ -206,13 +216,14 @@ function resizePanel(event: PointerEvent) {
           </button>
         </div>
         <p v-if="!state.canEdit" class="work-inline-note">
-          当前为只读，仅设计负责人或项目管理员可以修改。
+          {{ config.readonlyNote }}
         </p>
         <AgentWorkbench
           :base="agentBase"
           :session="run"
           :model-name="state.model"
           :editable="state.canEdit"
+          :development="config.development"
           @busy="agentBusy = $event"
           @open-artifact="openArtifact"
           @files-changed="run.refresh()"
@@ -268,6 +279,25 @@ function resizePanel(event: PointerEvent) {
               {{ OPTIONS.kind[state.item.kind] ?? state.item.kind }}</span
             >
             <h2>{{ state.item.name }}</h2>
+            <template v-if="config.development">
+              <h3>变更类型</h3>
+              <p>{{ changeTypeLabel }}</p>
+              <h3>开发对象</h3>
+              <p>
+                {{
+                  state.item.objects?.length
+                    ? state.item.objects
+                        .map((o) => `${o.pgmid} ${o.objectType} ${o.objectName}`)
+                        .join('；')
+                    : '尚未登记（同步代码需要在开发清单中登记程序对象）'
+                }}
+              </p>
+              <h3>事务码</h3>
+              <p>{{ state.item.transactionCode || '未登记' }}</p>
+              <p v-if="state.supported === false" class="work-inline-note">
+                当前版本只支持报表与功能类开发项生成代码。
+              </p>
+            </template>
             <h3>业务功能点</h3>
             <p>{{ richText(state.item.businessFunction) || '尚未填写业务功能点' }}</p>
             <h3>模型</h3>
@@ -306,7 +336,8 @@ function resizePanel(event: PointerEvent) {
               <pre>{{ filePreview.text || '此文件没有可提取文字。' }}</pre>
             </section>
           </section>
-          <DocumentPanel
+          <component
+            :is="config.artifactPanel"
             v-if="pane === 'document'"
             :base="agentBase"
             :session="run"
@@ -316,7 +347,7 @@ function resizePanel(event: PointerEvent) {
           />
           <section v-if="pane === 'sessions'" class="work-sessions">
             <div class="work-section-heading">
-              <h2>本开发项的设计对话</h2>
+              <h2>{{ config.sessionsHeading }}</h2>
               <button :disabled="agentBusy || !state.canEdit" @click="createSession">
                 <Plus :size="16" />新建
               </button>
@@ -333,7 +364,7 @@ function resizePanel(event: PointerEvent) {
               <strong>{{ s.title?.slice(0, 50) || '新对话' }}</strong
               ><small
                 >{{ new Date(s.updatedAt).toLocaleString('zh-CN') }}
-                {{ s.documentVersion ? ' · 文档第 ' + s.documentVersion + ' 版' : '' }}
+                {{ config.sessionVersion(s) }}
                 {{ s.id === run.sessionId.value ? ' · 当前' : '' }}</small
               >
             </button>

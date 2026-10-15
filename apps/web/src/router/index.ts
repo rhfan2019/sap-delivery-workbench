@@ -18,8 +18,12 @@ export const router = createRouter({
         { path: 'home', component: WorkspaceView },
         { path: 'projects/:id?', component: WorkspaceView },
         {
-          path: 'projects/:projectId/development-items/:itemId/:stage(design)',
+          path: 'projects/:projectId/development-items/:itemId/design',
           component: () => import('../features/abap-fsd-agent/ItemWorkspaceRoute.vue'),
+        },
+        {
+          path: 'projects/:projectId/development-items/:itemId/development',
+          component: () => import('../features/abap-dev-agent/ItemWorkspaceRoute.vue'),
         },
         {
           path: 'workspace/organization',

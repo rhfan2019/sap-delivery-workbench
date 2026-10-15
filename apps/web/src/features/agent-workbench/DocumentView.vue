@@ -10,11 +10,14 @@ import { Button } from '@/components/ui/button';
 import { X, Download, FileText } from '@lucide/vue';
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { visibleOutline, type OutlineItem } from './outline.mjs';
-import type { AgentArtifact } from '@sap-delivery-workbench/contracts/abap-fsd-agent/types';
+import type { AgentArtifactRef } from '@sap-delivery-workbench/contracts/agent-core/types';
 import ChatMarkdown from './ChatMarkdown.vue';
-const props = withDefaults(defineProps<{ artifact: AgentArtifact; closable?: boolean }>(), {
-  closable: true,
-});
+const props = withDefaults(
+  defineProps<{ artifact: AgentArtifactRef & { markdown: string }; closable?: boolean }>(),
+  {
+    closable: true,
+  },
+);
 // `select` reports text the reader selects in the document, for adding a comment.
 const emit = defineEmits<{ close: []; select: [text: string] }>();
 function selected() {

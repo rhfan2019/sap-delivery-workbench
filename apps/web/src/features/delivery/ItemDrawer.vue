@@ -172,7 +172,18 @@ defineExpose({ dirty, busy });
               :to="`/projects/${projectId}/development-items/${item.id}/design`"
               ><Sparkles :size="15" />设计</RouterLink
             >
-            <button type="button" class="secondary-button compact" @click="emit('agent', '开发')">
+            <RouterLink
+              v-if="['report', 'function'].includes(item.kind)"
+              class="secondary-button compact"
+              :to="`/projects/${projectId}/development-items/${item.id}/development`"
+              ><Code2 :size="15" />开发</RouterLink
+            >
+            <button
+              v-else
+              type="button"
+              class="secondary-button compact"
+              @click="emit('agent', '开发')"
+            >
               <Code2 :size="15" />开发
             </button>
             <div class="menu-anchor">
