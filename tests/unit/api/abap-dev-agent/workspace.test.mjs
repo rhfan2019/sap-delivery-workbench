@@ -111,3 +111,28 @@ test('facts warn about unsupported kinds, optimizations and missing SAP', () => 
   assert.match(facts, /【有变化】开发清单信息/);
   assert.match(facts, /还没有开发方案和代码/);
 });
+
+test('a reply cannot claim a change the program does not see', async () => {
+  const replies = [];
+  const { handlers } = workspace({
+    comments: [{ id: 'c1', target: 'code', status: 'open' }],
+    onReply: async (id, body) => replies.push(body),
+  });
+  await assert.rejects(
+    handlers.reply_comment({ comment_id: 'c1', reply: '已重构' }),
+    /没有任何改动/,
+  );
+  assert.equal(
+    await handlers.reply_comment({ comment_id: 'c1', reply: '不改：原因', no_change: true }),
+    '已回复批注。',
+  );
+  await handlers.edit_artifact({
+    target: 'code',
+    old_text: 'WRITE 1.',
+    new_text: 'WRITE 3.',
+    reason: '按批注',
+    comment_id: 'c1',
+  });
+  await handlers.reply_comment({ comment_id: 'c1', reply: '已修改' });
+  assert.deepEqual(replies, ['不改：原因', '已修改']);
+});

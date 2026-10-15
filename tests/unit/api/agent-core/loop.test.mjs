@@ -117,3 +117,30 @@ test('a failing model ends the turn as failed without throwing', async () => {
   assert.equal(result.error.message, '网络断开');
   assert.match(h.stored.at(-1).content, /本轮出错/);
 });
+
+test('a dropped connection is resent only when nothing was streamed', async () => {
+  const drop = () => Object.assign(new Error('socket hang up'), { code: 'ECONNRESET' });
+  let n = 0;
+  const quiet = harness();
+  const ok = await runAgentLoop({
+    ...quiet.options,
+    deps: {
+      wait: async () => {},
+      streamChat: async (...args) =>
+        n++ === 0 ? Promise.reject(drop()) : scripted([{ content: '好' }])(...args),
+    },
+  });
+  assert.equal(ok.status, 'completed');
+  const loud = harness();
+  const failed = await runAgentLoop({
+    ...loud.options,
+    deps: {
+      wait: async () => {},
+      streamChat: async (_c, _k, { onDelta }) => {
+        onDelta({ type: 'text', text: '半句' });
+        throw drop();
+      },
+    },
+  });
+  assert.equal(failed.status, 'failed');
+});

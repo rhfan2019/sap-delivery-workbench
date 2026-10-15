@@ -7,8 +7,16 @@ export const LIMITS = {
 };
 
 // A busy or rate-limited provider rejects the request before any output, so it is safe to resend.
+// A dropped connection is resent too, but only when nothing was streamed yet.
 export const BUSY_RETRY_MS = [3000, 8000, 15000];
 const BUSY_CODES = new Set(['PROVIDER_BUSY', 'RATE_LIMITED']);
+const NETWORK_CODES = new Set([
+  'ECONNRESET',
+  'ETIMEDOUT',
+  'ECONNREFUSED',
+  'EPIPE',
+  'UND_ERR_SOCKET',
+]);
 const sleep = (ms, signal) =>
   new Promise((resolve, reject) => {
     const timer = setTimeout(resolve, ms);
@@ -24,10 +32,13 @@ const sleep = (ms, signal) =>
 
 async function withBusyRetry(call, { signal, wait = sleep, onRetry }) {
   for (let retry = 0; ; retry++) {
+    const attempt = { streamed: false };
     try {
-      return await call();
+      return await call(attempt);
     } catch (e) {
-      if (!BUSY_CODES.has(e.code) || retry >= BUSY_RETRY_MS.length || signal?.aborted) throw e;
+      const retryable =
+        BUSY_CODES.has(e.code) || (NETWORK_CODES.has(e.code ?? e.cause?.code) && !attempt.streamed);
+      if (!retryable || retry >= BUSY_RETRY_MS.length || signal?.aborted) throw e;
       onRetry(retry + 1, BUSY_RETRY_MS[retry]);
       await wait(BUSY_RETRY_MS[retry], signal);
     }
@@ -85,13 +96,16 @@ export async function runAgentLoop({
       }
       emit('step', { step: step + 1 });
       const result = await withBusyRetry(
-        () =>
+        (attempt) =>
           chat(model.config, model.key, {
             messages,
             tools,
             signal,
             ...env,
-            onDelta: (delta) => emit('delta', delta),
+            onDelta: (delta) => {
+              attempt.streamed = true;
+              emit('delta', delta);
+            },
           }),
         {
           signal,

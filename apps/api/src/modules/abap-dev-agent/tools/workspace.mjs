@@ -93,10 +93,16 @@ export const WORKSPACE_TOOLS = [
     [],
   ),
   fn('check_code', '对当前代码运行一次完整的静态校验，并到 SAP 核实表和字段。', {}, []),
-  fn('reply_comment', '回复用户的一条批注，说明改了什么，或不改的理由、反问。', {
-    comment_id: str('批注编号'),
-    reply: str('回复内容'),
-  }),
+  fn(
+    'reply_comment',
+    '回复用户的一条批注，说明改了什么；不修改时把 no_change 设为 true，并说明理由或提出反问。批注针对的内容（代码或开发方案）本轮没有改动时，只能以 no_change 回复。',
+    {
+      comment_id: str('批注编号'),
+      reply: str('回复内容'),
+      no_change: { type: 'boolean', description: '本条批注不修改，只说明理由或反问' },
+    },
+    ['comment_id', 'reply'],
+  ),
   ASK_USER_TOOL,
 ];
 
@@ -125,7 +131,8 @@ export function createWorkspace({
     changed: false,
     questions: null,
   };
-  const commentIds = new Set(comments.map((c) => c.id));
+  const commentTargets = new Map(comments.map((c) => [c.id, c.target]));
+  const commentIds = new Set(commentTargets.keys());
   const check = async () =>
     formatCheck(await checkCode(state.code, { plan: state.plan, verifyTable }));
 
@@ -250,9 +257,15 @@ export function createWorkspace({
       state.questions = questions;
       return '问题已发给用户，本轮结束，等待答复。';
     },
-    async reply_comment({ comment_id, reply }) {
+    async reply_comment({ comment_id, reply, no_change }) {
       if (!commentIds.has(comment_id)) throw new Error('批注编号不存在。');
       if (!reply?.trim()) throw new Error('回复不能为空。');
+      // A reply may only claim a change the program can see (decision 2.6).
+      const target = commentTargets.get(comment_id);
+      if (!no_change && target && state[target] === state.base[target])
+        throw new Error(
+          `这条批注针对${target === 'code' ? '代码' : '开发方案'}，但本轮${target === 'code' ? '代码' : '开发方案'}没有任何改动。请先用 edit_artifact 修改并关联批注编号；确实不修改时，把 no_change 设为 true 并说明理由。`,
+        );
       await onReply?.(comment_id, reply.trim());
       return '已回复批注。';
     },
