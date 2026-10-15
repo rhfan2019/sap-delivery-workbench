@@ -41,8 +41,16 @@ export function sessionFacts({ scope, sap, objects, materials, version, comments
       ? '\n- 变更类型为“优化”（修改已有程序）：告诉用户你只开发新对象，可以把已有程序作为参考，在新对象上重写。'
       : '';
   const programs = objects.filter((o) => o.objectType === 'PROG').map((o) => o.objectName);
+  // Decision 2.3: without an FSD the business rules are inferred, so the first version is a
+  // plan for the consultant to review. Stated as a fact so the model cannot overlook it.
+  const hasFsd = materials.some((m) => m.type === 'fsd');
+  const fsdNote = hasFsd
+    ? ''
+    : version?.plan?.trim()
+      ? '\n- 本开发项没有 FSD；开发方案已有版本，按用户的意见同时修改方案和代码。'
+      : '\n- **本开发项没有 FSD，也还没有开发方案**：按第三部分第 4 条，本轮只写开发方案（必要时用 ask_user 提问），不写代码，然后停下请用户审阅。用户明确要求直接写代码的除外。';
   const parts = [
-    `# 本次会话的事实\n\n- 日期：${today}\n- 开发项：${scope.itemCode} ${scope.itemName}（项目：${scope.projectName}）\n- 程序对象：${programs.join('、') || '开发清单尚未登记；需要时按命名规范提议，请开发顾问到开发清单填写'}${kindNote}${changeNote}`,
+    `# 本次会话的事实\n\n- 日期：${today}\n- 开发项：${scope.itemCode} ${scope.itemName}（项目：${scope.projectName}）\n- 程序对象：${programs.join('、') || '开发清单尚未登记；需要时按命名规范提议，请开发顾问到开发清单填写'}${fsdNote}${kindNote}${changeNote}`,
   ];
   if (sap.available) {
     const t = sap.target;

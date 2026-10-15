@@ -136,3 +136,24 @@ test('a reply cannot claim a change the program does not see', async () => {
   await handlers.reply_comment({ comment_id: 'c1', reply: '已修改' });
   assert.deepEqual(replies, ['不改：原因', '已修改']);
 });
+
+test('without an FSD or a plan the facts say to write only the plan first', () => {
+  const base = {
+    scope: {
+      itemCode: '1',
+      itemName: 'x',
+      projectName: 'p',
+      itemKind: 'report',
+      changeType: 'new',
+    },
+    sap: { available: false, reason: 'x' },
+    objects: [],
+    comments: [],
+    today: '2026-10-15',
+  };
+  const fsd = [{ key: 'fsd:s:1', type: 'fsd', label: 'FSD 第 1 版', digest: 'd' }];
+  assert.match(sessionFacts({ ...base, materials: [], version: null }), /本轮只写开发方案/);
+  assert.doesNotMatch(sessionFacts({ ...base, materials: fsd, version: null }), /没有 FSD/);
+  const planned = { version: 1, source: 'assistant', plan: '## 1', code: '', labels: [] };
+  assert.match(sessionFacts({ ...base, materials: [], version: planned }), /开发方案已有版本/);
+});
