@@ -83,7 +83,7 @@ test('architecture accepts internal implementation and browser-safe contract imp
   assert.deepEqual(
     checkImport(
       'apps/web/src/main.ts',
-      '@sap-delivery-workbench/contracts/abap-fsd-agent/sse',
+      '@sap-delivery-workbench/contracts/agent-core/sse',
       options,
     ),
     [],

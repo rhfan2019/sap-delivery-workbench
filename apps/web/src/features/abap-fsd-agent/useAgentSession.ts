@@ -7,7 +7,7 @@ import type {
   AgentMessage,
   AgentStep,
 } from '@sap-delivery-workbench/contracts/abap-fsd-agent/types';
-import { createSseParser } from '@sap-delivery-workbench/contracts/abap-fsd-agent/sse';
+import { createSseParser } from '@sap-delivery-workbench/contracts/agent-core/sse';
 import { api, identity } from '../../services/session';
 import { reconnectingChatStream } from './chatStream.mjs';
 import {

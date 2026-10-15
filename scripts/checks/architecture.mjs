@@ -8,7 +8,6 @@ import { spawnSync } from 'node:child_process';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const browserContracts = new Set([
   'abap-fsd-agent/types',
-  'abap-fsd-agent/sse',
   'abap-dev-agent/types',
   'agent-core/sse',
   'delivery/fields',

@@ -8,7 +8,6 @@
     "abap-fsd-agent->agent-core",
     "abap-fsd-agent->item-workspace",
     "abap-fsd-agent->models",
-    "abap-fsd-agent->sap",
     "agent-core->models",
     "agent-core->sap",
     "audit->abap-fsd-agent",

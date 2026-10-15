@@ -5,9 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { failure } from '../../platform/auth.mjs';
 import { createWorkContext } from '../item-workspace/public.mjs';
 import { resolveAgentModel } from '../models/public.mjs';
-import { parseFile } from './attachments/parser.mjs';
+import { parseFile, openTurn, subscribe } from '../agent-core/public.mjs';
 import { runTurn } from './loop.mjs';
-import { openTurn, subscribe } from './events.mjs';
 import * as repo from './repository.mjs';
 
 export const base = '/api/projects/:projectId/development-items/:itemId/abap-fsd-agent';

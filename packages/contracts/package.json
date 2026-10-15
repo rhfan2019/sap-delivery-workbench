@@ -5,7 +5,7 @@
   "type": "module",
   "exports": {
     "./abap-fsd-agent/types": "./abap-fsd-agent/types.ts",
-    "./abap-fsd-agent/sse": "./abap-fsd-agent/sse.mjs",
+    "./agent-core/sse": "./agent-core/sse.mjs",
     "./delivery/fields": "./delivery/fields.mjs"
   }
 }

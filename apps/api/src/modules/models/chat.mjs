@@ -1,4 +1,4 @@
-import { createSseParser } from '@sap-delivery-workbench/contracts/abap-fsd-agent/sse';
+import { createSseParser } from '@sap-delivery-workbench/contracts/agent-core/sse';
 import { failure } from '../../platform/auth.mjs';
 import { requestModelStream } from './transport.mjs';
 import { openKey } from './crypto.mjs';

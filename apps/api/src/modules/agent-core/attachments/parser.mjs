@@ -175,7 +175,7 @@ export async function extractBytes(name, bytes) {
 }
 export function parseFile(path, name) {
   return new Promise((resolve) => {
-    const child = fork(fileURLToPath(import.meta.url), ['--fsd-parse'], {
+    const child = fork(fileURLToPath(import.meta.url), ['--agent-parse'], {
       execArgv: ['--max-old-space-size=192'],
       windowsHide: true,
       stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
@@ -200,7 +200,7 @@ export function parseFile(path, name) {
     child.send({ path, name });
   });
 }
-if (process.argv.includes('--fsd-parse'))
+if (process.argv.includes('--agent-parse'))
   process.once('message', async ({ path, name }) => {
     try {
       process.send(await extractBytes(name, await readFile(path)));

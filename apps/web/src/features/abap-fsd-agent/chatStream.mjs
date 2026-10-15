@@ -1,4 +1,4 @@
-import { createSseParser } from '@sap-delivery-workbench/contracts/abap-fsd-agent/sse';
+import { createSseParser } from '@sap-delivery-workbench/contracts/agent-core/sse';
 
 // Reconnect only the event subscription. A dropped connection never starts a model run.
 export async function reconnectingChatStream(

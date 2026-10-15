@@ -1,4 +1,4 @@
-import { connectMcp, decodeResult, resolveProjectSap } from '../../sap/public.mjs';
+import { connectMcp, decodeResult, resolveProjectSap } from '../sap/public.mjs';
 
 // Read-only abap-adt tools the model may use (system prompt part 4). Everything else the
 // MCP server offers (writes, code execution, debugger, transports...) never reaches the model.

@@ -1,6 +1,6 @@
 import { MODEL_CONNECTION_TIMEOUT_MS } from './runtime.mjs';
 import { requestModelStream } from './transport.mjs';
-import { createSseParser } from '@sap-delivery-workbench/contracts/abap-fsd-agent/sse';
+import { createSseParser } from '@sap-delivery-workbench/contracts/agent-core/sse';
 import { failure } from '../../platform/auth.mjs';
 
 export function streamPayload(config, prompt, context) {
