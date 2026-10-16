@@ -4,6 +4,9 @@ export const LIMITS = {
   steps: 30, // model calls per turn
   toolCalls: 60,
   sapBudgetMs: 30 * 60 * 1000,
+  // Some providers return a tool call only when its arguments are complete (a whole FSD
+  // chapter takes minutes), so agents wait longer for the first data than model tests do.
+  firstByteMs: Number(process.env.AGENT_MODEL_FIRST_BYTE_TIMEOUT_MS) || 5 * 60 * 1000,
 };
 
 // A busy or rate-limited provider rejects the request before any output, so it is safe to resend.
@@ -101,6 +104,7 @@ export async function runAgentLoop({
             messages,
             tools,
             signal,
+            firstByteTimeoutMs: limits.firstByteMs,
             ...env,
             onDelta: (delta) => {
               attempt.streamed = true;

@@ -98,3 +98,18 @@ test('payload only carries optional limits when configured', () => {
   assert.equal(tuned.enable_thinking, false);
   assert.equal(tuned.tool_choice, 'auto');
 });
+
+test('a first-byte allowance reaches the transport only when given', async () => {
+  const seen = [];
+  const transport = (_config, _key, _payload, options) => {
+    seen.push(options);
+    return frames(
+      { choices: [{ delta: { content: '好' }, finish_reason: 'stop' }] },
+      'data: [DONE]\n\n',
+    )();
+  };
+  await streamChat(config, 'k', { messages: [], firstByteTimeoutMs: 300000 }, { transport });
+  await streamChat(config, 'k', { messages: [] }, { transport });
+  assert.equal(seen[0].connectionTimeoutMs, 300000);
+  assert.equal('connectionTimeoutMs' in seen[1], false);
+});

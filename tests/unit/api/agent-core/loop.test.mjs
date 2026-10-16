@@ -144,3 +144,17 @@ test('a dropped connection is resent only when nothing was streamed', async () =
   });
   assert.equal(failed.status, 'failed');
 });
+
+test('agent model calls wait five minutes for the first data by default', async () => {
+  const seen = [];
+  const h = harness({
+    deps: {
+      streamChat: async (_c, _k, options) => {
+        seen.push(options.firstByteTimeoutMs);
+        return { content: '好', toolCalls: [], usage: {} };
+      },
+    },
+  });
+  await runAgentLoop(h.options);
+  assert.deepEqual(seen, [300000]);
+});
