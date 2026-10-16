@@ -295,6 +295,45 @@ test('SAP configuration HTTP and database boundaries', async (t) => {
         );
         assert.equal(stored.rows[0].n, 0);
         assert.equal((await req('DELETE', qasUrl, undefined, m)).json().ready, false);
+
+        // Contract 1.10: locally, the machine's credentials file can log in without typing.
+        assert.equal((await req('POST', qasUrl, { useProfile: true }, m)).statusCode, 409);
+        const { mkdtemp, writeFile } = await import('node:fs/promises');
+        const { tmpdir } = await import('node:os');
+        const { join } = await import('node:path');
+        const profile = join(await mkdtemp(join(tmpdir(), 'sap-profile-')), 'profile.json');
+        await writeFile(
+          profile,
+          JSON.stringify({
+            SAP_URL: 'https://sap.invalid',
+            SAP_CLIENT: '000',
+            SAP_USER: 'ok',
+            SAP_PASSWORD: secret,
+          }),
+        );
+        const saved = {
+          entry: process.env.SAP_MCP_ENTRY,
+          profile: process.env.SAP_MCP_PROFILE_FILE,
+        };
+        process.env.SAP_MCP_ENTRY = new URL(
+          '../../fixtures/sap-probe-server.mjs',
+          import.meta.url,
+        ).pathname.replace(/^\/(?=[A-Za-z]:)/, '');
+        process.env.SAP_MCP_PROFILE_FILE = profile;
+        try {
+          assert.equal((await req('GET', qasUrl, undefined, m)).json().profileAvailable, true);
+          const fromFile = await req('POST', qasUrl, { useProfile: true }, m);
+          assert.equal(fromFile.statusCode, 200, fromFile.body);
+          assert.ok(!fromFile.body.includes(secret));
+          assert.deepEqual([fromFile.json().ready, fromFile.json().username], [true, 'ok']);
+        } finally {
+          for (const [key, value] of [
+            ['SAP_MCP_ENTRY', saved.entry],
+            ['SAP_MCP_PROFILE_FILE', saved.profile],
+          ])
+            if (value === undefined) delete process.env[key];
+            else process.env[key] = value;
+        }
       },
     );
     await t.test('expired grant blocks execution and archived project blocks changes', async () => {

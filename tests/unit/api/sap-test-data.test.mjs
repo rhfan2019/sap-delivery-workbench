@@ -11,6 +11,7 @@ import {
   rememberCredentials,
   recalledCredentials,
   forgetCredentials,
+  profileCredentials,
 } from '../../../apps/api/src/modules/sap/session-credentials.mjs';
 import { binding } from '../../../apps/api/src/modules/sap/resolve.mjs';
 
@@ -192,4 +193,28 @@ test('session credentials live per login and project, expire, and can be forgott
   assert.equal(recalledCredentials('login-1', 'p', 1000 + 13 * 3600 * 1000), null);
   forgetCredentials('login-1', 'p');
   assert.equal(recalledCredentials('login-1', 'p', 2000), null);
+});
+
+test('the local credentials file logs in only outside production and for the same QAS', async () => {
+  const { mkdtemp, writeFile } = await import('node:fs/promises');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const file = join(await mkdtemp(join(tmpdir(), 'sap-profile-')), 'profile.json');
+  await writeFile(
+    file,
+    JSON.stringify({
+      SAP_URL: 'https://qas.example:44300',
+      SAP_CLIENT: '100',
+      SAP_USER: 'TESTER',
+      SAP_PASSWORD: 'secret',
+    }),
+  );
+  const qas = { sapUrl: 'https://qas.example:44300', client: '100' };
+  const env = { SAP_MCP_PROFILE_FILE: file };
+  assert.deepEqual(await profileCredentials(qas, env), { username: 'TESTER', password: 'secret' });
+  assert.equal(await profileCredentials(qas, { ...env, NODE_ENV: 'production' }), null);
+  assert.equal(await profileCredentials({ ...qas, client: '200' }, env), null);
+  assert.equal(await profileCredentials({ ...qas, sapUrl: 'https://other:44300' }, env), null);
+  assert.equal(await profileCredentials(qas, {}), null);
+  assert.equal(await profileCredentials(qas, { SAP_MCP_PROFILE_FILE: file + '.missing' }), null);
 });

@@ -14,6 +14,7 @@ import {
   rememberCredentials,
   recalledCredentials,
   forgetCredentials,
+  profileCredentials,
 } from './session-credentials.mjs';
 
 export function registerSapRoutes(app, pool, org, requireSession) {
@@ -262,6 +263,8 @@ export function registerSapRoutes(app, pool, org, requireSession) {
       client: c.client,
       username: entry?.username ?? c.username ?? '',
       ready: !!entry,
+      // Local development only: a credentials file for this QAS can log in without typing.
+      profileAvailable: !!(await profileCredentials(c)),
     };
   };
   app.get('/api/projects/:projectId/sap/test-system', async (req) => {
@@ -270,24 +273,37 @@ export function registerSapRoutes(app, pool, org, requireSession) {
   });
   app.post('/api/projects/:projectId/sap/test-system', async (req) => {
     const { current, project } = await delivery.read(req);
-    const username = v.text(req.body?.username, 'QAS 用户', 128);
-    if (
-      typeof req.body?.password !== 'string' ||
-      !req.body.password ||
-      req.body.password.length > 256
-    )
-      throw failure(400, '请输入 QAS 密码。');
+    const notConfigured = () =>
+      failure(409, '项目未配置可用的 QAS 系统，请联系管理员在项目参数中配置。');
+    const fromProfile = req.body?.useProfile === true;
+    let username, password;
+    if (fromProfile) {
+      let base;
+      try {
+        base = await effectiveConfig(pool, org, project, current.user.id, TEST_ENVIRONMENT);
+      } catch {
+        throw notConfigured();
+      }
+      const profile = await profileCredentials(base);
+      if (!profile) throw failure(409, '本机凭据文件不可用，或与项目 QAS 的地址、client 不一致。');
+      ({ username, password } = profile);
+    } else {
+      username = v.text(req.body?.username, 'QAS 用户', 128);
+      password = req.body?.password;
+      if (typeof password !== 'string' || !password || password.length > 256)
+        throw failure(400, '请输入 QAS 密码。');
+    }
     let c;
     try {
       c = await effectiveConfig(pool, org, project, current.user.id, TEST_ENVIRONMENT, {
         username,
-        password: req.body.password,
+        password,
         passwordAction: 'replace',
       });
     } catch {
-      throw failure(409, '项目未配置可用的 QAS 系统，请联系管理员在项目参数中配置。');
+      throw notConfigured();
     }
-    if (!c.sapUrl) throw failure(409, '项目未配置可用的 QAS 系统，请联系管理员在项目参数中配置。');
+    if (!c.sapUrl) throw notConfigured();
     const result = await probeSystem({
       SAP_MCP_ENTRY: process.env.SAP_MCP_ENTRY,
       SAP_ALLOW_HTTP: process.env.SAP_ALLOW_HTTP,
@@ -297,7 +313,7 @@ export function registerSapRoutes(app, pool, org, requireSession) {
       SAP_LANGUAGE: c.language,
       SAP_CLIENT: c.client ?? '',
       SAP_USER: username,
-      SAP_PASSWORD: req.body.password,
+      SAP_PASSWORD: password,
     });
     await pool.query(
       `INSERT INTO app.audit_event(organization_id,actor_user_id,action,outcome,subject_type,subject_id,request_id,details) VALUES($1,$2,'sap.test_system.login',$3,'project',$4,$5,$6)`,
@@ -307,11 +323,16 @@ export function registerSapRoutes(app, pool, org, requireSession) {
         result.status === 'passed' ? 'success' : 'failure',
         project.id,
         randomUUID(),
-        JSON.stringify({ environment: TEST_ENVIRONMENT, systemId: c.systemId, username }),
+        JSON.stringify({
+          environment: TEST_ENVIRONMENT,
+          systemId: c.systemId,
+          username,
+          source: fromProfile ? 'profile' : 'form',
+        }),
       ],
     );
     if (result.status !== 'passed') throw failure(400, result.message);
-    rememberCredentials(current.sessionId, project.id, c, req.body.password);
+    rememberCredentials(current.sessionId, project.id, c, password);
     return testSystemView(current, project);
   });
   app.delete('/api/projects/:projectId/sap/test-system', async (req) => {

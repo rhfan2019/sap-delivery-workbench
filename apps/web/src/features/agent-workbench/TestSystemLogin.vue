@@ -15,6 +15,7 @@ interface TestSystem {
   client?: string | null;
   username?: string;
   ready: boolean;
+  profileAvailable?: boolean;
 }
 const projectId = computed(() => props.base.split('/')[2]);
 const system = ref<TestSystem | null>(null),
@@ -36,12 +37,17 @@ onMounted(async () => {
     error.value = (e as Error).message;
   }
 });
-async function login() {
+// `fromProfile`: local development only, the server reads the machine's credentials file.
+async function login(fromProfile = false) {
   busy.value = true;
   error.value = '';
   try {
     adopt(
-      await api<TestSystem>(path(), { username: username.value, password: password.value }, 'POST'),
+      await api<TestSystem>(
+        path(),
+        fromProfile ? { useProfile: true } : { username: username.value, password: password.value },
+        'POST',
+      ),
     );
     open.value = !props.compact;
   } catch (e) {
@@ -82,7 +88,7 @@ async function logout() {
       v-if="!system.ready && open"
       class="flex flex-wrap items-center gap-2"
       autocomplete="on"
-      @submit.prevent="login"
+      @submit.prevent="login()"
     >
       <input
         v-model="username"
@@ -104,6 +110,15 @@ async function logout() {
       <Button type="submit" size="sm" :disabled="busy">{{
         busy ? '正在验证…' : '登录 QAS'
       }}</Button>
+      <Button
+        v-if="system.profileAvailable"
+        type="button"
+        size="sm"
+        variant="outline"
+        :disabled="busy"
+        @click="login(true)"
+        >使用本机凭据文件登录</Button
+      >
     </form>
     <p v-if="error" class="text-destructive" role="alert">{{ error }}</p>
   </div>

@@ -84,3 +84,7 @@
 - 新增迁移 `1792200000000_drop-sap-allowlist.sql` 删除 `app.sap_system_allowlist`；后台“SAP 系统”页面去掉“白名单”按钮与对话框，相关接口删除。
 - 保留语句级静态审查（禁止直接写库、动态调用、`SUBMIT`、`CALL TRANSACTION`、`DESTINATION`、文件与内核调用、类或方法定义），以及“至少调用一个 BAPI、函数或类”。授权卡片仍列出代码调用的全部函数和类。
 - 第 6 节中关于白名单的内容以本节为准。
+
+## 8. 本机测试自动登录 QAS（2026-10-16，契约 1.10）
+
+用户要求测试中自动登录 QAS。.env 的 `TEST_USER_NAME` / `TEST_USER_PASS` 是工作台本地管理员，不是 SAP 账号；SAP 凭据在 `SAP_MCP_PROFILE_FILE` 指向的本机文件中。实现：非生产环境下，测试系统登录接口接受 `{ useProfile: true }`，由服务端读取该文件，仅当文件中的地址与 client 与项目 QAS 配置一致时可用；登录框中出现“使用本机凭据文件登录”按钮。密码不经过浏览器，审计记录 `source: 'profile'`。生产环境不可用。

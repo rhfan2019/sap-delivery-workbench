@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { failure } from '../../platform/auth.mjs';
 import { binding } from './resolve.mjs';
 
@@ -33,3 +34,30 @@ export function forgetCredentials(sessionId, projectId) {
 
 export const loginRequired = (message = '请先输入您本人的 QAS 用户和密码。') =>
   Object.assign(failure(409, message), { code: 'TEST_SYSTEM_LOGIN_REQUIRED' });
+
+// Local development only (contract 3.4): the credentials file the MCP runtime can also use,
+// accepted when it points at the same SAP origin and client as the project's QAS.
+export async function profileCredentials(effective, env = process.env) {
+  if (env.NODE_ENV === 'production' || !env.SAP_MCP_PROFILE_FILE || !effective?.sapUrl) return null;
+  let profile;
+  try {
+    profile = JSON.parse(await readFile(env.SAP_MCP_PROFILE_FILE, 'utf8'));
+  } catch {
+    return null;
+  }
+  const origin = (url) => {
+    try {
+      return new URL(url).origin;
+    } catch {
+      return null;
+    }
+  };
+  if (
+    !profile?.SAP_USER ||
+    !profile.SAP_PASSWORD ||
+    origin(profile.SAP_URL) !== origin(effective.sapUrl) ||
+    String(profile.SAP_CLIENT ?? '') !== String(effective.client ?? '')
+  )
+    return null;
+  return { username: String(profile.SAP_USER), password: String(profile.SAP_PASSWORD) };
+}
