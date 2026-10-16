@@ -389,10 +389,6 @@ test('a test data request waits for authorization, then runs before the model co
       client: '100',
       ready,
     }),
-    listAllowlist: async () => [
-      { kind: 'BAPI', name: 'BAPI_SALESORDER_CREATEFROMDAT2' },
-      { kind: 'BAPI', name: 'BAPI_TRANSACTION_COMMIT' },
-    ],
     resolveTestSystem: async () => {
       if (!ready)
         throw Object.assign(new Error('请先输入您本人的 QAS 用户和密码。'), {
@@ -461,7 +457,7 @@ test('a test data request waits for authorization, then runs before the model co
     const sid = (await call('POST', '/sessions', {})).json().id;
     model.queue.push(async (messages) => {
       assert.match(messages[1].content, /测试系统（QAS）：Q01/);
-      assert.match(messages[1].content, /建单白名单：BAPI_SALESORDER_CREATEFROMDAT2/);
+      assert.match(messages[1].content, /可以用 request_test_data 申请在 QAS 建立/);
       return reply('', [ask('TD-01')]);
     });
     const asked = await send(sid, { content: '补充附录 D' });

@@ -15,13 +15,8 @@ const target = {
   client: '100',
   ready: false,
 };
-const allowlist = [
-  { kind: 'BAPI', name: 'BAPI_SALESORDER_CREATEFROMDAT2' },
-  { kind: 'BAPI', name: 'BAPI_TRANSACTION_COMMIT' },
-];
 const deps = {
   testSystemTarget: async () => target,
-  listAllowlist: async () => allowlist,
   resolveTestSystem: async () => {
     throw Object.assign(new Error('login'), { code: 'TEST_SYSTEM_LOGIN_REQUIRED' });
   },
@@ -36,12 +31,13 @@ const args = {
     "CALL FUNCTION 'BAPI_SALESORDER_CREATEFROMDAT2'.\nCALL FUNCTION 'BAPI_TRANSACTION_COMMIT'.",
 };
 
-test('facts name the test system, login state and allowlist; or say it is not configured', async () => {
+test('facts name the test system and login state; or say it is not configured', async () => {
   const facts = await testSystemFacts(null, scope, deps);
   assert.equal(facts.configured, true);
   assert.match(facts.text, /Q01 测试系统，client 100/);
   assert.match(facts.text, /尚未输入本人的 QAS 用户/);
-  assert.match(facts.text, /建单白名单：BAPI_SALESORDER_CREATEFROMDAT2、BAPI_TRANSACTION_COMMIT/);
+  assert.match(facts.text, /可以用 request_test_data 申请在 QAS 建立/);
+  assert.doesNotMatch(facts.text, /白名单/);
   const none = await testSystemFacts(null, scope, {
     testSystemTarget: async () => {
       throw new Error('none');

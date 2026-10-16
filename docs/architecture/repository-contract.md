@@ -1,6 +1,8 @@
 # 仓库目录与依赖契约
 
-版本：1.8。日期：2026-10-15。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.9。日期：2026-10-16。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.9 变更：用户 2026-10-16 决定取消建单白名单（维护工作量过大）：建单代码可调用任何 BAPI、函数模块和类，用户逐次授权与审阅代码是唯一的放行环节；黑名单留待确有需要时再设计，暂不实施。以新增迁移删除 `app.sap_system_allowlist`，后台“SAP 系统”页面不再提供白名单。语句级静态审查（禁止直接写库、动态调用等）保留。见 3.4 节。
 
 1.8 变更：依据 [FSD 附录 D 测试案例计划](../plans/2026-10-15-fsd-test-cases.md)（用户 2026-10-15 确认阶段 2），智能体对 SAP 的访问由“只读”扩展为“只读 + 经用户逐次授权、在 QAS 创建测试数据”。创建能力归 sap 模块（白名单、会话级个人凭据、临时类执行与运行记录），agent-core 只提供查询测试系统与申请建单的工具定义和执行编排；PRD 一律拒绝。新增表 `app.sap_system_allowlist`、`app.sap_test_data_run` 归 sap。见 3.4 节；新增检查规则见第 9 节。
 
@@ -103,10 +105,10 @@ fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3
 ### 3.4 测试数据创建（sap）
 
 - **边界**：智能体对 SAP 默认只读。唯一的写操作是为测试案例创建业务单据：只在项目配置的 **QAS** 环境执行，PRD 及未配置 QAS 时拒绝；每次执行前由用户在界面逐次授权，授权只对该次请求有效。
-- **职责归属**：sap 模块负责 BAPI / 函数模块 / 类白名单（按 SAP 系统，后台“SAP 系统”页面维护）、会话级个人凭据、建单代码的静态审查与执行、运行记录。agent-core 负责模型工具定义（查询测试系统、申请建单）与在轮次中编排执行；各智能体只决定是否启用这些工具及如何写入自己的产物。
-- **执行方式**：程序生成固定前缀的临时类（`$TMP`，实现 `IF_OO_ADT_CLASSRUN`），类定义由程序生成，模型只提供主方法正文；正文只能调用白名单中的函数与类，禁止直接数据库写、动态调用、`SUBMIT`、`CALL TRANSACTION`、文件与内核调用等。依次建对象、写源码、语法检查、激活、运行，运行后删除临时类。MCP 的写入类工具（`createObject`、`lock`、`unLock`、`setObjectSource`、`activateByName`、`runClass`、`deleteObject`）只允许在 `sap/test-data.mjs` 中出现。
+- **职责归属**：sap 模块负责会话级个人凭据、建单代码的静态审查与执行、运行记录。agent-core 负责模型工具定义（查询测试系统、申请建单）与在轮次中编排执行；各智能体只决定是否启用这些工具及如何写入自己的产物。
+- **执行方式**：程序生成固定前缀的临时类（`$TMP`，实现 `IF_OO_ADT_CLASSRUN`），类定义由程序生成，模型只提供主方法正文；正文可以调用任何 BAPI、函数模块和类（不设白名单；黑名单暂不实施），但禁止直接数据库写、动态调用、`SUBMIT`、`CALL TRANSACTION`、文件与内核调用等。依次建对象、写源码、语法检查、激活、运行，运行后删除临时类。MCP 的写入类工具（`createObject`、`lock`、`unLock`、`setObjectSource`、`activateByName`、`runClass`、`deleteObject`）只允许在 `sap/test-data.mjs` 中出现。
 - **个人凭据**：QAS 的系统与 client 取项目配置；用户名和密码必须是用户本人的，在一次登录内输入一次，只保存在 API 进程内存（按登录会话），不落库、不写日志；退出、过期或 API 重启后需重新输入。界面使用浏览器可保存的密码表单。
-- **数据归属**：`app.sap_system_allowlist`（白名单）、`app.sap_test_data_run`（授权人、目标系统、类名与正文、调用的函数、输出、结果）归 sap；同时写一条 `app.audit_event`。
+- **数据归属**：`app.sap_test_data_run`（授权人、目标系统、类名与正文、调用的函数、输出、结果）归 sap；同时写一条 `app.audit_event`。
 
 认证和连接配置属于 platform；只供一个业务使用的提示词、模板和资源放该业务模块内。禁止为单一消费者新增 packages/agents。
 
@@ -171,7 +173,7 @@ docs/architecture 放唯一架构契约与审计；docs/specs 放版本化设计
 
 npm run check:architecture 必须检查：受控根目录、workspace 清单、跨应用违规依赖、应用反向导入 scripts、contracts 反向依赖、跨包物理路径、缺失本地导入、前端 Node 校验入口，以及测试文件是否被发现。检查器自身必须有违规反例测试。
 
-1.8 新增检查：`apps/api/` 下除 `apps/api/src/modules/sap/test-data.mjs` 外，不得以字符串形式引用 MCP 写入类工具名（`createObject`、`lock`、`unLock`、`setObjectSource`、`activateByName`、`runClass`、`deleteObject`），保证所有 SAP 写入都经过白名单、授权与运行记录。
+1.8 新增检查：`apps/api/` 下除 `apps/api/src/modules/sap/test-data.mjs` 外，不得以字符串形式引用 MCP 写入类工具名（`createObject`、`lock`、`unLock`、`setObjectSource`、`activateByName`、`runClass`、`deleteObject`），保证所有 SAP 写入都经过代码审查、用户授权与运行记录。
 
 1.7 新增检查：版本目录禁令扩展到 agent-core、abap-dev-agent、agent-workbench 的后端模块、前端 feature 与共享契约；agent-core、abap-fsd-agent、abap-dev-agent 跨模块导入必须指向对方的 `public.mjs`（原只约束 abap-fsd-agent）；智能体模块 `prompts/` 下只允许 `.md` 与 `<类型>-example.abap` 文件且不得有子目录，`frameworks/` 下只允许 `.abap` 文件；前端 `features/abap-fsd-agent` 与 `features/abap-dev-agent` 不得互相导入。
 

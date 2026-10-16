@@ -263,38 +263,11 @@ test('SAP configuration HTTP and database boundaries', async (t) => {
       },
     );
     await t.test(
-      'allowlist is admin-only; QAS login is per login session and memory only',
+      'no allowlist endpoint remains; QAS login is per login session and memory only',
       async () => {
+        // Contract 1.9: test data code may call any BAPI, function module or class.
         const allowUrl = '/api/admin/sap-systems/' + system.id + '/allowlist';
-        assert.equal((await req('GET', allowUrl, undefined, m)).statusCode, 403);
-        const added = await req(
-          'POST',
-          allowUrl,
-          { kind: 'BAPI', name: 'bapi_transaction_commit' },
-          a,
-        );
-        assert.equal(added.statusCode, 200, added.body);
-        assert.equal(added.json().name, 'BAPI_TRANSACTION_COMMIT');
-        assert.equal(
-          (await req('POST', allowUrl, { kind: 'BAPI', name: 'BAPI_TRANSACTION_COMMIT' }, a))
-            .statusCode,
-          409,
-        );
-        assert.equal(
-          (await req('POST', allowUrl, { kind: 'BAPI', name: 'NO SPACE' }, a)).statusCode,
-          400,
-        );
-        assert.equal(
-          (await req('POST', allowUrl, { kind: 'PROG', name: 'ZX' }, a)).statusCode,
-          400,
-        );
-        const off = await req('POST', allowUrl, { ...added.json(), active: false }, a);
-        assert.equal(off.statusCode, 200, off.body);
-        assert.equal(off.json().active, false);
-        assert.equal(
-          (await req('POST', allowUrl, { ...added.json(), active: true }, a)).statusCode,
-          409,
-        );
+        assert.equal((await req('GET', allowUrl, undefined, a)).statusCode, 404);
 
         const qasUrl = personalUrl.replace(/\/sap$/, '/sap/test-system');
         const status = (await req('GET', qasUrl, undefined, m)).json();
@@ -377,7 +350,6 @@ test('SAP configuration HTTP and database boundaries', async (t) => {
       'user_project_sap_config',
       'project_sap_config',
       'sap_system_grant',
-      'sap_system_allowlist',
       'sap_system',
       'auth_session',
       'project_member',

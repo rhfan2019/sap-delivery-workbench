@@ -14,11 +14,6 @@ import {
 } from '../../../apps/api/src/modules/sap/session-credentials.mjs';
 import { binding } from '../../../apps/api/src/modules/sap/resolve.mjs';
 
-const allowlist = [
-  { kind: 'BAPI', name: 'BAPI_SALESORDER_CREATEFROMDAT2' },
-  { kind: 'BAPI', name: 'BAPI_TRANSACTION_COMMIT' },
-  { kind: 'BAPI', name: 'BAPI_TRANSACTION_ROLLBACK' },
-];
 const body = [
   'DATA: ls_header TYPE bapisdhd1, lt_return TYPE STANDARD TABLE OF bapiret2, lv_vbeln TYPE vbeln_va.',
   "ls_header-doc_type = 'OR'. \" a comment saying UPDATE vbak",
@@ -32,14 +27,14 @@ const body = [
   "DATA(lv_text) = 'SUBMIT and UPDATE are only words here'.",
 ].join('\n');
 
-test('review accepts allowlisted calls and ignores comments, literals and components', () => {
-  assert.deepEqual(reviewSource(body, allowlist), {
+test('review accepts any BAPI, function or class and ignores comments, literals and components', () => {
+  assert.deepEqual(reviewSource(body), {
     problems: [],
     functions: ['BAPI_SALESORDER_CREATEFROMDAT2', 'BAPI_TRANSACTION_COMMIT'],
   });
 });
 
-test('review refuses direct database writes, dynamic and remote calls, unknown objects', () => {
+test('review refuses direct database writes, dynamic and remote calls, definitions', () => {
   const bad = [
     body,
     "UPDATE vbak SET netwr = 0 WHERE vbeln = '1'.",
@@ -52,7 +47,7 @@ test('review refuses direct database writes, dynamic and remote calls, unknown o
     'lo_x = NEW zcl_anything( ).',
     'METHOD other.',
   ].join('\n');
-  const { problems } = reviewSource(bad, allowlist);
+  const { problems, functions } = reviewSource(bad);
   for (const pattern of [
     /直接更新数据库表/,
     /直接删除数据库表记录/,
@@ -61,16 +56,16 @@ test('review refuses direct database writes, dynamic and remote calls, unknown o
     /SUBMIT/,
     /CALL TRANSACTION/,
     /DESTINATION/,
-    /函数 RFC_PING 不在/,
-    /类 ZCL_ANYTHING 不在/,
     /类或方法定义/,
   ])
     assert.ok(
       problems.some((p) => pattern.test(p)),
       pattern,
     );
-  assert.match(reviewSource('out->write( 1 ).', allowlist).problems.join(), /没有调用白名单/);
-  assert.match(reviewSource(body, []).problems.join(), /不在该系统的白名单中/);
+  // Contract 1.9: no allowlist; every function and class called is listed for the user.
+  assert.ok(functions.includes('RFC_PING') && functions.includes('ZCL_ANYTHING'));
+  assert.ok(!problems.some((p) => /白名单/.test(p)));
+  assert.match(reviewSource('out->write( 1 ).').problems.join(), /没有调用任何 BAPI/);
 });
 
 test('the class wraps the body; outputs list created documents', () => {
@@ -95,7 +90,7 @@ function fakes({
   const db = {
     async query(sql, params) {
       queries.push({ sql, params });
-      return { rows: /sap_system_allowlist/.test(sql) ? allowlist : [] };
+      return { rows: [] };
     },
   };
   const calls = [];

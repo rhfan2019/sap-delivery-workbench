@@ -39,7 +39,7 @@ const legacyIdentifiers = [
   'app.fs_draft',
   'app.fs_version',
 ];
-// Contract 1.8: every SAP write goes through the allowlist, authorization and run record.
+// Contract 1.8: every SAP write goes through the code review, authorization and run record.
 const sapWriteTools =
   /['"`](createObject|lock|unLock|setObjectSource|activateByName|runClass|deleteObject)['"`]/;
 const sapWriter = 'apps/api/src/modules/sap/test-data.mjs';

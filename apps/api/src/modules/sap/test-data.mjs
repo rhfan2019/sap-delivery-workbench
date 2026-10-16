@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
 import { connectMcp } from '../technical/sap-mcp.mjs';
-import { listAllowlist } from './allowlist.mjs';
 import { resolveTestSystem } from './targets.mjs';
 
 // Contract 3.4: the only place that writes to SAP. Generated test data code runs in QAS as
@@ -8,7 +7,6 @@ import { resolveTestSystem } from './targets.mjs';
 // is fixed here, the model supplies only the body of the main method.
 export const CLASS_PREFIX = 'ZCL_SDWB_TD_';
 const MAX_BODY = 20000;
-const SAFE_CLASSES = new Set(['CL_ABAP_CHAR_UTILITIES', 'CL_ABAP_CONTEXT_INFO']);
 // Statements that may not start a statement of the body.
 const FORBIDDEN_STATEMENTS = [
   [/^EXEC\s+SQL\b/i, 'EXEC SQL'],
@@ -64,9 +62,10 @@ function stripped(body, blankLiterals) {
     .join('\n');
 }
 
-// Static review of a main method body against the system's active allowlist. Conservative:
-// anything it cannot prove harmless is refused with a reason the model can act on.
-export function reviewSource(body, allowlist) {
+// Static review of a main method body. Conservative: statements it cannot prove harmless
+// are refused with a reason the model can act on. Returns the functions and classes called,
+// for the user to see before authorizing.
+export function reviewSource(body) {
   const problems = [];
   if (typeof body !== 'string' || !body.trim()) return { problems: ['代码为空。'], functions: [] };
   if (body.length > MAX_BODY) problems.push(`代码超过 ${MAX_BODY} 字符。`);
@@ -80,10 +79,7 @@ export function reviewSource(body, allowlist) {
       if (pattern.test(statement)) refused.add(label);
   }
   for (const label of refused) problems.push(`不允许：${label}。`);
-  const allowed = (kinds) =>
-    new Set(allowlist.filter((e) => kinds.includes(e.kind)).map((e) => e.name.toUpperCase()));
-  const functionsAllowed = allowed(['BAPI', 'FM']),
-    classesAllowed = allowed(['CLASS']);
+  // Contract 1.9: any BAPI, function module or class may be called; the user reviews the code.
   const functions = [
     ...new Set(
       [...stripped(body, false).matchAll(/\bCALL\s+FUNCTION\s+'([^']+)'/gi)].map((m) =>
@@ -91,26 +87,17 @@ export function reviewSource(body, allowlist) {
       ),
     ),
   ];
-  for (const name of functions)
-    if (!functionsAllowed.has(name)) problems.push(`函数 ${name} 不在该系统的白名单中。`);
   const classes = new Set();
   for (const pattern of [
     /\b([A-Z_/][\w/]*)\s*=>/gi,
     /\bNEW\s+([A-Z_/][\w/]*)\s*\(/gi,
-    /\bTYPE\s+REF\s+TO\s+([A-Z_/][\w/]*)/gi,
     /\bCREATE\s+OBJECT\b[^.]*?\bTYPE\s+([A-Z_/][\w/]*)/gi,
   ])
     for (const m of code.matchAll(pattern)) classes.add(m[1].toUpperCase());
   for (const name of ['DATA', 'ME', 'IF_OO_ADT_CLASSRUN_OUT']) classes.delete(name);
-  for (const name of classes)
-    if (!SAFE_CLASSES.has(name) && !classesAllowed.has(name))
-      problems.push(`类 ${name} 不在该系统的白名单中。`);
-  if (!functions.length && ![...classes].some((c) => classesAllowed.has(c)))
-    problems.push('代码没有调用白名单中的 BAPI、函数或类，无法建立单据。');
-  return {
-    problems,
-    functions: [...functions, ...[...classes].filter((c) => classesAllowed.has(c))],
-  };
+  if (!functions.length && !classes.size)
+    problems.push('代码没有调用任何 BAPI、函数或类，无法建立单据。');
+  return { problems, functions: [...functions, ...classes] };
 }
 
 export function classSource(name, body) {
@@ -170,10 +157,7 @@ export async function executeTestData(
 ) {
   const { target, env } = await resolve(db, scope);
   if (target.environment !== 'QAS') throw new Error('测试数据只能建在 QAS。');
-  const allowlist = await listAllowlist(db, scope.organizationId, target.systemId, {
-    activeOnly: true,
-  });
-  const review = reviewSource(body, allowlist);
+  const review = reviewSource(body);
   if (review.problems.length) throw new Error('代码审查未通过：' + review.problems.join(' '));
   const id = randomUUID();
   const className = CLASS_PREFIX + id.replace(/-/g, '').slice(0, 8).toUpperCase();

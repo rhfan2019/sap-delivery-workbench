@@ -4,7 +4,6 @@ import {
   decodeResult,
   testSystemTarget,
   resolveTestSystem,
-  listAllowlist,
   reviewSource,
   executeTestData,
 } from '../sap/public.mjs';
@@ -35,7 +34,7 @@ export const TEST_DATA_TOOLS = [
         '关键数据，一行一项：组织、单据类型、客户、物料、数量、日期等，均来自 QAS 查询',
       ),
       abap_body: str(
-        '主方法 if_oo_adt_classrun~main 的正文（不含 METHOD/ENDMETHOD）。只调用白名单中的 BAPI、函数和类；检查 RETURN 中的错误，失败时调用 BAPI_TRANSACTION_ROLLBACK，成功时调用 BAPI_TRANSACTION_COMMIT（WAIT = abap_true）；每建成一张单据输出一行 out->write( |DOCUMENT <对象> { 单据号 }| )，并输出 RETURN 中的消息。',
+        '主方法 if_oo_adt_classrun~main 的正文（不含 METHOD/ENDMETHOD）。通过标准 BAPI、函数或类建单，不直接写数据库表；检查 RETURN 中的错误，失败时调用 BAPI_TRANSACTION_ROLLBACK，成功时调用 BAPI_TRANSACTION_COMMIT（WAIT = abap_true）；每建成一张单据输出一行 out->write( |DOCUMENT <对象> { 单据号 }| )，并输出 RETURN 中的消息。',
       ),
     },
   ),
@@ -53,20 +52,12 @@ export async function testSystemFacts(db, scope, deps = {}) {
       text: '- 测试系统（QAS）：项目未配置。测试单据在目标开发系统中用 runQuery 查找，查不到时来源写“未找到”。',
     };
   }
-  const allowlist = await (deps.listAllowlist ?? listAllowlist)(
-    db,
-    scope.organizationId,
-    target.systemId,
-    { activeOnly: true },
-  );
   const text = [
     `- 测试系统（QAS）：${target.systemCode} ${target.systemName}，client ${target.client}。测试单据用 query_test_system 在 QAS 查找，不在开发系统查找。`,
     target.ready
       ? '- 用户已输入本人的 QAS 用户，可以查询。'
       : '- 用户尚未输入本人的 QAS 用户：query_test_system 会提示用户登录；可以先写其余内容。',
-    allowlist.length
-      ? `- 建单白名单：${allowlist.map((e) => e.name).join('、')}。找不到单据时可以用 request_test_data 申请建立。`
-      : '- 建单白名单为空：不能申请建单，找不到的单据来源写“未找到”。',
+    '- 找不到所需单据时，可以用 request_test_data 申请在 QAS 建立，用户审阅代码并同意后执行。',
   ].join('\n');
   return { configured: true, text };
 }
@@ -109,13 +100,7 @@ export function createTestDataTools({ db, scope, deps = {} }) {
     } catch {
       return '项目未配置可用的 QAS 系统，不能申请建单。';
     }
-    const allowlist = await (deps.listAllowlist ?? listAllowlist)(
-      db,
-      scope.organizationId,
-      target.systemId,
-      { activeOnly: true },
-    );
-    const review = reviewSource(args.abap_body, allowlist);
+    const review = reviewSource(args.abap_body);
     if (review.problems.length)
       return '代码审查未通过，请修改后重新申请：\n' + review.problems.join('\n');
     requested = {

@@ -9,7 +9,6 @@ import { systemColumns, configView, saveRows, effectiveConfig } from './store.mj
 import { publicConfig } from './resolve.mjs';
 import { open } from './crypto.mjs';
 import { connectMcp, queryTable } from '../technical/sap-mcp.mjs';
-import { listAllowlist, saveAllowlistEntry } from './allowlist.mjs';
 import {
   TEST_ENVIRONMENT,
   rememberCredentials,
@@ -188,22 +187,6 @@ export function registerSapRoutes(app, pool, org, requireSession) {
       return { subjectId: id, data: { ok: true } };
     });
   });
-  app.get('/api/admin/sap-systems/:id/allowlist', async (req) => {
-    await admin.authorize(req);
-    return listAllowlist(pool, org, v.uuid(req.params.id));
-  });
-  app.post('/api/admin/sap-systems/:id/allowlist', async (req) =>
-    admin.write(req, 'admin.sap.allowlist.save', 'sap_system', async (db) => {
-      const id = v.uuid(req.params.id);
-      found(
-        await db.query('SELECT id FROM app.sap_system WHERE organization_id=$1 AND id=$2', [
-          org,
-          id,
-        ]),
-      );
-      return { subjectId: id, data: await saveAllowlistEntry(db, org, id, req.body) };
-    }),
-  );
   const project = async (db, id) =>
     found(
       await db.query('SELECT * FROM app.project WHERE organization_id=$1 AND id=$2', [
