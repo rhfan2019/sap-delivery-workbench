@@ -1,16 +1,5 @@
-import {
-  runAgentLoop,
-  openSap,
-  historyMessages,
-  LIMITS,
-  SAP_TOOLS,
-  TEST_DATA_TOOLS,
-  testSystemFacts,
-  createTestDataTools,
-  runAuthorizedTestData,
-} from '../agent-core/public.mjs';
+import { runAgentLoop, openSap, historyMessages, LIMITS } from '../agent-core/public.mjs';
 import { WORKSPACE_TOOLS, createWorkspace } from './tools/workspace.mjs';
-import { containsDocumentNumber, testDataNumbers } from './tools/check.mjs';
 import { compareDeclarations } from './document.mjs';
 import { loadSystemPrompt, sessionFacts } from './context.mjs';
 import * as repo from './repository.mjs';
@@ -23,12 +12,10 @@ const env = () => ({
   thinking: process.env.ABAP_FSD_AGENT_THINKING === 'off' ? false : undefined,
 });
 
-// Tools whose results can show a test document number (contract 3.4).
-const EVIDENCE_TOOLS = [...SAP_TOOLS, 'query_test_system', 'create_test_data'];
-
-// Runs one turn to its natural end (answer, questions, document written, a test data request)
-// or a limit. `approved` is a test data request the user just authorized: it runs first.
-// Never throws: failures end the turn with a status the user can see.
+// Runs one turn to its natural end (answer, questions, document written) or a limit.
+// `environment` is the SAP system the user chose for this message (contract 1.12: QAS by
+// default, where business data shows how the logic behaves). Never throws: failures end
+// the turn with a status the user can see.
 export async function runTurn({
   pool,
   scope,
@@ -37,12 +24,13 @@ export async function runTurn({
   model,
   emit,
   signal,
-  approved = null,
+  environment = 'QAS',
   deps = {},
 }) {
-  const sap = trackResults(
-    await (deps.openSap ?? openSap)(pool, scope, { budgetMs: LIMITS.sapBudgetMs }),
-  );
+  const sap = await (deps.openSap ?? openSap)(pool, scope, {
+    budgetMs: LIMITS.sapBudgetMs,
+    environment,
+  });
   const document = await repo.latestDocument(pool, sessionId);
   const comments = await repo.listComments(pool, sessionId, { openOnly: true });
   const attachments = await repo.listAttachments(pool, sessionId, { withText: true });
@@ -65,37 +53,11 @@ export async function runTurn({
         return value;
       }
     : undefined;
-  // Test document numbers must come from SAP: this turn's results, earlier turns' result
-  // summaries, or the previous version (whose numbers were checked when written).
-  const sapCalls = (await repo.listToolCalls(pool, sessionId)).filter(
-    (c) => c.status === 'ok' && EVIDENCE_TOOLS.includes(c.name),
-  );
-  const testData = createTestDataTools({ db: pool, scope, deps: deps.testData });
-  const testSystem = await testSystemFacts(pool, scope, deps.testData);
-  const created = [];
-  const evidence = [
-    testDataNumbers(document?.markdown ?? '').join(' '),
-    ...sapCalls.map((c) => c.summary),
-  ];
-  // Test data can only have been checked from the session's first SAP result until today;
-  // one day of slack on both sides absorbs time zones.
-  const day = (at, offset) =>
-    new Date(new Date(at).getTime() + offset * 864e5).toISOString().slice(0, 10);
-  const verifiedBetween = [day(sapCalls[0]?.createdAt ?? Date.now(), -1), day(Date.now(), 1)];
-  const seenInSap =
-    sap.available || testSystem.configured
-      ? (number) =>
-          [...evidence, ...(sap.results ?? []), ...testData.results, ...created].some((t) =>
-            containsDocumentNumber(t, number),
-          )
-      : undefined;
   const workspace = createWorkspace({
     markdown: document?.markdown ?? '',
     comments,
     verifyTable,
-    seenInSap,
     ignoreRefs: sap.available ? [sap.target.systemCode] : [],
-    verifiedBetween,
     onDocument: (markdown) => emit('document.draft', { markdown }),
     onReply: async (commentId, body) => {
       const reply = { body, by: 'assistant', at: new Date().toISOString() };
@@ -104,49 +66,7 @@ export async function runTurn({
     },
   });
 
-  // The user authorized a test data request: run it before the model continues, and give
-  // the model the outcome as the next message of the conversation.
-  async function createApproved() {
-    const started = Date.now();
-    emit('tool.start', { id: approved.id, name: 'create_test_data', arguments: approved.object });
-    const { run, text } = await runAuthorizedTestData(pool, scope, approved, {
-      agent: 'abap-fsd-agent',
-      agentSessionId: sessionId,
-      deps: deps.testData,
-    });
-    created.push(text);
-    const status = run.status === 'succeeded' ? 'ok' : 'error';
-    await repo.recordToolCall(pool, sessionId, turnId, {
-      name: 'create_test_data',
-      arguments: { requestId: approved.id, dataId: approved.dataId, object: approved.object },
-      status,
-      summary: text,
-      durationMs: Date.now() - started,
-    });
-    const testDataRun = {
-      requestId: approved.id,
-      status: run.status,
-      documents: run.documents ?? [],
-      error: run.error ?? null,
-    };
-    await repo.appendMessage(pool, sessionId, {
-      turnId,
-      role: 'user',
-      content: text,
-      payload: { testDataRun },
-    });
-    emit('tool.end', {
-      id: approved.id,
-      name: 'create_test_data',
-      status,
-      summary: text.slice(0, 160),
-      durationMs: Date.now() - started,
-      testDataRun,
-    });
-  }
-
   try {
-    if (approved) await createApproved();
     const messages = [
       { role: 'system', content: await loadSystemPrompt() },
       {
@@ -157,7 +77,6 @@ export async function runTurn({
           document,
           comments,
           attachments,
-          testSystem: testSystem.text,
           today: new Date().toISOString().slice(0, 10),
         }),
       },
@@ -166,8 +85,8 @@ export async function runTurn({
     ({ status, stopReason, usage, error } = await runAgentLoop({
       model,
       messages,
-      tools: [...WORKSPACE_TOOLS, ...TEST_DATA_TOOLS, ...(sap.available ? sap.tools : [])],
-      handlers: { ...workspace.handlers, ...testData.handlers },
+      tools: [...WORKSPACE_TOOLS, ...(sap.available ? sap.tools : [])],
+      handlers: workspace.handlers,
       sap,
       emit,
       signal,
@@ -177,8 +96,7 @@ export async function runTurn({
         appendMessage: (message) => repo.appendMessage(pool, sessionId, { turnId, ...message }),
         recordToolCall: (call) => repo.recordToolCall(pool, sessionId, turnId, call),
       },
-      shouldStop: () =>
-        workspace.state.questions ? 'asked' : testData.requested ? 'authorization' : null,
+      shouldStop: () => (workspace.state.questions ? 'asked' : null),
       logArguments: (name, args) =>
         name.endsWith('_document') ? { ...args, content: undefined, new_text: undefined } : args,
       truncatedHint:
@@ -191,7 +109,6 @@ export async function runTurn({
     error = { code: e.code ?? 'ERROR', message: String(e.message).slice(0, 500) };
   } finally {
     await sap.close?.();
-    await testData.close();
     // Whatever happened, keep the document work done so far and release the session.
     try {
       if (workspace.state.changed) {
@@ -219,19 +136,4 @@ export async function runTurn({
     emit('turn.end', { status, stopReason, version, usage, error });
   }
   return { status, stopReason, version };
-}
-
-// Keeps the text of every successful SAP result of the turn, as the model saw it.
-function trackResults(sap) {
-  if (!sap.available) return sap;
-  const results = [];
-  return {
-    ...sap,
-    results,
-    async call(name, args) {
-      const outcome = await sap.call(name, args);
-      if (outcome.status === 'ok') results.push(outcome.content);
-      return outcome;
-    },
-  };
 }

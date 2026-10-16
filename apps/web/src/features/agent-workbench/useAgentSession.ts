@@ -1,4 +1,4 @@
-import { computed, onScopeDispose, ref, shallowRef } from 'vue';
+import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue';
 import type {
   AgentAttachment,
   AgentDecision,
@@ -30,7 +30,21 @@ type Status =
   | 'cancelled';
 // One agent conversation: history, the live turn, its files and comments. What the agent
 // produces (an FSD, a plan and code) stays in `detail` and `drafts` for the agent's panel.
-export function useAgentSession(base: string) {
+export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV') {
+  // The SAP system the next message reads (contract 1.12), remembered per assistant and item.
+  const sapKey = 'sap-environment:' + base;
+  let remembered: string | null = null;
+  try {
+    remembered = localStorage.getItem(sapKey);
+  } catch {}
+  const sapEnvironment = ref<'DEV' | 'QAS'>(
+    remembered === 'DEV' || remembered === 'QAS' ? remembered : defaultSap,
+  );
+  watch(sapEnvironment, (value) => {
+    try {
+      localStorage.setItem(sapKey, value);
+    } catch {}
+  });
   const sessionId = ref('');
   const messages = ref<AgentMessage[]>([]);
   const steps = ref<AgentStep[]>([]);
@@ -209,7 +223,7 @@ export function useAgentSession(base: string) {
     testData.value = null;
     const started = await api<{ turnId: string }>(
       `${base}/sessions/${sessionId.value}/messages`,
-      { content, ...(answers ? { answers } : {}) },
+      { content, sapEnvironment: sapEnvironment.value, ...(answers ? { answers } : {}) },
       'POST',
     );
     messages.value.push({
@@ -235,7 +249,10 @@ export function useAgentSession(base: string) {
     error.value = '';
     const started = await api<{ turnId: string }>(
       `${base}/sessions/${sessionId.value}/messages`,
-      { authorization: { requestId: request.id, decision, note } },
+      {
+        authorization: { requestId: request.id, decision, note },
+        sapEnvironment: sapEnvironment.value,
+      },
       'POST',
     );
     testData.value = null;
@@ -295,6 +312,7 @@ export function useAgentSession(base: string) {
     steps,
     decision,
     testData,
+    sapEnvironment,
     status,
     statusLabel,
     busy,

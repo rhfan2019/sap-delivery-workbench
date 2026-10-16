@@ -1,4 +1,5 @@
 import { connectMcp, decodeResult, resolveProjectSap } from '../sap/public.mjs';
+import { failure } from '../../platform/auth.mjs';
 
 // Read-only abap-adt tools the model may use (system prompt part 4). Everything else the
 // MCP server offers (writes, code execution, debugger, transports...) never reaches the model.
@@ -54,18 +55,29 @@ export function truncate(text, limit = MAX_RESULT_CHARS) {
     : text.slice(0, limit) + `\n…（结果已截断，共 ${text.length} 字符；请缩小查询范围）`;
 }
 
+// Contract 1.12: the user picks the SAP system per message; agents never read PRD.
+export const SAP_ENVIRONMENTS = ['DEV', 'QAS'];
+export function sapEnvironment(value, fallback) {
+  if (value === undefined || value === null || value === '') return fallback;
+  if (!SAP_ENVIRONMENTS.includes(value)) throw failure(400, 'SAP 系统只能选择 DEV 或 QAS。');
+  return value;
+}
+
 // Opens one MCP connection for a turn. Never throws: when SAP is not usable the agent
 // keeps working without SAP tools and tells the model why.
 export async function openSap(
   db,
   scope,
-  { budgetMs, connect = connectMcp, resolve = resolveProjectSap } = {},
+  { budgetMs, environment = 'DEV', connect = connectMcp, resolve = resolveProjectSap } = {},
 ) {
   let resolved;
   try {
-    resolved = await resolve(db, scope);
+    resolved = await resolve(db, scope, environment);
   } catch (error) {
-    return { available: false, reason: '项目未配置可用的 DEV SAP 系统：' + error.message };
+    return {
+      available: false,
+      reason: `项目未配置可用的 ${environment} SAP 系统：` + error.message,
+    };
   }
   let connection;
   try {

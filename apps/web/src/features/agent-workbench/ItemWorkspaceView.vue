@@ -29,7 +29,7 @@ import './workspace.css';
 
 const props = defineProps<{ projectId: string; itemId: string; config: StageConfig }>();
 const agentBase = `/projects/${props.projectId}/development-items/${props.itemId}/${props.config.agent}`;
-const run = useAgentSession(agentBase);
+const run = useAgentSession(agentBase, props.config.sapEnvironment);
 const state = ref<{
   project: { name: string };
   item: {
@@ -224,7 +224,6 @@ function resizePanel(event: PointerEvent) {
           :model-name="state.model"
           :editable="state.canEdit"
           :development="config.development"
-          :test-system="config.agent === 'abap-fsd-agent'"
           @busy="agentBusy = $event"
           @open-artifact="openArtifact"
           @files-changed="run.refresh()"

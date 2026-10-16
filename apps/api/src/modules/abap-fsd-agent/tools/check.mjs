@@ -21,19 +21,13 @@ export const REQUIRED_SECTIONS = [
 // subsections, column names and cell vocabularies are fixed.
 export const TEST_SUBSECTIONS = [
   ['D.1', '测试范围'],
-  ['D.2', '测试数据'],
+  ['D.2', '测试数据需求'],
   ['D.3', '测试案例'],
   ['D.4', '未覆盖'],
 ];
-export const TEST_DATA_COLUMNS = [
-  '数据编号',
-  '对象',
-  '单据号',
-  '数据特征',
-  '核实条件',
-  '来源',
-  '核实时间',
-];
+// Contract 1.12: the FSD states data requirements; finding or creating documents is the test
+// agent's job, so no document numbers are recorded here.
+export const TEST_DATA_COLUMNS = ['数据编号', '对象', '数据特征', '核实条件', '准备建议'];
 export const TEST_CASE_COLUMNS = [
   '编号',
   '场景',
@@ -45,7 +39,6 @@ export const TEST_CASE_COLUMNS = [
   '对应条款',
   '优先级',
 ];
-const SOURCES = ['系统已有', '本次新建', '未找到'];
 const DIMENSIONS = ['生命周期', '颗粒度', '粒度', '状态', '取数', '权限', '消息'];
 const CASE_KINDS = ['正向', '排除', '边界', '异常'];
 const NONE = /^(—|-|–|无)?$/;
@@ -54,13 +47,11 @@ const NONE = /^(—|-|–|无)?$/;
 const FIELD_REF = /\b([A-Z][A-Z0-9_]{2,15})-([A-Z][A-Z0-9_]{1,29})\b/g;
 
 // Deterministic checks of a draft. `verifyTable(name)` (optional) resolves to the table's
-// field definition text, or null when the table cannot be read. `seenInSap(value)`
-// (optional) tells whether a document number occurred in this session's SAP results.
-// `ignoreRefs` lists names that look like TABLE-FIELD but are not, e.g. the system code.
-// `verifiedBetween` ([from, to], YYYY-MM-DD) bounds the dates test data can have been checked.
+// field definition text, or null when the table cannot be read. `ignoreRefs` lists names
+// that look like TABLE-FIELD but are not, e.g. the system code.
 export async function checkDocument(
   markdown,
-  { verifyTable, seenInSap, ignoreRefs = [], verifiedBetween, maxTables = 30 } = {},
+  { verifyTable, ignoreRefs = [], maxTables = 30 } = {},
 ) {
   const problems = [];
   const sections = splitSections(markdown);
@@ -91,7 +82,7 @@ export async function checkDocument(
   for (const match of markdown.matchAll(/见\s*(\d+(?:\.\d+)+)/g))
     if (!numbers.has(match[1]))
       problems.push({ kind: 'reference', message: `引用了不存在的章节：见 ${match[1]}` });
-  problems.push(...checkTestCases(sections, numbers, seenInSap, verifiedBetween));
+  problems.push(...checkTestCases(sections, numbers));
 
   const verified = { tables: 0, unknownTables: [], unknownFields: [] };
   if (verifyTable) {
@@ -127,7 +118,7 @@ export async function checkDocument(
   return { ok: problems.length === 0, problems, verified };
 }
 
-function checkTestCases(sections, numbers, seenInSap, verifiedBetween) {
+function checkTestCases(sections, numbers) {
   const appendix = sections.find((s) => /附录\s*D/.test(s.heading));
   if (!appendix) return [];
   const parts = sections.filter((s) => /^D\.\d/.test(s.heading));
@@ -147,36 +138,16 @@ function checkTestCases(sections, numbers, seenInSap, verifiedBetween) {
   for (const [number, title] of TEST_SUBSECTIONS)
     if (!part(number)?.heading.includes(title)) add(`附录 D 缺少小节：${number} ${title}`);
 
-  const data = tableOf(part('D.2'), TEST_DATA_COLUMNS, 'D.2 测试数据', add);
+  const data = tableOf(part('D.2'), TEST_DATA_COLUMNS, 'D.2 测试数据需求', add);
   const dataIds = new Set();
-  const unverified = [];
   for (const row of data ?? []) {
-    const [id, , number, , condition, source, checkedOn] = row;
+    const [id, , feature, condition] = row;
     if (!/^TD-\d+$/.test(id)) add(`D.2 的数据编号“${id}”应写成 TD-01 的形式。`);
     else if (dataIds.has(id)) add(`D.2 的数据编号 ${id} 重复。`);
     dataIds.add(id);
-    if (!SOURCES.includes(source)) add(`D.2 ${id} 的来源“${source}”应为：${SOURCES.join('、')}。`);
-    if (source !== '未找到' && NONE.test(number)) add(`D.2 ${id} 来源为“${source}”但没有单据号。`);
+    if (NONE.test(feature)) add(`D.2 ${id} 没有写数据特征。`);
     if (NONE.test(condition)) add(`D.2 ${id} 没有写核实条件。`);
-    if (
-      verifiedBetween &&
-      source !== '未找到' &&
-      !(
-        /^\d{4}-\d{2}-\d{2}$/.test(checkedOn) &&
-        checkedOn >= verifiedBetween[0] &&
-        checkedOn <= verifiedBetween[1]
-      )
-    )
-      add(`D.2 ${id} 的核实时间“${checkedOn}”应为实际查询的日期（会话事实中的日期，YYYY-MM-DD）。`);
-    if (seenInSap && source !== '未找到')
-      for (const token of documentNumbers(number))
-        if (!seenInSap(token)) unverified.push(`${id} ${token}`);
   }
-  if (unverified.length)
-    add(
-      `这些单据号没有在本会话的 SAP 查询结果中出现：${unverified.join('、')}。` +
-        '请用 runQuery 查到后再写；查不到时来源写“未找到”、单据号写“—”。',
-    );
 
   const cases = tableOf(part('D.3'), TEST_CASE_COLUMNS, 'D.3 测试案例', add);
   if (cases && !cases.length) add('D.3 没有测试案例。');
@@ -225,32 +196,6 @@ function tableOf(section, columns, label, add) {
     return null;
   }
   return rows.slice(2).filter((r) => r.length === columns.length);
-}
-
-// Document numbers in a D.2 cell, e.g. "4381" (leading zeros dropped) or "4500000012/00010";
-// one- and two-digit tokens such as item numbers cannot identify a document and are left out.
-function documentNumbers(cell) {
-  if (NONE.test(cell)) return [];
-  return (cell.replace(/`/g, '').match(/[A-Z0-9]+/gi) ?? []).filter(
-    (t) => t.length >= 3 && /\d/.test(t),
-  );
-}
-
-// Document numbers already recorded in the D.2 table of `markdown`; a previous version's
-// numbers were checked when they were written.
-export function testDataNumbers(markdown) {
-  const section = splitSections(markdown).find((s) => /^D\.2\b/.test(s.heading));
-  const rows = tableOf(section, TEST_DATA_COLUMNS, '', () => {}) ?? [];
-  return rows.flatMap((r) => documentNumbers(r[2]));
-}
-
-// True when `number` occurs in `text` as a whole value, ignoring leading zeros on either side.
-export function containsDocumentNumber(text, number) {
-  const bare = String(number)
-    .toUpperCase()
-    .replace(/^0+(?=.)/, '');
-  const escaped = bare.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp(`(?<![0-9A-Z])0*${escaped}(?![0-9A-Z])`).test(String(text).toUpperCase());
 }
 
 function cells(row) {

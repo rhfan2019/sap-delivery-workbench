@@ -11,6 +11,7 @@ const config: StageConfig = {
   readonlyNote: '当前为只读，仅设计负责人或项目管理员可以修改。',
   sessionsHeading: '本开发项的设计对话',
   development: false,
+  sapEnvironment: 'QAS',
   artifactPanel: DocumentPanel,
   latestRevision: (detail) => detail?.document?.version,
   sessionVersion: (s) => (s.documentVersion ? ` · 文档第 ${s.documentVersion} 版` : ''),

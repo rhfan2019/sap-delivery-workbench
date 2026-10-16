@@ -6,6 +6,7 @@ import 'splitpanes/dist/splitpanes.css';
 import DecisionCard from './DecisionCard.vue';
 import TestDataCard from './TestDataCard.vue';
 import TestSystemLogin from './TestSystemLogin.vue';
+import SapSystemSelect from './SapSystemSelect.vue';
 import RunSteps from './RunSteps.vue';
 import ChatComposer from './ChatComposer.vue';
 import ConversationTimeline from './ConversationTimeline.vue';
@@ -205,6 +206,13 @@ const previewOpen = computed(() => !!activeAttachment.value);
                 @attach="open()"
                 @files="addFiles"
               >
+                <template #tools>
+                  <SapSystemSelect
+                    v-model="run.sapEnvironment.value"
+                    :base="base"
+                    :disabled="sending || !editable || blocked"
+                  />
+                </template>
                 <AttachmentTray
                   compact
                   v-if="attachments.length"

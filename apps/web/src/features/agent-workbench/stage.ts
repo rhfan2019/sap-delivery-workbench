@@ -10,6 +10,8 @@ export interface StageConfig {
   readonlyNote: string;
   sessionsHeading: string;
   development: boolean;
+  // SAP system a message reads unless the user picks another (contract 1.12).
+  sapEnvironment: 'DEV' | 'QAS';
   artifactPanel: Component;
   // Revision of the newest saved version in a session detail.
   latestRevision: (detail: any) => number | undefined;

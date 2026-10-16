@@ -5,7 +5,13 @@ import { fileURLToPath } from 'node:url';
 import { failure } from '../../platform/auth.mjs';
 import { createWorkContext } from '../item-workspace/public.mjs';
 import { resolveAgentModel } from '../models/public.mjs';
-import { parseFile, openTurn, streamTurnEvents, answersText } from '../agent-core/public.mjs';
+import {
+  parseFile,
+  openTurn,
+  streamTurnEvents,
+  answersText,
+  sapEnvironment,
+} from '../agent-core/public.mjs';
 import { diffLines } from './artifacts.mjs';
 import { SUPPORTED_KINDS } from './context.mjs';
 import { runTurn } from './loop.mjs';
@@ -108,12 +114,14 @@ export function registerAbapDevAgent(app, pool, organizationId, requireSession, 
     const content = answers?.length
       ? answersText(answers) + (req.body?.content?.trim() ? '\n\n' + req.body.content.trim() : '')
       : text(req.body?.content, '消息', 100000);
+    const environment = sapEnvironment(req.body?.sapEnvironment, 'DEV');
     const model = await (deps.resolveModel ?? resolveAgentModel)(pool, organizationId);
     const turnId = randomUUID();
     const claimed = await repo.claimTurn(pool, s.id, turnId, req.work.scope.actorId, {
       versionId: model.versionId,
       name: model.config.name,
       modelId: model.config.modelId,
+      sap: environment,
     });
     if (!claimed) throw failure(409, '上一轮还在进行中，请等待完成或先停止。');
     await repo.appendMessage(pool, s.id, {
@@ -139,6 +147,7 @@ export function registerAbapDevAgent(app, pool, organizationId, requireSession, 
           model,
           emit,
           signal: controller.signal,
+          environment,
           deps: deps.loop,
         }),
       )

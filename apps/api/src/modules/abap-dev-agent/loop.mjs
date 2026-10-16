@@ -27,9 +27,14 @@ export async function runTurn({
   model,
   emit,
   signal,
+  environment = 'DEV',
   deps = {},
 }) {
-  const sap = await (deps.openSap ?? openSap)(pool, scope, { budgetMs: LIMITS.sapBudgetMs });
+  // Contract 1.12: DEV by default; the user may choose QAS for a message.
+  const sap = await (deps.openSap ?? openSap)(pool, scope, {
+    budgetMs: LIMITS.sapBudgetMs,
+    environment,
+  });
   let status = 'completed',
     stopReason = 'answered',
     error = null,

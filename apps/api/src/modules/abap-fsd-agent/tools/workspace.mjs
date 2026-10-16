@@ -42,7 +42,7 @@ export const WORKSPACE_TOOLS = [
   ),
   fn(
     'check_document',
-    '检查章节完整性、表格结构、章节引用、附录 D 测试案例，并到 SAP 核实文中的表、字段和测试单据号。',
+    '检查章节完整性、表格结构、章节引用、附录 D 测试案例，并到 SAP 核实文中的表和字段。',
     {},
     [],
   ),
@@ -58,9 +58,7 @@ export function createWorkspace({
   markdown = '',
   comments = [],
   verifyTable,
-  seenInSap,
   ignoreRefs,
-  verifiedBetween,
   onDocument,
   onReply,
 }) {
@@ -69,7 +67,7 @@ export function createWorkspace({
   async function check() {
     if (!state.markdown.trim()) return '文档为空。';
     return formatCheck(
-      await checkDocument(state.markdown, { verifyTable, seenInSap, ignoreRefs, verifiedBetween }),
+      await checkDocument(state.markdown, { verifyTable, ignoreRefs }),
     );
   }
   const handlers = {

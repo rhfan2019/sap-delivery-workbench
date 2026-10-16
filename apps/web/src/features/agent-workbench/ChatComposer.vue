@@ -101,6 +101,7 @@ provide(PROMPT_INPUT_KEY, context);
         >
       </PromptInputTools>
       <div class="flex min-w-0 items-center gap-2">
+        <slot name="tools" />
         <ModelSelector v-model:open="modelOpen">
           <ModelSelectorTrigger as-child
             ><Button
