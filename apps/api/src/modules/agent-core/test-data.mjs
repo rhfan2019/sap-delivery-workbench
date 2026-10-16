@@ -176,6 +176,14 @@ export async function runAuthorizedTestData(
           ? `建立的单据：${run.documents.map((d) => `${d.object} ${d.number}`).join('、')}。`
           : '输出中没有 DOCUMENT 行，请根据输出判断是否建成。') +
         `\n输出：\n${run.output}`
-      : `建单失败：${run.error}${run.output ? `\n输出：\n${run.output}` : ''}`;
+      : `建单失败：${run.error}${run.output ? `\n输出：\n${run.output}` : ''}` +
+        (run.ran
+          ? '\n建单代码已经开始运行后才终止：终止前已提交的单据可能已经建成，输出随之丢失。' +
+            `重新申请前，先用 query_test_system 按创建人 ${run.target?.username ?? ''}、创建日期 ${new Date().toISOString().slice(0, 10).replace(/-/g, '')}（前后各一天，系统时区可能不同）查询相关单据，核实是否已经建成；` +
+            '已建成的单据直接使用，或在新代码中只做后续修改，不要重复建立。' +
+            (run.dump
+              ? '运行时错误多由参数类型与函数接口不一致引起：先读取函数模块接口，按接口声明的类型定义变量。'
+              : '')
+          : '');
   return { run, text: truncate(text) };
 }

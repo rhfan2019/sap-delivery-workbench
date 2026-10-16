@@ -145,3 +145,26 @@ test('a failed QAS query returns SAP’s own error text, not a login hint', asyn
   assert.doesNotMatch(answer, /登录/);
   assert.deepEqual(tools.results, []);
 });
+
+test('a run that failed after starting warns about documents already committed', async () => {
+  const request = { id: 'r', dataId: 'TD-01', object: '销售订单', purpose: 'p', body: 'x' };
+  const outcome = await runAuthorizedTestData(null, scope, request, {
+    agent: 'abap-fsd-agent',
+    agentSessionId: 'a',
+    deps: {
+      executeTestData: async () => ({
+        status: 'failed',
+        error: '运行建单代码失败：Internal Server Error',
+        output: '',
+        documents: [],
+        ran: true,
+        dump: { error: 'CALL_FUNCTION_CONFLICT_LENG' },
+        target: { username: 'RHFAN' },
+      }),
+    },
+  });
+  assert.match(outcome.text, /已提交的单据可能已经建成/);
+  assert.match(outcome.text, /按创建人 RHFAN/);
+  assert.match(outcome.text, /不要重复建立/);
+  assert.match(outcome.text, /按接口声明的类型定义变量/);
+});

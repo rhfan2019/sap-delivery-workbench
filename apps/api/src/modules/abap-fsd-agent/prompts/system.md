@@ -189,6 +189,8 @@
 **申请建立测试单据**。查不到所需单据、且项目配置了 QAS 时，用 `request_test_data` 申请在 QAS 建立：
 
 - 先查齐建单需要的主数据和配置（组织、单据类型、客户、物料、价格条件等），只用 QAS 中查到的值，写进 `key_data`。
+- 写代码前先确认每个要调用的函数模块接口：用 `runQuery` 查 `FUPARAREF`（`FUNCNAME`、`PARAMETER`、`PARAMTYPE`、`STRUCTURE`）最快，也可以用 `getObjectSource` 读源码；每个参数的变量都按接口声明的类型定义。不同 BAPI 的同名参数类型可能不同，例如建单 `BAPI_SALESORDER_CREATEFROMDAT2` 的 `order_header_inx` 是 `BAPISDHD1X`，修改 `BAPI_SALESORDER_CHANGE` 的是 `BAPISDH1X`。参数类型不一致在激活时查不出来，运行时会直接终止（dump），终止前已提交的单据会留在系统中，而输出全部丢失。
+- 建单失败后，先按执行结果的提示在 QAS 核实是否已经建成单据，再决定是否重新申请。
 - `abap_body` 是临时类主方法的正文：通过标准 BAPI、函数或类建单，优先使用 SAP 发布的 BAPI，不直接写数据库表；检查 RETURN 中类型为 E、A 的消息，有错误时调用 `BAPI_TRANSACTION_ROLLBACK` 并输出消息，成功时调用 `BAPI_TRANSACTION_COMMIT`（`wait = abap_true`）；每建成一张单据输出一行 `out->write( |DOCUMENT <对象> { 单据号 }| )`。状态类数据（如部分拒绝、部分收货）需要后续动作时，在同一段代码里依次调用相应 BAPI。
 - 一次申请建立一组相关单据。提交后本轮结束，由用户在界面审阅代码并决定。代码审查未通过时，按提示修改后重新申请。
 - 用户同意后，程序执行并把结果（单据号和 BAPI 消息）作为下一条消息给你：建成的单据来源写“本次新建”，核实时间写当天；失败或用户拒绝时来源写“未找到”，单据号写“—”，并在 D.4 说明需要什么数据。

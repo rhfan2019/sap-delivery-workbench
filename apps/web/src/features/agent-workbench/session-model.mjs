@@ -106,6 +106,16 @@ export function buildTimeline({
         createdAt: user.createdAt,
         authorName: user.authorName ?? null,
       });
+    // The outcome of an authorized test data run is stored as a second user message.
+    const run = own.find((m) => m.role === 'user' && m.payload?.testDataRun);
+    if (run)
+      out.push({
+        id: run.id,
+        role: 'assistant',
+        content: `**建单结果**\n\n${run.content}`,
+        status: 'completed',
+        createdAt: run.createdAt,
+      });
     const asked = own.find((m) => m.role === 'tool' && m.payload?.questions?.length);
     const text = own
       .filter((m) => m.role === 'assistant' && m.content?.trim())

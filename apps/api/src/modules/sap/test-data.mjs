@@ -195,10 +195,15 @@ export async function executeTestData(
     failure = null,
     created = false,
     cleanedUp = false,
+    // Set once the code ran: business documents may be committed even if it then failed.
+    ran = false,
+    dump = null,
+    step = '连接 QAS',
     connection;
   try {
     connection = await connect(env);
     const call = mcpCaller(connection);
+    step = '建立临时类';
     await call('createObject', {
       objtype: 'CLAS/OC',
       name: className,
@@ -208,6 +213,7 @@ export async function executeTestData(
       responsible: String(target.username).toUpperCase(),
     });
     created = true;
+    step = '写入临时类源码';
     const { lockHandle } = await call('lock', { objectUrl: url, accessMode: 'MODIFY' });
     try {
       await call('setObjectSource', {
@@ -218,19 +224,27 @@ export async function executeTestData(
     } finally {
       await call('unLock', { objectUrl: url, lockHandle }).catch(() => {});
     }
+    step = '激活临时类';
     const activation = await call('activateByName', { objectName: className, objectUrl: url });
     if (activation?.success === false || activationErrors(activation))
       throw new Error('激活失败：' + (activationErrors(activation) || '语法错误'));
     // The stateful session that activated the class still holds its old definition; a
     // fresh session sees the interface implementation.
     await call('dropSession', {});
+    step = '运行建单代码';
+    ran = true;
     const run = await call('runClass', { className });
     output = String(run?.result ?? run ?? '');
     // Classrun reports its own failures (e.g. a missing implementation) as output text.
     if (/^Error:/.test(output)) throw new Error(output.slice(0, 500));
     status = 'succeeded';
   } catch (error) {
-    failure = String(error.message ?? error).slice(0, 2000);
+    failure = `${step}失败：${String(error.message ?? error).slice(0, 1500)}`;
+    // A runtime error in the code ends the run without output; the dump says why.
+    if (ran && connection) dump = await runtimeError(mcpCaller(connection), className);
+    if (dump)
+      failure += `
+运行时错误 ${dump.error}：${dump.shortText}`;
   } finally {
     if (created && connection)
       try {
@@ -266,5 +280,26 @@ export async function executeTestData(
     error: failure,
     documents: documentsOf(output),
     cleanedUp,
+    ran,
+    dump,
   };
+}
+
+// The newest short dump of `className`, if the run ended in one: { error, shortText }.
+async function runtimeError(call, className) {
+  try {
+    const value = await call('dumps', {});
+    const list = value?.dumps?.dumps ?? [];
+    for (const d of list) {
+      const term = (label) => d.categories?.find((c) => c.label === label)?.term ?? '';
+      if (!term('Terminated ABAP program').startsWith(className)) continue;
+      const text = String(d.text ?? '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/\s+/g, ' ');
+      const shortText = /Short Text\s+(.*?)\s+Runtime Error/.exec(text)?.[1] ?? '';
+      return { error: term('ABAP runtime error'), shortText: shortText.slice(0, 300) };
+    }
+  } catch {}
+  return null;
 }

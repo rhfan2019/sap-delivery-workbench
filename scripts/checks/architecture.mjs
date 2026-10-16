@@ -248,6 +248,8 @@ export async function checkRepository(directory = root) {
     '.archify',
     '.git',
     '.vscode',
+    // Contract 1.11: Claude desktop preview configuration, kept out of Git.
+    '.claude',
     'node_modules',
   ]);
   const allowedRootFiles = new Set([

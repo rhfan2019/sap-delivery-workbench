@@ -86,6 +86,7 @@ test('the class wraps the body; outputs list created documents', () => {
 function fakes({
   activation = { success: true, messages: [] },
   output = 'DOCUMENT 销售订单 4711\n',
+  runDump = false,
 } = {}) {
   const queries = [];
   const db = {
@@ -101,7 +102,25 @@ function fakes({
       calls.push([name, args]);
       if (name === 'lock') return reply({ status: 'success', lockHandle: 'H' });
       if (name === 'activateByName') return reply(activation);
-      if (name === 'runClass') return reply({ status: 'success', result: output });
+      if (name === 'runClass')
+        return runDump
+          ? { isError: true, content: [{ type: 'text', text: 'Internal Server Error' }] }
+          : reply({ status: 'success', result: output });
+      if (name === 'dumps')
+        return reply({
+          status: 'success',
+          dumps: {
+            dumps: [
+              {
+                categories: [
+                  { term: 'CALL_FUNCTION_CONFLICT_LENG', label: 'ABAP runtime error' },
+                  { term: calls[0][1].name + '==========CP', label: 'Terminated ABAP program' },
+                ],
+                text: '<p>Short Text&nbsp; Type conflict during a function module call (field length). Runtime Error&nbsp; CALL_FUNCTION_CONFLICT_LENG</p>',
+              },
+            ],
+          },
+        });
       return reply({ status: 'success' });
     },
     close: async () => {},
@@ -217,4 +236,22 @@ test('the local credentials file logs in only outside production and for the sam
   assert.equal(await profileCredentials({ ...qas, sapUrl: 'https://other:44300' }, env), null);
   assert.equal(await profileCredentials(qas, {}), null);
   assert.equal(await profileCredentials(qas, { SAP_MCP_PROFILE_FILE: file + '.missing' }), null);
+});
+
+test('a run that dumps names the step and the runtime error, and says it ran', async () => {
+  const f = fakes({ runDump: true });
+  const run = await executeTestData(f.db, f.scope, f.request, f.deps);
+  assert.equal(run.status, 'failed');
+  assert.equal(run.ran, true);
+  assert.match(run.error, /^运行建单代码失败：/);
+  assert.match(
+    run.error,
+    /运行时错误 CALL_FUNCTION_CONFLICT_LENG：Type conflict during a function module call/,
+  );
+  assert.equal(run.dump.error, 'CALL_FUNCTION_CONFLICT_LENG');
+  assert.equal(f.calls.at(-1)[0], 'deleteObject');
+  const g = fakes({ activation: { success: false, messages: [{ type: 'E', shortText: 'X' }] } });
+  const early = await executeTestData(g.db, g.scope, g.request, g.deps);
+  assert.deepEqual([early.ran, early.dump], [false, null]);
+  assert.match(early.error, /^激活临时类失败：/);
 });

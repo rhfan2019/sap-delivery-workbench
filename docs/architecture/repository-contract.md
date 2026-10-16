@@ -1,6 +1,8 @@
 # 仓库目录与依赖契约
 
-版本：1.10。日期：2026-10-16。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.11。日期：2026-10-16。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.11 变更：根目录登记 `.claude`（Claude 桌面端预览配置 `launch.json`，本机工具配置，与 `.vscode` 同类，不入库）。
 
 1.10 变更：用户 2026-10-16 要求本机测试时自动登录 QAS：非生产环境下，可用 `SAP_MCP_PROFILE_FILE` 指定的本机凭据文件登录测试系统，仅当文件中的地址与 client 与项目 QAS 配置一致；生产环境禁用。见 3.4 节“个人凭据”。
 
@@ -46,7 +48,7 @@
 | docs               | 与代码版本对应的架构、规格、计划、运维与验收资料         | 产品运行时数据来源、个人助手记忆                   |
 | .runtime           | 本机私有状态、附件、凭据、日志及隔离测试环境（忽略提交） | 应提交的业务源码                                   |
 
-根目录只保留统一入口及工具要求的配置：README、AGENTS、package.json、单一锁文件、start.cmd、stop.cmd、compose.yaml、编辑器/格式/Git 配置及测试配置。不新增 frontend/backend、src、common 等与上述结构重叠的根目录。
+根目录只保留统一入口及工具要求的配置：README、AGENTS、package.json、单一锁文件、start.cmd、stop.cmd、compose.yaml、编辑器/格式/Git 配置及测试配置。本机工具配置目录 `.vscode`、`.claude` 允许存在，其中 `.claude` 整体不入库。不新增 frontend/backend、src、common 等与上述结构重叠的根目录。
 
 ## 3. 应用内部边界
 

@@ -5,6 +5,7 @@ import {
   buildTimeline,
   decisionFromQuestions,
   pendingQuestions,
+  pendingTestData,
   toolLabel,
 } from '../../../apps/web/src/features/agent-workbench/session-model.mjs';
 
@@ -107,4 +108,33 @@ test('only an unanswered question batch at the end is pending', () => {
   const asked = { ...detail, turns: detail.turns.slice(0, 1) };
   assert.equal(pendingQuestions(asked).questions[0].question, question.question);
   assert.equal(buildTimeline(asked)[1].status, 'waiting_user');
+});
+
+test('a test data run outcome shows in the timeline, and the request waits for authorization', () => {
+  const turns = [
+    { id: 't1', status: 'completed', stopReason: 'authorization' },
+    { id: 't2', status: 'completed', stopReason: 'answered' },
+  ];
+  const request = { id: 'r1', dataId: 'TD-01', object: '销售订单' };
+  const messages = [
+    { id: 'm1', turnId: 't1', role: 'user', content: '补充附录 D', payload: {} },
+    {
+      id: 'm2',
+      turnId: 't1',
+      role: 'tool',
+      content: '已提交',
+      payload: { testDataRequest: request },
+    },
+    { id: 'm3', turnId: 't2', role: 'user', content: '同意', payload: { authorization: {} } },
+    { id: 'm4', turnId: 't2', role: 'user', content: '建单失败：x', payload: { testDataRun: {} } },
+  ];
+  assert.equal(
+    pendingTestData({ turns: turns.slice(0, 1), messages: messages.slice(0, 2) }),
+    request,
+  );
+  assert.equal(pendingTestData({ turns, messages }), null);
+  const timeline = buildTimeline({ turns, messages });
+  const outcome = timeline.find((m) => m.id === 'm4');
+  assert.equal(outcome.role, 'assistant');
+  assert.match(outcome.content, /建单结果[\s\S]*建单失败：x/);
 });
