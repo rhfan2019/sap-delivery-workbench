@@ -1,4 +1,5 @@
 import { streamChat } from '../models/public.mjs';
+import { previewToolResult } from './preview.mjs';
 
 export const LIMITS = {
   steps: 30, // model calls per turn
@@ -56,6 +57,28 @@ function parseArguments(raw) {
   return value;
 }
 
+// Chapter names in a tool call's arguments while the model is still writing them.
+function sectionsSoFar(raw) {
+  const out = [];
+  for (const m of raw.matchAll(/"section"\s*:\s*"((?:[^"\\]|\\.)*)"/g)) {
+    try {
+      out.push(JSON.parse('"' + m[1] + '"'));
+    } catch {}
+  }
+  return [...new Set(out)].slice(0, 8);
+}
+const PREPARE_EVERY_CHARS = 400;
+
+// The arguments the interface shows when a call starts, without the content being written:
+// a chapter's text may come before its section names.
+function brief(call, logArguments) {
+  try {
+    return JSON.stringify(logArguments(call.name, parseArguments(call.arguments))).slice(0, 1000);
+  } catch {
+    return call.arguments.slice(0, 500);
+  }
+}
+
 function summarize(text) {
   const line = String(text).replace(/\s+/g, ' ').trim();
   return line.length > 160 ? line.slice(0, 160) + '…' : line;
@@ -98,6 +121,8 @@ export async function runAgentLoop({
         break;
       }
       emit('step', { step: step + 1 });
+      // A long tool call (a whole chapter) can take minutes; tell the interface as it grows.
+      const prepared = new Map();
       const result = await withBusyRetry(
         (attempt) =>
           chat(model.config, model.key, {
@@ -109,6 +134,19 @@ export async function runAgentLoop({
             onDelta: (delta) => {
               attempt.streamed = true;
               emit('delta', delta);
+            },
+            onToolCall: (call) => {
+              attempt.streamed = true;
+              const last = prepared.get(call.index);
+              const chars = call.arguments.length;
+              if (last !== undefined && chars - last < PREPARE_EVERY_CHARS) return;
+              prepared.set(call.index, chars);
+              emit('tool.prepare', {
+                index: call.index,
+                name: call.name,
+                chars,
+                sections: sectionsSoFar(call.arguments),
+              });
             },
           }),
         {
@@ -150,7 +188,7 @@ export async function runAgentLoop({
         emit('tool.start', {
           id: call.id,
           name: call.name,
-          arguments: call.arguments.slice(0, 500),
+          arguments: brief(call, logArguments),
         });
         let args = {},
           outcome;
@@ -182,12 +220,14 @@ export async function runAgentLoop({
           };
         }
         const durationMs = Date.now() - started;
+        const preview = previewToolResult(outcome.status, outcome.content);
         await persist.recordToolCall({
           name: call.name,
           arguments: logArguments(call.name, args),
           status: outcome.status,
           // The audit page and log exports read this; keep enough to diagnose failures.
           summary: String(outcome.content).slice(0, 2000),
+          preview,
           durationMs,
         });
         const questions = {
@@ -207,6 +247,7 @@ export async function runAgentLoop({
           name: call.name,
           status: outcome.status,
           summary: summarize(outcome.content),
+          preview,
           durationMs,
           ...questions,
         });
@@ -228,7 +269,7 @@ export async function runAgentLoop({
       await persist
         .appendMessage({
           role: 'assistant',
-          content: `本轮出错：${error.message}。已保存的进度不受影响，可以重新发送消息继续。`,
+          content: `本轮出错：${error.message.replace(/[。.\s]+$/, '')}。已保存的进度不受影响，可以重新发送消息继续。`,
           payload: { error },
         })
         .catch(() => {});

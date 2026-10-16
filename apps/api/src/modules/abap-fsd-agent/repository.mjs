@@ -112,8 +112,8 @@ export async function listTurns(db, sessionId) {
 
 export async function recordToolCall(db, sessionId, turnId, call) {
   await db.query(
-    `INSERT INTO ${T}tool_call(id,session_id,turn_id,name,arguments,status,result_summary,duration_ms)
-     VALUES($1,$2,$3,$4,$5,$6,$7,$8)`,
+    `INSERT INTO ${T}tool_call(id,session_id,turn_id,name,arguments,status,result_summary,duration_ms,preview)
+     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
     [
       randomUUID(),
       sessionId,
@@ -123,6 +123,7 @@ export async function recordToolCall(db, sessionId, turnId, call) {
       call.status,
       String(call.summary ?? '').slice(0, 2000),
       Math.round(call.durationMs ?? 0),
+      call.preview ?? null,
     ],
   );
 }
@@ -130,7 +131,7 @@ export async function recordToolCall(db, sessionId, turnId, call) {
 export async function listToolCalls(db, sessionId) {
   return (
     await db.query(
-      `SELECT turn_id AS "turnId",name,arguments,status,result_summary AS "summary",duration_ms AS "durationMs",created_at AS "createdAt"
+      `SELECT turn_id AS "turnId",name,arguments,status,result_summary AS "summary",duration_ms AS "durationMs",preview,created_at AS "createdAt"
        FROM ${T}tool_call WHERE session_id=$1 ORDER BY created_at`,
       [sessionId],
     )

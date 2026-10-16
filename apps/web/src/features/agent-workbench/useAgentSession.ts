@@ -14,6 +14,9 @@ import {
   decisionFromQuestions,
   pendingQuestions,
   pendingTestData,
+  preparingText,
+  reasoningHeading,
+  runningText,
   stepFromToolCall,
   type AskedQuestion,
   type TestDataRequest,
@@ -53,7 +56,10 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
   const testData = ref<TestDataRequest | null>(null);
   const status = ref<Status>('idle');
   const error = ref('');
-  const generationNote = ref('');
+  // The live status line: what the agent is doing now, and when anything last arrived.
+  const liveNote = ref({ text: '', at: Date.now() });
+  const note = (text: string) => (liveNote.value = { text, at: Date.now() });
+  let reasoning = '';
   // The session as the API returned it, and the live text of artifacts being written.
   const detail = shallowRef<any>(null);
   const drafts = ref<Record<string, string>>({});
@@ -131,6 +137,8 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
     const message = live(turnId);
     if (replay) message.content = '';
     steps.value = [];
+    reasoning = '';
+    note('正在理解需求…');
     try {
       const response = await reconnectingChatStream(
         `/api${base}/sessions/${sessionId.value}/turns/${turnId}/events`,
@@ -152,7 +160,7 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
       error.value = cause instanceof Error ? cause.message : '连接中断。';
     } finally {
       reader = null;
-      generationNote.value = '';
+      note('');
       if (!disposed && sessionId.value) {
         const final = status.value;
         await refresh().catch(() => {});
@@ -168,18 +176,30 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
     if (event.type === 'delta' && d.type === 'text') {
       message.content += d.text;
       if (status.value !== 'stopping') status.value = 'streaming';
-      generationNote.value = '';
-    } else if (event.type === 'delta' && d.type === 'reasoning') generationNote.value = '正在思考…';
-    else if (event.type === 'step')
-      generationNote.value = d.retry
-        ? `模型服务繁忙，${Math.round(d.waitMs / 1000)} 秒后第 ${d.retry} 次重试…`
-        : `正在分析（第 ${d.step} 步）…`;
+      note('正在输出回复…');
+    } else if (event.type === 'delta' && d.type === 'reasoning') {
+      reasoning += d.text;
+      const heading = reasoningHeading(reasoning.slice(-2000));
+      note(heading ? `正在思考：${heading}` : '正在思考…');
+    } else if (event.type === 'step') {
+      reasoning = '';
+      note(
+        d.retry
+          ? `模型服务繁忙，${Math.round(d.waitMs / 1000)} 秒后第 ${d.retry} 次重试…`
+          : d.step > 1
+            ? '正在思考下一步…'
+            : '正在理解需求…',
+      );
+    } else if (event.type === 'tool.prepare') note(preparingText(d));
     else if (event.type === 'tool.start') {
-      steps.value.push({
-        ...stepFromToolCall({ id: d.id, name: d.name, status: 'running' }),
-        summary: '执行中…',
+      const step = stepFromToolCall({
+        id: d.id,
+        name: d.name,
+        status: 'running',
+        arguments: d.arguments,
       });
-      generationNote.value = '';
+      steps.value.push({ ...step, summary: '执行中…' });
+      note(runningText(step));
     } else if (event.type === 'tool.end') {
       const index = steps.value.findIndex((s) => s.stepId === d.id);
       const step = stepFromToolCall({
@@ -187,6 +207,10 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
         name: d.name,
         status: d.status,
         summary: d.summary,
+        // tool.end does not repeat the arguments; keep those tool.start brought.
+        arguments: index >= 0 ? steps.value[index].input : undefined,
+        preview: d.preview,
+        durationMs: d.durationMs,
       });
       if (index >= 0) steps.value[index] = step;
       else steps.value.push(step);
@@ -292,20 +316,6 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
     reader?.abort();
   });
 
-  const statusLabel = computed(
-    () =>
-      ({
-        idle: '',
-        waiting: '等待模型回复…',
-        streaming: '正在输出…',
-        stopping: '正在停止…',
-        waiting_user: testData.value ? '请审阅建单申请' : '请回答问题后继续',
-        completed: '回复完成',
-        failed: '本轮未完成',
-        cancelled: '已停止',
-      })[status.value],
-  );
-
   return {
     sessionId,
     messages,
@@ -314,10 +324,9 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
     testData,
     sapEnvironment,
     status,
-    statusLabel,
     busy,
     error,
-    generationNote,
+    liveNote,
     detail,
     drafts,
     comments,

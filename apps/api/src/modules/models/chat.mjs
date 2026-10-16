@@ -43,13 +43,14 @@ export function chatPayload(config, { messages, tools, maxOutputTokens, thinking
 }
 
 // One streamed chat completion with tool calling (OpenAI chat protocol).
-// Resolves with the assembled assistant message; onDelta receives text and reasoning as they arrive.
+// Resolves with the assembled assistant message; onDelta receives text and reasoning as they arrive,
+// onToolCall each tool call as its name and arguments accumulate.
 // `firstByteTimeoutMs` overrides how long to wait for the first data: some providers send a tool
 // call only once its arguments are complete, so a long document arrives after minutes.
 export async function streamChat(
   config,
   key,
-  { messages, tools, maxOutputTokens, thinking, signal, onDelta, firstByteTimeoutMs },
+  { messages, tools, maxOutputTokens, thinking, signal, onDelta, onToolCall, firstByteTimeoutMs },
   { transport = requestModelStream } = {},
 ) {
   if (config.protocol !== 'openai_chat')
@@ -109,6 +110,7 @@ export async function streamChat(
         if (part.id) call.id = part.id;
         if (part.function?.name) call.name += part.function.name;
         if (part.function?.arguments) call.arguments += part.function.arguments;
+        if (call.name) onToolCall?.({ index, ...call });
       }
       if (choice.finish_reason) finishReason = choice.finish_reason;
     }

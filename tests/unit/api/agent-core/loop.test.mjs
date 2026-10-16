@@ -111,11 +111,47 @@ test('a failing model ends the turn as failed without throwing', async () => {
   const h = harness();
   const result = await runAgentLoop({
     ...h.options,
-    deps: { streamChat: scripted([new Error('网络断开')]) },
+    deps: { streamChat: scripted([new Error('模型未正常完成。')]) },
   });
   assert.equal(result.status, 'failed');
-  assert.equal(result.error.message, '网络断开');
-  assert.match(h.stored.at(-1).content, /本轮出错/);
+  assert.equal(result.error.message, '模型未正常完成。');
+  assert.match(h.stored.at(-1).content, /^本轮出错：模型未正常完成。已保存/);
+});
+
+test('a tool call being written is announced as it grows, and results carry a preview', async () => {
+  const h = harness({ handlers: { write_document: async () => '已写入' } });
+  const args = JSON.stringify({ changes: [{ section: '3 业务逻辑' }], markdown: 'x'.repeat(900) });
+  let n = 0;
+  const result = await runAgentLoop({
+    ...h.options,
+    logArguments: (name, a) => ({ ...a, markdown: undefined }),
+    deps: {
+      streamChat: async (config, key, { onToolCall }) => {
+        if (n++) return { content: '完成', toolCalls: [], usage: {} };
+        // Arguments arrive in pieces: the name first, then 300 characters at a time.
+        for (let end = 0; end <= args.length; end += 300)
+          onToolCall({ index: 0, id: 'c1', name: 'write_document', arguments: args.slice(0, end) });
+        return {
+          content: '',
+          toolCalls: [call('write_document', JSON.parse(args), 'c1')],
+          usage: {},
+        };
+      },
+    },
+  });
+  assert.equal(result.status, 'completed');
+  const prepares = h.events.filter((e) => e.type === 'tool.prepare').map((e) => e.data);
+  assert.equal(prepares[0].chars, 0);
+  assert.equal(prepares[0].name, 'write_document');
+  // Throttled: one event per 400 new characters, not one per piece.
+  assert.ok(prepares.length >= 2 && prepares.length < Math.ceil(args.length / 300));
+  assert.deepEqual(prepares.at(-1).sections, ['3 业务逻辑']);
+  const end = h.events.find((e) => e.type === 'tool.end').data;
+  assert.deepEqual(end.preview, { kind: 'text', text: '已写入' });
+  assert.deepEqual(h.toolLog[0].preview, end.preview);
+  // The call's start names its sections without the text being written.
+  const start = h.events.find((e) => e.type === 'tool.start').data;
+  assert.deepEqual(JSON.parse(start.arguments), { changes: [{ section: '3 业务逻辑' }] });
 });
 
 test('a dropped connection is resent only when nothing was streamed', async () => {

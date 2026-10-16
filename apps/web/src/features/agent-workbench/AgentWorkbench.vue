@@ -157,13 +157,17 @@ const previewOpen = computed(() => !!activeAttachment.value);
             :base="base"
             :messages="run.messages.value"
             :busy="sending"
-            :status-label="run.statusLabel.value"
-            :generation-note="run.generationNote.value"
             @suggestion="draft = $event"
             @open-artifact="emit('openArtifact', $event)"
           >
-            <template #progress>
-              <RunSteps :steps="run.steps.value" />
+            <template #progress="{ message }">
+              <RunSteps
+                live
+                :steps="run.steps.value"
+                :note="run.liveNote.value"
+                :started-at="message.createdAt"
+                :clock-offset-ms="message.clockOffsetMs"
+              />
             </template>
             <DecisionCard
               v-if="run.decision.value && !sending"

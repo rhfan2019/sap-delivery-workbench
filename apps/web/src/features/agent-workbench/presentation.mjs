@@ -30,3 +30,17 @@ export function stepPresentation(status) {
     tone: status === 'failed' ? 'destructive' : status === 'succeeded' ? 'success' : 'muted',
   };
 }
+
+// "42 秒", "3 分 57 秒".
+export function formatElapsed(ms) {
+  const seconds = Math.max(0, Math.floor((Number(ms) || 0) / 1000));
+  return seconds < 60 ? `${seconds} 秒` : `${Math.floor(seconds / 60)} 分 ${seconds % 60} 秒`;
+}
+
+// Shown under the status line when nothing new has arrived for a while (10-second rule).
+export function waitHint(quietMs) {
+  if (quietMs < 20000) return '';
+  return quietMs < 60000
+    ? '模型仍在生成，内容较长时可能需要 1～3 分钟。'
+    : '模型仍在生成，内容较长时可能需要 1～3 分钟。离开页面不会中断运行，完成后回来查看即可。';
+}

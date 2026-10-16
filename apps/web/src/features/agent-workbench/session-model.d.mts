@@ -14,7 +14,16 @@ export interface AskedQuestion {
 }
 export function toolLabel(name: string): string;
 export function stepFromToolCall(
-  call: { id?: string; name: string; status: string; summary?: string; createdAt?: string },
+  call: {
+    id?: string;
+    name: string;
+    status: string;
+    summary?: string;
+    createdAt?: string;
+    arguments?: unknown;
+    preview?: AgentStep['preview'];
+    durationMs?: number;
+  },
   index?: number,
 ): AgentStep;
 export function decisionFromQuestions(id: string, questions: AskedQuestion[]): AgentDecision;
@@ -41,3 +50,24 @@ export interface TestDataRequest {
   target: { environment: string; systemCode: string; systemName: string; client: string | null };
 }
 export function pendingTestData(detail: any): TestDataRequest | null;
+export interface RunActivity {
+  id: string;
+  title: string;
+  detail: string;
+  count: number;
+  failures: number;
+  status: 'running' | 'succeeded';
+  steps: AgentStep[];
+}
+export function sectionsOf(input: unknown): string[];
+export function stepObjects(step: AgentStep): { group: string; name: string }[];
+export function objectsText(groups: { group: string; names: string[] }[], limit?: number): string;
+export function activitiesFromSteps(steps?: AgentStep[]): RunActivity[];
+export function activitySummary(steps?: AgentStep[]): string;
+export function runningText(step: AgentStep): string;
+export function preparingText(prepare: {
+  name: string;
+  chars?: number;
+  sections?: string[];
+}): string;
+export function reasoningHeading(text?: string): string;

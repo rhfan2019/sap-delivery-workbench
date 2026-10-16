@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { Copy, RotateCcw, FileText, Sparkles, LoaderCircle } from '@lucide/vue';
+import { ref } from 'vue';
+import { Copy, RotateCcw, FileText, Sparkles } from '@lucide/vue';
 import {
   Conversation,
   ConversationContent,
@@ -31,9 +31,8 @@ import type {
 defineProps<{
   messages: AgentMessage[];
   busy: boolean;
-  statusLabel: string;
   canRetry?: boolean;
-  generationNote?: string;
+  liveNote?: { text: string; at: number };
   base?: string;
   development?: boolean;
   quiet?: boolean;
@@ -50,28 +49,6 @@ function undeclared(artifact: AgentArtifactRef) {
   const c = artifact.comparison ?? {};
   if (Array.isArray(c.undeclared)) return c.undeclared as string[];
   return [...(c.plan?.undeclared ?? []), ...(c.code?.undeclared ? ['代码'] : [])];
-}
-const now = ref(Date.now());
-let ticker: ReturnType<typeof setInterval>;
-onMounted(() => {
-  ticker = setInterval(() => {
-    now.value = Date.now();
-  }, 1000);
-});
-onBeforeUnmount(() => clearInterval(ticker));
-function elapsed(message: AgentMessage, running: boolean) {
-  if (!message.createdAt || (!running && !message.finishedAt)) return '耗时未记录';
-  const seconds = Math.max(
-    0,
-    Math.floor(
-      ((running ? now.value + (message.clockOffsetMs ?? 0) : Date.parse(message.finishedAt!)) -
-        Date.parse(message.createdAt)) /
-        1000,
-    ),
-  );
-  return Number.isFinite(seconds)
-    ? `耗时 ${Math.floor(seconds / 60)}分${seconds % 60}秒`
-    : '耗时未记录';
 }
 async function copy(text: string) {
   try {
@@ -158,21 +135,16 @@ async function copy(text: string) {
           }}</span
           ><span>{{ message.model }}</span>
         </div>
-        <div
-          v-if="message.role === 'assistant' && message.runId"
-          class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground"
-          aria-label="运行信息"
-        >
-          <span class="break-all">运行编号：{{ message.runId }}</span>
-          <Button variant="ghost" size="sm" @click="copy(message.runId)">复制编号</Button>
-          <time v-if="message.createdAt">{{
-            new Date(message.createdAt).toLocaleString('zh-CN', { hour12: false })
-          }}</time>
-          <span>{{ elapsed(message, busy && index === messages.length - 1) }}</span>
-        </div>
-        <template v-if="message.role === 'assistant'">
-          <slot v-if="index === messages.length - 1" name="progress" />
-          <RunSteps v-else :steps="message.steps ?? []" />
+        <template v-if="message.role === 'assistant' && message.runId">
+          <slot v-if="busy && index === messages.length - 1" name="progress" :message="message" />
+          <RunSteps
+            v-else
+            :steps="message.steps ?? []"
+            :status="message.status"
+            :run-id="message.runId"
+            :started-at="message.createdAt"
+            :finished-at="message.finishedAt"
+          />
         </template>
         <MessageContent class="max-w-full" :class="{ 'w-full': message.role === 'assistant' }">
           <p v-if="message.role === 'user'" class="whitespace-pre-wrap break-words">
@@ -203,21 +175,18 @@ async function copy(text: string) {
               :content="message.content"
               :streaming="busy && index === messages.length - 1"
             />
-            <div
-              v-else-if="!message.error && message.status !== 'cancelled' && !message.decision"
-              class="flex items-center gap-2 text-muted-foreground"
+            <p
+              v-else-if="
+                !(busy && index === messages.length - 1) &&
+                !message.error &&
+                !message.artifact &&
+                message.status !== 'cancelled' &&
+                !message.decision
+              "
+              class="text-muted-foreground"
             >
-              <LoaderCircle
-                v-if="busy && index === messages.length - 1"
-                class="size-4 animate-spin"
-              />{{
-                busy && index === messages.length - 1
-                  ? generationNote || '正在准备回复…'
-                  : message.artifact
-                    ? ''
-                    : '本轮没有文字回复'
-              }}
-            </div>
+              本轮没有文字回复
+            </p>
             <Artifact v-if="message.artifact" class="w-full shadow-none">
               <ArtifactHeader
                 ><div class="flex items-center gap-3">
@@ -257,31 +226,27 @@ async function copy(text: string) {
             </div>
           </template>
         </MessageContent>
+        <!-- Failures, questions and saved versions already speak for themselves above. -->
         <p
-          v-if="message.role === 'assistant' && !busy && index === messages.length - 1"
+          v-if="
+            message.role === 'assistant' &&
+            !busy &&
+            index === messages.length - 1 &&
+            message.status !== 'failed' &&
+            message.status !== 'waiting_user' &&
+            !message.artifact
+          "
           role="status"
           class="rounded-lg bg-muted p-3 text-sm"
         >
           {{
-            message.status === 'failed'
-              ? '本轮未完成，已保存的进度不受影响。可以重新发送消息继续。'
-              : message.status === 'cancelled'
-                ? '已停止本轮运行。可补充需求后重新发送。'
-                : message.status === 'waiting_user'
-                  ? '请回答下方问题后继续。'
-                  : message.artifact
-                    ? '已保存新版本。可在右侧“成果”中阅读，选中文字添加批注后让助手修改。'
-                    : '可以继续补充需求，或提出修改意见。'
+            message.status === 'cancelled'
+              ? '已停止本轮运行。可补充需求后重新发送。'
+              : '可以继续补充需求，或提出修改意见。'
           }}
         </p>
         <MessageActions v-if="message.role === 'assistant'" class="items-center">
-          <span
-            v-if="busy && index === messages.length - 1"
-            class="text-xs text-muted-foreground"
-            role="status"
-            >{{ generationNote || statusLabel }}</span
-          >
-          <span v-else-if="message.status === 'cancelled'" class="text-xs text-muted-foreground"
+          <span v-if="message.status === 'cancelled'" class="text-xs text-muted-foreground"
             >已停止，内容已保留</span
           >
           <MessageAction v-if="message.content" label="复制回复" @click="copy(message.content)"
