@@ -89,6 +89,12 @@ export function registerAbapFsdAgent(app, pool, organizationId, requireSession, 
     return repo.findSession(pool, req.work.scope, id);
   });
 
+  app.patch(base + '/sessions/:sessionId', async (req) => {
+    const s = await session(req, true);
+    await repo.renameSession(pool, req.work.scope, s.id, text(req.body?.title, '对话名称', 200));
+    return repo.findSession(pool, req.work.scope, s.id);
+  });
+
   app.get(base + '/sessions/:sessionId', async (req) => {
     const s = await session(req, false);
     return {

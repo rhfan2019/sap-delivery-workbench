@@ -23,6 +23,15 @@ export async function createSession(db, scope, title = '') {
   return id;
 }
 
+// Renaming keeps the list order: updated_at follows the conversation, not its title.
+export async function renameSession(db, scope, id, title) {
+  const r = await db.query(
+    `UPDATE ${T}session SET title=$5 WHERE id=$1 AND organization_id=$2 AND project_id=$3 AND item_id=$4`,
+    [id, scope.organizationId, scope.projectId, scope.itemId, title.slice(0, 200)],
+  );
+  return r.rowCount > 0;
+}
+
 export async function findSession(db, scope, id) {
   return (
     await db.query(

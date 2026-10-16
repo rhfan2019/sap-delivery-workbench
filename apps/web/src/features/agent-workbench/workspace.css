@@ -231,29 +231,148 @@
   gap: 2px;
   padding: 10px 10px 0;
   border-bottom: 1px solid var(--work-border);
-  min-height: 60px;
+  min-height: 52px;
+  padding-bottom: 8px;
   flex-shrink: 0;
 }
-.work-panel-header nav {
+.work-panel-title {
   flex: 1;
   display: flex;
-  gap: 3px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 0 !important;
+  padding-left: 8px;
+  font-size: 14px !important;
+  font-weight: 600;
+}
+.item-workspace .work-panel-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto;
+}
+/* Cards that open under a title or button and float over the page (no layout shift). */
+.work-popover-anchor {
+  position: relative;
   min-width: 0;
 }
-.work-panel-header nav button {
+.work-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  width: min(420px, calc(100vw - 32px));
+  max-height: min(70vh, 560px);
+  overflow: auto;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid var(--work-border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px #16294022;
+}
+.work-popover-right {
+  left: auto;
+  right: 0;
+}
+.work-popover h2 {
+  font-size: 15px;
+  margin: 6px 0 4px;
+}
+.work-popover h3 {
+  font-size: 12px;
+  font-weight: 650;
+  color: #66768b;
+  margin: 14px 0 4px;
+}
+.work-popover p {
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.work-info p {
+  white-space: pre-wrap;
+}
+.item-workspace .work-title-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 2px 6px;
+  text-align: left;
+}
+.work-title-button h1,
+.work-title-button h2 {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.work-title-button svg {
+  flex-shrink: 0;
+  color: #66768b;
+}
+.work-item-title {
+  display: flex;
+}
+.work-switcher {
+  flex: 1;
+}
+.work-chat-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.work-chat-actions button,
+.item-workspace .work-panel-toggle {
   display: flex;
   align-items: center;
   gap: 5px;
-  border-radius: 0;
-  padding: 10px 6px 14px;
-  white-space: nowrap;
-  font-size: 12px;
-  border-bottom: 2px solid transparent;
 }
-.work-panel-header nav button[aria-pressed='true'] {
-  border-bottom-color: #2563eb;
-  color: #1d5ed0;
-  font-weight: 600;
+.work-sessions ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.work-sessions .work-session-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 0;
+  border-bottom: 0;
+}
+.item-workspace .work-session-pick {
+  flex: 1;
+  min-width: 0;
+  display: block;
+  padding: 10px 12px;
+  text-align: left;
+}
+.work-rename {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px 6px 12px;
+}
+.work-rename input {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #c1cedd;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+}
+.work-rename small {
+  flex-basis: 100%;
+  color: #922c2c;
 }
 .work-panel-scroll {
   overflow: auto;
@@ -346,13 +465,7 @@
   margin: 0;
 }
 .item-workspace .work-session-row {
-  display: block;
-  width: 100%;
-  padding: 16px 12px;
-  text-align: left;
   border-radius: 7px;
-  margin-top: 8px;
-  border-bottom: 1px solid var(--work-border);
 }
 .work-session-row strong,
 .work-session-row small {
@@ -506,14 +619,6 @@
   .work-back span {
     display: none;
   }
-  .work-panel-header nav button {
-    gap: 3px;
-    padding-left: 4px;
-    padding-right: 4px;
-  }
-  .work-panel-header nav svg {
-    display: none;
-  }
   .work-panel-header {
     padding-left: 8px;
     padding-right: 8px;
@@ -541,11 +646,8 @@
     max-width: 100%;
     flex: 1;
   }
-  .work-panel-header nav {
-    justify-content: space-between;
-  }
-  .work-panel-header nav button {
-    padding: 10px 9px 14px;
+  .work-panel-toggle span {
+    display: none;
   }
   .work-panel-header {
     min-height: 55px;
@@ -584,4 +686,10 @@
   .stage-label {
     padding: 2px 5px;
   }
+}
+.work-session-pick strong {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }

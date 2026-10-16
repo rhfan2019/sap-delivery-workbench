@@ -258,6 +258,13 @@ test('one turn at a time; a running turn can be cancelled; strangers are rejecte
     assert.equal(anonymous.status, 401);
     const missing = await call('GET', '/sessions/00000000-0000-4000-8000-000000000000');
     assert.equal(missing.status, 404);
+
+    // A conversation can be renamed; an empty name is refused.
+    const renamed = await call('PATCH', `/sessions/${sid}`, { title: '  逾期清单初稿  ' });
+    assert.equal(renamed.json().title, '逾期清单初稿');
+    assert.equal((await call('PATCH', `/sessions/${sid}`, { title: ' ' })).status, 400);
+    const listedAfter = (await call('GET', '/sessions')).json().sessions;
+    assert.equal(listedAfter.find((x) => x.id === sid).title, '逾期清单初稿');
   } finally {
     await f.close();
   }

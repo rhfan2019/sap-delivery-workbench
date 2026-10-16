@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { api } from '../../services/session';
 import DocumentView from '../agent-workbench/DocumentView.vue';
+import SelectionComment from '../agent-workbench/SelectionComment.vue';
 import type { useAgentSession } from '../agent-workbench/useAgentSession';
 import CodeView from './CodeView.vue';
 import type {
@@ -28,19 +29,16 @@ const SOURCE: Record<string, string> = {
   upload: '开发顾问上传',
   sap: 'SAP 同步',
 };
-const TABS: { id: string; label: string }[] = [
+const VIEWS: { id: string; label: string }[] = [
   { id: 'code', label: '代码' },
   { id: 'plan', label: '开发方案' },
-  { id: 'diff', label: '差异' },
-  { id: 'basis', label: '依据' },
 ];
 const tab = ref('code');
 const shown = ref<DevVersion | null>(null);
 const loading = ref(false),
   error = ref(''),
   saving = ref(false);
-const anchor = ref<{ target: DevTarget; text: string; line: number | null } | null>(null),
-  body = ref('');
+const selection = ref<InstanceType<typeof SelectionComment> | null>(null);
 
 const latest = computed<DevVersion | null>(() => run.detail.value?.version ?? null);
 const versions = computed<DevVersionSummary[]>(() => run.detail.value?.versions ?? []);
@@ -117,30 +115,22 @@ async function toggleFinal() {
   }
 }
 
-async function addComment() {
-  if (!shown.value || !anchor.value || !body.value.trim() || saving.value) return;
-  saving.value = true;
-  error.value = '';
-  try {
-    await api(
-      `${sessionUrl.value}/comments`,
-      {
-        target: anchor.value.target,
-        anchorText: anchor.value.text,
-        anchorVersion: shown.value.version,
-        anchorLine: anchor.value.line,
-        body: body.value.trim(),
-      },
-      'POST',
-    );
-    anchor.value = null;
-    body.value = '';
-    await run.refresh();
-  } catch (e) {
-    error.value = (e as Error).message;
-  } finally {
-    saving.value = false;
-  }
+// Errors stay in the comment box, which remains open for another try.
+async function addComment(anchorText: string, body: string, context: unknown) {
+  if (!shown.value) return;
+  const at = context as { target: DevTarget; line: number | null };
+  await api(
+    `${sessionUrl.value}/comments`,
+    {
+      target: at.target,
+      anchorText,
+      anchorVersion: shown.value.version,
+      anchorLine: at.line,
+      body,
+    },
+    'POST',
+  );
+  await run.refresh();
 }
 
 async function setStatus(id: string, status: 'open' | 'resolved') {
@@ -224,41 +214,49 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
       <p v-if="shown && !live && warnings(shown).length" role="alert" class="dev-warning">
         未声明的修改：{{ warnings(shown).join('、') }}（助手改了但没有说明原因，请重点核对）
       </p>
+      <!-- Code and plan are the two views; comparing versions and the basis are tools on them. -->
       <nav class="dev-tabs" aria-label="成果内容">
-        <button v-for="t in TABS" :key="t.id" :aria-pressed="tab === t.id" @click="tab = t.id">
+        <button v-for="t in VIEWS" :key="t.id" :aria-pressed="tab === t.id" @click="tab = t.id">
           {{ t.label }}
         </button>
+        <span class="dev-tools">
+          <button
+            v-if="shown && !live"
+            :aria-pressed="tab === 'diff'"
+            @click="tab = tab === 'diff' ? 'code' : 'diff'"
+          >
+            与上一版比较
+          </button>
+          <button
+            v-if="shown && !live"
+            :aria-pressed="tab === 'basis'"
+            @click="tab = tab === 'basis' ? 'code' : 'basis'"
+          >
+            查看依据
+          </button>
+        </span>
       </nav>
-      <form v-if="anchor && canEdit && !live" class="comment-form" @submit.prevent="addComment">
-        <blockquote>
-          {{ anchor.target === 'code' ? `代码第 ${anchor.line} 行：` : '开发方案：'
-          }}{{ anchor.text.slice(0, 300) }}
-        </blockquote>
-        <textarea v-model="body" rows="3" aria-label="批注内容" placeholder="写下修改意见…" />
-        <div class="work-actions">
-          <button class="work-primary" :disabled="saving || !body.trim()">添加批注</button
-          ><button type="button" @click="anchor = null">取消</button>
-        </div>
-      </form>
-      <template v-if="tab === 'code'">
-        <p v-if="!viewedCode" class="work-muted">这一版还没有代码。</p>
-        <CodeView
-          v-else
-          :code="viewedCode"
-          :title="`ABAP · ${viewedCode.split('\n').length} 行`"
-          @select="(text, line) => (anchor = { target: 'code', text, line })"
-        />
-      </template>
-      <template v-if="tab === 'plan'">
-        <p v-if="!viewedPlan" class="work-muted">这一版还没有开发方案。</p>
-        <DocumentView
-          v-else
-          class="dev-reader"
-          :artifact="{ id: 'plan', revision: shown?.version ?? 0, markdown: viewedPlan }"
-          :closable="false"
-          @select="anchor = { target: 'plan', text: $event, line: null }"
-        />
-      </template>
+      <SelectionComment ref="selection" :disabled="!canEdit || live || !shown" :save="addComment">
+        <template v-if="tab === 'code'">
+          <p v-if="!viewedCode" class="work-muted">这一版还没有代码。</p>
+          <CodeView
+            v-else
+            :code="viewedCode"
+            :title="`ABAP · ${viewedCode.split('\n').length} 行`"
+            @select="(text, line) => selection?.offer(text, { target: 'code', line })"
+          />
+        </template>
+        <template v-if="tab === 'plan'">
+          <p v-if="!viewedPlan" class="work-muted">这一版还没有开发方案。</p>
+          <DocumentView
+            v-else
+            class="dev-reader"
+            :artifact="{ id: 'plan', revision: shown?.version ?? 0, markdown: viewedPlan }"
+            :closable="false"
+            @select="selection?.offer($event, { target: 'plan', line: null })"
+          />
+        </template>
+      </SelectionComment>
       <section v-if="tab === 'diff' && shown" class="dev-diff" aria-label="版本差异">
         <div class="work-actions">
           <label
@@ -310,7 +308,9 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
             让助手处理批注
           </button>
         </div>
-        <p v-if="!comments.length" class="work-muted">在代码或开发方案中选中文字即可添加批注。</p>
+        <p v-if="!comments.length" class="work-muted">
+          在代码或开发方案中选中文字，点旁边的“批注”即可添加。
+        </p>
         <article
           v-for="c in comments"
           :key="c.id"
@@ -365,6 +365,14 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
   border-bottom-color: currentColor;
   font-weight: 600;
 }
+.dev-tools {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.dev-tools button {
+  font-size: 13px;
+}
 .dev-reader {
   min-height: 420px;
   max-height: 70vh;
@@ -402,15 +410,11 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
   padding-left: 18px;
   font-size: 13px;
 }
-.comment-form,
 .comment-item {
   border: 1px solid #e8edf2;
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 13px;
-}
-.comment-form textarea {
-  width: 100%;
 }
 blockquote {
   margin: 0 0 6px;

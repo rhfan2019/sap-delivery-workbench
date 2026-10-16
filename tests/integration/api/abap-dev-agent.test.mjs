@@ -83,6 +83,8 @@ test('a development session writes a plan and code, revises by comment and takes
     assert.equal(listed.item.kind, 'report');
     assert.equal(listed.supported, true);
     const sid = (await call('POST', '/sessions', {})).json().id;
+    const renamed = await call('PATCH', `/sessions/${sid}`, { title: '生产订单清单' });
+    assert.equal(renamed.json().title, '生产订单清单');
 
     // First turn: the framework interface and the report rules reach the model.
     model.queue.push(

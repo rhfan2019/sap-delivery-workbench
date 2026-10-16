@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { api } from '../../services/session';
 import DocumentView from '../agent-workbench/DocumentView.vue';
+import SelectionComment from '../agent-workbench/SelectionComment.vue';
 import type { useAgentSession } from '../agent-workbench/useAgentSession';
 import type {
   AgentArtifact,
@@ -21,9 +22,8 @@ const run = props.session;
 const shown = ref<SessionDocument | null>(null);
 const loading = ref(false),
   error = ref(''),
-  anchor = ref(''),
-  body = ref(''),
   saving = ref(false);
+const selection = ref<InstanceType<typeof SelectionComment> | null>(null);
 const asDocument = (doc: any): SessionDocument => ({
   ...doc,
   id: 'v' + doc.version,
@@ -32,7 +32,9 @@ const asDocument = (doc: any): SessionDocument => ({
 const latest = computed(() =>
   run.detail.value?.document ? asDocument(run.detail.value.document) : null,
 );
-const documents = computed<{ version: number; labels: string[] }[]>(() => run.detail.value?.documents ?? []);
+const documents = computed<{ version: number; labels: string[] }[]>(
+  () => run.detail.value?.documents ?? [],
+);
 const draftMarkdown = computed(() => run.drafts.value.document ?? '');
 const comments = computed(() => run.comments.value as AgentComment[]);
 const live = computed(() => run.busy.value && !!draftMarkdown.value);
@@ -89,24 +91,15 @@ async function toggleFinal() {
   }
 }
 
-async function addComment() {
-  if (!shown.value || !anchor.value || !body.value.trim() || saving.value) return;
-  saving.value = true;
-  error.value = '';
-  try {
-    await api(
-      `${props.base}/sessions/${run.sessionId.value}/comments`,
-      { anchorText: anchor.value, anchorVersion: shown.value.revision, body: body.value.trim() },
-      'POST',
-    );
-    anchor.value = '';
-    body.value = '';
-    await run.refresh();
-  } catch (e) {
-    error.value = (e as Error).message;
-  } finally {
-    saving.value = false;
-  }
+// Errors stay in the comment box, which remains open for another try.
+async function addComment(anchorText: string, body: string) {
+  if (!shown.value) return;
+  await api(
+    `${props.base}/sessions/${run.sessionId.value}/comments`,
+    { anchorText, anchorVersion: shown.value.revision, body },
+    'POST',
+  );
+  await run.refresh();
 }
 
 async function setStatus(id: string, status: 'open' | 'resolved') {
@@ -183,21 +176,15 @@ async function handleComments() {
           声明了但未改动：{{ shown.comparison.unapplied.join('、') }}
         </p>
       </div>
-      <form v-if="anchor && canEdit && !live" class="comment-form" @submit.prevent="addComment">
-        <blockquote>{{ anchor.slice(0, 300) }}</blockquote>
-        <textarea v-model="body" rows="3" aria-label="批注内容" placeholder="写下修改意见…" />
-        <div class="work-actions">
-          <button class="work-primary" :disabled="saving || !body.trim()">添加批注</button
-          ><button type="button" @click="anchor = ''">取消</button>
-        </div>
-      </form>
-      <DocumentView
-        v-if="viewed"
-        class="document-reader"
-        :artifact="viewed"
-        :closable="false"
-        @select="anchor = $event"
-      />
+      <SelectionComment ref="selection" :disabled="!canEdit || live || !shown" :save="addComment">
+        <DocumentView
+          v-if="viewed"
+          class="document-reader"
+          :artifact="viewed"
+          :closable="false"
+          @select="selection?.offer($event)"
+        />
+      </SelectionComment>
       <section class="document-comments" aria-label="批注">
         <div class="work-section-heading">
           <h3>
@@ -213,7 +200,7 @@ async function handleComments() {
           </button>
         </div>
         <p v-if="!run.comments.value.length" class="work-muted">
-          在上方文档中选中文字即可添加批注。
+          在文档中选中文字，点旁边的“批注”即可添加。
         </p>
         <article
           v-for="c in run.comments.value"
@@ -256,15 +243,11 @@ async function handleComments() {
 .document-changes [role='alert'] {
   color: #b45309;
 }
-.comment-form,
 .comment-item {
   border: 1px solid #e8edf2;
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 13px;
-}
-.comment-form textarea {
-  width: 100%;
 }
 blockquote {
   margin: 0 0 6px;
