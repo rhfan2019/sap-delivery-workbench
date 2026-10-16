@@ -1,14 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import {
   connectMcp,
-  decodeResult,
   testSystemTarget,
   resolveTestSystem,
   reviewSource,
   executeTestData,
 } from '../sap/public.mjs';
 import { fn, str } from './questions.mjs';
-import { guardSapCall, truncate, formatResult } from './sap-tools.mjs';
+import { guardSapCall, truncate, callSapTool } from './sap-tools.mjs';
 
 // Contract 3.4: finding test documents in the test system (QAS) and asking the user to
 // authorize creating missing ones. Creation itself runs only after the user agreed, in
@@ -16,7 +15,7 @@ import { guardSapCall, truncate, formatResult } from './sap-tools.mjs';
 export const TEST_DATA_TOOLS = [
   fn(
     'query_test_system',
-    '在测试系统（QAS）中执行单表 SELECT，查找测试单据。规则同 runQuery：只查一张表，不用别名、JOIN、子查询；行数用 rowNumber 控制。需要用户已在界面输入本人的 QAS 用户。',
+    '在测试系统（QAS）中执行单表 SELECT，查找测试单据。规则同 runQuery：只查一张表，不用别名、JOIN、子查询；行数用 rowNumber 控制；降序写 DESCENDING，不写 DESC。查询失败时返回 SAP 的原始报错，请据此修改语句；只有提示“尚未登录”时才是登录问题。',
     {
       sqlQuery: str('单表 SELECT 语句'),
       rowNumber: { type: 'integer', description: '最多返回行数，不超过 100' },
@@ -82,14 +81,10 @@ export function createTestDataTools({ db, scope, deps = {} }) {
       }
       connection = await (deps.connect ?? connectMcp)(env);
     }
-    try {
-      const value = await decodeResult(await connection.call('runQuery', args), connection.call);
-      const content = truncate(formatResult('runQuery', value));
-      results.push(content);
-      return content;
-    } catch (error) {
-      return 'QAS 查询失败：' + String(error.message).slice(0, 500);
-    }
+    const outcome = await callSapTool(connection, 'runQuery', args);
+    if (outcome.status !== 'ok') return outcome.content.replace(/^SAP 查询失败/, 'QAS 查询失败');
+    results.push(outcome.content);
+    return outcome.content;
   }
   async function request_test_data(args) {
     for (const key of ['data_id', 'object', 'purpose', 'key_data', 'abap_body'])

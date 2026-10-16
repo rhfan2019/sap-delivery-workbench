@@ -21,7 +21,7 @@ export const SAP_TOOLS = [
 const HINTS = {
   ddicElement: 'path 只放一个对象名，例如 LIKP；返回字段清单。多个表请并行发出多个调用。',
   runQuery:
-    '只允许单表 SELECT：不用表别名、JOIN、子查询；只写表中真实存在的字段。行数用 rowNumber 参数控制，SQL 中不写 UP TO n ROWS。域文本在 DD07T.DDTEXT，DD07L 没有 DDTEXT。',
+    '只允许单表 SELECT：不用表别名、JOIN、子查询；只写表中真实存在的字段。行数用 rowNumber 参数控制，SQL 中不写 UP TO n ROWS；按 ABAP SQL 书写，降序写 ORDER BY 字段 DESCENDING，不写 DESC。域文本在 DD07T.DDTEXT，DD07L 没有 DDTEXT。',
   tableContents: '读取小表的前几行，用于了解配置；需要条件或字段时用 runQuery。',
   searchObject: 'objType 可省略，或用 TABL、PROG、FUNC、CLAS 等具体类型，不要用 *。',
 };
@@ -89,20 +89,7 @@ export async function openSap(
     async call(name, args) {
       const problem = guardSapCall(name, args);
       if (problem) return { status: 'denied', content: problem };
-      try {
-        const envelope = await connection.call(name, args);
-        let value;
-        try {
-          value = await decodeResult(envelope, connection.call);
-        } catch {
-          // Not every tool answers with the paged JSON envelope; fall back to its text.
-          if (envelope?.isError) throw new Error(textOf(envelope) || 'SAP 工具返回错误');
-          value = textOf(envelope);
-        }
-        return { status: 'ok', content: truncate(formatResult(name, value)) };
-      } catch (error) {
-        return { status: 'error', content: 'SAP 查询失败：' + String(error.message).slice(0, 500) };
-      }
+      return callSapTool(connection, name, args);
     },
     // Full source of one object for the program itself (framework loading, code sync);
     // never offered to the model, so the line limit above does not apply. Throws on failure.
@@ -115,6 +102,25 @@ export async function openSap(
     },
     close: () => connection.close().catch(() => {}),
   };
+}
+
+// One read-only tool call on an open MCP connection, with SAP's own error text on failure
+// so the model can correct the query.
+export async function callSapTool(connection, name, args) {
+  try {
+    const envelope = await connection.call(name, args);
+    let value;
+    try {
+      value = await decodeResult(envelope, connection.call);
+    } catch {
+      // Not every tool answers with the paged JSON envelope; fall back to its text.
+      if (envelope?.isError) throw new Error(textOf(envelope) || 'SAP 工具返回错误');
+      value = textOf(envelope);
+    }
+    return { status: 'ok', content: truncate(formatResult(name, value)) };
+  } catch (error) {
+    return { status: 'error', content: 'SAP 查询失败：' + String(error.message).slice(0, 500) };
+  }
 }
 
 // ddicElement answers with verbose JSON (EBAN alone is ~24k characters); the model only

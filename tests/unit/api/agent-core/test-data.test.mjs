@@ -119,3 +119,29 @@ test('an approved run is worded for the model, success or failure', async () => 
   assert.equal(failed.run.status, 'failed');
   assert.match(failed.text, /^建单失败：请先输入/);
 });
+
+test('a failed QAS query returns SAP’s own error text, not a login hint', async () => {
+  const tools = createTestDataTools({
+    db: null,
+    scope,
+    deps: {
+      ...deps,
+      resolveTestSystem: async () => ({ target, env: {} }),
+      connect: async () => ({
+        call: async () => ({
+          isError: true,
+          content: [
+            { type: 'text', text: 'The elements in the "ORDER BY" list must be separated' },
+          ],
+        }),
+        close: async () => {},
+      }),
+    },
+  });
+  const answer = await tools.handlers.query_test_system({
+    sqlQuery: 'SELECT VBELN FROM VBAK ORDER BY ERDAT DESC',
+  });
+  assert.match(answer, /^QAS 查询失败：.*ORDER BY/);
+  assert.doesNotMatch(answer, /登录/);
+  assert.deepEqual(tools.results, []);
+});
