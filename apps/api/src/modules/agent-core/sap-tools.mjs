@@ -44,9 +44,45 @@ export function guardSapCall(name, args) {
   }
   if (name === 'runQuery' || name === 'tableContents')
     args.rowNumber = Math.min(Number(args.rowNumber) || MAX_ROWS, MAX_ROWS);
+  if (typeof args.sqlQuery === 'string') args.sqlQuery = wrapSql(args.sqlQuery);
   if (name === 'getObjectSource')
     args.maxLines = Math.min(Number(args.maxLines) || MAX_SOURCE_LINES, MAX_SOURCE_LINES);
   return null;
+}
+
+// ADT's data preview compiles the statement as ABAP source, whose lines may not exceed 255
+// characters (long IN lists hit this). Breaks after a comma or before AND/OR, never inside
+// a literal, so every line stays within `width`.
+export function wrapSql(sql, width = 200) {
+  if (sql.split('\n').every((line) => line.length <= width)) return sql;
+  const out = [];
+  let line = '',
+    quoted = false;
+  for (let i = 0; i < sql.length; i++) {
+    const ch = sql[i];
+    if (ch === "'") quoted = !quoted;
+    if (!quoted && ch === '\n') {
+      out.push(line);
+      line = '';
+      continue;
+    }
+    if (!quoted && line.length >= width * 0.7) {
+      const rest = sql.slice(i);
+      if (ch === ' ' && /^ (AND|OR) /i.test(rest)) {
+        out.push(line);
+        line = '';
+        continue;
+      }
+      if (line.endsWith(',') && ch === ' ') {
+        out.push(line);
+        line = '';
+        continue;
+      }
+    }
+    line += ch;
+  }
+  out.push(line);
+  return out.join('\n');
 }
 
 export function truncate(text, limit = MAX_RESULT_CHARS) {

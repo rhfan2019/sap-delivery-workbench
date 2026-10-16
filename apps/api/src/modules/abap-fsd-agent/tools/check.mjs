@@ -60,6 +60,28 @@ export async function checkDocument(
     if (!headings.some((h) => h.includes(title) && (!number || h.includes(number))))
       problems.push({ kind: 'missing_section', message: `缺少章节：${number} ${title}`.trim() });
 
+  // A chapter's text: its own section and the deeper sections under it.
+  const chapter = (title) => {
+    const start = sections.findIndex((s) => s.heading.includes(title));
+    if (start < 0) return null;
+    const parts = [sections[start].body];
+    for (let i = start + 1; i < sections.length && sections[i].level > sections[start].level; i++)
+      parts.push(sections[i].heading, sections[i].body);
+    return parts.join('\n');
+  };
+  const scope = chapter('业务需求描述');
+  if (scope !== null && !scope.includes('单据范围'))
+    problems.push({
+      kind: 'content',
+      message: '1.2 缺少“单据范围”：逐一列出相关对象的全部类别与类型，以及包含、排除或条件包含。',
+    });
+  const layout = chapter('输出布局');
+  if (layout !== null && !layout.includes('默认显示'))
+    problems.push({
+      kind: 'content',
+      message: '2.4 的输出字段表缺少“默认显示”列：补充字段写“否”，由用户在 ALV 布局中显示。',
+    });
+
   for (const section of sections) {
     const lines = section.body.split('\n');
     for (let i = 0; i < lines.length; i++) {

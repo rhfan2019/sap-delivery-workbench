@@ -241,6 +241,7 @@ START-OF-SELECTION.
 ## 五、ALV 输出
 
 - **字段目录逐项填充**：在 `build_alv_grid_fcat` 中用 `ct_fcat = VALUE #( ( ... ) ( ... ) )` 重建整个字段目录，按显示顺序**逐列列出要显示的字段**，不依赖基类自动生成的目录。不在目录中的 `gt_out` 字段（如 `mark`、只用于计算的字段）不显示。不用宏。
+- **默认隐藏的列**：FSD 2.4 “默认显示”为“否”的字段同样放进字段目录并取数，设 `no_out = abap_true`，用户可在 ALV 布局中显示并保存为默认布局。代码字段的描述列紧跟在代码列之后。
 - **每列的写法**：`fieldname` 加 `ref_table`；内表字段名与参照字段名不同时再加 `ref_field`（如 `lifnr_name` 参照 `LFA1-NAME1`）。
 - **列标题**：参照字段的 DDIC 标题不达意或会与其他列重复时（如两列都参照 `NAME1`、计算列参照 `MENGE`），用 `coltext = '...'(fxx)` 覆盖。
 - **数量与金额**：设置 `qfieldname` / `cfieldname` 绑定单位与币种字段；不同单位不能合计时不设 `do_sum`。
@@ -280,7 +281,7 @@ START-OF-SELECTION.
 | 事件块   | `INITIALIZATION` 只有创建对象和 `initialize( )`；默认值都在 `initialize` 中                                                                                     |
 | SRI      | 每个需权限检查的 `s_xxx` 都有 `s_xxx1`，用 `get_util_auth( )->check_authority`，`iv_auth_field` 是业务字段（如 `EKORG`）而不是 `ACTVT`；SELECT 只绑定影子范围表 |
 | 计算下推 | 计算列在 SQL 中用表达式算出，`process` 中没有可下推的算术                                                                                                       |
-| 字段目录 | 在 `build_alv_grid_fcat` 中逐项填充全部显示列；每列有 `ref_table`，重名或不达意的列有 `coltext` 文本符号；无宏                                                  |
+| 字段目录 | 在 `build_alv_grid_fcat` 中逐项填充全部显示列；每列有 `ref_table`，重名或不达意的列有 `coltext` 文本符号；FSD 中默认不显示的列设 `no_out`；无宏                 |
 | 写回     | 勾选检查、`check_changed_data`、提交回滚、逐行结果、刷新都已实现                                                                                                |
 
 ## 九、完整范例

@@ -7,9 +7,11 @@ import {
 } from '../../../../apps/api/src/modules/abap-fsd-agent/tools/check.mjs';
 
 const exempt = '无需测试案例：本功能只有静态说明，没有可执行的取数逻辑。';
-const complete = REQUIRED_SECTIONS.map(
-  ([n, t]) => `## ${n} ${t}\n${n === '附录 D' ? exempt : '内容'}`,
-).join('\n\n');
+// Bodies the content checks look for: the document scope in 1.2, the display column in 2.4.
+const bodies = { 1.2: '**单据范围**\n内容', 2.4: '字段表含默认显示列', '附录 D': exempt };
+const complete = REQUIRED_SECTIONS.map(([n, t]) => `## ${n} ${t}\n${bodies[n] ?? '内容'}`).join(
+  '\n\n',
+);
 
 const row = (cells) => `| ${cells.join(' | ')} |`;
 // The skeleton with real sections 3.1 and 3.2 and a fully structured appendix D.
@@ -155,4 +157,16 @@ test('appendix D: data requirements carry no document numbers (contract 1.12)', 
   assert.ok(
     messages.some((m) => /表头应为：数据编号 \| 对象 \| 数据特征 \| 核实条件 \| 准备建议/.test(m)),
   );
+});
+
+test('1.2 needs the document scope and 2.4 the default display column', async () => {
+  const withoutScope = complete.replace('**单据范围**\n内容', '只有标准订单');
+  assert.ok(
+    (await checkDocument(withoutScope)).problems.some((p) => /1\.2 缺少“单据范围”/.test(p.message)),
+  );
+  const withoutDisplay = complete.replace('字段表含默认显示列', '字段表');
+  assert.ok((await checkDocument(withoutDisplay)).problems.some((p) => /默认显示/.test(p.message)));
+  // A sub-heading under 1.2 still counts as part of the chapter.
+  const nested = complete.replace('**单据范围**\n内容', '内容\n\n### 单据范围\n全部类别');
+  assert.equal((await checkDocument(nested)).ok, true);
 });

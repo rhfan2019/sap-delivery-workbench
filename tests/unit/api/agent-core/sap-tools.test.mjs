@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   guardSapCall,
+  wrapSql,
   openSap,
   truncate,
   formatResult,
@@ -111,4 +112,19 @@ test('openSap reports why SAP is unavailable instead of failing the turn', async
   );
   assert.equal(down.available, false);
   assert.match(down.reason, /网络不通/);
+});
+
+test('long SQL is wrapped into short lines outside literals', () => {
+  const values = Array.from({ length: 40 }, (_, i) => `'Z${String(i).padStart(3, '0')}, X'`);
+  const sql = `SELECT AUART FROM TVAK WHERE VBTYP = 'C' AND AUART IN (${values.join(', ')})`;
+  const wrapped = wrapSql(sql);
+  assert.ok(wrapped.split('\n').length > 1);
+  assert.ok(wrapped.split('\n').every((line) => line.length <= 200));
+  // Only whitespace changed; literals (which contain ", ") are intact.
+  assert.equal(wrapped.replace(/\n/g, ' '), sql);
+  for (const v of values) assert.ok(wrapped.includes(v));
+  assert.equal(wrapSql('SELECT A FROM T'), 'SELECT A FROM T');
+  const args = { sqlQuery: sql };
+  guardSapCall('runQuery', args);
+  assert.equal(args.sqlQuery, wrapped);
 });

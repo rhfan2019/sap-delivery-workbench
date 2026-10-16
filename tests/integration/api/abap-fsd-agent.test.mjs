@@ -3,9 +3,13 @@ import assert from 'node:assert/strict';
 import { apiFixture } from '../../fixtures/api.mjs';
 import { REQUIRED_SECTIONS } from '../../../apps/api/src/modules/abap-fsd-agent/tools/check.mjs';
 
+const bodies = {
+  1.2: '业务需求描述的内容\n\n**单据范围**：只含标准订单。',
+  2.4: '输出布局的内容，含默认显示列。',
+  '附录 D': '无需测试案例：这份测试文档没有可执行的取数逻辑。',
+};
 const skeleton = REQUIRED_SECTIONS.map(
-  ([n, t]) =>
-    `## ${n} ${t}\n${n === '附录 D' ? '无需测试案例：这份测试文档没有可执行的取数逻辑。' : t + '的内容'}`,
+  ([n, t]) => `## ${n} ${t}\n${bodies[n] ?? t + '的内容'}`,
 ).join('\n\n');
 const reply = (content, toolCalls = []) => ({
   content,
