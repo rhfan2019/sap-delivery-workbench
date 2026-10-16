@@ -262,6 +262,68 @@ test('SAP configuration HTTP and database boundaries', async (t) => {
         );
       },
     );
+    await t.test(
+      'allowlist is admin-only; QAS login is per login session and memory only',
+      async () => {
+        const allowUrl = '/api/admin/sap-systems/' + system.id + '/allowlist';
+        assert.equal((await req('GET', allowUrl, undefined, m)).statusCode, 403);
+        const added = await req(
+          'POST',
+          allowUrl,
+          { kind: 'BAPI', name: 'bapi_transaction_commit' },
+          a,
+        );
+        assert.equal(added.statusCode, 200, added.body);
+        assert.equal(added.json().name, 'BAPI_TRANSACTION_COMMIT');
+        assert.equal(
+          (await req('POST', allowUrl, { kind: 'BAPI', name: 'BAPI_TRANSACTION_COMMIT' }, a))
+            .statusCode,
+          409,
+        );
+        assert.equal(
+          (await req('POST', allowUrl, { kind: 'BAPI', name: 'NO SPACE' }, a)).statusCode,
+          400,
+        );
+        assert.equal(
+          (await req('POST', allowUrl, { kind: 'PROG', name: 'ZX' }, a)).statusCode,
+          400,
+        );
+        const off = await req('POST', allowUrl, { ...added.json(), active: false }, a);
+        assert.equal(off.statusCode, 200, off.body);
+        assert.equal(off.json().active, false);
+        assert.equal(
+          (await req('POST', allowUrl, { ...added.json(), active: true }, a)).statusCode,
+          409,
+        );
+
+        const qasUrl = personalUrl.replace(/\/sap$/, '/sap/test-system');
+        const status = (await req('GET', qasUrl, undefined, m)).json();
+        assert.deepEqual([status.configured, status.ready, status.client], [true, false, '000']);
+        const originalEntry = process.env.SAP_MCP_ENTRY;
+        process.env.SAP_MCP_ENTRY = new URL(
+          '../../fixtures/sap-probe-server.mjs',
+          import.meta.url,
+        ).pathname.replace(/^\/(?=[A-Za-z]:)/, '');
+        try {
+          const refused = await req('POST', qasUrl, { username: 'bad-auth', password: secret }, m);
+          assert.equal(refused.statusCode, 400);
+          const login = await req('POST', qasUrl, { username: 'ok', password: secret }, m);
+          assert.equal(login.statusCode, 200, login.body);
+          assert.ok(!login.body.includes(secret));
+          assert.deepEqual([login.json().ready, login.json().username], [true, 'ok']);
+        } finally {
+          if (originalEntry === undefined) delete process.env.SAP_MCP_ENTRY;
+          else process.env.SAP_MCP_ENTRY = originalEntry;
+        }
+        assert.equal((await req('GET', qasUrl, undefined, a)).json().ready, false);
+        const stored = await db.query(
+          'SELECT count(*)::int AS n FROM app.user_project_sap_config WHERE project_id=$1 AND username=$2',
+          [project, 'ok'],
+        );
+        assert.equal(stored.rows[0].n, 0);
+        assert.equal((await req('DELETE', qasUrl, undefined, m)).json().ready, false);
+      },
+    );
     await t.test('expired grant blocks execution and archived project blocks changes', async () => {
       await db.query(
         "UPDATE app.sap_system_grant SET expires_at=now()-interval '1 second' WHERE organization_id=$1",
@@ -315,6 +377,7 @@ test('SAP configuration HTTP and database boundaries', async (t) => {
       'user_project_sap_config',
       'project_sap_config',
       'sap_system_grant',
+      'sap_system_allowlist',
       'sap_system',
       'auth_session',
       'project_member',

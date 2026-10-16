@@ -227,12 +227,12 @@ function tableOf(section, columns, label, add) {
   return rows.slice(2).filter((r) => r.length === columns.length);
 }
 
-// Document numbers in a D.2 cell, e.g. "1000123" or "4500000012/00010"; short tokens
-// such as item numbers are left out because they cannot identify a document alone.
+// Document numbers in a D.2 cell, e.g. "4381" (leading zeros dropped) or "4500000012/00010";
+// one- and two-digit tokens such as item numbers cannot identify a document and are left out.
 function documentNumbers(cell) {
   if (NONE.test(cell)) return [];
   return (cell.replace(/`/g, '').match(/[A-Z0-9]+/gi) ?? []).filter(
-    (t) => t.length >= 5 && /\d/.test(t),
+    (t) => t.length >= 3 && /\d/.test(t),
   );
 }
 

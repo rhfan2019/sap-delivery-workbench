@@ -4,6 +4,7 @@ import { api, identity } from '../../services/session';
 import type { Customer } from '../admin/types';
 import type { SapSystem } from './types';
 import AdminDialog from '../admin/components/AdminDialog.vue';
+import SapAllowlistDialog from './SapAllowlistDialog.vue';
 import '../admin/admin.css';
 import './sap.css';
 const systems = ref<SapSystem[]>([]),
@@ -12,7 +13,8 @@ const systems = ref<SapSystem[]>([]),
   saveError = ref(''),
   busy = ref(false);
 const draft = ref<Partial<SapSystem> | null>(null),
-  grantSystem = ref<SapSystem | null>(null);
+  grantSystem = ref<SapSystem | null>(null),
+  allowlistSystem = ref<SapSystem | null>(null);
 const testSystem = ref<SapSystem | null>(null),
   testing = ref(false),
   testError = ref(''),
@@ -205,8 +207,8 @@ onMounted(() => {
                     测试</button
                   ><button class="text-button" :disabled="testing" @click="edit(s)">编辑</button
                   ><button v-if="s.ownerCustomerId" class="text-button" @click="showGrants(s)">
-                    临时授权
-                  </button>
+                    临时授权</button
+                  ><button class="text-button" @click="allowlistSystem = s">白名单</button>
                 </div>
               </td>
             </tr>
@@ -220,6 +222,11 @@ onMounted(() => {
         企业自有系统可用于本企业客户项目；客户所属系统仅供归属客户及有效期内被授权客户使用。
       </p></template
     >
+    <SapAllowlistDialog
+      v-if="allowlistSystem"
+      :system="allowlistSystem"
+      @close="allowlistSystem = null"
+    />
     <AdminDialog
       v-if="testSystem"
       :title="testSystem.name + ' · 连接测试'"

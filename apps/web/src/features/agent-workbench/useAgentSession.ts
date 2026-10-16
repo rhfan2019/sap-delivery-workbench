@@ -13,8 +13,10 @@ import {
   buildTimeline,
   decisionFromQuestions,
   pendingQuestions,
+  pendingTestData,
   stepFromToolCall,
   type AskedQuestion,
+  type TestDataRequest,
 } from './session-model.mjs';
 
 type Status =
@@ -33,6 +35,8 @@ export function useAgentSession(base: string) {
   const messages = ref<AgentMessage[]>([]);
   const steps = ref<AgentStep[]>([]);
   const decision = ref<AgentDecision | null>(null);
+  // A test data request awaiting the user's authorization (contract 3.4).
+  const testData = ref<TestDataRequest | null>(null);
   const status = ref<Status>('idle');
   const error = ref('');
   const generationNote = ref('');
@@ -54,6 +58,7 @@ export function useAgentSession(base: string) {
     const pending = pendingQuestions(data);
     questions = pending?.questions ?? [];
     decision.value = pending ? decisionFromQuestions(pending.id, pending.questions) : null;
+    testData.value = pendingTestData(data);
     comments.value = data.comments ?? [];
     attachments.value = data.attachments ?? [];
     drafts.value = {};
@@ -80,7 +85,7 @@ export function useAgentSession(base: string) {
     }
     const detail = await refresh();
     if (detail?.session?.activeTurnId) void follow(detail.session.activeTurnId, true);
-    else if (decision.value) status.value = 'waiting_user';
+    else if (decision.value || testData.value) status.value = 'waiting_user';
   }
 
   async function create(title = '') {
@@ -137,7 +142,7 @@ export function useAgentSession(base: string) {
       if (!disposed && sessionId.value) {
         const final = status.value;
         await refresh().catch(() => {});
-        if (decision.value) status.value = 'waiting_user';
+        if (decision.value || testData.value) status.value = 'waiting_user';
         else if (['waiting', 'streaming', 'stopping'].includes(final)) status.value = 'completed';
         else status.value = final;
       }
@@ -175,6 +180,7 @@ export function useAgentSession(base: string) {
         questions = d.questions;
         decision.value = decisionFromQuestions(d.id, d.questions);
       }
+      if (d.testDataRequest) testData.value = d.testDataRequest;
     } else if (event.type === 'document.draft')
       drafts.value = { ...drafts.value, document: d.markdown };
     else if (event.type === 'artifact.draft')
@@ -199,6 +205,8 @@ export function useAgentSession(base: string) {
     if (!sessionId.value) await create(content.slice(0, 60));
     error.value = '';
     decision.value = null;
+    // A new message supersedes an open test data request.
+    testData.value = null;
     const started = await api<{ turnId: string }>(
       `${base}/sessions/${sessionId.value}/messages`,
       { content, ...(answers ? { answers } : {}) },
@@ -212,6 +220,32 @@ export function useAgentSession(base: string) {
             .map((a) => `${a.question}：${a.choice}${a.note ? '（' + a.note + '）' : ''}`)
             .join('\n') + (content.trim() ? '\n' + content : '')
         : content,
+      status: 'completed',
+      createdAt: new Date().toISOString(),
+      authorName: identity.value?.user.displayName,
+    });
+    void follow(started.turnId);
+    return true;
+  }
+
+  // Approves or rejects the pending test data request; the next turn runs it.
+  async function authorize(decision: 'approve' | 'reject', note = '') {
+    const request = testData.value;
+    if (busy.value || !request || !sessionId.value) return false;
+    error.value = '';
+    const started = await api<{ turnId: string }>(
+      `${base}/sessions/${sessionId.value}/messages`,
+      { authorization: { requestId: request.id, decision, note } },
+      'POST',
+    );
+    testData.value = null;
+    messages.value.push({
+      id: 'local-' + started.turnId,
+      role: 'user',
+      content:
+        decision === 'approve'
+          ? `同意在 QAS 建立测试数据（${request.dataId} ${request.object}）。`
+          : `不同意建立测试数据（${request.dataId} ${request.object}）${note ? '：' + note : '。'}`,
       status: 'completed',
       createdAt: new Date().toISOString(),
       authorName: identity.value?.user.displayName,
@@ -248,7 +282,7 @@ export function useAgentSession(base: string) {
         waiting: '等待模型回复…',
         streaming: '正在输出…',
         stopping: '正在停止…',
-        waiting_user: '请回答问题后继续',
+        waiting_user: testData.value ? '请审阅建单申请' : '请回答问题后继续',
         completed: '回复完成',
         failed: '本轮未完成',
         cancelled: '已停止',
@@ -260,6 +294,7 @@ export function useAgentSession(base: string) {
     messages,
     steps,
     decision,
+    testData,
     status,
     statusLabel,
     busy,
@@ -275,6 +310,7 @@ export function useAgentSession(base: string) {
     create,
     send,
     answer,
+    authorize,
     stop,
   };
 }

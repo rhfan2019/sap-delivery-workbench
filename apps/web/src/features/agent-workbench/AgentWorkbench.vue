@@ -4,6 +4,8 @@ import { useDropZone, useFileDialog, useMediaQuery } from '@vueuse/core';
 import { Splitpanes, Pane } from 'splitpanes';
 import 'splitpanes/dist/splitpanes.css';
 import DecisionCard from './DecisionCard.vue';
+import TestDataCard from './TestDataCard.vue';
+import TestSystemLogin from './TestSystemLogin.vue';
 import RunSteps from './RunSteps.vue';
 import ChatComposer from './ChatComposer.vue';
 import ConversationTimeline from './ConversationTimeline.vue';
@@ -25,8 +27,10 @@ const props = withDefaults(
     editable?: boolean;
     blocked?: boolean;
     development?: boolean;
+    // Show the user's QAS login (contract 3.4) for agents that find or create test data.
+    testSystem?: boolean;
   }>(),
-  { editable: true, blocked: false, modelName: null, development: false },
+  { editable: true, blocked: false, modelName: null, development: false, testSystem: false },
 );
 const emit = defineEmits<{
   busy: [value: boolean];
@@ -130,6 +134,14 @@ async function answer(values: Record<string, string>) {
     error.value = e instanceof Error ? e.message : '提交失败';
   }
 }
+async function authorize(decision: 'approve' | 'reject', note: string) {
+  if (props.blocked || !props.editable) return;
+  try {
+    await run.authorize(decision, note);
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : '提交失败';
+  }
+}
 const previewOpen = computed(() => !!activeAttachment.value);
 </script>
 <template>
@@ -159,8 +171,17 @@ const previewOpen = computed(() => !!activeAttachment.value);
               :busy="sending || blocked || !editable"
               @answer="answer"
             />
+            <TestDataCard
+              v-if="run.testData.value && !sending"
+              :key="run.testData.value.id"
+              :request="run.testData.value"
+              :base="base"
+              :busy="sending || blocked || !editable"
+              @decide="authorize"
+            />
           </ConversationTimeline>
           <div class="assistant-bottom">
+            <TestSystemLogin v-if="testSystem && editable" compact :base="base" />
             <p v-if="notice" class="assistant-notice" role="alert">{{ notice }}</p>
             <p v-if="!models.length" class="assistant-notice">
               尚未配置组织默认模型。<RouterLink to="/workspace/models">前往大模型配置</RouterLink>

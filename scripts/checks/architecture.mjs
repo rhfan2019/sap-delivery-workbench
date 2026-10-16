@@ -39,6 +39,10 @@ const legacyIdentifiers = [
   'app.fs_draft',
   'app.fs_version',
 ];
+// Contract 1.8: every SAP write goes through the allowlist, authorization and run record.
+const sapWriteTools =
+  /['"`](createObject|lock|unLock|setObjectSource|activateByName|runClass|deleteObject)['"`]/;
+const sapWriter = 'apps/api/src/modules/sap/test-data.mjs';
 export function checkLegacy(file, content = '') {
   const errors = [];
   if (agentRoots.some((root) => file.startsWith(root)) && /\/v\d+\//.test(file))
@@ -59,6 +63,8 @@ export function checkLegacy(file, content = '') {
   )
     for (const id of legacyIdentifiers)
       if (content.includes(id)) errors.push(`${file}: Legacy assistant identifier ${id}`);
+  const write = file.startsWith('apps/api/') && file !== sapWriter && content.match(sapWriteTools);
+  if (write) errors.push(`${file}: SAP write tool ${write[1]} outside ${sapWriter}`);
   return errors;
 }
 const workspace = (file) =>

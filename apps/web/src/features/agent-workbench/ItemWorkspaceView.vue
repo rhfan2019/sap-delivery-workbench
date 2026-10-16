@@ -224,6 +224,7 @@ function resizePanel(event: PointerEvent) {
           :model-name="state.model"
           :editable="state.canEdit"
           :development="config.development"
+          :test-system="config.agent === 'abap-fsd-agent'"
           @busy="agentBusy = $event"
           @open-artifact="openArtifact"
           @files-changed="run.refresh()"

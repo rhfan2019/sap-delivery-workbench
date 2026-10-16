@@ -1,6 +1,8 @@
 # 仓库目录与依赖契约
 
-版本：1.7。日期：2026-10-14。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.8。日期：2026-10-15。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.8 变更：依据 [FSD 附录 D 测试案例计划](../plans/2026-10-15-fsd-test-cases.md)（用户 2026-10-15 确认阶段 2），智能体对 SAP 的访问由“只读”扩展为“只读 + 经用户逐次授权、在 QAS 创建测试数据”。创建能力归 sap 模块（白名单、会话级个人凭据、临时类执行与运行记录），agent-core 只提供查询测试系统与申请建单的工具定义和执行编排；PRD 一律拒绝。新增表 `app.sap_system_allowlist`、`app.sap_test_data_run` 归 sap。见 3.4 节；新增检查规则见第 9 节。
 
 1.7 变更：依据 [ABAP 开发助手方向决策](2026-10-13-abap-dev-agent-direction-decision.md) 与[实施计划](../plans/2026-10-14-abap-dev-agent-implementation.md)（用户 2026-10-14 确认），新增两个后端模块：`agent-core`（智能体公共运行层）与 `abap-dev-agent`（开发助手）；预留 `abap-test-agent`；规定智能体提示词与运行资源的放置和命名；两个助手共用的前端工作台外壳归 `features/agent-workbench/`，共用的流事件协议归 `packages/contracts/agent-core/`。设计助手的循环、事件缓冲、附件解析、SAP 只读工具在实施计划阶段 A 迁入 `agent-core`，迁出后不保留转发。见 3.1 节；新增检查规则见第 9 节。
 
@@ -72,7 +74,7 @@ fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3
 
 - **命名**：FSD 设计助手在后端模块、前端 feature、共享契约、提示词、API 路径和数据库表中统一使用 `abap-fsd-agent`（表名用 `abap_fsd_agent_` 前缀）；开发助手统一使用 `abap-dev-agent`（表名用 `abap_dev_agent_` 前缀）；测试助手预留 `abap-test-agent`，设计前不建目录。不再使用 design-assistant、fsd、fsd-agent、fs-workspace、agent-runtime 等同义名称。
 - **职责**：abap-fsd-agent 是模型主导的 FSD 设计智能体，负责对话、FSD 文档及其版本、批注、模型调用编排、SAP 只读查询与文档校验。abap-dev-agent 是模型主导的开发智能体，负责对话、开发方案与代码及其版本与依据、批注、框架加载、代码交回（上传与 SAP 同步）与代码静态校验。业务方法论与交付标准写在系统指令中，不写成固定流程节点或阶段状态机。
-- **公共运行层**：agent-core 承载各智能体共用、且与产物无关的能力：智能体循环（步数与工具调用上限、繁忙重试、重复调用拦截、取消）、进程内事件缓冲与续传、附件解析、SAP 只读工具（白名单、SELECT 限制、结果截断）、历史消息投影。它不含任何智能体的提示词、产物、表或路由，通过参数接收工具、系统指令与持久化回调；不依赖任何智能体模块。判断标准：各智能体都用、并且与产物无关的才放这里，不为假想的智能体设计扩展点。
+- **公共运行层**：agent-core 承载各智能体共用、且与产物无关的能力：智能体循环（步数与工具调用上限、繁忙重试、重复调用拦截、取消）、进程内事件缓冲与续传、附件解析、SAP 只读工具（白名单、SELECT 限制、结果截断）、测试系统查询与测试数据申请（见 3.4）、历史消息投影。它不含任何智能体的提示词、产物、表或路由，通过参数接收工具、系统指令与持久化回调；不依赖任何智能体模块。判断标准：各智能体都用、并且与产物无关的才放这里，不为假想的智能体设计扩展点。
 - **提示词与运行资源**：系统指令放在各智能体模块的 `prompts/`，不跨模块共享，业务分析方法在各助手中各写一份。主指令统一命名 `system.md`；按开发类型加载的部分以开发类型命名（如 `report.md`），该类型的完整范例命名为 `<类型>-example.abap`；模块名即命名空间，文件名不加 `fsd-`、`dev-` 等前缀；`prompts/` 下不建子目录。参考源码等运行资源不放进 `prompts/`：开发助手的框架类内置副本放 `abap-dev-agent/frameworks/`，每个类一个 `.abap` 文件。
 - **单一版本**：上述各处不得出现 `v1`、`v2` 等版本层级。API 入口为 `/api/projects/:projectId/development-items/:itemId/abap-fsd-agent` 与 `/api/projects/:projectId/development-items/:itemId/abap-dev-agent`。
 - **历史清除**：以下资产全部删除，不保留 410、转发或兼容壳：design-assistant 模块（含 `unavailable.mjs`）；agent-runtime 模块（旧 abap-fsd-agent 引擎，含 `/api/admin/abap-fsd-agent` 与开发助手挂载）；fs-workspace 模块及其前端、契约；item-workspace 中的开发助手后端；“FS助手测试”菜单、页面与诊断页；`packages/contracts` 下 design-assistant、agent-runtime、fs-workspace 及空的旧 abap-fsd-agent 目录；上述各代迁移所建的表与数据（含 `fsd_checkpoint` 模式）；仅服务这些代码的测试、工具、脚本、npm 命令和部署配置。删除前按第 8 节检查引用。
@@ -97,6 +99,14 @@ fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3
 - **阶段负责人**：设计助手的编辑权限取 `fsd` 阶段负责人，开发助手取 `development` 阶段负责人；未指定时为创建人。
 - **共享契约**：`packages/contracts/delivery` 只放字段目录、选项和纯函数（浏览器可用），不放校验副作用、数据库查询或权限决策。
 - **不保留**：手工 FS 章节编辑（由设计助手替代）、开发项“阶段 / 验收条件 / 阻塞原因”等旧字段及其兼容接口。
+
+### 3.4 测试数据创建（sap）
+
+- **边界**：智能体对 SAP 默认只读。唯一的写操作是为测试案例创建业务单据：只在项目配置的 **QAS** 环境执行，PRD 及未配置 QAS 时拒绝；每次执行前由用户在界面逐次授权，授权只对该次请求有效。
+- **职责归属**：sap 模块负责 BAPI / 函数模块 / 类白名单（按 SAP 系统，后台“SAP 系统”页面维护）、会话级个人凭据、建单代码的静态审查与执行、运行记录。agent-core 负责模型工具定义（查询测试系统、申请建单）与在轮次中编排执行；各智能体只决定是否启用这些工具及如何写入自己的产物。
+- **执行方式**：程序生成固定前缀的临时类（`$TMP`，实现 `IF_OO_ADT_CLASSRUN`），类定义由程序生成，模型只提供主方法正文；正文只能调用白名单中的函数与类，禁止直接数据库写、动态调用、`SUBMIT`、`CALL TRANSACTION`、文件与内核调用等。依次建对象、写源码、语法检查、激活、运行，运行后删除临时类。MCP 的写入类工具（`createObject`、`lock`、`unLock`、`setObjectSource`、`activateByName`、`runClass`、`deleteObject`）只允许在 `sap/test-data.mjs` 中出现。
+- **个人凭据**：QAS 的系统与 client 取项目配置；用户名和密码必须是用户本人的，在一次登录内输入一次，只保存在 API 进程内存（按登录会话），不落库、不写日志；退出、过期或 API 重启后需重新输入。界面使用浏览器可保存的密码表单。
+- **数据归属**：`app.sap_system_allowlist`（白名单）、`app.sap_test_data_run`（授权人、目标系统、类名与正文、调用的函数、输出、结果）归 sap；同时写一条 `app.audit_event`。
 
 认证和连接配置属于 platform；只供一个业务使用的提示词、模板和资源放该业务模块内。禁止为单一消费者新增 packages/agents。
 
@@ -160,6 +170,8 @@ docs/architecture 放唯一架构契约与审计；docs/specs 放版本化设计
 ## 9. 可执行验收
 
 npm run check:architecture 必须检查：受控根目录、workspace 清单、跨应用违规依赖、应用反向导入 scripts、contracts 反向依赖、跨包物理路径、缺失本地导入、前端 Node 校验入口，以及测试文件是否被发现。检查器自身必须有违规反例测试。
+
+1.8 新增检查：`apps/api/` 下除 `apps/api/src/modules/sap/test-data.mjs` 外，不得以字符串形式引用 MCP 写入类工具名（`createObject`、`lock`、`unLock`、`setObjectSource`、`activateByName`、`runClass`、`deleteObject`），保证所有 SAP 写入都经过白名单、授权与运行记录。
 
 1.7 新增检查：版本目录禁令扩展到 agent-core、abap-dev-agent、agent-workbench 的后端模块、前端 feature 与共享契约；agent-core、abap-fsd-agent、abap-dev-agent 跨模块导入必须指向对方的 `public.mjs`（原只约束 abap-fsd-agent）；智能体模块 `prompts/` 下只允许 `.md` 与 `<类型>-example.abap` 文件且不得有子目录，`frameworks/` 下只允许 `.abap` 文件；前端 `features/abap-fsd-agent` 与 `features/abap-dev-agent` 不得互相导入。
 

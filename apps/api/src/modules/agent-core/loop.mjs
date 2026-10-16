@@ -159,9 +159,15 @@ export async function runAgentLoop({
               status: 'denied',
               content: '同样的调用本轮已执行过两次，请使用已有结果或换一种查询。',
             };
-          else if (handlers[call.name])
-            outcome = { status: 'ok', content: await handlers[call.name](args) };
-          else if (sap?.available && sap.tools.some((t) => t.function.name === call.name))
+          else if (handlers[call.name]) {
+            // A handler answers with text, or with { content, payload } to attach data the
+            // interface shows (e.g. a request awaiting the user's authorization).
+            const value = await handlers[call.name](args);
+            outcome =
+              value && typeof value === 'object'
+                ? { status: 'ok', content: value.content, payload: value.payload }
+                : { status: 'ok', content: value };
+          } else if (sap?.available && sap.tools.some((t) => t.function.name === call.name))
             outcome = await sap.call(call.name, args);
           else outcome = { status: 'denied', content: `没有名为 ${call.name} 的工具。` };
         } catch (e) {
@@ -180,8 +186,12 @@ export async function runAgentLoop({
           summary: String(outcome.content).slice(0, 2000),
           durationMs,
         });
-        const questions =
-          call.name === 'ask_user' && outcome.status === 'ok' ? { questions: args.questions } : {};
+        const questions = {
+          ...(call.name === 'ask_user' && outcome.status === 'ok'
+            ? { questions: args.questions }
+            : {}),
+          ...outcome.payload,
+        };
         await persist.appendMessage({
           role: 'tool',
           content: outcome.content,

@@ -48,7 +48,7 @@ function scriptedModel() {
   };
 }
 
-async function setup({ openSap } = {}) {
+async function setup({ openSap, testData } = {}) {
   const model = scriptedModel();
   const f = await apiFixture({
     abapFsdAgent: {
@@ -61,7 +61,9 @@ async function setup({ openSap } = {}) {
         streamChat: model.streamChat,
         openSap: openSap ?? (async () => ({ available: false, reason: '测试环境不连接 SAP' })),
         wait: async () => {},
+        testData,
       },
+      testData,
     },
   });
   const base = `/api/projects/${f.scope.projectId}/development-items/${f.scope.itemId}/abap-fsd-agent`;
@@ -370,6 +372,181 @@ test('test document numbers in appendix D are checked against SAP results', asyn
     );
     await send(sid, { content: '再检查一遍' });
     assert.equal(model.queue.length, 0);
+  } finally {
+    await f.close();
+  }
+});
+
+test('a test data request waits for authorization, then runs before the model continues', async () => {
+  let ready = false;
+  const executed = [];
+  const testData = {
+    testSystemTarget: async () => ({
+      environment: 'QAS',
+      systemId: 's',
+      systemCode: 'Q01',
+      systemName: '测试系统',
+      client: '100',
+      ready,
+    }),
+    listAllowlist: async () => [
+      { kind: 'BAPI', name: 'BAPI_SALESORDER_CREATEFROMDAT2' },
+      { kind: 'BAPI', name: 'BAPI_TRANSACTION_COMMIT' },
+    ],
+    resolveTestSystem: async () => {
+      if (!ready)
+        throw Object.assign(new Error('请先输入您本人的 QAS 用户和密码。'), {
+          code: 'TEST_SYSTEM_LOGIN_REQUIRED',
+        });
+      return { target: {}, env: {} };
+    },
+    executeTestData: async (_db, _scope, request) => {
+      executed.push(request);
+      return {
+        status: 'succeeded',
+        target: { systemCode: 'Q01', client: '100' },
+        output: 'DOCUMENT 销售订单 0000004711\n',
+        documents: [{ object: '销售订单', number: '0000004711' }],
+        cleanedUp: true,
+      };
+    },
+  };
+  const { f, model, call, send } = await setup({ testData });
+  const body =
+    "CALL FUNCTION 'BAPI_SALESORDER_CREATEFROMDAT2'.\nCALL FUNCTION 'BAPI_TRANSACTION_COMMIT'.";
+  const ask = (data_id) => [
+    'request_test_data',
+    {
+      data_id,
+      object: '销售订单',
+      purpose: 'TC-02 需要部分拒绝的订单',
+      key_data: '销售组织 1710',
+      abap_body: body,
+    },
+  ];
+  const row = (cells) => `| ${cells.join(' | ')} |`;
+  const today = new Date().toISOString().slice(0, 10);
+  const withData = (number) =>
+    skeleton.replace(
+      '## 附录 D 测试案例\n无需测试案例：这份测试文档没有可执行的取数逻辑。',
+      [
+        '# 附录 D 测试案例',
+        '## D.1 测试范围与策略\n覆盖状态。',
+        [
+          '## D.2 测试数据',
+          row(['数据编号', '对象', '单据号', '数据特征', '核实条件', '来源', '核实时间']),
+          row(Array(7).fill('---')),
+          row(['TD-01', '销售订单', number, '部分拒绝', '`VBAK-ABSTK` = B', '本次新建', today]),
+        ].join('\n'),
+        [
+          '## D.3 测试案例',
+          row([
+            '编号',
+            '场景',
+            '维度',
+            '类型',
+            '测试数据',
+            '操作',
+            '预期结果',
+            '对应条款',
+            '优先级',
+          ]),
+          row(Array(9).fill('---')),
+          row(['TC-01', '部分拒绝', '状态', '正向', 'TD-01', '执行', `出现 ${number}`, '3', 'P1']),
+        ].join('\n'),
+        '## D.4 未覆盖与待补\n- 权限。',
+      ].join('\n\n'),
+    );
+  try {
+    const sid = (await call('POST', '/sessions', {})).json().id;
+    model.queue.push(async (messages) => {
+      assert.match(messages[1].content, /测试系统（QAS）：Q01/);
+      assert.match(messages[1].content, /建单白名单：BAPI_SALESORDER_CREATEFROMDAT2/);
+      return reply('', [ask('TD-01')]);
+    });
+    const asked = await send(sid, { content: '补充附录 D' });
+    assert.equal(asked.end.stopReason, 'authorization');
+    assert.match(asked.events, /"testDataRequest"/);
+    const request = (await call('GET', `/sessions/${sid}`))
+      .json()
+      .messages.find((m) => m.payload?.testDataRequest).payload.testDataRequest;
+    assert.deepEqual(request.functions, [
+      'BAPI_SALESORDER_CREATEFROMDAT2',
+      'BAPI_TRANSACTION_COMMIT',
+    ]);
+    assert.equal(request.target.systemCode, 'Q01');
+
+    const decide = (decision, requestId = request.id) =>
+      call('POST', `/sessions/${sid}/messages`, { authorization: { requestId, decision } });
+    assert.equal((await decide('approve', 'other')).status, 409);
+    const notLoggedIn = await decide('approve');
+    assert.equal(notLoggedIn.status, 409);
+    assert.match(notLoggedIn.json().message, /QAS 用户和密码/);
+    assert.equal(executed.length, 0);
+
+    ready = true;
+    model.queue.push(
+      async (messages) => {
+        assert.match(messages.at(-1).content, /建立的单据：销售订单 0000004711/);
+        assert.match(messages.at(-2).content, /同意在 QAS 建立测试数据（TD-01 销售订单）/);
+        return reply('', [
+          [
+            'write_document',
+            {
+              mode: 'replace',
+              content: withData('99999999'),
+              changes: [{ section: '全文', summary: '初稿' }],
+            },
+          ],
+        ]);
+      },
+      async (messages) => {
+        assert.match(messages.at(-1).content, /没有在本会话的 SAP 查询结果中出现：TD-01 99999999/);
+        return reply('', [
+          [
+            'write_document',
+            {
+              mode: 'replace',
+              content: withData('0000004711'),
+              changes: [{ section: '全文', summary: '初稿' }],
+            },
+          ],
+        ]);
+      },
+      async (messages) => {
+        assert.match(messages.at(-1).content, /自动校验通过/);
+        return reply('附录 D 已写好。');
+      },
+    );
+    const approvedRes = await call('POST', `/sessions/${sid}/messages`, {
+      authorization: { requestId: request.id, decision: 'approve' },
+    });
+    assert.equal(approvedRes.status, 202, approvedRes.body);
+    const events = await call('GET', `/sessions/${sid}/turns/${approvedRes.json().turnId}/events`);
+    assert.match(events.body, /"name":"create_test_data"/);
+    assert.equal(executed.length, 1);
+    assert.equal(executed[0].requestId, request.id);
+    assert.equal(model.queue.length, 0);
+    const detail = (await call('GET', `/sessions/${sid}`)).json();
+    assert.ok(detail.toolCalls.some((c) => c.name === 'create_test_data' && c.status === 'ok'));
+    assert.equal((await decide('approve')).status, 409);
+
+    model.queue.push(async () => reply('', [ask('TD-02')]));
+    await send(sid, { content: '再补一张' });
+    const second = (await call('GET', `/sessions/${sid}`))
+      .json()
+      .messages.filter((m) => m.payload?.testDataRequest)
+      .at(-1).payload.testDataRequest;
+    model.queue.push(async (messages) => {
+      assert.match(messages.at(-1).content, /不同意建立测试数据（TD-02 销售订单）：没有合适的物料/);
+      return reply('已标为未找到。');
+    });
+    const rejected = await call('POST', `/sessions/${sid}/messages`, {
+      authorization: { requestId: second.id, decision: 'reject', note: '没有合适的物料' },
+    });
+    assert.equal(rejected.status, 202);
+    await call('GET', `/sessions/${sid}/turns/${rejected.json().turnId}/events`);
+    assert.equal(executed.length, 1);
   } finally {
     await f.close();
   }

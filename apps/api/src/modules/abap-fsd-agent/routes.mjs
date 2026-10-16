@@ -5,7 +5,14 @@ import { fileURLToPath } from 'node:url';
 import { failure } from '../../platform/auth.mjs';
 import { createWorkContext } from '../item-workspace/public.mjs';
 import { resolveAgentModel } from '../models/public.mjs';
-import { parseFile, openTurn, streamTurnEvents, answersText } from '../agent-core/public.mjs';
+import {
+  parseFile,
+  openTurn,
+  streamTurnEvents,
+  answersText,
+  assertTestSystemReady,
+  pendingTestDataRequest,
+} from '../agent-core/public.mjs';
 import { runTurn } from './loop.mjs';
 import * as repo from './repository.mjs';
 
@@ -101,9 +108,37 @@ export function registerAbapFsdAgent(app, pool, organizationId, requireSession, 
   app.post(base + '/sessions/:sessionId/messages', { bodyLimit: 200000 }, async (req, reply) => {
     const s = await session(req, true);
     const answers = Array.isArray(req.body?.answers) ? req.body.answers.slice(0, 5) : null;
-    const content = answers?.length
-      ? answersText(answers) + (req.body?.content?.trim() ? '\n\n' + req.body.content.trim() : '')
-      : text(req.body?.content, '消息', 100000);
+    // A decision on a test data request (contract 3.4); approval needs the user's QAS login.
+    const authorization = req.body?.authorization;
+    let approved = null,
+      decided = null;
+    if (authorization) {
+      if (!['approve', 'reject'].includes(authorization.decision))
+        throw failure(400, '授权决定无效。');
+      const pending = pendingTestDataRequest(await repo.listMessages(pool, s.id));
+      if (!pending || pending.id !== authorization.requestId)
+        throw failure(409, '这个建单请求已处理或已失效。');
+      if (authorization.decision === 'approve') {
+        try {
+          await assertTestSystemReady(pool, req.work.scope, deps.testData);
+        } catch (e) {
+          throw Object.assign(failure(409, e.message), { code: e.code });
+        }
+        approved = pending;
+      }
+      const note = String(authorization.note ?? '')
+        .trim()
+        .slice(0, 2000);
+      decided = approved
+        ? `同意在 QAS 建立测试数据（${pending.dataId} ${pending.object}）。`
+        : `不同意建立测试数据（${pending.dataId} ${pending.object}）${note ? '：' + note : '。'}` +
+          '相关数据的来源写“未找到”，并在 D.4 说明。';
+    }
+    const content =
+      decided ??
+      (answers?.length
+        ? answersText(answers) + (req.body?.content?.trim() ? '\n\n' + req.body.content.trim() : '')
+        : text(req.body?.content, '消息', 100000));
     const model = await (deps.resolveModel ?? resolveAgentModel)(pool, organizationId);
     const turnId = randomUUID();
     const claimed = await repo.claimTurn(pool, s.id, turnId, req.work.scope.actorId, {
@@ -116,7 +151,13 @@ export function registerAbapFsdAgent(app, pool, organizationId, requireSession, 
       turnId,
       role: 'user',
       content,
-      payload: answers?.length ? { answers } : {},
+      payload: authorization
+        ? {
+            authorization: { requestId: authorization.requestId, decision: authorization.decision },
+          }
+        : answers?.length
+          ? { answers }
+          : {},
       actorId: req.work.scope.actorId,
     });
     if (!s.title)
@@ -138,6 +179,7 @@ export function registerAbapFsdAgent(app, pool, organizationId, requireSession, 
           model,
           emit,
           signal: controller.signal,
+          approved,
           deps: deps.loop,
         }),
       )

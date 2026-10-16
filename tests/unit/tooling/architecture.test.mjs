@@ -255,3 +255,15 @@ test('contract 1.7 names agent prompts and framework copies', () => {
     /Version directory/,
   );
 });
+
+test('contract 1.8 keeps SAP write tools inside the test data executor', () => {
+  assert.match(
+    checkLegacy('apps/api/src/modules/agent-core/sap-tools.mjs', "call('runClass', {})").join(),
+    /SAP write tool runClass/,
+  );
+  assert.deepEqual(
+    checkLegacy('apps/api/src/modules/sap/test-data.mjs', "call('setObjectSource', {})"),
+    [],
+  );
+  assert.deepEqual(checkLegacy('apps/web/src/views/LoginView.vue', "icon: 'lock'"), []);
+});

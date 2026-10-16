@@ -11,7 +11,7 @@ const FULL_DOCUMENT_CHARS = 60000;
 const ATTACHMENT_CHARS = 40000;
 
 // Facts the model needs every turn: work item, SAP target, materials, document, open comments.
-export function sessionFacts({ scope, sap, document, comments, attachments, today }) {
+export function sessionFacts({ scope, sap, testSystem, document, comments, attachments, today }) {
   const parts = [
     `# 本次会话的事实\n\n- 日期：${today}\n- 开发项：${scope.itemCode} ${scope.itemName}（项目：${scope.projectName}）`,
   ];
@@ -24,6 +24,7 @@ export function sessionFacts({ scope, sap, document, comments, attachments, toda
     parts.push(
       `- SAP 工具本轮不可用：${sap.reason}${sap.target ? `（目标 ${sap.target.systemCode}）` : ''}。不得声称已在 SAP 核实任何结论；技术结论标为推断并列入未决事项。`,
     );
+  if (testSystem) parts.push(testSystem);
   let budget = ATTACHMENT_CHARS;
   const readable = attachments.filter((a) => a.text);
   if (attachments.length) {

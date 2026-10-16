@@ -164,6 +164,11 @@ test('document numbers match whole values regardless of leading zeros', () => {
   assert.ok(!containsDocumentNumber('"AUFNR":"000001000123"', '100012'));
   assert.ok(!containsDocumentNumber('"AUFNR":"000011000123"', '1000123'));
   assert.deepEqual(testDataNumbers(withTests(goodData, goodCases)), ['1000123']);
+  // Numbers without leading zeros are short but still checked; item numbers are not.
+  const short = [
+    ['TD-01', '销售订单', '4381/10', '正常', '`VBAK-ABSTK` = A', '系统已有', '2026-10-15'],
+  ];
+  assert.deepEqual(testDataNumbers(withTests(short, goodCases)), ['4381']);
 });
 
 test('appendix D: check dates must fall within the session', async () => {

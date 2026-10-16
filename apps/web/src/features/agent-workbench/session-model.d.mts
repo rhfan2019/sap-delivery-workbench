@@ -30,3 +30,14 @@ export function buildTimeline(detail: {
   versions?: any[];
 }): AgentMessage[];
 export function pendingQuestions(detail: any): { id: string; questions: AskedQuestion[] } | null;
+export interface TestDataRequest {
+  id: string;
+  dataId: string;
+  object: string;
+  purpose: string;
+  keyData: string;
+  body: string;
+  functions: string[];
+  target: { environment: string; systemCode: string; systemName: string; client: string | null };
+}
+export function pendingTestData(detail: any): TestDataRequest | null;

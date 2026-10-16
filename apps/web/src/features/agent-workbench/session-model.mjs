@@ -27,6 +27,9 @@ const TOOL_LABELS = {
   sync_from_sap: '从 SAP 同步代码',
   check_code: '校验代码',
   ask_user: '整理待确认问题',
+  query_test_system: '在 QAS 查找测试单据',
+  request_test_data: '申请建立测试单据',
+  create_test_data: '在 QAS 建立测试单据',
   reply_comment: '回复批注',
 };
 export const toolLabel = (name) => TOOL_LABELS[name] ?? name;
@@ -158,4 +161,14 @@ export function pendingQuestions(detail) {
     (m) => m.turnId === turn.id && m.role === 'tool' && m.payload?.questions?.length,
   );
   return asked ? { id: asked.id, questions: asked.payload.questions } : null;
+}
+
+// The test data request awaiting the user's authorization, if the latest turn ended with one.
+export function pendingTestData(detail) {
+  const turn = detail.turns?.at(-1);
+  if (!turn || turn.status !== 'completed' || turn.stopReason !== 'authorization') return null;
+  const asked = (detail.messages ?? []).find(
+    (m) => m.turnId === turn.id && m.role === 'tool' && m.payload?.testDataRequest,
+  );
+  return asked?.payload.testDataRequest ?? null;
 }

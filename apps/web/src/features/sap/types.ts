@@ -47,3 +47,11 @@ export interface SapView {
   defaults: SapRow[];
   effective: Effective[];
 }
+export interface AllowlistEntry {
+  id: string;
+  kind: 'BAPI' | 'FM' | 'CLASS';
+  name: string;
+  description: string;
+  active: boolean;
+  rowVersion: string;
+}

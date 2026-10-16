@@ -9,6 +9,13 @@ import { systemColumns, configView, saveRows, effectiveConfig } from './store.mj
 import { publicConfig } from './resolve.mjs';
 import { open } from './crypto.mjs';
 import { connectMcp, queryTable } from '../technical/sap-mcp.mjs';
+import { listAllowlist, saveAllowlistEntry } from './allowlist.mjs';
+import {
+  TEST_ENVIRONMENT,
+  rememberCredentials,
+  recalledCredentials,
+  forgetCredentials,
+} from './session-credentials.mjs';
 
 export function registerSapRoutes(app, pool, org, requireSession) {
   const admin = adminContext(pool, org, requireSession),
@@ -181,6 +188,22 @@ export function registerSapRoutes(app, pool, org, requireSession) {
       return { subjectId: id, data: { ok: true } };
     });
   });
+  app.get('/api/admin/sap-systems/:id/allowlist', async (req) => {
+    await admin.authorize(req);
+    return listAllowlist(pool, org, v.uuid(req.params.id));
+  });
+  app.post('/api/admin/sap-systems/:id/allowlist', async (req) =>
+    admin.write(req, 'admin.sap.allowlist.save', 'sap_system', async (db) => {
+      const id = v.uuid(req.params.id);
+      found(
+        await db.query('SELECT id FROM app.sap_system WHERE organization_id=$1 AND id=$2', [
+          org,
+          id,
+        ]),
+      );
+      return { subjectId: id, data: await saveAllowlistEntry(db, org, id, req.body) };
+    }),
+  );
   const project = async (db, id) =>
     found(
       await db.query('SELECT * FROM app.project WHERE organization_id=$1 AND id=$2', [
@@ -230,6 +253,88 @@ export function registerSapRoutes(app, pool, org, requireSession) {
         req.body?.temporary,
       ),
     );
+  });
+  // Contract 3.4: the user's own QAS credentials for this login (memory only).
+  const testSystemView = async (current, p) => {
+    const entry = recalledCredentials(current.sessionId, p.id);
+    let c;
+    try {
+      c = await effectiveConfig(pool, org, p, current.user.id, TEST_ENVIRONMENT);
+    } catch {
+      return { environment: TEST_ENVIRONMENT, configured: false, ready: false };
+    }
+    const system = c.systemId
+      ? (
+          await pool.query(
+            'SELECT code,name FROM app.sap_system WHERE organization_id=$1 AND id=$2',
+            [org, c.systemId],
+          )
+        ).rows[0]
+      : null;
+    return {
+      environment: TEST_ENVIRONMENT,
+      configured: !!c.sapUrl,
+      systemCode: system?.code ?? '',
+      systemName: system?.name ?? '',
+      client: c.client,
+      username: entry?.username ?? c.username ?? '',
+      ready: !!entry,
+    };
+  };
+  app.get('/api/projects/:projectId/sap/test-system', async (req) => {
+    const { current, project } = await delivery.read(req);
+    return testSystemView(current, project);
+  });
+  app.post('/api/projects/:projectId/sap/test-system', async (req) => {
+    const { current, project } = await delivery.read(req);
+    const username = v.text(req.body?.username, 'QAS 用户', 128);
+    if (
+      typeof req.body?.password !== 'string' ||
+      !req.body.password ||
+      req.body.password.length > 256
+    )
+      throw failure(400, '请输入 QAS 密码。');
+    let c;
+    try {
+      c = await effectiveConfig(pool, org, project, current.user.id, TEST_ENVIRONMENT, {
+        username,
+        password: req.body.password,
+        passwordAction: 'replace',
+      });
+    } catch {
+      throw failure(409, '项目未配置可用的 QAS 系统，请联系管理员在项目参数中配置。');
+    }
+    if (!c.sapUrl) throw failure(409, '项目未配置可用的 QAS 系统，请联系管理员在项目参数中配置。');
+    const result = await probeSystem({
+      SAP_MCP_ENTRY: process.env.SAP_MCP_ENTRY,
+      SAP_ALLOW_HTTP: process.env.SAP_ALLOW_HTTP,
+      NODE_EXTRA_CA_CERTS: process.env.NODE_EXTRA_CA_CERTS,
+      SAP_REQUEST_TIMEOUT_MS: process.env.SAP_REQUEST_TIMEOUT_MS ?? '15000',
+      SAP_URL: c.sapUrl,
+      SAP_LANGUAGE: c.language,
+      SAP_CLIENT: c.client ?? '',
+      SAP_USER: username,
+      SAP_PASSWORD: req.body.password,
+    });
+    await pool.query(
+      `INSERT INTO app.audit_event(organization_id,actor_user_id,action,outcome,subject_type,subject_id,request_id,details) VALUES($1,$2,'sap.test_system.login',$3,'project',$4,$5,$6)`,
+      [
+        org,
+        current.user.id,
+        result.status === 'passed' ? 'success' : 'failure',
+        project.id,
+        randomUUID(),
+        JSON.stringify({ environment: TEST_ENVIRONMENT, systemId: c.systemId, username }),
+      ],
+    );
+    if (result.status !== 'passed') throw failure(400, result.message);
+    rememberCredentials(current.sessionId, project.id, c, req.body.password);
+    return testSystemView(current, project);
+  });
+  app.delete('/api/projects/:projectId/sap/test-system', async (req) => {
+    const { current, project } = await delivery.read(req);
+    forgetCredentials(current.sessionId, project.id);
+    return testSystemView(current, project);
   });
   let activeQueries = 0;
   app.post('/api/projects/:projectId/sap/table', async (req, reply) => {
