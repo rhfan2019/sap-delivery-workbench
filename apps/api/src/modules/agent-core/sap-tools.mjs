@@ -21,7 +21,7 @@ export const SAP_TOOLS = [
 const HINTS = {
   ddicElement: 'path 只放一个对象名，例如 LIKP；返回字段清单。多个表请并行发出多个调用。',
   runQuery:
-    '只允许单表 SELECT：不用表别名、JOIN、子查询；只写表中真实存在的字段。域文本在 DD07T.DDTEXT，DD07L 没有 DDTEXT。',
+    '只允许单表 SELECT：不用表别名、JOIN、子查询；只写表中真实存在的字段。行数用 rowNumber 参数控制，SQL 中不写 UP TO n ROWS。域文本在 DD07T.DDTEXT，DD07L 没有 DDTEXT。',
   tableContents: '读取小表的前几行，用于了解配置；需要条件或字段时用 runQuery。',
   searchObject: 'objType 可省略，或用 TABL、PROG、FUNC、CLAS 等具体类型，不要用 *。',
 };

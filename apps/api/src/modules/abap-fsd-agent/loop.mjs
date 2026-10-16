@@ -1,5 +1,12 @@
-import { runAgentLoop, openSap, historyMessages, LIMITS } from '../agent-core/public.mjs';
+import {
+  runAgentLoop,
+  openSap,
+  historyMessages,
+  LIMITS,
+  SAP_TOOLS,
+} from '../agent-core/public.mjs';
 import { WORKSPACE_TOOLS, createWorkspace } from './tools/workspace.mjs';
+import { containsDocumentNumber, testDataNumbers } from './tools/check.mjs';
 import { compareDeclarations } from './document.mjs';
 import { loadSystemPrompt, sessionFacts } from './context.mjs';
 import * as repo from './repository.mjs';
@@ -15,7 +22,9 @@ const env = () => ({
 // Runs one turn to its natural end (answer, questions, document written) or a limit.
 // Never throws: failures end the turn with a status the user can see.
 export async function runTurn({ pool, scope, sessionId, turnId, model, emit, signal, deps = {} }) {
-  const sap = await (deps.openSap ?? openSap)(pool, scope, { budgetMs: LIMITS.sapBudgetMs });
+  const sap = trackResults(
+    await (deps.openSap ?? openSap)(pool, scope, { budgetMs: LIMITS.sapBudgetMs }),
+  );
   const document = await repo.latestDocument(pool, sessionId);
   const comments = await repo.listComments(pool, sessionId, { openOnly: true });
   const attachments = await repo.listAttachments(pool, sessionId, { withText: true });
@@ -38,10 +47,30 @@ export async function runTurn({ pool, scope, sessionId, turnId, model, emit, sig
         return value;
       }
     : undefined;
+  // Test document numbers must come from SAP: this turn's results, earlier turns' result
+  // summaries, or the previous version (whose numbers were checked when written).
+  const sapCalls = (await repo.listToolCalls(pool, sessionId)).filter(
+    (c) => c.status === 'ok' && SAP_TOOLS.includes(c.name),
+  );
+  const evidence = [
+    testDataNumbers(document?.markdown ?? '').join(' '),
+    ...sapCalls.map((c) => c.summary),
+  ];
+  // Test data can only have been checked from the session's first SAP result until today;
+  // one day of slack on both sides absorbs time zones.
+  const day = (at, offset) =>
+    new Date(new Date(at).getTime() + offset * 864e5).toISOString().slice(0, 10);
+  const verifiedBetween = [day(sapCalls[0]?.createdAt ?? Date.now(), -1), day(Date.now(), 1)];
+  const seenInSap = sap.available
+    ? (number) => [...evidence, ...sap.results].some((t) => containsDocumentNumber(t, number))
+    : undefined;
   const workspace = createWorkspace({
     markdown: document?.markdown ?? '',
     comments,
     verifyTable,
+    seenInSap,
+    ignoreRefs: sap.available ? [sap.target.systemCode] : [],
+    verifiedBetween,
     onDocument: (markdown) => emit('document.draft', { markdown }),
     onReply: async (commentId, body) => {
       const reply = { body, by: 'assistant', at: new Date().toISOString() };
@@ -120,4 +149,19 @@ export async function runTurn({ pool, scope, sessionId, turnId, model, emit, sig
     emit('turn.end', { status, stopReason, version, usage, error });
   }
   return { status, stopReason, version };
+}
+
+// Keeps the text of every successful SAP result of the turn, as the model saw it.
+function trackResults(sap) {
+  if (!sap.available) return sap;
+  const results = [];
+  return {
+    ...sap,
+    results,
+    async call(name, args) {
+      const outcome = await sap.call(name, args);
+      if (outcome.status === 'ok') results.push(outcome.content);
+      return outcome;
+    },
+  };
 }

@@ -40,7 +40,12 @@ export const WORKSPACE_TOOLS = [
     },
     ['old_text', 'new_text', 'reason'],
   ),
-  fn('check_document', '检查章节完整性、表格结构、章节引用，并到 SAP 核实文中的表和字段。', {}, []),
+  fn(
+    'check_document',
+    '检查章节完整性、表格结构、章节引用、附录 D 测试案例，并到 SAP 核实文中的表、字段和测试单据号。',
+    {},
+    [],
+  ),
   ASK_USER_TOOL,
   fn('reply_comment', '回复用户的一条批注，说明改了什么，或不改的理由、反问。', {
     comment_id: str('批注编号'),
@@ -53,6 +58,9 @@ export function createWorkspace({
   markdown = '',
   comments = [],
   verifyTable,
+  seenInSap,
+  ignoreRefs,
+  verifiedBetween,
   onDocument,
   onReply,
 }) {
@@ -60,7 +68,9 @@ export function createWorkspace({
   const commentIds = new Set(comments.map((c) => c.id));
   async function check() {
     if (!state.markdown.trim()) return '文档为空。';
-    return formatCheck(await checkDocument(state.markdown, { verifyTable }));
+    return formatCheck(
+      await checkDocument(state.markdown, { verifyTable, seenInSap, ignoreRefs, verifiedBetween }),
+    );
   }
   const handlers = {
     async read_document({ section } = {}) {
@@ -82,7 +92,15 @@ export function createWorkspace({
       state.declarations.push({
         tool: 'write_document',
         mode,
-        sections: changes.map((c) => String(c.section)),
+        // Headings in appended text are declared by the append itself.
+        sections: [
+          ...changes.map((c) => String(c.section)),
+          ...(mode === 'append'
+            ? splitSections(content)
+                .map((s) => s.heading)
+                .filter(Boolean)
+            : []),
+        ],
         summary: changes,
       });
       state.changed = true;

@@ -47,8 +47,10 @@ test('workspace tools write, edit with reasons and record declarations', async (
   await handlers.write_document({
     mode: 'append',
     content: '## 1.2 业务需求描述\n需求',
-    changes: [{ section: '1.2 业务需求描述', summary: '续写' }],
+    changes: [{ section: '1.2', summary: '续写' }],
   });
+  // An append declares every heading it brings, even when `changes` names only the parent.
+  assert.deepEqual(state.declarations.at(-1).sections, ['1.2', '1.2 业务需求描述']);
   await assert.rejects(
     handlers.edit_document({ old_text: '旧', new_text: '新', reason: '' }),
     /理由/,

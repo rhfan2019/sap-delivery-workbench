@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import { apiFixture } from '../../fixtures/api.mjs';
 import { REQUIRED_SECTIONS } from '../../../apps/api/src/modules/abap-fsd-agent/tools/check.mjs';
 
-const skeleton = REQUIRED_SECTIONS.map(([n, t]) => `## ${n} ${t}\n${t}的内容`).join('\n\n');
+const skeleton = REQUIRED_SECTIONS.map(
+  ([n, t]) =>
+    `## ${n} ${t}\n${n === '附录 D' ? '无需测试案例：这份测试文档没有可执行的取数逻辑。' : t + '的内容'}`,
+).join('\n\n');
 const reply = (content, toolCalls = []) => ({
   content,
   reasoning: '',
@@ -45,7 +48,7 @@ function scriptedModel() {
   };
 }
 
-async function setup() {
+async function setup({ openSap } = {}) {
   const model = scriptedModel();
   const f = await apiFixture({
     abapFsdAgent: {
@@ -56,7 +59,7 @@ async function setup() {
       }),
       loop: {
         streamChat: model.streamChat,
-        openSap: async () => ({ available: false, reason: '测试环境不连接 SAP' }),
+        openSap: openSap ?? (async () => ({ available: false, reason: '测试环境不连接 SAP' })),
         wait: async () => {},
       },
     },
@@ -271,6 +274,101 @@ test('a busy provider is retried before the turn fails', async () => {
     model.queue.push(busy, busy, busy, busy);
     const failed = await send(sid, { content: '再来' });
     assert.equal(failed.end.status, 'failed');
+    assert.equal(model.queue.length, 0);
+  } finally {
+    await f.close();
+  }
+});
+
+test('test document numbers in appendix D are checked against SAP results', async () => {
+  const runQuery = { type: 'function', function: { name: 'runQuery', parameters: {} } };
+  const { f, model, call, send } = await setup({
+    openSap: async () => ({
+      available: true,
+      target: { systemCode: 'S4H', systemName: '测试', environment: 'DEV', client: '100' },
+      tools: [runQuery],
+      call: async (name) =>
+        name === 'runQuery'
+          ? { status: 'ok', content: '{"rows":[{"AUFNR":"000001000123"}]}' }
+          : { status: 'ok', content: 'AFPO（table）共 1 个字段：\nWEMNG' },
+      close: async () => {},
+    }),
+  });
+  const row = (cells) => `| ${cells.join(' | ')} |`;
+  const documentWith = (number) =>
+    skeleton.replace(
+      '## 附录 D 测试案例\n无需测试案例：这份测试文档没有可执行的取数逻辑。',
+      [
+        '# 附录 D 测试案例',
+        '## D.1 测试范围与策略\n覆盖取数。',
+        [
+          '## D.2 测试数据',
+          row(['数据编号', '对象', '单据号', '数据特征', '核实条件', '来源', '核实时间']),
+          row(Array(7).fill('---')),
+          row([
+            'TD-01',
+            '生产订单',
+            number,
+            '部分收货',
+            '`AFPO-WEMNG` > 0',
+            '系统已有',
+            '2026-10-15',
+          ]),
+        ].join('\n'),
+        [
+          '## D.3 测试案例',
+          row([
+            '编号',
+            '场景',
+            '维度',
+            '类型',
+            '测试数据',
+            '操作',
+            '预期结果',
+            '对应条款',
+            '优先级',
+          ]),
+          row(Array(9).fill('---')),
+          row(['TC-01', '部分收货', '取数', '正向', 'TD-01', '执行', `出现 ${number}`, '3', 'P1']),
+        ].join('\n'),
+        '## D.4 未覆盖与待补\n- 无。',
+      ].join('\n\n'),
+    );
+  const write = (number) => [
+    'write_document',
+    {
+      mode: 'replace',
+      content: documentWith(number),
+      changes: [{ section: '全文', summary: '初稿' }],
+    },
+  ];
+  try {
+    const sid = (await call('POST', '/sessions', {})).json().id;
+    model.queue.push(
+      async () => reply('', [['runQuery', { sqlQuery: 'SELECT AUFNR FROM AFPO' }]]),
+      async () => reply('', [write('9999999')]),
+      async (messages) => {
+        assert.match(messages.at(-1).content, /没有在本会话的 SAP 查询结果中出现：TD-01 9999999/);
+        return reply('', [write('1000123')]);
+      },
+      async (messages) => {
+        assert.match(messages.at(-1).content, /自动校验通过/);
+        return reply('初稿已完成。');
+      },
+    );
+    const drafted = await send(sid, { content: '写 FSD' });
+    assert.equal(drafted.end.status, 'completed');
+    assert.equal(model.queue.length, 0);
+
+    // A later turn without new queries still accepts the number recorded in the saved version.
+    model.queue.push(
+      async () => reply('', [['check_document', {}]]),
+      async (messages) => {
+        assert.match(messages.at(-1).content, /自动校验通过/);
+        return reply('没有问题。');
+      },
+    );
+    await send(sid, { content: '再检查一遍' });
     assert.equal(model.queue.length, 0);
   } finally {
     await f.close();

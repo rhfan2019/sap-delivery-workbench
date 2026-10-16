@@ -4,9 +4,58 @@ import {
   checkDocument,
   formatCheck,
   REQUIRED_SECTIONS,
+  testDataNumbers,
+  containsDocumentNumber,
 } from '../../../../apps/api/src/modules/abap-fsd-agent/tools/check.mjs';
 
-const complete = REQUIRED_SECTIONS.map(([n, t]) => `## ${n} ${t}\n内容`).join('\n\n');
+const exempt = '无需测试案例：本功能只有静态说明，没有可执行的取数逻辑。';
+const complete = REQUIRED_SECTIONS.map(
+  ([n, t]) => `## ${n} ${t}\n${n === '附录 D' ? exempt : '内容'}`,
+).join('\n\n');
+
+const row = (cells) => `| ${cells.join(' | ')} |`;
+// The skeleton with real sections 3.1 and 3.2 and a fully structured appendix D.
+const withTests = (data, cases) =>
+  [
+    complete.replace(`## 附录 D 测试案例\n${exempt}`, ''),
+    '## 3.1 数据查询\n内容',
+    '## 3.2 状态判定\n内容',
+    '# 附录 D 测试案例',
+    '## D.1 测试范围与策略\n覆盖状态与取数。',
+    [
+      '## D.2 测试数据',
+      row(['数据编号', '对象', '单据号', '数据特征', '核实条件', '来源', '核实时间']),
+      row(Array(7).fill('---')),
+      ...data.map(row),
+    ].join('\n'),
+    [
+      '## D.3 测试案例',
+      row(['编号', '场景', '维度', '类型', '测试数据', '操作', '预期结果', '对应条款', '优先级']),
+      row(Array(9).fill('---')),
+      ...cases.map(row),
+    ].join('\n'),
+    '## D.4 未覆盖与待补\n- 无。',
+  ].join('\n\n');
+const goodData = [
+  ['TD-01', '生产订单', '1000123', '部分收货', '`AFPO-WEMNG` > 0', '系统已有', '2026-10-15'],
+  ['TD-02', '生产订单', '—', '已删除标记', '`JEST-STAT` = I0076', '未找到', '2026-10-15'],
+];
+const goodCases = [
+  [
+    'TC-01',
+    '部分收货显示剩余',
+    '取数',
+    '正向',
+    'TD-01',
+    '工厂 1010 执行',
+    '出现 1000123',
+    '3.1',
+    'P1',
+  ],
+  ['TC-02', 'TECO 不显示', '状态、生命周期', '排除', 'TD-01', '同上', '不出现', '3.2、3.1', 'P1'],
+  ['TC-03', '无数据', '消息', '边界', '—', '工厂 9999', '提示无数据', '3.1', 'P2'],
+];
+const sapSaw = (n) => containsDocumentNumber('{"AUFNR":"000001000123"}', n);
 
 test('a complete skeleton passes; missing sections are named', async () => {
   assert.equal((await checkDocument(complete)).ok, true);
@@ -38,7 +87,100 @@ test('table and field references are verified against SAP definitions', async ()
     },
   });
   assert.deepEqual(calls, ['EBAN', 'ZZFAKE']);
+  calls.length = 0;
+  await checkDocument(complete + '\n测试系统 SELF-S4H-2020 中的 EBAN-WERKS', {
+    ignoreRefs: ['SELF-S4H-2020'],
+    verifyTable: async (t) => (calls.push(t), '{"fields":["WERKS"]}'),
+  });
+  assert.deepEqual(calls, ['EBAN']);
   assert.deepEqual(result.verified.unknownFields, ['EBAN-NOPE']);
   assert.deepEqual(result.verified.unknownTables, ['ZZFAKE']);
   assert.equal(result.ok, false);
+});
+
+test('appendix D: a structured appendix passes; an exemption needs a stated reason', async () => {
+  const result = await checkDocument(withTests(goodData, goodCases), { seenInSap: sapSaw });
+  assert.deepEqual(result.problems, []);
+  const bare = await checkDocument(complete.replace(exempt, '略'));
+  assert.ok(bare.problems.some((p) => /缺少 D\.1～D\.4/.test(p.message)));
+});
+
+test('appendix D: columns, vocabularies and references are enforced', async () => {
+  const messages = (
+    await checkDocument(
+      withTests(
+        [['TD-01', '生产订单', '—', '特征', '—', '系统已有', '2026-10-15']],
+        [
+          ['T1', '场景', '性能', '随便', 'TD-09', '执行', '符合预期', '3.9', 'P4'],
+          ['TC-02', '场景', '取数', '正向', '—', '执行', '出现', '附录 C', 'P1'],
+        ],
+      ),
+    )
+  ).problems.map((p) => p.message);
+  for (const pattern of [
+    /“T1”应写成 TC-01/,
+    /维度“性能”/,
+    /类型“随便”/,
+    /不存在的测试数据 TD-09/,
+    /T1 的预期结果/,
+    /不存在的章节 3\.9/,
+    /优先级“P4”/,
+    /TC-02 没有写对应的正文条款/,
+    /TD-01 来源为“系统已有”但没有单据号/,
+    /TD-01 没有写核实条件/,
+  ])
+    assert.ok(
+      messages.some((m) => pattern.test(m)),
+      pattern,
+    );
+
+  const renamed = withTests(goodData, goodCases).replace('| 编号 | 场景 |', '| 编号 | 名称 |');
+  assert.ok(
+    (await checkDocument(renamed)).problems.some((p) => /D\.3 测试案例 的表头应为/.test(p.message)),
+  );
+  const missing = withTests(goodData, goodCases).replace('## D.4 未覆盖与待补', '## D.4 其他');
+  assert.ok(
+    (await checkDocument(missing)).problems.some(
+      (p) => p.message === '附录 D 缺少小节：D.4 未覆盖',
+    ),
+  );
+});
+
+test('appendix D: document numbers must have appeared in SAP results', async () => {
+  const data = [
+    ...goodData,
+    ['TD-03', '生产订单', '1000999', '已 TECO', '`JEST-STAT` = I0045', '系统已有', '2026-10-15'],
+  ];
+  const result = await checkDocument(withTests(data, goodCases), { seenInSap: sapSaw });
+  assert.equal(result.problems.length, 1);
+  assert.match(result.problems[0].message, /没有在本会话的 SAP 查询结果中出现：TD-03 1000999/);
+  // Without SAP the numbers cannot be checked and are not reported.
+  assert.equal((await checkDocument(withTests(data, goodCases))).ok, true);
+});
+
+test('document numbers match whole values regardless of leading zeros', () => {
+  assert.ok(containsDocumentNumber('"AUFNR":"000001000123"', '1000123'));
+  assert.ok(containsDocumentNumber('VBELN 0000004711', '0000004711'));
+  assert.ok(!containsDocumentNumber('"AUFNR":"000001000123"', '100012'));
+  assert.ok(!containsDocumentNumber('"AUFNR":"000011000123"', '1000123'));
+  assert.deepEqual(testDataNumbers(withTests(goodData, goodCases)), ['1000123']);
+});
+
+test('appendix D: check dates must fall within the session', async () => {
+  const data = [
+    ['TD-01', '生产订单', '1000123', '部分收货', '`AFPO-WEMNG` > 0', '系统已有', '2024-10-16'],
+  ];
+  const result = await checkDocument(withTests(data, goodCases), {
+    seenInSap: sapSaw,
+    verifiedBetween: ['2026-10-14', '2026-10-16'],
+  });
+  assert.deepEqual(
+    result.problems.map((p) => p.message),
+    ['D.2 TD-01 的核实时间“2024-10-16”应为实际查询的日期（会话事实中的日期，YYYY-MM-DD）。'],
+  );
+  const ok = await checkDocument(withTests(goodData, goodCases), {
+    seenInSap: sapSaw,
+    verifiedBetween: ['2026-10-14', '2026-10-16'],
+  });
+  assert.equal(ok.ok, true);
 });
