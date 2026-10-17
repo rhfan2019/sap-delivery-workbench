@@ -88,7 +88,8 @@ provide(PROMPT_INPUT_KEY, context);
         class="min-h-20 px-4 py-3"
       />
     </PromptInputBody>
-    <PromptInputFooter>
+    <!-- One type size for the hint, the SAP system and the model; the hint gives way first. -->
+    <PromptInputFooter class="composer-footer">
       <PromptInputTools>
         <PromptInputButton
           aria-label="添加文件或图片"
@@ -96,7 +97,7 @@ provide(PROMPT_INPUT_KEY, context);
           @click="emit('attach')"
           ><Plus class="size-5"
         /></PromptInputButton>
-        <span class="hidden text-xs text-muted-foreground sm:inline"
+        <span class="composer-hint whitespace-nowrap text-xs text-muted-foreground"
           >Enter 发送 · Shift + Enter 换行</span
         >
       </PromptInputTools>
@@ -108,7 +109,7 @@ provide(PROMPT_INPUT_KEY, context);
               type="button"
               variant="ghost"
               size="sm"
-              class="max-w-48"
+              class="max-w-48 text-xs font-normal text-muted-foreground"
               aria-label="选择模型"
               :disabled="busy || loading || blocked"
               ><span class="truncate">{{ selectedName }}</span
@@ -161,3 +162,13 @@ provide(PROMPT_INPUT_KEY, context);
     </PromptInputFooter>
   </PromptInput>
 </template>
+<style scoped>
+.composer-footer {
+  container-type: inline-size;
+}
+@container (max-width: 560px) {
+  .composer-hint {
+    display: none;
+  }
+}
+</style>

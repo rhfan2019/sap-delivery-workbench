@@ -135,26 +135,11 @@
   min-height: 0;
   overflow: hidden;
 }
-.work-chat-heading {
-  padding: 20px 28px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  flex-shrink: 0;
-}
-.work-chat-heading h2 {
-  font-size: 17px;
-  line-height: 1.5;
-  font-weight: 600;
-  margin: 4px 0 0;
-}
 .work-eyebrow {
   font-size: 11px;
   letter-spacing: 0.03em;
   color: #78869a;
 }
-.work-chat-heading > button,
 .work-section-heading > button {
   display: flex;
   align-items: center;
@@ -318,16 +303,27 @@
   display: flex;
 }
 .work-switcher {
-  flex: 1;
+  flex: 0 1 auto;
+  max-width: 380px;
 }
-.work-chat-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
+/* The conversation in the header: quieter than the item title. */
+.item-workspace .work-switcher-button {
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--work-border);
+  color: #475569;
+  font-size: 13px;
 }
-.work-chat-actions button,
+.work-switcher-button span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.work-header-actions > button,
+.work-header-actions > .work-popover-anchor > button,
 .item-workspace .work-panel-toggle {
+  white-space: nowrap;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -380,6 +376,14 @@
   padding: 24px;
   min-height: 0;
   scrollbar-gutter: stable;
+}
+/* An artifact panel fills the side panel and scrolls inside itself (one scroll bar). */
+.work-panel-scroll.work-panel-fill {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 0;
+  scrollbar-gutter: auto;
 }
 .work-panel h2 {
   font-size: 17px;
@@ -613,8 +617,8 @@
   .work-panel-scroll {
     padding: 18px;
   }
-  .work-chat-heading {
-    padding: 16px 20px;
+  .work-switcher {
+    max-width: 240px;
   }
   .work-back span {
     display: none;
@@ -655,11 +659,13 @@
   .work-panel-scroll {
     padding: 20px;
   }
-  .work-chat-heading h2 {
-    font-size: 15px;
+  .work-switcher {
+    max-width: 130px;
   }
-  .work-chat-heading {
-    padding: 16px;
+  /* Icons only in the header on a phone. */
+  .work-header-actions button > span,
+  .item-work-header .stage-label {
+    display: none;
   }
   .work-header-actions {
     gap: 0;

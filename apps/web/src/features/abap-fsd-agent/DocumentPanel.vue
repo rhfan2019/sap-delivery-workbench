@@ -166,7 +166,10 @@ async function handleComments() {
         v-if="shown?.comparison && !live && shown.comparison.actual?.length"
         class="document-changes"
       >
-        <p>本版改动章节：{{ shown.comparison.actual.map((c) => c.heading).join('、') }}</p>
+        <details>
+          <summary>本版改动 {{ shown.comparison.actual.length }} 个章节</summary>
+          <p>{{ shown.comparison.actual.map((c) => c.heading).join('、') }}</p>
+        </details>
         <p v-if="shown.comparison.undeclared.length" role="alert">
           未声明的修改：{{
             shown.comparison.undeclared.join('、')
@@ -225,16 +228,30 @@ async function handleComments() {
   </section>
 </template>
 <style scoped>
+/* The panel fills the side panel; only the document scrolls (one scroll bar). */
 .document-panel {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+}
+.document-panel > :not(.document-reader) {
+  flex-shrink: 0;
 }
 .document-reader {
-  min-height: 420px;
-  max-height: 70vh;
+  flex: 1;
+  min-height: 240px;
   border: 1px solid #e8edf2;
   border-radius: 8px;
+}
+.document-changes summary {
+  cursor: pointer;
+}
+.document-comments {
+  max-height: 30%;
+  overflow: auto;
+  padding-bottom: 12px;
 }
 .document-changes {
   font-size: 13px;

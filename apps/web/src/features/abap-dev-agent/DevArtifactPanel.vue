@@ -236,64 +236,66 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
           </button>
         </span>
       </nav>
-      <SelectionComment ref="selection" :disabled="!canEdit || live || !shown" :save="addComment">
-        <template v-if="tab === 'code'">
-          <p v-if="!viewedCode" class="work-muted">这一版还没有代码。</p>
-          <CodeView
-            v-else
-            :code="viewedCode"
-            :title="`ABAP · ${viewedCode.split('\n').length} 行`"
-            @select="(text, line) => selection?.offer(text, { target: 'code', line })"
-          />
-        </template>
-        <template v-if="tab === 'plan'">
-          <p v-if="!viewedPlan" class="work-muted">这一版还没有开发方案。</p>
-          <DocumentView
-            v-else
-            class="dev-reader"
-            :artifact="{ id: 'plan', revision: shown?.version ?? 0, markdown: viewedPlan }"
-            :closable="false"
-            @select="selection?.offer($event, { target: 'plan', line: null })"
-          />
-        </template>
-      </SelectionComment>
-      <section v-if="tab === 'diff' && shown" class="dev-diff" aria-label="版本差异">
-        <div class="work-actions">
-          <label
-            >内容<select v-model="diffTarget">
-              <option value="code">代码</option>
-              <option value="plan">开发方案</option>
-            </select></label
-          >
-          <label
-            >对比<select v-model="diffFrom">
-              <option value="">空白</option>
-              <option
-                v-for="v in versions.filter((x) => x.version < shown!.version)"
-                :key="v.version"
-                :value="v.version"
-              >
-                {{ label(v) }}
-              </option>
-            </select></label
-          >
-        </div>
-        <p v-if="diff && !diff.added && !diff.removed" class="work-muted">两个版本相同。</p>
-        <p v-else-if="diff" class="work-muted">
-          新增 {{ diff.added }} 行，删除 {{ diff.removed }} 行。
-        </p>
-        <div v-for="(h, i) in diff?.hunks ?? []" :key="i" class="dev-hunk">
-          <p>新版第 {{ h.newStart }} 行附近</p>
-          <pre><span v-for="(l, k) in h.lines" :key="k" :data-change="l[0]">{{ l }}
+      <div class="dev-content">
+        <SelectionComment ref="selection" :disabled="!canEdit || live || !shown" :save="addComment">
+          <template v-if="tab === 'code'">
+            <p v-if="!viewedCode" class="work-muted">这一版还没有代码。</p>
+            <CodeView
+              v-else
+              :code="viewedCode"
+              :title="`ABAP · ${viewedCode.split('\n').length} 行`"
+              @select="(text, line) => selection?.offer(text, { target: 'code', line })"
+            />
+          </template>
+          <template v-if="tab === 'plan'">
+            <p v-if="!viewedPlan" class="work-muted">这一版还没有开发方案。</p>
+            <DocumentView
+              v-else
+              class="dev-reader"
+              :artifact="{ id: 'plan', revision: shown?.version ?? 0, markdown: viewedPlan }"
+              :closable="false"
+              @select="selection?.offer($event, { target: 'plan', line: null })"
+            />
+          </template>
+        </SelectionComment>
+        <section v-if="tab === 'diff' && shown" class="dev-diff" aria-label="版本差异">
+          <div class="work-actions">
+            <label
+              >内容<select v-model="diffTarget">
+                <option value="code">代码</option>
+                <option value="plan">开发方案</option>
+              </select></label
+            >
+            <label
+              >对比<select v-model="diffFrom">
+                <option value="">空白</option>
+                <option
+                  v-for="v in versions.filter((x) => x.version < shown!.version)"
+                  :key="v.version"
+                  :value="v.version"
+                >
+                  {{ label(v) }}
+                </option>
+              </select></label
+            >
+          </div>
+          <p v-if="diff && !diff.added && !diff.removed" class="work-muted">两个版本相同。</p>
+          <p v-else-if="diff" class="work-muted">
+            新增 {{ diff.added }} 行，删除 {{ diff.removed }} 行。
+          </p>
+          <div v-for="(h, i) in diff?.hunks ?? []" :key="i" class="dev-hunk">
+            <p>新版第 {{ h.newStart }} 行附近</p>
+            <pre><span v-for="(l, k) in h.lines" :key="k" :data-change="l[0]">{{ l }}
 </span></pre>
-        </div>
-      </section>
-      <section v-if="tab === 'basis' && shown" class="dev-basis" aria-label="版本依据">
-        <p class="work-muted">第 {{ shown.version }} 版依据的资料：</p>
-        <ul>
-          <li v-for="b in shown.basis" :key="b.key">{{ b.label }}</li>
-        </ul>
-      </section>
+          </div>
+        </section>
+        <section v-if="tab === 'basis' && shown" class="dev-basis" aria-label="版本依据">
+          <p class="work-muted">第 {{ shown.version }} 版依据的资料：</p>
+          <ul>
+            <li v-for="b in shown.basis" :key="b.key">{{ b.label }}</li>
+          </ul>
+        </section>
+      </div>
       <section class="document-comments" aria-label="批注">
         <div class="work-section-heading">
           <h3>
@@ -345,10 +347,28 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
   </section>
 </template>
 <style scoped>
+/* The panel fills the side panel; only the content scrolls (one scroll bar). */
 .dev-panel {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+}
+.dev-panel > :not(.dev-content) {
+  flex-shrink: 0;
+}
+.dev-content {
+  flex: 1;
+  min-height: 240px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+.document-comments {
+  max-height: 30%;
+  overflow: auto;
+  padding-bottom: 12px;
 }
 .dev-tabs {
   display: flex;
@@ -374,8 +394,8 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
   font-size: 13px;
 }
 .dev-reader {
-  min-height: 420px;
-  max-height: 70vh;
+  flex: 1;
+  min-height: 0;
   border: 1px solid #e8edf2;
   border-radius: 8px;
 }

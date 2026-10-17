@@ -29,7 +29,8 @@ const options = computed(() =>
     return {
       value,
       ready,
-      label: e?.systemName ? `${value} · ${e.systemName}${e.client ? ' ' + e.client : ''}` : value,
+      // The full name is the tooltip; the composer only has room for DEV / QAS.
+      title: e?.systemName ? `${value} · ${e.systemName}${e.client ? ' ' + e.client : ''}` : value,
     };
   }),
 );
@@ -37,13 +38,16 @@ const options = computed(() =>
 <template>
   <select
     v-model="environment"
-    class="max-w-56 truncate rounded-md bg-transparent px-2 py-1 text-sm hover:bg-accent"
+    class="max-w-56 shrink-0 truncate rounded-md bg-transparent px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
     aria-label="选择 SAP 系统"
-    title="本条消息读取的 SAP 系统"
+    :title="
+      '本条消息读取的 SAP 系统：' +
+      (options.find((o) => o.value === environment)?.title ?? environment)
+    "
     :disabled="disabled"
   >
     <option v-for="o in options" :key="o.value" :value="o.value">
-      {{ o.label }}{{ o.ready || !effective.length ? '' : '（未配置）' }}
+      {{ o.value }}{{ o.ready || !effective.length ? '' : '（未配置）' }}
     </option>
   </select>
 </template>

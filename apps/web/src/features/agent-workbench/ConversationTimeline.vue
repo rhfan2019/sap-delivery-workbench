@@ -13,15 +13,7 @@ import {
   MessageActions,
   MessageAction,
 } from '@/components/ai-elements/message';
-import {
-  Artifact,
-  ArtifactHeader,
-  ArtifactTitle,
-  ArtifactDescription,
-  ArtifactContent,
-} from '@/components/ai-elements/artifact';
 import { Suggestion } from '@/components/ai-elements/suggestion';
-import { Button } from '@/components/ui/button';
 import ChatMarkdown from './ChatMarkdown.vue';
 import RunSteps from './RunSteps.vue';
 import type {
@@ -49,6 +41,26 @@ function undeclared(artifact: AgentArtifactRef) {
   const c = artifact.comparison ?? {};
   if (Array.isArray(c.undeclared)) return c.undeclared as string[];
   return [...(c.plan?.undeclared ?? []), ...(c.code?.undeclared ? ['代码'] : [])];
+}
+// A reply with nothing to show (a turn that only asked questions) renders no empty block.
+function silent(message: AgentMessage, live: boolean) {
+  return (
+    !live &&
+    !message.error &&
+    !message.artifact &&
+    message.status !== 'cancelled' &&
+    !message.decision
+  );
+}
+function hasBody(message: AgentMessage, live: boolean) {
+  return (
+    message.role === 'user' ||
+    !!message.content ||
+    (!!message.decision && message.status !== 'waiting_user') ||
+    !!message.artifact ||
+    !!message.error ||
+    silent(message, live)
+  );
 }
 async function copy(text: string) {
   try {
@@ -146,7 +158,11 @@ async function copy(text: string) {
             :finished-at="message.finishedAt"
           />
         </template>
-        <MessageContent class="max-w-full" :class="{ 'w-full': message.role === 'assistant' }">
+        <MessageContent
+          v-if="hasBody(message, busy && index === messages.length - 1)"
+          class="max-w-full"
+          :class="{ 'w-full': message.role === 'assistant' }"
+        >
           <p v-if="message.role === 'user'" class="whitespace-pre-wrap break-words">
             {{ message.content }}
           </p>
@@ -176,41 +192,32 @@ async function copy(text: string) {
               :streaming="busy && index === messages.length - 1"
             />
             <p
-              v-else-if="
-                !(busy && index === messages.length - 1) &&
-                !message.error &&
-                !message.artifact &&
-                message.status !== 'cancelled' &&
-                !message.decision
-              "
+              v-else-if="silent(message, busy && index === messages.length - 1)"
               class="text-muted-foreground"
             >
               本轮没有文字回复
             </p>
-            <Artifact v-if="message.artifact" class="w-full shadow-none">
-              <ArtifactHeader
-                ><div class="flex items-center gap-3">
-                  <FileText class="size-5" /><ArtifactTitle
-                    >{{ development ? '开发方案与代码已保存' : '功能说明书已保存' }} · 第
-                    {{ message.artifact.revision }} 版</ArtifactTitle
-                  >
-                </div></ArtifactHeader
+            <button
+              v-if="message.artifact"
+              type="button"
+              class="artifact-link"
+              @click="emit('openArtifact', message.artifact)"
+            >
+              <FileText class="size-4 shrink-0" />
+              <span
+                >{{ development ? '开发方案与代码' : '功能说明书' }} · 第
+                {{ message.artifact.revision }} 版已保存</span
               >
-              <ArtifactContent class="space-y-3">
-                <ArtifactDescription v-if="undeclared(message.artifact).length"
-                  >注意：以下部分有改动但助手没有说明原因，请重点核对：{{
-                    undeclared(message.artifact).join('、')
-                  }}</ArtifactDescription
-                >
-                <ArtifactDescription v-else
-                  >可在右侧“成果”中阅读；选中文字即可添加批注，让助手按批注修改。</ArtifactDescription
-                >
-                <Button variant="outline" size="sm" @click="emit('openArtifact', message.artifact)"
-                  >{{ development ? '打开' : '打开功能说明书 · ' }}第
-                  {{ message.artifact.revision }} 版</Button
-                >
-              </ArtifactContent>
-            </Artifact>
+              <span class="artifact-link-open">打开</span>
+            </button>
+            <p
+              v-if="message.artifact && undeclared(message.artifact).length"
+              class="text-xs text-amber-700"
+            >
+              注意：以下部分有改动但助手没有说明原因，请重点核对：{{
+                undeclared(message.artifact).join('、')
+              }}
+            </p>
             <div
               v-if="message.error"
               class="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm"
@@ -245,7 +252,15 @@ async function copy(text: string) {
               : '可以继续补充需求，或提出修改意见。'
           }}
         </p>
-        <MessageActions v-if="message.role === 'assistant'" class="items-center">
+        <MessageActions
+          v-if="
+            message.role === 'assistant' &&
+            (message.content ||
+              message.status === 'cancelled' ||
+              (canRetry && !busy && index === messages.length - 1))
+          "
+          class="items-center"
+        >
           <span v-if="message.status === 'cancelled'" class="text-xs text-muted-foreground"
             >已停止，内容已保留</span
           >
@@ -267,3 +282,28 @@ async function copy(text: string) {
     <span class="sr-only" role="status">{{ copyNotice }}</span>
   </Conversation>
 </template>
+<style scoped>
+/* A saved version is one highlighted line that opens it, not a card. */
+.artifact-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  margin-top: 4px;
+  padding: 6px 10px;
+  border: 1px solid #c7d7f0;
+  border-radius: 8px;
+  background: #f1f6fd;
+  color: var(--link, #174b7a);
+  font-size: 13px;
+  text-align: left;
+}
+.artifact-link:hover {
+  background: #e3eefb;
+}
+.artifact-link-open {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+</style>

@@ -18,6 +18,7 @@ import {
   ChevronDown,
   FileText,
   Maximize2,
+  MessageSquare,
   MoreHorizontal,
   Paperclip,
   PanelRight,
@@ -309,7 +310,109 @@ onBeforeUnmount(() => controller.abort());
         </section>
       </div>
       <span class="stage-label">{{ config.stageLabel }}</span>
+      <div ref="switcher" class="work-popover-anchor work-switcher">
+        <button
+          class="work-title-button work-switcher-button"
+          :aria-expanded="switcherOpen"
+          aria-haspopup="listbox"
+          :title="currentTitle"
+          @click="switcherOpen = !switcherOpen"
+        >
+          <MessageSquare :size="15" /><span>{{ currentTitle }}</span>
+          <ChevronDown :size="15" />
+        </button>
+        <section
+          v-if="switcherOpen && state"
+          class="work-popover work-sessions"
+          aria-label="切换对话"
+        >
+          <h3>{{ config.sessionsHeading }}</h3>
+          <p v-if="!sessions.length" class="work-empty">发送第一条消息后，对话会保存在这里。</p>
+          <ul role="listbox">
+            <li
+              v-for="s in sessions"
+              :key="s.id"
+              role="option"
+              :aria-selected="s.id === run.sessionId.value"
+              class="work-session-row"
+              :class="{ selected: s.id === run.sessionId.value }"
+            >
+              <form v-if="renaming === s.id" class="work-rename" @submit.prevent="saveRename">
+                <input v-model="newTitle" aria-label="对话名称" maxlength="200" autofocus />
+                <button class="work-icon" aria-label="保存名称" :disabled="!newTitle.trim()">
+                  <Check :size="16" />
+                </button>
+                <button
+                  type="button"
+                  class="work-icon"
+                  aria-label="取消改名"
+                  @click="renaming = ''"
+                >
+                  <X :size="16" />
+                </button>
+                <small v-if="renameError" role="alert">{{ renameError }}</small>
+              </form>
+              <template v-else>
+                <button
+                  class="work-session-pick"
+                  :disabled="agentBusy && s.id !== run.sessionId.value"
+                  @click="selectSession(s.id)"
+                >
+                  <strong>{{ s.title?.trim() || '未命名对话' }}</strong>
+                  <small
+                    >{{ time(s.updatedAt) }}{{ config.sessionVersion(s)
+                    }}{{ s.id === run.sessionId.value ? ' · 当前' : '' }}</small
+                  >
+                </button>
+                <button
+                  v-if="state.canEdit"
+                  class="work-icon"
+                  aria-label="重命名对话"
+                  @click="startRename(s)"
+                >
+                  <Pencil :size="14" />
+                </button>
+              </template>
+            </li>
+          </ul>
+        </section>
+      </div>
       <div class="work-header-actions">
+        <div v-if="state && run.attachments.value.length" ref="files" class="work-popover-anchor">
+          <button :aria-expanded="filesOpen" @click="filesOpen = !filesOpen">
+            <Paperclip :size="15" /><span>资料 {{ run.attachments.value.length }}</span>
+          </button>
+          <section
+            v-if="filesOpen"
+            class="work-popover work-popover-right work-files"
+            aria-label="本次对话的文件"
+          >
+            <p class="work-muted">上传的资料会提供给助手阅读；新对话不自动继承。</p>
+            <button
+              v-for="f in run.attachments.value"
+              :key="f.id"
+              class="work-file-row"
+              @click="inspectFile(f.id)"
+            >
+              <FileText :size="20" /><span
+                ><strong>{{ f.fileName }}</strong
+                ><small
+                  >{{
+                    f.parseState === 'ready'
+                      ? '已读取'
+                      : f.parseState === 'preview_only'
+                        ? '仅预览'
+                        : '未能读取'
+                  }}
+                  · {{ Math.ceil(f.size / 1024) }} KB</small
+                ></span
+              >
+            </button>
+          </section>
+        </div>
+        <button :disabled="agentBusy || !state?.canEdit" @click="createSession">
+          <Plus :size="16" /><span>新对话</span>
+        </button>
         <button
           class="work-panel-toggle"
           :aria-label="panelOpen ? '关闭成果面板' : '打开成果面板'"
@@ -330,109 +433,6 @@ onBeforeUnmount(() => controller.abort());
     <p v-if="loading" role="status" class="work-loading">正在读取开发项…</p>
     <div v-else-if="state" ref="shell" class="work-body" :class="{ 'panel-open': panelOpen }">
       <section class="work-chat" v-show="!compact || !panelOpen" aria-label="对话工作区">
-        <div class="work-chat-heading">
-          <div ref="switcher" class="work-popover-anchor work-switcher">
-            <span class="work-eyebrow">{{ config.assistantName }}</span>
-            <button
-              class="work-title-button"
-              :aria-expanded="switcherOpen"
-              aria-haspopup="listbox"
-              :title="currentTitle"
-              @click="switcherOpen = !switcherOpen"
-            >
-              <h2>{{ currentTitle }}</h2>
-              <ChevronDown :size="16" />
-            </button>
-            <section v-if="switcherOpen" class="work-popover work-sessions" aria-label="切换对话">
-              <h3>{{ config.sessionsHeading }}</h3>
-              <p v-if="!sessions.length" class="work-empty">发送第一条消息后，对话会保存在这里。</p>
-              <ul role="listbox">
-                <li
-                  v-for="s in sessions"
-                  :key="s.id"
-                  role="option"
-                  :aria-selected="s.id === run.sessionId.value"
-                  class="work-session-row"
-                  :class="{ selected: s.id === run.sessionId.value }"
-                >
-                  <form v-if="renaming === s.id" class="work-rename" @submit.prevent="saveRename">
-                    <input v-model="newTitle" aria-label="对话名称" maxlength="200" autofocus />
-                    <button class="work-icon" aria-label="保存名称" :disabled="!newTitle.trim()">
-                      <Check :size="16" />
-                    </button>
-                    <button
-                      type="button"
-                      class="work-icon"
-                      aria-label="取消改名"
-                      @click="renaming = ''"
-                    >
-                      <X :size="16" />
-                    </button>
-                    <small v-if="renameError" role="alert">{{ renameError }}</small>
-                  </form>
-                  <template v-else>
-                    <button
-                      class="work-session-pick"
-                      :disabled="agentBusy && s.id !== run.sessionId.value"
-                      @click="selectSession(s.id)"
-                    >
-                      <strong>{{ s.title?.trim() || '未命名对话' }}</strong>
-                      <small
-                        >{{ time(s.updatedAt) }}{{ config.sessionVersion(s)
-                        }}{{ s.id === run.sessionId.value ? ' · 当前' : '' }}</small
-                      >
-                    </button>
-                    <button
-                      v-if="state.canEdit"
-                      class="work-icon"
-                      aria-label="重命名对话"
-                      @click="startRename(s)"
-                    >
-                      <Pencil :size="14" />
-                    </button>
-                  </template>
-                </li>
-              </ul>
-            </section>
-          </div>
-          <div class="work-chat-actions">
-            <div v-if="run.attachments.value.length" ref="files" class="work-popover-anchor">
-              <button :aria-expanded="filesOpen" @click="filesOpen = !filesOpen">
-                <Paperclip :size="15" />资料 {{ run.attachments.value.length }}
-              </button>
-              <section
-                v-if="filesOpen"
-                class="work-popover work-popover-right work-files"
-                aria-label="本次对话的文件"
-              >
-                <p class="work-muted">上传的资料会提供给助手阅读；新对话不自动继承。</p>
-                <button
-                  v-for="f in run.attachments.value"
-                  :key="f.id"
-                  class="work-file-row"
-                  @click="inspectFile(f.id)"
-                >
-                  <FileText :size="20" /><span
-                    ><strong>{{ f.fileName }}</strong
-                    ><small
-                      >{{
-                        f.parseState === 'ready'
-                          ? '已读取'
-                          : f.parseState === 'preview_only'
-                            ? '仅预览'
-                            : '未能读取'
-                      }}
-                      · {{ Math.ceil(f.size / 1024) }} KB</small
-                    ></span
-                  >
-                </button>
-              </section>
-            </div>
-            <button :disabled="agentBusy || !state.canEdit" @click="createSession">
-              <Plus :size="16" />新对话
-            </button>
-          </div>
-        </div>
         <p v-if="!state.canEdit" class="work-inline-note">
           {{ config.readonlyNote }}
         </p>
@@ -486,7 +486,7 @@ onBeforeUnmount(() => controller.abort());
             <X :size="18" />
           </button>
         </header>
-        <div class="work-panel-scroll">
+        <div class="work-panel-scroll" :class="{ 'work-panel-fill': !filePreview }">
           <section v-if="filePreview" class="file-extraction">
             <h3>{{ filePreview.fileName }}</h3>
             <p class="work-muted">提取内容预览，非原始文件。</p>

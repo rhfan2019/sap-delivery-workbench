@@ -60,6 +60,10 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
   const liveNote = ref({ text: '', at: Date.now() });
   const note = (text: string) => (liveNote.value = { text, at: Date.now() });
   let reasoning = '';
+  // Most SAP lookups take a fraction of a second; naming them would make the line flicker
+  // between "正在查阅…" and "正在思考下一步…". Only a call still running after a moment is named.
+  let toolNote: ReturnType<typeof setTimeout> | undefined;
+  const TOOL_NOTE_DELAY_MS = 800;
   // The session as the API returned it, and the live text of artifacts being written.
   const detail = shallowRef<any>(null);
   const drafts = ref<Record<string, string>>({});
@@ -160,6 +164,7 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
       error.value = cause instanceof Error ? cause.message : '连接中断。';
     } finally {
       reader = null;
+      clearTimeout(toolNote);
       note('');
       if (!disposed && sessionId.value) {
         const final = status.value;
@@ -199,8 +204,10 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
         arguments: d.arguments,
       });
       steps.value.push({ ...step, summary: '执行中…' });
-      note(runningText(step));
+      clearTimeout(toolNote);
+      toolNote = setTimeout(() => note(runningText(step)), TOOL_NOTE_DELAY_MS);
     } else if (event.type === 'tool.end') {
+      clearTimeout(toolNote);
       const index = steps.value.findIndex((s) => s.stepId === d.id);
       const step = stepFromToolCall({
         id: d.id,

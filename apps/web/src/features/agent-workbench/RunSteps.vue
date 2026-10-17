@@ -63,10 +63,11 @@ const summary = computed(() =>
 );
 
 const expanded = ref(false);
-// Rows the user opened; while running, the row in progress is open by itself.
+// Rows the reader opened. Rows never open by themselves: a call that opens and closes within
+// a second makes the list jump.
 const opened = ref<Record<string, boolean>>({});
-const isOpen = (id: string, running: boolean) => opened.value[id] ?? (props.live && running);
-const toggle = (id: string, running: boolean) => (opened.value[id] = !isOpen(id, running));
+const isOpen = (id: string) => !!opened.value[id];
+const toggle = (id: string) => (opened.value[id] = !isOpen(id));
 
 function sqlOf(step: AgentStep) {
   const input = step.input as Record<string, unknown> | string;
@@ -130,12 +131,7 @@ async function copyRunId() {
     <div v-if="live || expanded" class="run-rows">
       <ol v-if="activities.length">
         <li v-for="a in activities" :key="a.id">
-          <button
-            type="button"
-            class="run-row"
-            :aria-expanded="isOpen(a.id, a.status === 'running')"
-            @click="toggle(a.id, a.status === 'running')"
-          >
+          <button type="button" class="run-row" :aria-expanded="isOpen(a.id)" @click="toggle(a.id)">
             <LoaderCircle
               v-if="a.status === 'running'"
               class="size-4 shrink-0 animate-spin text-muted-foreground"
@@ -150,7 +146,7 @@ async function copyRunId() {
               ></span
             >
           </button>
-          <ul v-if="isOpen(a.id, a.status === 'running')" class="run-calls">
+          <ul v-if="isOpen(a.id)" class="run-calls">
             <li
               v-for="s in a.steps"
               :key="s.stepId"
