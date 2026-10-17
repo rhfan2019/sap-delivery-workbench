@@ -46,8 +46,6 @@
   --font-size-xl: 17px;
   --font-size-2xl: 20px;
   --font-size-3xl: 28px;
-  /* The one display size: the login page headline (DESIGN.md 3). */
-  --font-size-display: clamp(36px, 4.4vw, 64px);
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
