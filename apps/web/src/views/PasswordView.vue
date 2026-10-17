@@ -3,6 +3,8 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { api, identity } from '../services/session';
 import AppIcon from '../components/AppIcon.vue';
+// Standalone at /password (first sign-in), or one section of 个人设置 when embedded.
+defineProps<{ embedded?: boolean }>();
 const router = useRouter();
 const oldPassword = ref('');
 const newPassword = ref('');
@@ -41,11 +43,12 @@ async function logout() {
 }
 </script>
 <template>
-  <div class="password-page">
-    <section class="password-card">
-      <div class="form-symbol"><AppIcon name="shield" :size="26" /></div>
-      <p class="eyebrow">ACCOUNT SECURITY</p>
-      <h1>{{ identity?.mustChangePassword ? '设置你的专属密码' : '修改登录密码' }}</h1>
+  <div :class="embedded ? 'password-embedded' : 'password-page'">
+    <section :class="embedded ? 'password-section' : 'password-card'">
+      <div v-if="!embedded" class="form-symbol"><AppIcon name="shield" :size="20" /></div>
+      <component :is="embedded ? 'h2' : 'h1'">{{
+        identity?.mustChangePassword ? '设置你的专属密码' : '修改登录密码'
+      }}</component>
       <p class="muted">
         {{
           identity?.mustChangePassword
@@ -83,11 +86,29 @@ async function logout() {
           maxlength="128"
         />
         <p v-if="error" class="error-note" role="alert">{{ error }}</p>
-        <button class="primary-button login-submit" :disabled="busy">
-          {{ busy ? '正在保存…' : '更新密码并重新登录' }}<AppIcon name="arrow" />
+        <button class="primary-button password-submit" :disabled="busy">
+          {{ busy ? '正在保存…' : '更新密码并重新登录' }}
         </button>
       </form>
-      <button class="text-button password-exit" :disabled="busy" @click="logout">退出登录</button>
+      <button v-if="!embedded" class="text-button password-exit" :disabled="busy" @click="logout">
+        退出登录
+      </button>
     </section>
   </div>
 </template>
+<style scoped>
+.password-section {
+  max-width: 420px;
+  padding-top: var(--space-5);
+}
+.password-section h2 {
+  font-size: var(--font-16);
+}
+.password-submit {
+  width: 100%;
+  margin-top: var(--space-6);
+}
+.password-section .password-submit {
+  width: auto;
+}
+</style>

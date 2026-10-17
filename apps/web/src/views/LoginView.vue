@@ -92,6 +92,7 @@ async function submit() {
   </main>
 </template>
 <style scoped>
+/* Sign-in (DESIGN.md 6.5): one centred card on the page ground. */
 .login-page {
   min-height: 100dvh;
   display: flex;
@@ -100,94 +101,70 @@ async function submit() {
   justify-content: center;
   gap: var(--space-6);
   padding: var(--space-10) var(--space-4);
-  background: var(--bg);
+  background: var(--page);
   color: var(--text);
 }
 .login-card {
   width: 100%;
-  max-width: 400px;
+  max-width: 380px;
   padding: var(--space-8);
-  background: var(--card-bg);
-  border: var(--card-border-width) solid var(--card-border);
-  border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-12);
+  box-shadow: var(--shadow-card);
 }
 .brand {
   margin-bottom: var(--space-8);
-  font-size: var(--font-size-lg);
+  font-size: var(--font-14);
 }
 .login-card h1 {
-  font-family: var(--font-display);
-  font-size: var(--font-size-2xl);
-  font-weight: var(--heading-weight);
-  letter-spacing: var(--heading-letter-spacing);
+  font-size: var(--font-20);
+  line-height: var(--leading-28);
+  font-weight: var(--weight-550);
 }
 .login-lead {
-  margin-top: var(--space-1-5);
-  color: var(--muted);
-  font-size: var(--font-size-md);
+  margin-top: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--font-14);
 }
 form {
   margin-top: var(--space-6);
 }
-form label {
-  margin-top: var(--space-4);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-}
 form label:first-child {
   margin-top: 0;
 }
-form input {
-  height: 44px;
-  border-radius: var(--input-radius);
-  border-color: var(--input-border);
-  background: var(--input-bg);
-  font-size: var(--font-size-lg);
-  transition: border-color var(--duration-base);
-}
-/* Browser autofill keeps the theme's field colours. */
+/* Browser autofill keeps the field colours. */
 form input:-webkit-autofill {
   -webkit-text-fill-color: var(--text);
-  box-shadow: 0 0 0 100px var(--input-bg) inset;
-}
-form input:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 1px;
-  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 100px var(--panel) inset;
 }
 .password-field {
   position: relative;
 }
 .password-field input {
-  padding-right: var(--space-12);
+  padding-right: var(--space-10);
 }
 .password-field .icon-button {
   position: absolute;
-  right: var(--space-1-5);
+  right: var(--space-0-5);
   top: 50%;
+  width: var(--space-8);
+  height: var(--space-6);
   transform: translateY(-50%);
-  color: var(--muted);
-}
-.password-field .icon-button:hover {
-  background: var(--hover);
 }
 .login-submit {
   width: 100%;
-  height: 44px;
   margin-top: var(--space-6);
-  font-size: var(--font-size-lg);
 }
 .login-submit:active:not(:disabled) {
   transform: scale(0.985);
 }
 .login-help {
   margin-top: var(--space-4);
-  font-size: var(--font-size-sm);
 }
 .login-foot {
-  color: var(--muted);
-  font-size: var(--font-size-xs);
+  color: var(--text-subtle);
+  font-size: var(--font-12);
 }
 @media (max-width: 480px) {
   .login-page {

@@ -460,21 +460,3 @@
   }
 }
 
-/* Scoped inverse surface of the home banner until the home page is rewritten. */
-.welcome-banner {
-  --nav-bg: var(--story-bg);
-  --nav-text: var(--story-text);
-  --nav-muted: var(--story-muted);
-  --nav-border: var(--story-border);
-  --nav-hover: var(--story-hover);
-  --nav-active: var(--story-active);
-  --nav-focus: var(--story-focus);
-  --text: var(--story-text);
-  --muted: var(--story-muted);
-  --border: var(--story-border);
-  --hover: var(--story-hover);
-  --active: var(--story-active);
-  --link: var(--story-muted);
-  --focus: var(--story-focus);
-  color: var(--text);
-}

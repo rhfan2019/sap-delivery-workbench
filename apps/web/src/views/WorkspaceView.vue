@@ -4,6 +4,9 @@ import { useRoute, useRouter } from 'vue-router';
 import AppIcon from '../components/AppIcon.vue';
 import BaseEmptyState from '../components/base/BaseEmptyState.vue';
 import BaseTag from '../components/base/BaseTag.vue';
+import BasePropertyRow from '../components/base/BasePropertyRow.vue';
+import BaseSection from '../components/base/BaseSection.vue';
+import BaseSkeleton from '../components/base/BaseSkeleton.vue';
 import { menus } from '../features/navigation';
 import { api, identity, ApiError, type Project } from '../services/session';
 const route = useRoute();
@@ -28,6 +31,16 @@ const status = (p: Project) =>
     : ({ preparing: '准备中', active: '进行中', completed: '已完成', archived: '已归档' }[
         p.status
       ] ?? p.status);
+const tone = (p: Project) =>
+  p.isPaused
+    ? 'yellow'
+    : (({ preparing: 'purple', active: 'blue', completed: 'green' } as const)[
+        p.status as 'preparing'
+      ] ?? 'neutral');
+const pick = (ids: string[]) => ids.map((id) => menus.find((m) => m.id === id)!).filter(Boolean);
+// The home page (DESIGN.md 6.4): what people open most, then their projects and knowledge.
+const shortcuts = pick(['development-items', 'development-overview', 'organization', 'templates']);
+const knowledge = pick(['qa', 'knowledge', 'assets']);
 const date = new Intl.DateTimeFormat('zh-CN', {
   timeZone: 'Asia/Shanghai',
   month: 'long',
@@ -50,227 +63,163 @@ async function load() {
 onMounted(load);
 </script>
 <template>
-  <template v-if="isHome">
-    <div class="page-heading">
+  <div v-if="isHome" class="home">
+    <header class="page-heading">
       <div>
-        <p class="eyebrow">YOUR DELIVERY, CONNECTED</p>
-        <h1>你好，{{ identity?.user.displayName }}<span class="greeting-dot">。</span></h1>
-        <p class="muted">让想法落地，让每一步交付清晰可见。</p>
+        <h1>你好，{{ identity?.user.displayName }}</h1>
+        <p class="muted">{{ date }} · 从开发清单开始今天的交付。</p>
       </div>
-      <span class="date-label">{{ date }}</span>
-    </div>
-    <section class="welcome-banner">
-      <div>
-        <span class="banner-label">SAP 智能交付工作台</span>
-        <h2>从业务需求，走向可信交付。</h2>
-        <p>连接 FS、TS、开发与测试，在一个空间协同推进。</p>
-        <RouterLink to="/projects" class="banner-link"
-          >进入我的项目<AppIcon name="arrow" :size="17"
-        /></RouterLink>
-      </div>
-      <div class="banner-graphic" aria-hidden="true">
-        <div class="graphic-ring"></div>
-        <div class="graphic-ring inner"></div>
-        <span class="graphic-core"><AppIcon name="layers" :size="40" /></span
-        ><span class="graphic-label gl-one">FS</span><span class="graphic-label gl-two">TS</span
-        ><span class="graphic-label gl-three">DEV</span
-        ><span class="graphic-label gl-four">TEST</span><span class="graphic-spark">✦</span>
+      <RouterLink to="/workspace/development-items" class="primary-button"
+        ><AppIcon name="file" :size="16" />打开开发清单</RouterLink
+      >
+    </header>
+    <section class="home-group" aria-labelledby="home-start">
+      <h2 id="home-start">常用</h2>
+      <div class="home-cards">
+        <RouterLink v-for="item in shortcuts" :key="item.id" :to="item.path" class="home-card">
+          <span class="icon-tile"><AppIcon :name="item.icon" :size="16" /></span>
+          <span class="home-card-text">
+            <strong>{{ item.label }}</strong>
+            <small>{{ item.description }}</small>
+          </span>
+        </RouterLink>
       </div>
     </section>
-    <section class="quick-section">
-      <div class="section-heading">
-        <h2>交付工作流</h2>
-        <span>从需求开始，让成果可追溯</span>
-      </div>
-      <div class="quick-grid">
-        <RouterLink
-          v-for="(item, index) in [
-            menus.find((m) => m.id === 'development-items')!,
-            menus.find((m) => m.id === 'development-overview')!,
-            menus.find((m) => m.id === 'organization')!,
-            menus.find((m) => m.id === 'templates')!,
-          ]"
-          :key="item.id"
-          :to="item.path"
-          class="quick-card"
-          ><div class="quick-card-top">
-            <span class="icon-tile"><AppIcon :name="item.icon" :size="22" /></span
-            ><span class="step-number">0{{ index + 1 }}</span>
-          </div>
-          <h3>{{ item.label }}</h3>
-          <p>
-            {{
-              [
-                '维护台账，编写功能规格',
-                '项目驾驶舱，后续开放',
-                '统一维护客户与项目',
-                '统一交付标准与文档',
-              ][index]
-            }}
-          </p>
-          <AppIcon name="external" class="quick-arrow" :size="17"
-        /></RouterLink>
-      </div>
-    </section>
-    <div class="dashboard-lower">
-      <section class="surface project-surface">
-        <div class="section-heading">
-          <h2>
-            我的项目 <span class="count-badge">{{ loading ? '—' : projects.length }}</span>
+    <div class="home-columns">
+      <section class="home-group" aria-labelledby="home-projects">
+        <div class="home-group-head">
+          <h2 id="home-projects">
+            我的项目<span class="count-badge">{{ loading ? '—' : projects.length }}</span>
           </h2>
-          <RouterLink to="/projects" class="text-link"
-            >查看全部<AppIcon name="arrow" :size="15"
-          /></RouterLink>
+          <RouterLink to="/projects" class="text-link">查看全部</RouterLink>
         </div>
-        <p v-if="loading" class="loading-state">正在读取项目…</p>
-        <div v-else-if="error" class="error-note" role="alert">
+        <div v-if="loading" class="home-skeleton">
+          <BaseSkeleton v-for="n in 3" :key="n" />
+        </div>
+        <p v-else-if="error" class="error-note" role="alert">
           {{ error }}<button class="text-button" @click="load">重新加载</button>
-        </div>
-        <div v-else-if="!projects.length" class="empty-projects">
-          <div class="empty-illustration"><AppIcon name="folder" :size="34" /><span>+</span></div>
-          <h3>你的下一个项目，从这里开始</h3>
-          <p>当前尚未分配项目。联系管理员加入项目后，<br />即可在这里查看项目与交付进展。</p>
-          <RouterLink to="/projects" class="secondary-button"
-            >了解项目空间<AppIcon name="arrow" :size="15"
-          /></RouterLink>
-        </div>
-        <RouterLink
-          v-for="p in projects.slice(0, 3)"
-          v-else
-          :key="p.id"
-          :to="'/projects/' + p.id"
-          class="project-row"
-          ><span class="icon-tile"><AppIcon name="folder" /></span>
-          <div>
-            <h3>{{ p.name }}</h3>
-            <p>{{ p.customerName }} · {{ p.code }}</p>
-          </div>
-          <span class="status-badge">{{ status(p) }}</span
-          ><AppIcon name="arrow" :size="16"
-        /></RouterLink>
+        </p>
+        <BaseEmptyState
+          v-else-if="!projects.length"
+          title="还没有加入项目"
+          text="联系管理员把你加入项目后，项目会显示在这里。"
+        >
+          <template #icon><AppIcon name="folder" :size="16" /></template>
+        </BaseEmptyState>
+        <ul v-else class="project-list">
+          <li v-for="p in projects.slice(0, 5)" :key="p.id">
+            <RouterLink :to="'/projects/' + p.id" class="project-row">
+              <span class="icon-tile"><AppIcon name="folder" :size="16" /></span>
+              <span class="project-text">
+                <strong>{{ p.name }}</strong>
+                <small>{{ p.customerName }} · {{ p.code }}</small>
+              </span>
+              <BaseTag :tone="tone(p)">{{ status(p) }}</BaseTag>
+            </RouterLink>
+          </li>
+        </ul>
       </section>
-      <section class="surface resources-surface">
-        <div class="section-heading">
-          <h2>团队知识与资产</h2>
-          <AppIcon name="library" :size="18" />
+      <section class="home-group" aria-labelledby="home-knowledge">
+        <div class="home-group-head">
+          <h2 id="home-knowledge">知识与资产</h2>
+          <BaseTag>建设中</BaseTag>
         </div>
-        <p class="resource-intro">让经验沉淀，让专业持续复用。</p>
-        <RouterLink
-          v-for="id in ['qa', 'assets', 'templates']"
-          :key="id"
-          :to="menus.find((m) => m.id === id)!.path"
-          class="resource-link"
-          ><span class="icon-tile"><AppIcon :name="menus.find((m) => m.id === id)!.icon" /></span>
-          <div>
-            <h3>{{ menus.find((m) => m.id === id)!.label }}</h3>
-            <p>
-              {{
-                id === 'qa'
-                  ? '带着问题，寻找有据可循的答案'
-                  : id === 'assets'
-                    ? '复用成熟代码，积累交付能力'
-                    : '统一交付标准，减少重复工作'
-              }}
-            </p>
-          </div>
-          <AppIcon name="external" :size="16"
-        /></RouterLink>
-        <p class="resource-note"><AppIcon name="sparkles" :size="14" /> 知识与资产能力正在建设中</p>
+        <ul class="project-list">
+          <li v-for="item in knowledge" :key="item.id">
+            <RouterLink :to="item.path" class="project-row">
+              <span class="icon-tile"><AppIcon :name="item.icon" :size="16" /></span>
+              <span class="project-text">
+                <strong>{{ item.label }}</strong>
+                <small>{{ item.description }}</small>
+              </span>
+            </RouterLink>
+          </li>
+        </ul>
       </section>
     </div>
-  </template>
-  <template v-else-if="isProjects"
-    ><div class="page-heading">
+  </div>
+  <div v-else-if="isProjects" class="home">
+    <header class="page-heading">
       <div>
-        <p class="eyebrow">PROJECT SPACE</p>
         <h1>我的项目</h1>
-        <p class="muted">在项目中组织协作，贯通从需求到验收的完整交付。</p>
+        <p class="muted">你参与的项目，从需求到验收的交付都在项目中协作。</p>
       </div>
-      <button class="secondary-button" @click="load" :disabled="loading">
+      <button class="secondary-button" :disabled="loading" @click="load">
         <AppIcon name="refresh" :size="16" />刷新
       </button>
+    </header>
+    <div class="projects-bar">
+      <div class="filter-input">
+        <AppIcon name="search" :size="16" /><input
+          v-model="filter"
+          aria-label="搜索项目"
+          placeholder="搜索项目名称、客户或编号"
+        />
+      </div>
+      <span class="projects-count">{{ filtered.length }} 个项目</span>
     </div>
-    <section class="surface projects-list">
-      <div class="section-heading">
-        <h2>
-          参与的项目 <span class="count-badge">{{ projects.length }}</span>
-        </h2>
-        <div class="filter-input">
-          <AppIcon name="search" :size="17" /><input
-            v-model="filter"
-            aria-label="搜索项目"
-            placeholder="搜索项目名称、客户或编号"
-          />
-        </div>
-      </div>
-      <p v-if="loading" class="loading-state">正在加载项目…</p>
-      <p v-else-if="error" class="error-note" role="alert">{{ error }}</p>
-      <div v-else-if="!filtered.length" class="empty-projects large">
-        <div class="empty-illustration"><AppIcon name="folder" :size="38" /><span>+</span></div>
-        <h2>{{ filter ? '未找到匹配项目' : '尚未加入项目' }}</h2>
-        <p>
-          {{
-            filter
-              ? '请换一个关键词再试试。'
-              : '联系管理员建立客户、项目及成员关系。你获准参与的项目将显示在这里。'
-          }}
-        </p>
-        <button v-if="filter" class="secondary-button" @click="filter = ''">清除搜索</button
-        ><RouterLink v-else to="/home" class="secondary-button"
-          >返回工作台<AppIcon name="arrow" :size="16"
-        /></RouterLink>
-      </div>
-      <RouterLink
-        v-for="p in filtered"
-        v-else
-        :key="p.id"
-        :to="'/projects/' + p.id"
-        class="project-row"
-        ><span class="icon-tile"><AppIcon name="folder" /></span>
-        <div>
-          <h3>{{ p.name }}</h3>
-          <p>{{ p.customerName }} · {{ p.code }}</p>
-        </div>
-        <span class="status-badge">{{ status(p) }}</span
-        ><AppIcon name="arrow"
-      /></RouterLink></section
-  ></template>
-  <template v-else-if="isDetail"
-    ><RouterLink to="/projects" class="text-link back-link"
-      ><AppIcon name="back" :size="17" />返回我的项目</RouterLink
-    >
-    <p v-if="loading" class="loading-state">正在读取项目…</p>
+    <div v-if="loading" class="home-skeleton">
+      <BaseSkeleton v-for="n in 4" :key="n" />
+    </div>
     <p v-else-if="error" class="error-note" role="alert">{{ error }}</p>
-    <template v-else-if="project"
-      ><div class="page-heading">
+    <BaseEmptyState
+      v-else-if="!filtered.length"
+      :title="filter ? '没有匹配的项目' : '还没有加入项目'"
+      :text="
+        filter
+          ? '换一个关键词再试试。'
+          : '联系管理员建立客户、项目及成员关系，你参与的项目会显示在这里。'
+      "
+    >
+      <template #icon><AppIcon name="folder" :size="16" /></template>
+      <button v-if="filter" class="secondary-button" @click="filter = ''">清除搜索</button>
+    </BaseEmptyState>
+    <ul v-else class="project-list">
+      <li v-for="p in filtered" :key="p.id">
+        <RouterLink :to="'/projects/' + p.id" class="project-row">
+          <span class="icon-tile"><AppIcon name="folder" :size="16" /></span>
+          <span class="project-text">
+            <strong>{{ p.name }}</strong>
+            <small>{{ p.customerName }} · {{ p.code }}</small>
+          </span>
+          <BaseTag :tone="tone(p)">{{ status(p) }}</BaseTag>
+        </RouterLink>
+      </li>
+    </ul>
+  </div>
+  <div v-else-if="isDetail" class="home">
+    <RouterLink to="/projects" class="text-link back-link"
+      ><AppIcon name="back" :size="14" />我的项目</RouterLink
+    >
+    <div v-if="loading" class="home-skeleton"><BaseSkeleton v-for="n in 3" :key="n" /></div>
+    <p v-else-if="error" class="error-note" role="alert">{{ error }}</p>
+    <template v-else-if="project">
+      <header class="page-heading">
         <div>
-          <p class="eyebrow">{{ project.code }}</p>
           <h1>{{ project.name }}</h1>
           <p class="muted">{{ project.customerName }}</p>
         </div>
-        <span class="status-badge">{{ status(project) }}</span>
-      </div>
-      <section class="surface project-detail">
-        <h2>项目概览</h2>
-        <p>{{ project.description || '尚未填写项目说明。' }}</p>
-        <dl>
-          <div>
-            <dt>所属客户</dt>
-            <dd>{{ project.customerName }}</dd>
-          </div>
-          <div>
-            <dt>计划开始</dt>
-            <dd>{{ project.plannedStartDate?.slice(0, 10) || '未设置' }}</dd>
-          </div>
-          <div>
-            <dt>计划结束</dt>
-            <dd>{{ project.plannedEndDate?.slice(0, 10) || '未设置' }}</dd>
-          </div>
-        </dl>
-        <p class="help-note">交付项、文档、开发与测试能力将逐步接入此项目空间。</p>
-      </section></template
-    ></template
-  >
+        <div class="project-tags">
+          <BaseTag variant="outline">{{ project.code }}</BaseTag>
+          <BaseTag :tone="tone(project)">{{ status(project) }}</BaseTag>
+        </div>
+      </header>
+      <section class="project-detail">
+        <BaseSection title="项目概览">
+          <p class="project-description">{{ project.description || '尚未填写项目说明。' }}</p>
+          <dl>
+            <BasePropertyRow label="所属客户">{{ project.customerName }}</BasePropertyRow>
+            <BasePropertyRow label="计划开始" :empty="!project.plannedStartDate">{{
+              project.plannedStartDate?.slice(0, 10)
+            }}</BasePropertyRow>
+            <BasePropertyRow label="计划结束" :empty="!project.plannedEndDate">{{
+              project.plannedEndDate?.slice(0, 10)
+            }}</BasePropertyRow>
+          </dl>
+        </BaseSection>
+      </section>
+    </template>
+  </div>
   <template v-else
     ><div class="page-heading">
       <div>
@@ -293,3 +242,146 @@ onMounted(load);
     </BaseEmptyState></template
   >
 </template>
+<style scoped>
+.home {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.home-group {
+  margin-top: var(--space-6);
+}
+.home-group > h2,
+.home-group-head h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-14);
+  font-weight: var(--weight-550);
+}
+.home-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.home-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+.home-card {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-8);
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
+  transition:
+    background var(--motion-fast),
+    border-color var(--motion-fast);
+}
+.home-card:hover,
+.project-row:hover {
+  background: var(--neutral-bg-2);
+}
+.home-card:hover {
+  border-color: var(--border-strong);
+}
+.home-card-text,
+.project-text {
+  display: grid;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+.home-card strong,
+.project-text strong {
+  font-size: var(--font-14);
+  font-weight: var(--weight-550);
+}
+.home-card small,
+.project-text small {
+  font-size: var(--font-12);
+  line-height: var(--leading-16);
+  color: var(--text-muted);
+}
+.home-columns {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: var(--space-6);
+}
+.project-list {
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--border);
+}
+.project-list li {
+  border-bottom: 1px solid var(--border);
+}
+.project-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-table-row);
+  padding: var(--space-2) var(--space-2);
+  transition: background var(--motion-fast);
+}
+.project-text {
+  flex: 1;
+}
+.project-text strong,
+.project-text small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.home-skeleton {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+.projects-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.projects-bar .filter-input {
+  flex: 1;
+  max-width: 420px;
+}
+.projects-bar .filter-input input {
+  width: 100%;
+}
+.projects-count {
+  font-size: var(--font-12);
+  color: var(--text-muted);
+}
+.project-tags {
+  display: flex;
+  gap: var(--space-1-5);
+}
+.project-detail {
+  max-width: 720px;
+}
+.project-description {
+  margin-bottom: var(--space-3);
+  color: var(--text-muted);
+}
+.project-detail dl {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+}
+@media (max-width: 950px) {
+  .home-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .home-columns {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+</style>

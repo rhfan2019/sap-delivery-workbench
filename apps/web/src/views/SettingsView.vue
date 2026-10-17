@@ -12,11 +12,16 @@ async function choose(next: string) {
 </script>
 <template>
   <section>
-    <header class="page-heading"><h1>个人设置</h1></header>
+    <header class="page-heading">
+      <div>
+        <h1>个人设置</h1>
+        <p class="muted">你的登录密码，以及在各项目中使用的 SAP 登录参数。</p>
+      </div>
+    </header>
     <nav class="tabs sap-settings-tabs" aria-label="个人设置页签">
       <button :class="{ active: tab === 'security' }" @click="choose('security')">账号安全</button
       ><button :class="{ active: tab === 'project' }" @click="choose('project')">项目参数</button>
     </nav>
-    <PasswordView v-if="tab === 'security'" /><ProjectParameters v-else ref="parameters" />
+    <PasswordView v-if="tab === 'security'" embedded /><ProjectParameters v-else ref="parameters" />
   </section>
 </template>

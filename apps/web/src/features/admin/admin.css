@@ -30,7 +30,7 @@
   flex-shrink: 0;
 }
 .organization-emblem,
-.icon-tile {
+.admin-page .icon-tile {
   display: flex;
   align-items: center;
   justify-content: center;
