@@ -40,6 +40,10 @@ export const router = createRouter({
           meta: { keepOnQuery: true },
         },
         {
+          path: 'workspace/admin',
+          component: () => import('../features/admin/AdminOverviewView.vue'),
+        },
+        {
           path: 'workspace/organization',
           component: () => import('../features/admin/OrganizationView.vue'),
         },

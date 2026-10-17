@@ -86,7 +86,6 @@ onMounted(load);
   <div class="admin-page">
     <div class="page-heading">
       <div>
-        <p class="eyebrow">CUSTOMERS & PROJECTS</p>
         <h1>客户与项目</h1>
         <p class="muted">管理客户档案及关联项目，在清晰的业务关系中开展交付。</p>
       </div>

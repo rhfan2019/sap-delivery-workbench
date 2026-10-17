@@ -48,6 +48,7 @@ export const groups = [
     label: '后台管理',
     icon: 'settings',
     items: [
+      item('admin', '总览', 'settings', '后台管理的全部设置。'),
       item('organization-profile', '企业资料', 'building', '维护当前企业资料。'),
       item(
         'organization',
@@ -112,6 +113,7 @@ export const modules: Module[] = [
     sections:
       group.id === 'admin'
         ? [
+            { items: pick(['admin']) },
             {
               label: '组织',
               items: pick(['organization-profile', 'organization', 'members', 'permissions']),

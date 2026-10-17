@@ -1,11 +1,11 @@
 :root {
   font-family: var(--font-sans);
   color: var(--text);
-  background: var(--page-bg);
+  background: var(--page);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  font-size: var(--font-size-md);
+  font-size: var(--font-14);
 }
 * {
   box-sizing: border-box;
@@ -36,8 +36,8 @@ a {
   text-decoration: none;
 }
 button:disabled {
-  cursor: wait;
-  opacity: 0.6;
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 button {
   border: 0;
@@ -55,8 +55,8 @@ input:focus-visible,
 select:focus-visible,
 button:focus-visible,
 a:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 3px;
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 svg {
   flex-shrink: 0;
@@ -67,89 +67,96 @@ h3,
 p {
   margin: 0;
 }
-/* Headings take the theme's display face, weight and tracking (component tokens). */
+/* Titles are not bold (DESIGN.md 3): size carries them. */
 h1,
 h2,
 h3 {
-  font-family: var(--font-display);
-  font-weight: var(--heading-weight);
-  letter-spacing: var(--heading-letter-spacing);
+  font-weight: var(--weight-550);
 }
 h1 {
-  font-size: var(--page-title-size);
-  line-height: 1.35;
+  font-size: var(--font-24);
+  line-height: var(--leading-32);
+  font-weight: var(--weight-475);
 }
 h2 {
-  font-size: var(--section-title-size);
+  font-size: var(--font-16);
+  line-height: var(--leading-24);
 }
 h3 {
-  font-size: var(--font-size-md);
+  font-size: var(--font-14);
+  line-height: var(--leading-20);
 }
 p {
-  line-height: 1.8;
+  line-height: var(--leading-20);
 }
 .muted {
-  color: var(--muted);
-  margin-top: var(--space-2-5);
-}
-.eyebrow {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: 2px;
-  color: var(--muted);
-  margin-bottom: var(--space-3);
+  color: var(--text-muted);
+  margin-top: var(--space-2);
 }
 .icon-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-sm);
+  width: var(--control-icon);
+  height: var(--control-icon);
+  border-radius: var(--radius-6);
+  color: var(--neutral-icon-1);
   flex-shrink: 0;
+  transition:
+    background var(--motion-fast),
+    color var(--motion-fast);
 }
 .icon-button:hover {
   background: var(--hover);
+  color: var(--text);
 }
+.icon-button:active {
+  background: var(--pressed);
+}
+/* The old button classes take the look of BaseButton (DESIGN.md 5). */
 .primary-button,
 .secondary-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  min-height: var(--button-height);
-  padding: 0 var(--button-padding-x);
-  border-radius: var(--button-radius);
-  font-weight: var(--button-font-weight);
-  font-size: var(--button-font-size);
-  box-shadow: var(--button-shadow);
+  gap: var(--space-1-5);
+  min-height: var(--control-button);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-6);
+  font-weight: var(--weight-475);
+  font-size: var(--font-14);
+  white-space: nowrap;
   transition:
-    background var(--duration-base),
-    transform var(--duration-base);
+    background var(--motion-fast),
+    border-color var(--motion-fast);
 }
 .primary-button {
-  background: var(--button-primary-bg);
-  color: var(--button-primary-text);
-  border: 1px solid var(--button-primary-bg);
+  background: var(--primary);
+  color: var(--on-primary);
+  border: 1px solid var(--primary);
+  box-shadow: var(--shadow-button);
 }
 .primary-button:hover {
-  background: var(--button-primary-hover-bg);
+  background: var(--primary-hover);
 }
 .secondary-button {
-  background: var(--button-secondary-bg);
-  border: 1px solid var(--button-secondary-border);
-  color: var(--button-secondary-text);
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
 }
 .secondary-button:hover {
-  background: var(--button-secondary-hover-bg);
+  background: var(--hover);
 }
-/* Tabs (DESIGN.md 12): one component; an underline or a filled pill depending on the theme. */
+.primary-button svg,
+.secondary-button svg {
+  width: var(--space-4);
+  height: var(--space-4);
+}
+/* Text tabs (DESIGN.md 5): the selected tab sits on a light grey fill. */
 .tabs {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: var(--space-1);
-  /* The bar line is an inset shadow, so the active indicator can sit on it without overflow. */
-  box-shadow: inset 0 -1px 0 var(--tab-bar-border);
   overflow-x: auto;
   overflow-y: hidden;
 }
@@ -157,29 +164,32 @@ p {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1-5);
-  padding: var(--space-2) var(--space-3);
+  height: var(--control-tab);
+  padding: 0 var(--space-2-5);
   border: 0;
-  border-bottom: var(--tab-indicator-height) solid transparent;
-  border-radius: var(--tab-radius);
+  border-radius: var(--radius-6);
   background: none;
-  color: var(--tab-color);
-  font-size: var(--font-size-md);
+  color: var(--text-muted);
+  font-size: var(--font-14);
   white-space: nowrap;
   cursor: pointer;
+  transition:
+    background var(--motion-fast),
+    color var(--motion-fast);
 }
 .tabs > button:hover {
-  color: var(--tab-active-color);
+  color: var(--text);
+  background: var(--hover);
 }
 .tabs > button:is(.active, [aria-pressed='true'], [aria-selected='true']) {
-  color: var(--tab-active-color);
-  background: var(--tab-active-bg);
-  border-bottom-color: var(--tab-indicator);
-  font-weight: var(--tab-font-weight);
+  color: var(--text);
+  background: var(--selected);
+  font-weight: var(--weight-550);
 }
 .text-button,
 .text-link {
   color: var(--link);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
   display: inline-flex;
   align-items: center;
   gap: var(--space-1-5);
@@ -188,174 +198,182 @@ p {
 .text-link:hover {
   text-decoration: underline;
 }
+/* Bands (DESIGN.md 5): a hue's light fill, one sentence. */
 .error-note,
 .success-note,
 .help-note {
-  border-radius: var(--radius-sm);
-  padding: var(--space-2-5) var(--space-3);
-  font-size: var(--font-size-xs);
-  line-height: 1.7;
+  border-radius: var(--radius-8);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-12);
+  line-height: var(--leading-20);
   margin: var(--space-3) 0;
 }
 .error-note {
-  background: var(--error-bg);
-  color: var(--error-text);
-  border: 1px solid var(--error-border);
+  background: var(--red-fill-1);
+  color: var(--red-text-1);
 }
 .success-note {
-  background: var(--success-bg);
-  color: var(--success-text);
+  background: var(--green-fill-1);
+  color: var(--green-text-1);
 }
 .help-note {
-  background: var(--hover);
-  color: var(--muted);
+  background: var(--neutral-fill-1);
+  color: var(--text-muted);
 }
 .brand {
   display: flex;
   align-items: center;
   gap: var(--space-2-5);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-16);
+  font-weight: var(--weight-550);
   white-space: nowrap;
-  letter-spacing: 0.3px;
 }
 .brand-mark {
   display: flex;
   position: relative;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: var(--control-button);
+  height: var(--control-button);
   background: var(--primary);
   color: var(--on-primary);
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-medium);
-  border-radius: var(--radius-md);
+  font-size: var(--font-20);
+  font-weight: var(--weight-550);
+  border-radius: var(--radius-8);
   flex-shrink: 0;
 }
 .brand-mark > span {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-12);
   position: absolute;
-  right: 4px;
-  top: 1px;
+  right: var(--space-1);
+  top: 0;
   color: var(--on-primary);
 }
 .form-symbol {
-  width: 50px;
-  height: 50px;
+  width: var(--space-10);
+  height: var(--space-10);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--hover);
-  color: var(--link);
+  background: var(--neutral-fill-1);
+  color: var(--neutral-icon-1);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  margin-bottom: var(--space-8);
+  border-radius: var(--radius-8);
+  margin-bottom: var(--space-6);
 }
 form label {
   display: block;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  margin: var(--space-5) 0 var(--space-2);
+  font-size: var(--font-12);
+  font-weight: var(--weight-550);
+  margin: var(--space-4) 0 var(--space-1-5);
 }
 form input {
-  background: transparent;
+  background: var(--panel);
   color: inherit;
-  border: 1px solid var(--control-border);
-  border-radius: var(--radius-sm);
-  height: 46px;
-  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-6);
+  height: var(--control-input);
+  padding: 0 var(--space-2-5);
   width: 100%;
 }
+form input:focus-visible {
+  outline: none;
+  border-color: var(--focus);
+  box-shadow: 0 0 0 1px var(--focus);
+}
 .input-wrap {
-  border: 1px solid var(--control-border);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-6);
   display: flex;
   align-items: center;
-  padding: 0 var(--space-3);
-  gap: var(--space-2-5);
-  color: var(--muted);
-  background: var(--surface);
+  padding: 0 var(--space-2-5);
+  gap: var(--space-2);
+  color: var(--neutral-icon-1);
+  background: var(--panel);
+  transition: border-color var(--motion-fast);
 }
 .input-wrap:focus-within {
   border-color: var(--focus);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--control-border) 7%, transparent);
+  box-shadow: 0 0 0 1px var(--focus);
 }
 .input-wrap input {
   border: 0;
   padding: 0;
-  height: 47px;
+  height: var(--control-button);
   color: var(--text);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-14);
   outline: none;
 }
 .input-wrap input:focus-visible {
   outline: none;
+  box-shadow: none;
 }
 input::placeholder {
-  color: var(--muted);
-  font-size: var(--font-size-xs);
+  color: var(--text-subtle);
 }
 .login-submit {
   width: 100%;
   margin-top: var(--space-6);
   justify-content: space-between;
-  height: 47px;
-  font-size: var(--font-size-sm);
-  padding: 0 var(--space-4);
 }
 .password-page {
   min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: var(--space-8);
-  background: var(--bg);
+  background: var(--page);
 }
 .password-card {
-  background: var(--surface);
+  background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  padding: var(--space-10);
-  width: min(100%, 450px);
+  border-radius: var(--radius-12);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-8);
+  width: min(100%, 420px);
 }
 .password-card h1 {
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-20);
+  line-height: var(--leading-28);
 }
 .password-card .muted {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
 }
 .password-exit {
   display: block;
   margin: var(--space-5) auto 0;
 }
 .avatar {
-  width: 35px;
-  height: 35px;
-  border-radius: var(--radius-full);
-  background: var(--active);
-  color: var(--link);
+  width: var(--control-icon);
+  height: var(--control-icon);
+  border-radius: var(--radius-4);
+  background: var(--blue-solid-1);
+  color: var(--neutral-on-solid);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-12);
+  font-weight: var(--weight-550);
   flex-shrink: 0;
-  border: 3px solid var(--surface);
 }
-/* The shell is exactly one viewport tall; only the content area scrolls, so pages with
-   their own scrolling regions (tables) never produce a second page scrollbar. */
+/* Page heading (DESIGN.md 6.2): a 24px title with one line of description; actions right. */
 .page-heading {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-4);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
 }
-.page-heading .eyebrow {
-  font-size: var(--font-size-xs);
-  margin-bottom: var(--space-1-5);
+.page-heading > div:last-child:not(:first-child),
+.page-heading .toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
 }
-.page-heading .muted {
-  font-size: var(--font-size-xs);
+.page-heading .muted,
+.page-heading h1 + p {
+  font-size: var(--font-14);
+  color: var(--text-muted);
   margin-top: var(--space-1);
 }
 .greeting-dot {
@@ -689,11 +707,6 @@ input::placeholder {
   font-size: var(--font-size-xs);
   white-space: nowrap;
 }
-.status-badge.planned {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--muted);
-}
 .filter-input {
   display: flex;
   align-items: center;
@@ -726,68 +739,9 @@ input::placeholder {
   color: var(--text);
 }
 .planned-page {
-  min-height: 510px;
-  text-align: center;
-  padding-top: var(--space-16);
-}
-.planned-art {
-  position: relative;
-  width: 170px;
-  height: 140px;
-  margin: 0 auto var(--space-6);
-  display: grid;
-  place-items: center;
-}
-.planned-orbit {
-  position: absolute;
-  width: 160px;
-  height: 120px;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-full);
-  transform: rotate(-25deg);
-}
-.planned-icon {
-  display: grid;
-  place-items: center;
-  background: var(--hover);
-  color: var(--link);
-  width: 84px;
-  height: 84px;
-  border-radius: var(--radius-composer);
+  min-height: 320px;
   border: 1px solid var(--border);
-  transform: rotate(-6deg);
-}
-.planned-star {
-  position: absolute;
-  right: 13px;
-  top: 0;
-  color: var(--muted);
-  font-size: var(--font-size-3xl);
-}
-.planned-page h2 {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-semibold);
-}
-.planned-page > p:not(.eyebrow) {
-  font-size: var(--font-size-xs);
-  color: var(--muted);
-  line-height: 1.9;
-  margin: var(--space-5) auto var(--space-6);
-}
-.planned-page .primary-button {
-  font-size: var(--font-size-xs);
-  min-height: 38px;
-}
-.planned-footer {
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--space-2);
-  color: var(--muted);
-  font-size: var(--font-size-xs);
-  margin-top: var(--space-12);
-  padding: var(--space-5);
+  border-radius: var(--radius-12);
 }
 .back-link {
   margin-bottom: var(--space-6);
@@ -879,10 +833,12 @@ input::placeholder {
     display: none;
   }
   .page-heading {
-    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-4);
   }
   .page-heading h1 {
-    font-size: var(--font-size-3xl);
+    font-size: var(--font-20);
+    line-height: var(--leading-28);
   }
   .welcome-banner {
     padding: var(--space-6) var(--space-5);
@@ -926,20 +882,6 @@ input::placeholder {
   }
   .filter-input input {
     width: 100%;
-  }
-  .planned-page {
-    padding: var(--space-8) var(--space-5) 0;
-    min-height: 470px;
-  }
-  .planned-page h2 {
-    font-size: var(--font-size-2xl);
-  }
-  .planned-page > p:not(.eyebrow) {
-    font-size: var(--font-size-xs);
-  }
-  .planned-footer {
-    font-size: var(--font-size-xs);
-    padding: var(--space-5) 0;
   }
   .project-detail dl {
     grid-template-columns: 1fr;

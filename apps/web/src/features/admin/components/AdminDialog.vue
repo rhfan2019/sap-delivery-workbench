@@ -25,7 +25,6 @@ onMounted(() => dialog.value?.showModal());
     <form @submit.prevent="emit('submit')">
       <header>
         <div>
-          <span class="eyebrow">INSPIRE · ADMINISTRATION</span>
           <h2 id="admin-dialog-title">{{ title }}</h2>
         </div>
         <button

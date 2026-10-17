@@ -114,7 +114,6 @@ async function copy(text: string) {
     <template v-if="data">
       <div class="page-heading">
         <div>
-          <p class="eyebrow">ASSISTANT RUN</p>
           <h1 class="mono audit-title">
             {{ data.run.id }}
             <button

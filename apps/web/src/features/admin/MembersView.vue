@@ -166,7 +166,6 @@ onMounted(reload);
   <div class="admin-page">
     <div class="page-heading">
       <div>
-        <p class="eyebrow">USERS & MEMBERSHIPS</p>
         <h1>用户与成员</h1>
         <p class="muted">管理用户账号，在企业与项目中分配成员，明确每一次访问的范围。</p>
       </div>

@@ -218,7 +218,6 @@ onUnmounted(() => {
   <div class="models-page" :class="{ 'drawer-visible': open }">
     <div class="page-heading">
       <div>
-        <p class="eyebrow">MODEL REGISTRY</p>
         <h1>大模型(LLM)</h1>
         <p class="muted">维护模型接入信息。</p>
       </div>

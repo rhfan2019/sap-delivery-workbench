@@ -2,7 +2,9 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import AppIcon from '../components/AppIcon.vue';
-import { menus, groups } from '../features/navigation';
+import BaseEmptyState from '../components/base/BaseEmptyState.vue';
+import BaseTag from '../components/base/BaseTag.vue';
+import { menus } from '../features/navigation';
 import { api, identity, ApiError, type Project } from '../services/session';
 const route = useRoute();
 const router = useRouter();
@@ -272,38 +274,22 @@ onMounted(load);
   <template v-else
     ><div class="page-heading">
       <div>
-        <p class="eyebrow">
-          {{
-            groups.find((g) => g.items.some((i) => i.id === module?.id))?.id === 'admin'
-              ? 'ADMINISTRATION'
-              : 'DELIVERY WORKSPACE'
-          }}
-        </p>
         <h1>{{ module?.label ?? '页面未找到' }}</h1>
         <p class="muted">{{ module?.description ?? '这个地址暂时没有对应的页面。' }}</p>
       </div>
-      <span v-if="module" class="status-badge planned">规划中</span>
+      <BaseTag v-if="module">规划中</BaseTag>
     </div>
-    <section class="surface planned-page">
-      <div class="planned-art">
-        <span class="planned-orbit"></span
-        ><span class="planned-icon"><AppIcon :name="module?.icon ?? 'help'" :size="38" /></span
-        ><span class="planned-star">✦</span>
-      </div>
-      <p class="eyebrow">{{ module ? 'BUILDING THE NEXT STEP' : 'PAGE NOT FOUND' }}</p>
-      <h2>{{ module ? '为下一步交付，做好准备' : '返回熟悉的工作空间' }}</h2>
-      <p>
-        {{ module ? '此模块已纳入平台规划，业务功能尚未开放。' : '请通过左侧导航选择一个有效页面。'
-        }}<br v-if="module" /><template v-if="module"
-          >当前可使用账号登录、工作台与已授权项目查询。</template
-        >
-      </p>
-      <RouterLink to="/home" class="primary-button"
-        >返回工作台<AppIcon name="arrow" :size="17"
-      /></RouterLink>
-      <div v-if="module" class="planned-footer">
-        <AppIcon name="layers" :size="16" /><span>项目交付 · 公共资产 · 企业管理</span>
-      </div>
-    </section></template
+    <BaseEmptyState
+      class="planned-page"
+      :title="module ? '此模块尚未开放' : '页面未找到'"
+      :text="
+        module
+          ? '它已纳入平台规划。现在可以使用工作台、开发清单与已授权的项目。'
+          : '请通过左侧导航选择一个页面。'
+      "
+    >
+      <template #icon><AppIcon :name="module?.icon ?? 'help'" :size="16" /></template>
+      <RouterLink to="/home" class="secondary-button">返回工作台</RouterLink>
+    </BaseEmptyState></template
   >
 </template>

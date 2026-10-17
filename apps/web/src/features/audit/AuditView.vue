@@ -130,7 +130,6 @@ onMounted(reload);
   <div class="admin-page audit-page">
     <div class="page-heading">
       <div>
-        <p class="eyebrow">AUDIT</p>
         <h1>审计日志</h1>
         <p class="muted">
           复核 FSD 设计助手的每一轮运行，记录评论；查看平台操作审计和优化建议。仅企业管理员可见。

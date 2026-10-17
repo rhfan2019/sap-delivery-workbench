@@ -42,7 +42,6 @@ onMounted(() => {
   <div class="admin-page">
     <div class="page-heading">
       <div>
-        <p class="eyebrow">ORGANIZATION PROFILE</p>
         <h1>企业资料</h1>
         <p class="muted">维护团队所属企业的信息。</p>
       </div>

@@ -59,7 +59,6 @@ const change = (c: number | null) =>
     <template v-if="data">
       <div class="page-heading">
         <div>
-          <p class="eyebrow">SESSION TREND</p>
           <h1 class="audit-title">{{ data.session.title || data.session.id }}</h1>
           <p class="muted">
             {{ data.session.project.code }} {{ data.session.project.name }} /
