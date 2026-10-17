@@ -1,55 +1,144 @@
-/* Design tokens: 中性白 + 海军蓝 (docs/specs/DESIGN.md). Names stay; values follow the spec.
-   The default theme is also selectable as [data-ui-theme='navy'] so a preview can show it. */
-:root,
-[data-ui-theme='navy'] {
-  color-scheme: light;
-  --bg: #f7f7f8;
-  --surface: #ffffff;
-  --surface-muted: #f2f3f5;
-  --text: #1f2328;
-  --muted: #5f6672;
-  --text-tertiary: #8b919a;
-  --border: #e5e7eb;
-  --border-strong: #d1d5db;
-  --control-border: #9aa3ae;
-  --hover: #f2f3f5;
-  --active: #eaf1f8;
-  --link: #174b7a;
-  --primary: #174b7a;
-  --primary-hover: #0f3a61;
-  --focus: #2f6fb3;
-  --on-primary: #ffffff;
-  --nav-bg: #f7f7f8;
-  --nav-text: #1f2328;
-  --nav-muted: #5f6672;
-  --nav-border: #e5e7eb;
-  --nav-hover: #ecedef;
-  --nav-active: #eaf1f8;
-  --nav-focus: #2f6fb3;
-  --error-bg: #fef0ef;
-  --error-text: #b42318;
-  --error-border: #f1b5ae;
-  --success-bg: #e9f6ef;
-  --success-text: #1f7a4d;
-  --warning-bg: #fff5e1;
-  --warning-text: #8a5300;
-  --success-border: #b5dfc6;
-  --warning-border: #f1d7a6;
-  --scrim: #1f232866;
+/* Design tokens (docs/specs/DESIGN.md 2.0, Plain style). The only file that writes colours,
+   fonts, sizes, weights, spacing, radii, shadows and durations (contract 1.13, 1.15).
+   Dark follows the system. */
+:root {
+  color-scheme: light dark;
+
+  /* Six hues, each with the same roles (DESIGN.md 2.1). */
+  --neutral-bg-1: #ffffff;
+  --neutral-bg-2: #f9f9fc;
+  --neutral-fill-1: #f0f0f5;
+  --neutral-fill-2: #e7e7ef;
+  --neutral-fill-3: #e0e0e9;
+  --neutral-border-1: #e7e7ef;
+  --neutral-border-2: #e0e0e9;
+  --neutral-border-3: #cdcddb;
+  --neutral-text-1: #1f1f28;
+  --neutral-text-2: #636370;
+  --neutral-text-3: #8c8c9b;
+  --neutral-icon-1: #8e8e9c;
+  --neutral-icon-2: #adadb7;
+  --neutral-solid-1: #1f1f28;
+  --neutral-solid-2: #0b0b0e;
+  --neutral-on-solid: #ffffff;
+
+  --blue-bg-1: #fdfdff;
+  --blue-bg-2: #f7f9ff;
+  --blue-fill-1: #eef2ff;
+  --blue-fill-2: #e1e8ff;
+  --blue-fill-3: #d3ddff;
+  --blue-border-1: #e1e8ff;
+  --blue-border-2: #d3ddff;
+  --blue-border-3: #adbcff;
+  --blue-text-1: #232964;
+  --blue-text-2: #4a52d1;
+  --blue-icon-1: #448bff;
+  --blue-icon-2: #7daeff;
+  --blue-solid-1: #5c67f4;
+  --blue-solid-2: #525cdb;
+
+  --green-bg-1: #f9fffb;
+  --green-bg-2: #f3fcf5;
+  --green-fill-1: #e2f9e8;
+  --green-fill-2: #cff4d9;
+  --green-fill-3: #b7eec8;
+  --green-border-1: #cff4d9;
+  --green-border-2: #b7eec8;
+  --green-border-3: #6ed795;
+  --green-text-1: #074022;
+  --green-text-2: #008046;
+  --green-icon-1: #00ab5f;
+  --green-icon-2: #66c589;
+  --green-solid-1: #00a85c;
+  --green-solid-2: #009652;
+
+  --purple-bg-1: #fefcff;
+  --purple-bg-2: #fdf7fd;
+  --purple-fill-1: #fbebfb;
+  --purple-fill-2: #f7def8;
+  --purple-fill-3: #f2d1f3;
+  --purple-border-1: #f7def8;
+  --purple-border-2: #f2d1f3;
+  --purple-border-3: #deade3;
+  --purple-text-1: #53195d;
+  --purple-text-2: #953ea3;
+  --purple-icon-1: #ca54dd;
+  --purple-icon-2: #d48cdf;
+  --purple-solid-1: #ab4aba;
+  --purple-solid-2: #a144af;
+
+  --red-bg-1: #fffcfc;
+  --red-bg-2: #fff7f7;
+  --red-fill-1: #ffebe9;
+  --red-fill-2: #ffdbd7;
+  --red-fill-3: #ffcdc7;
+  --red-border-1: #ffdbd7;
+  --red-border-2: #ffcdc7;
+  --red-border-3: #f6a9a1;
+  --red-text-1: #651818;
+  --red-text-2: #d1282d;
+  --red-icon-1: #f14e4b;
+  --red-icon-2: #ff847d;
+  --red-solid-1: #e33d3d;
+  --red-solid-2: #d5292f;
+
+  --yellow-bg-1: #fefdfb;
+  --yellow-bg-2: #fffae9;
+  --yellow-fill-1: #fff4c1;
+  --yellow-fill-2: #ffea9c;
+  --yellow-fill-3: #ffe079;
+  --yellow-border-1: #ffea9c;
+  --yellow-border-2: #ffe079;
+  --yellow-border-3: #e6c368;
+  --yellow-text-1: #453a1e;
+  --yellow-text-2: #987100;
+  --yellow-icon-1: #e79d00;
+  --yellow-icon-2: #efb062;
+  --yellow-solid-1: #ffcb14;
+  --yellow-solid-2: #f4c224;
+
+  /* Semantic names (DESIGN.md 2.2). */
+  --page: var(--neutral-bg-2);
+  --panel: var(--neutral-bg-1);
+  --text: var(--neutral-text-1);
+  --text-muted: var(--neutral-text-2);
+  --text-subtle: var(--neutral-text-3);
+  --border: var(--neutral-border-1);
+  --border-strong: var(--neutral-border-2);
+  --border-emphasis: var(--neutral-border-3);
+  --hover: var(--neutral-fill-1);
+  --selected: var(--neutral-fill-2);
+  --pressed: var(--neutral-fill-3);
+  --primary: var(--neutral-solid-1);
+  --primary-hover: var(--neutral-solid-2);
+  --on-primary: var(--neutral-on-solid);
+  --link: var(--blue-text-2);
+  --focus: var(--blue-solid-1);
+  --tooltip-bg: var(--neutral-solid-1);
+  --tooltip-text: var(--neutral-fill-1);
+  --scrim: color-mix(in srgb, var(--neutral-solid-2) 40%, transparent);
+
+  /* Type (DESIGN.md 3). */
   --font-sans: 'Inter Variable', Inter, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
-  /* Type scale (DESIGN.md 3): nothing smaller than 12px. */
-  --font-size-xs: 12px;
-  --font-size-sm: 13px;
-  --font-size-md: 14px;
-  --font-size-lg: 15px;
-  --font-size-xl: 17px;
-  --font-size-2xl: 20px;
-  --font-size-3xl: 28px;
-  --font-weight-regular: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  /* Spacing scale (DESIGN.md 4): --space-N is N x 4px. */
+  --font-11: 11px;
+  --font-12: 12px;
+  --font-14: 14px;
+  --font-16: 16px;
+  --font-20: 20px;
+  --font-24: 24px;
+  --font-32: 32px;
+  --leading-16: 16px;
+  --leading-20: 20px;
+  --leading-24: 24px;
+  --leading-28: 28px;
+  --leading-32: 32px;
+  --leading-40: 40px;
+  --weight-400: 400;
+  --weight-475: 475;
+  --weight-550: 550;
+
+  /* Spacing: --space-N is N x 4px. */
   --space-0-5: 2px;
   --space-1: 4px;
   --space-1-5: 6px;
@@ -63,6 +152,219 @@
   --space-10: 40px;
   --space-12: 48px;
   --space-16: 64px;
+
+  /* Shape and depth (DESIGN.md frontmatter). */
+  --radius-2: 2px;
+  --radius-4: 4px;
+  --radius-6: 6px;
+  --radius-8: 8px;
+  --radius-10: 10px;
+  --radius-12: 12px;
+  --radius-full: 9999px;
+  --shadow-card: 0 0 0 1px #20272c14, 0 1px 1px #20272c14;
+  --shadow-popover: 0 1px 2px #20272c3d, 0 2px 6px 2px #20272c14, 0 2px 8px #20272c14;
+  --shadow-dialog: 0 1px 2px #20272c3d, 0 2px 8px 2px #20272c14, 0 2px 16px #20272c14;
+  --shadow-floating: 0 1px 12px #0000000d, 0 0.5px 4px #0000000d;
+  --shadow-button: 0 1px 2px #20272c3d;
+
+  /* Motion (DESIGN.md 7). */
+  --motion-fast: 75ms ease-in-out;
+  --motion-base: 150ms ease-in-out;
+  --motion-slow: 300ms ease-in-out;
+  --motion-panel: 400ms cubic-bezier(0.32, 0.72, 0, 1);
+  --duration-fast: 75ms;
+  --duration-base: 150ms;
+  --duration-slow: 300ms;
+  --duration-spin: 900ms;
+  /* Reduced motion: transitions finish at once but still fire their events. */
+  --duration-none: 0.01ms;
+  --tooltip-delay: 400ms;
+
+  /* Layout and control sizes (DESIGN.md 4, 5). */
+  --layout-rail: 56px;
+  --layout-nav: 248px;
+  --layout-gap: 8px;
+  --layout-list-panel: 400px;
+  --layout-details: 384px;
+  --control-button: 34px;
+  --control-input: 32px;
+  --control-icon: 32px;
+  --control-nav-item: 32px;
+  --control-menu-item: 30px;
+  --control-tab: 28px;
+  --control-table-row: 44px;
+  --control-table-head: 36px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --neutral-bg-1: #1a191b;
+    --neutral-bg-2: #121113;
+    --neutral-fill-1: #232225;
+    --neutral-fill-2: #2b292d;
+    --neutral-fill-3: #323035;
+    --neutral-border-1: #2b292d;
+    --neutral-border-2: #323035;
+    --neutral-border-3: #49474e;
+    --neutral-text-1: #eeeef0;
+    --neutral-text-2: #b5b2bc;
+    --neutral-text-3: #7c7a85;
+    --neutral-icon-1: #98979f;
+    --neutral-icon-2: #72707b;
+    --neutral-solid-1: #eeeef0;
+    --neutral-solid-2: #f8f8fc;
+    --neutral-on-solid: #121113;
+
+    --blue-bg-1: #131628;
+    --blue-bg-2: #0e111f;
+    --blue-fill-1: #1c214e;
+    --blue-fill-2: #24296b;
+    --blue-fill-3: #2c327e;
+    --blue-border-1: #24296b;
+    --blue-border-2: #2c327e;
+    --blue-border-3: #4049a3;
+    --blue-text-1: #d7e0ff;
+    --blue-text-2: #9dafff;
+    --blue-icon-1: #5696ff;
+    --blue-icon-2: #4761e4;
+    --blue-solid-1: #5c67f4;
+    --blue-solid-2: #5159e5;
+
+    --green-bg-1: #121b14;
+    --green-bg-2: #0c130e;
+    --green-fill-1: #152d1c;
+    --green-fill-2: #143c22;
+    --green-fill-3: #19492b;
+    --green-border-1: #143c22;
+    --green-border-2: #19492b;
+    --green-border-3: #286940;
+    --green-text-1: #b2f2c0;
+    --green-text-2: #3ad878;
+    --green-icon-1: #18b562;
+    --green-icon-2: #008848;
+    --green-solid-1: #18b562;
+    --green-solid-2: #00a85c;
+
+    --purple-bg-1: #201320;
+    --purple-bg-2: #181118;
+    --purple-fill-1: #351a35;
+    --purple-fill-2: #451d47;
+    --purple-fill-3: #512454;
+    --purple-border-1: #451d47;
+    --purple-border-2: #512454;
+    --purple-border-3: #734079;
+    --purple-text-1: #f4d4f4;
+    --purple-text-2: #e796f3;
+    --purple-icon-1: #d066df;
+    --purple-icon-2: #a84fb6;
+    --purple-solid-1: #ab4aba;
+    --purple-solid-2: #b658c4;
+
+    --red-bg-1: #201312;
+    --red-bg-2: #18100f;
+    --red-fill-1: #3c1210;
+    --red-fill-2: #520e0e;
+    --red-fill-3: #621515;
+    --red-border-1: #520e0e;
+    --red-border-2: #621515;
+    --red-border-3: #8d332f;
+    --red-text-1: #ffd2cc;
+    --red-text-2: #ff8f86;
+    --red-icon-1: #f3625c;
+    --red-icon-2: #b94641;
+    --red-solid-1: #e33d3d;
+    --red-solid-2: #d42c30;
+
+    --yellow-bg-1: #1c180f;
+    --yellow-bg-2: #14120c;
+    --yellow-fill-1: #2c2207;
+    --yellow-fill-2: #3b2a00;
+    --yellow-fill-3: #483400;
+    --yellow-border-1: #3b2a00;
+    --yellow-border-2: #483400;
+    --yellow-border-3: #685317;
+    --yellow-text-1: #fde8b3;
+    --yellow-text-2: #d9b06a;
+    --yellow-icon-1: #d28f19;
+    --yellow-icon-2: #b17000;
+    --yellow-solid-1: #fdc700;
+    --yellow-solid-2: #f2bd00;
+
+    --shadow-card: 0 0 0 1px #ffffff14, 0 1px 1px #00000066;
+    --shadow-popover: 0 0 0 1px #ffffff14, 0 2px 6px 2px #00000066, 0 2px 8px #00000066;
+    --shadow-dialog: 0 0 0 1px #ffffff14, 0 2px 8px 2px #00000080, 0 2px 16px #00000080;
+    --shadow-floating: 0 0 0 1px #ffffff14, 0 1px 12px #00000066;
+    --shadow-button: 0 1px 2px #00000066;
+  }
+}
+
+/* ---------------------------------------------------------------------------------------
+   Transitional names (DESIGN.md 11): the pages not yet rewritten read these. Each points at a
+   token above, or keeps its old value where a new value would break an old layout. Removed
+   in batch 7 with the last old page. */
+:root {
+  --bg: var(--page);
+  --surface: var(--panel);
+  --surface-muted: var(--neutral-fill-1);
+  --muted: var(--text-muted);
+  --text-tertiary: var(--text-subtle);
+  --control-border: var(--neutral-border-3);
+  --active: var(--blue-fill-1);
+  --nav-bg: var(--page);
+  --nav-text: var(--text);
+  --nav-muted: var(--text-muted);
+  --nav-border: var(--border);
+  --nav-hover: var(--hover);
+  --nav-active: var(--selected);
+  --nav-focus: var(--focus);
+  --error-bg: var(--red-fill-1);
+  --error-text: var(--red-text-2);
+  --error-border: var(--red-border-2);
+  --success-bg: var(--green-fill-1);
+  --success-text: var(--green-text-2);
+  --success-border: var(--green-border-2);
+  --warning-bg: var(--yellow-fill-1);
+  --warning-text: var(--yellow-text-2);
+  --warning-border: var(--yellow-border-2);
+  --chart-1: var(--blue-solid-1);
+  --chart-2: var(--green-solid-1);
+  --chart-3: var(--yellow-icon-1);
+  --story-bg: var(--neutral-solid-1);
+  --story-text: var(--neutral-on-solid);
+  --story-muted: color-mix(in srgb, var(--neutral-on-solid) 75%, transparent);
+  --story-border: color-mix(in srgb, var(--neutral-on-solid) 20%, transparent);
+  --story-hover: color-mix(in srgb, var(--neutral-on-solid) 10%, transparent);
+  --story-active: color-mix(in srgb, var(--neutral-on-solid) 18%, transparent);
+  --story-focus: var(--blue-icon-2);
+  --shadow-raised: var(--shadow-card);
+
+  /* Tag colours people pick for development items (stored by name). */
+  --tag-blue-bg: var(--blue-fill-1);
+  --tag-blue-text: var(--blue-text-2);
+  --tag-green-bg: var(--green-fill-1);
+  --tag-green-text: var(--green-text-2);
+  --tag-red-bg: var(--red-fill-1);
+  --tag-red-text: var(--red-text-2);
+  --tag-purple-bg: var(--purple-fill-1);
+  --tag-purple-text: var(--purple-text-2);
+  --tag-yellow-bg: var(--yellow-fill-1);
+  --tag-yellow-text: var(--yellow-text-2);
+  --tag-orange-bg: #fdecdc;
+  --tag-orange-text: #a2561c;
+  --tag-teal-bg: #ddf2f1;
+  --tag-teal-text: #1f6d69;
+
+  /* Old type and shape scales keep their values so old layouts hold. */
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 15px;
+  --font-size-xl: 17px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 28px;
+  --font-weight-regular: var(--weight-400);
+  --font-weight-medium: var(--weight-475);
+  --font-weight-semibold: var(--weight-550);
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -70,41 +372,90 @@
   --radius-xl: 16px;
   --radius-bubble: 18px;
   --radius-composer: 24px;
-  --radius-full: 9999px;
-  /* Layout dimensions (DESIGN.md 4). */
   --layout-sidebar: 246px;
   --layout-sidebar-narrow: 220px;
   --layout-sidebar-collapsed: 70px;
   --layout-drawer: 480px;
-  /* Chart series, in order. */
-  --chart-1: #2f6fb6;
-  --chart-2: #2e8a6a;
-  --chart-3: #b06a1a;
-  /* Tag colours people pick for development items: background and text. */
-  --tag-blue-bg: #e1edfb;
-  --tag-blue-text: #1d5a96;
-  --tag-green-bg: #e1f3e8;
-  --tag-green-text: #23704a;
-  --tag-orange-bg: #fdecdc;
-  --tag-orange-text: #a2561c;
-  --tag-red-bg: #fde4e1;
-  --tag-red-text: #a83a30;
-  --tag-purple-bg: #efe6fa;
-  --tag-purple-text: #6542a1;
-  --tag-teal-bg: #ddf2f1;
-  --tag-teal-text: #1f6d69;
-  --tag-yellow-bg: #fbf3d0;
-  --tag-yellow-text: #806414;
-  --shadow-raised: 0 1px 2px rgb(16 24 40 / 0.04), 0 4px 16px rgb(16 24 40 / 0.06);
-  --shadow-popover: 0 8px 28px rgb(16 24 40 / 0.14);
-  /* The home banner keeps its navy until migrated (DESIGN.md 9). */
-  --story-bg: #0a2240;
-  --story-text: #ffffff;
-  --story-muted: #d4e1ef;
-  --story-border: #385471;
-  --story-hover: #163b60;
-  --story-active: #255b8a;
-  --story-focus: #b8d8ff;
+
+  /* Old component tokens, now in the new look. */
+  --font-display: var(--font-sans);
+  --heading-weight: var(--weight-475);
+  --heading-letter-spacing: 0;
+  --page-title-size: var(--font-24);
+  --section-title-size: var(--font-16);
+  --page-bg: var(--page);
+  --button-height: var(--control-button);
+  --button-padding-x: var(--space-3);
+  --button-radius: var(--radius-6);
+  --button-font-size: var(--font-14);
+  --button-font-weight: var(--weight-400);
+  --button-primary-bg: var(--primary);
+  --button-primary-text: var(--on-primary);
+  --button-primary-hover-bg: var(--primary-hover);
+  --button-secondary-bg: var(--panel);
+  --button-secondary-text: var(--text);
+  --button-secondary-border: var(--border-strong);
+  --button-secondary-hover-bg: var(--hover);
+  --button-shadow: none;
+  --input-height: var(--control-input);
+  --input-radius: var(--radius-6);
+  --input-bg: var(--panel);
+  --input-text: var(--text);
+  --input-border: var(--border-strong);
+  --input-border-width: 1px;
+  --input-border-bottom-width: 1px;
+  --input-focus-border: var(--focus);
+  --card-bg: var(--panel);
+  --card-border: var(--border);
+  --card-border-width: 1px;
+  --card-radius: var(--radius-10);
+  --card-shadow: none;
+  --card-padding: var(--space-5);
+  --tab-bar-border: var(--border);
+  --tab-color: var(--text-muted);
+  --tab-active-color: var(--text);
+  --tab-active-bg: var(--selected);
+  --tab-indicator: transparent;
+  --tab-indicator-height: 0px;
+  --tab-radius: var(--radius-6);
+  --tab-font-weight: var(--weight-400);
+  --table-header-bg: var(--panel);
+  --table-header-text: var(--text-muted);
+  --table-header-weight: var(--weight-550);
+  --table-border: var(--border);
+  --table-row-hover: var(--hover);
+  --table-row-height: var(--control-table-row);
+  --badge-radius: var(--radius-4);
+  --badge-font-weight: var(--weight-475);
+  --topbar-bg: transparent;
+  --topbar-text: var(--text);
+  --topbar-muted: var(--text-muted);
+  --topbar-border: var(--border);
+  --topbar-height: 56px;
+  --sidebar-bg: var(--page);
+  --sidebar-border: transparent;
+  --sidebar-radius: 0px;
+  --sidebar-inset: 0px;
+  --sidebar-shadow: none;
+  --nav-item-radius: var(--radius-6);
+  --nav-item-active-bg: var(--selected);
+  --nav-item-active-text: var(--text);
+  --dialog-radius: var(--radius-12);
+  --dialog-shadow: var(--shadow-dialog);
+  --bubble-bg: var(--neutral-bg-2);
+  --bubble-text: var(--text);
+  --bubble-radius: var(--radius-8);
+  --composer-radius: var(--radius-12);
+  --composer-border: var(--border);
+  --composer-shadow: var(--shadow-floating);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tag-orange-bg: #33200f;
+    --tag-orange-text: #f0a875;
+    --tag-teal-bg: #0e2a29;
+    --tag-teal-text: #79d0ca;
+  }
 }
 
 .sidebar {
@@ -117,7 +468,7 @@
   color: var(--text);
 }
 
-/* Scoped inverse surfaces: never change the light workspace or native dialogs. */
+/* Scoped inverse surface of the home banner until the home page is rewritten. */
 .welcome-banner {
   --nav-bg: var(--story-bg);
   --nav-text: var(--story-text);
@@ -134,138 +485,4 @@
   --link: var(--story-muted);
   --focus: var(--story-focus);
   color: var(--text);
-}
-
-/* Component tokens (DESIGN.md 12): what each shared component looks like. They default to the
-   semantic tokens and are declared on every themed element, so a preview card computes them
-   from its own theme; theme packages (assets/themes/) override them to change shapes too. */
-:root,
-[data-ui-theme] {
-  --font-display: var(--font-sans);
-  --heading-weight: var(--font-weight-semibold);
-  --heading-letter-spacing: 0;
-  --page-title-size: var(--font-size-2xl);
-  --section-title-size: var(--font-size-xl);
-  --page-bg: var(--bg);
-  --button-height: 36px;
-  --button-padding-x: var(--space-4);
-  --button-radius: var(--radius-md);
-  --button-font-size: var(--font-size-sm);
-  --button-font-weight: var(--font-weight-medium);
-  --button-primary-bg: var(--primary);
-  --button-primary-text: var(--on-primary);
-  --button-primary-hover-bg: var(--primary-hover);
-  --button-secondary-bg: var(--surface);
-  --button-secondary-text: var(--text);
-  --button-secondary-border: var(--border-strong);
-  --button-secondary-hover-bg: var(--hover);
-  --button-shadow: none;
-  --input-height: 36px;
-  --input-radius: var(--radius-md);
-  --input-bg: var(--surface);
-  --input-text: var(--text);
-  --input-border: var(--control-border);
-  --input-border-width: 1px;
-  --input-border-bottom-width: 1px;
-  --input-focus-border: var(--focus);
-  --card-bg: var(--surface);
-  --card-border: var(--border);
-  --card-border-width: 1px;
-  --card-radius: var(--radius-lg);
-  --card-shadow: none;
-  --card-padding: var(--space-5);
-  --tab-bar-border: var(--border);
-  --tab-color: var(--muted);
-  --tab-active-color: var(--text);
-  --tab-active-bg: transparent;
-  --tab-indicator: var(--primary);
-  --tab-indicator-height: 2px;
-  --tab-radius: 0;
-  --tab-font-weight: var(--font-weight-medium);
-  --table-header-bg: var(--surface-muted);
-  --table-header-text: var(--muted);
-  --table-header-weight: var(--font-weight-medium);
-  --table-border: var(--border);
-  --table-row-hover: var(--hover);
-  --table-row-height: 40px;
-  --badge-radius: var(--radius-sm);
-  --badge-font-weight: var(--font-weight-medium);
-  --topbar-bg: transparent;
-  --topbar-text: var(--text);
-  --topbar-muted: var(--muted);
-  --topbar-border: var(--border);
-  --topbar-height: 56px;
-  --sidebar-bg: var(--nav-bg);
-  --sidebar-border: var(--nav-border);
-  --sidebar-radius: var(--radius-lg);
-  --sidebar-inset: var(--space-3);
-  --sidebar-shadow: none;
-  --nav-item-radius: var(--radius-sm);
-  --nav-item-active-bg: var(--nav-active);
-  --nav-item-active-text: var(--link);
-  --dialog-radius: var(--radius-lg);
-  --dialog-shadow: var(--shadow-popover);
-  --bubble-bg: var(--surface-muted);
-  --bubble-text: var(--text);
-  --bubble-radius: var(--radius-bubble);
-  --composer-radius: var(--radius-composer);
-  --composer-border: var(--border);
-  --composer-shadow: var(--shadow-raised);
-}
-
-/* The default theme in dark mode (DESIGN.md 11). */
-[data-ui-theme='navy'][data-ui-mode='dark'] {
-  color-scheme: dark;
-  --bg: #0f1216;
-  --surface: #161a20;
-  --surface-muted: #1d222a;
-  --text: #eef1f5;
-  --muted: #a7b0bc;
-  --text-tertiary: #848d99;
-  --border: #282e37;
-  --border-strong: #363e49;
-  --control-border: #5f6874;
-  --hover: #1f252e;
-  --active: #1b3352;
-  --link: #8cb8e8;
-  --primary: #4f8fd0;
-  --primary-hover: #6aa3dc;
-  --focus: #8cb8e8;
-  --on-primary: #0b1724;
-  --nav-bg: #0f1216;
-  --nav-text: #eef1f5;
-  --nav-muted: #a7b0bc;
-  --nav-border: #282e37;
-  --nav-hover: #1a1f26;
-  --nav-active: #1b3352;
-  --nav-focus: #8cb8e8;
-  --error-bg: #3a1614;
-  --error-text: #ff8f85;
-  --error-border: #6b2a26;
-  --success-bg: #10291a;
-  --success-text: #6fd08c;
-  --success-border: #22492f;
-  --warning-bg: #2e2310;
-  --warning-text: #f0b44c;
-  --warning-border: #5a4318;
-  --scrim: #000000b3;
-  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 16px rgb(0 0 0 / 0.35);
-  --shadow-popover: 0 8px 28px rgb(0 0 0 / 0.55);
-  --chart-1: #6aa3dc;
-  --chart-2: #6fd08c;
-  --chart-3: #f0b44c;
-  --tag-blue-bg: #10233d;
-  --tag-blue-text: #8ab8f0;
-  --tag-green-bg: #10291b;
-  --tag-green-text: #7fd1a1;
-  --tag-orange-bg: #33200f;
-  --tag-orange-text: #f0a875;
-  --tag-red-bg: #3a1513;
-  --tag-red-text: #f3928a;
-  --tag-purple-bg: #251a3d;
-  --tag-purple-text: #c0a8ee;
-  --tag-teal-bg: #0e2a29;
-  --tag-teal-text: #79d0ca;
-  --tag-yellow-bg: #2e2810;
-  --tag-yellow-text: #e6c35c;
 }

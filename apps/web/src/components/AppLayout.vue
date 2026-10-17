@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import AppIcon from './AppIcon.vue';
 import ConfirmDialog from './ConfirmDialog.vue';
 import UserMenu from './UserMenu.vue';
 import { groups, menus } from '../features/navigation';
 import { api, identity } from '../services/session';
-import { syncAppearance } from '../services/theme';
 import {
   projects,
   currentProject as selected,
@@ -93,8 +92,6 @@ async function logout() {
     loggingOut.value = false;
   }
 }
-// The account's theme and mode (个人设置 › 外观) replace this browser's cached choice.
-onMounted(() => void syncAppearance());
 </script>
 <template>
   <ConfirmDialog />

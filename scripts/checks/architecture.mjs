@@ -67,11 +67,10 @@ export function checkLegacy(file, content = '') {
   if (write) errors.push(`${file}: SAP write tool ${write[1]} outside ${sapWriter}`);
   return errors;
 }
-// Contract 1.13: the web styles use the design tokens of theme.css (docs/specs/DESIGN.md);
-// colours, fonts, font sizes and weights, spacing and radii are never written literally.
+// Contract 1.13 and 1.15: the web styles use the design tokens of theme.css (docs/specs/DESIGN.md);
+// colours, fonts, font sizes and weights, spacing, radii, shadows and durations are never
+// written literally.
 const tokenSource = 'apps/web/src/assets/theme.css';
-// Contract 1.14: theme packages hold a theme's values, like theme.css.
-const themePackage = /^apps\/web\/src\/assets\/themes\/[a-z0-9-]+\.css$/;
 const vendoredStyles = /^apps\/web\/src\/components\/(ai-elements|ui)\//;
 const literalColour =
   /#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklch|oklab)\(|\b(?:white|black|red|green|blue|gray|grey|orange|yellow|purple|pink|navy|silver|teal)\b/i;
@@ -79,12 +78,7 @@ const tailwindPalette =
   /\b(?:text|bg|border|ring|fill|stroke|from|to|via|outline|decoration|divide|placeholder|caret|accent|shadow)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|black|white)(?:-\d{2,3})?\b/;
 const outsideVar = (value) => value.replace(/var\([^()]*(?:\([^()]*\))*[^()]*\)/g, ' ');
 export function checkDesignTokens(file, content = '') {
-  if (
-    !file.startsWith('apps/web/src/') ||
-    file === tokenSource ||
-    themePackage.test(file) ||
-    vendoredStyles.test(file)
-  )
+  if (!file.startsWith('apps/web/src/') || file === tokenSource || vendoredStyles.test(file))
     return [];
   const errors = [];
   const styles = file.endsWith('.css')
@@ -133,6 +127,20 @@ export function checkDesignTokens(file, content = '') {
         errors.push(`${at} — literal spacing`);
       if (/^border(-[a-z]+-[a-z]+)?-radius$/.test(prop) && /\d(px|rem|%)/.test(value))
         errors.push(`${at} — literal radius`);
+      // A shadow with blur is a depth token; plain rings and lines (no blur) may be written.
+      if (
+        prop === 'box-shadow' &&
+        value.split(',').some((part) => {
+          const lengths = part.split(/\s+/).filter((v) => /^-?[\d.]+(px)?$/.test(v));
+          return lengths.length > 2 && parseFloat(lengths[2]) !== 0;
+        })
+      )
+        errors.push(`${at} — literal shadow`);
+      if (
+        /^(transition|animation)(-duration|-delay)?$/.test(prop) &&
+        /(^|[\s,])[\d.]*[1-9][\d.]*m?s\b/.test(value)
+      )
+        errors.push(`${at} — literal duration`);
     }
   }
   return errors;

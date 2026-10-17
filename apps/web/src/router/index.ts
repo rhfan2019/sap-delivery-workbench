@@ -10,6 +10,16 @@ export const router = createRouter({
   routes: [
     { path: '/login', component: LoginView },
     { path: '/password', component: PasswordView },
+    // Development only: every base component and state (contract 1.15).
+    ...(import.meta.env.DEV
+      ? [
+          {
+            path: '/dev/components',
+            component: () => import('../views/ComponentGalleryView.vue'),
+            meta: { public: true },
+          },
+        ]
+      : []),
     {
       path: '/',
       component: AppLayout,
@@ -71,6 +81,7 @@ export const router = createRouter({
   ],
 });
 router.beforeEach(async (to) => {
+  if (to.meta.public) return;
   if (!identity.value && to.path !== '/login') {
     try {
       await restoreSession();

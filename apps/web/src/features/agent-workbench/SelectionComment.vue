@@ -164,7 +164,7 @@ onBeforeUnmount(() => {
   border-radius: var(--input-radius);
   background: var(--input-bg);
   color: var(--text);
-  box-shadow: 0 6px 24px color-mix(in srgb, var(--story-bg) 18%, transparent);
+  box-shadow: var(--shadow-popover);
   font-size: var(--font-size-sm);
 }
 .selection-comment-button {

@@ -124,8 +124,8 @@ p {
   font-size: var(--button-font-size);
   box-shadow: var(--button-shadow);
   transition:
-    background 0.18s,
-    transform 0.18s;
+    background var(--duration-base),
+    transform var(--duration-base);
 }
 .primary-button {
   background: var(--button-primary-bg);
@@ -356,7 +356,7 @@ input::placeholder {
   flex-direction: column;
   z-index: 30;
   padding: var(--space-6) var(--space-3) var(--space-3);
-  transition: width 0.2s;
+  transition: width var(--duration-base);
 }
 .sidebar-brand {
   display: flex;
@@ -497,7 +497,7 @@ input::placeholder {
 }
 .group-chevron {
   margin-left: auto;
-  transition: transform 0.2s;
+  transition: transform var(--duration-base);
 }
 .group-chevron.rotated {
   transform: rotate(180deg);
@@ -557,7 +557,7 @@ input::placeholder {
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  transition: margin-left 0.2s;
+  transition: margin-left var(--duration-base);
 }
 .topbar {
   height: var(--topbar-height);
@@ -729,7 +729,7 @@ input::placeholder {
     color-mix(in srgb, var(--control-border) 19%, transparent),
     color-mix(in srgb, var(--muted) 6%, transparent)
   );
-  box-shadow: 0 12px 30px color-mix(in srgb, var(--story-bg) 20%, transparent);
+  box-shadow: var(--shadow-dialog);
 }
 .graphic-label {
   position: absolute;
@@ -796,8 +796,8 @@ input::placeholder {
   padding: var(--space-4) var(--space-4) var(--space-5);
   position: relative;
   transition:
-    transform 0.18s,
-    border-color 0.18s;
+    transform var(--duration-base),
+    border-color var(--duration-base);
 }
 .quick-card:hover {
   border-color: var(--control-border);
@@ -1463,7 +1463,7 @@ textarea::placeholder {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
-  box-shadow: 0 12px 35px color-mix(in srgb, var(--story-bg) 15%, transparent);
+  box-shadow: var(--shadow-dialog);
 }
 .user-menu-profile {
   display: flex;

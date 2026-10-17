@@ -144,7 +144,7 @@ form input {
   border-color: var(--input-border);
   background: var(--input-bg);
   font-size: var(--font-size-lg);
-  transition: border-color 0.15s;
+  transition: border-color var(--duration-base);
 }
 /* Browser autofill keeps the theme's field colours. */
 form input:-webkit-autofill {

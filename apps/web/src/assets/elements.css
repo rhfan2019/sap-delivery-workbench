@@ -96,7 +96,7 @@
 /* Who sent it and when: on hover, like the actions under a reply. */
 .assistant-elements .user-message-meta {
   opacity: 0;
-  transition: opacity 0.15s;
+  transition: opacity var(--duration-base);
 }
 .assistant-elements .elements-message:hover .user-message-meta,
 .assistant-elements .elements-message:focus-within .user-message-meta {
@@ -181,8 +181,8 @@
 @media (prefers-reduced-motion: reduce) {
   .assistant-elements *,
   .elements-overlay * {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+    animation-duration: var(--duration-none) !important;
+    transition-duration: var(--duration-none) !important;
     scroll-behavior: auto !important;
   }
 }

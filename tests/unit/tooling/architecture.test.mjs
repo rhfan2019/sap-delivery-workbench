@@ -318,14 +318,26 @@ test('web styles use design tokens, never literal colours, fonts, sizes, spacing
     checkDesignTokens('apps/web/src/assets/theme.css', ':root { --text: #1f2328; }'),
     [],
   );
-  // Contract 1.14: theme packages hold values too, but only directly in assets/themes/.
+  // Contract 1.15: theme packages are gone, so only theme.css may hold values.
+  assert.match(
+    checkDesignTokens('apps/web/src/assets/themes/airbnb.css', '.a { color: #fff; }').join(),
+    /literal colour/,
+  );
+  // Shadows with blur and durations come from tokens; rings, lines and 0s may be written.
+  assert.match(
+    checkDesignTokens('apps/web/src/a.css', '.a { box-shadow: 0 4px 12px var(--scrim); }').join(),
+    /literal shadow/,
+  );
   assert.deepEqual(
-    checkDesignTokens('apps/web/src/assets/themes/airbnb.css', '.a { --primary: #ff385c; }'),
+    checkDesignTokens(
+      'apps/web/src/a.css',
+      '.a { box-shadow: 0 0 0 2px var(--focus), inset 0 -1px 0 var(--border); transition: color var(--motion-fast); animation-delay: 0s; }',
+    ),
     [],
   );
   assert.match(
-    checkDesignTokens('apps/web/src/assets/themes/x/y.css', '.a { color: #fff; }').join(),
-    /literal colour/,
+    checkDesignTokens('apps/web/src/a.css', '.a { transition: opacity 0.2s ease; }').join(),
+    /literal duration/,
   );
   assert.deepEqual(
     checkDesignTokens(

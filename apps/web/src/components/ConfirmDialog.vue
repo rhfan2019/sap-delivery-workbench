@@ -84,7 +84,7 @@ function trap(event: KeyboardEvent) {
   border-radius: var(--radius-lg);
   padding: var(--space-6);
   color: var(--primary-hover);
-  box-shadow: 0 16px 60px color-mix(in srgb, var(--story-bg) 25%, transparent);
+  box-shadow: var(--shadow-dialog);
 }
 .confirm-scrim h2 {
   font-size: var(--font-size-2xl);

@@ -398,7 +398,7 @@
   justify-content: flex-end;
   gap: var(--space-0-5);
   opacity: 0;
-  transition: opacity 0.12s;
+  transition: opacity var(--duration-base);
 }
 .vxe-body--row:is(.row--hover, .is-current, .is-checked) .row-actions,
 .row-actions:focus-within {
@@ -497,7 +497,7 @@
   white-space: normal;
 }
 .spin {
-  animation: delivery-spin 0.9s linear infinite;
+  animation: delivery-spin var(--duration-spin) linear infinite;
   flex-shrink: 0;
 }
 @keyframes delivery-spin {
@@ -940,7 +940,7 @@
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: var(--badge-radius);
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--story-bg) 12%, transparent);
+  box-shadow: var(--shadow-popover);
 }
 .tag-suggestions button {
   display: block;
@@ -1270,7 +1270,7 @@
   background: var(--story-bg);
   color: var(--on-primary);
   font-size: var(--font-size-sm);
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--story-bg) 23%, transparent);
+  box-shadow: var(--shadow-popover);
 }
 
 @media (max-width: 760px) {

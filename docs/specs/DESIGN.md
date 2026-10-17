@@ -213,7 +213,7 @@ layout:
 ## 3. 字体
 
 - 无衬线：Inter 可变字体（随项目部署，`@fontsource-variable/inter`）加苹方 / 微软雅黑；代码与 SAP 对象名用等宽字体。
-- 字号只用 7 级：11（快捷键）、12（表头、标签、说明）、14（界面与正文默认）、16（阅读正文、消息）、20（面板标题）、24（页面标题）、32（登录页等少数场合）。
+- 字号只用 7 级：11（快捷键）、12（表头、标签、说明）、14（界面与正文默认）、16（文档阅读正文）、20（面板标题）、24（页面标题）、32（登录页等少数场合）。
 - 字重只用 regular 400 / medium 475 / semibold 550。页面标题用 regular；菜单选中项、表格主列、属性面板标签用 semibold。
 
 ## 4. 布局
@@ -257,14 +257,14 @@ layout:
 | 菜单                | 白底、圆角 10、`popover` 阴影、上下内边距 4；项高 30、圆角 6、12–14px，左侧小彩色图标、右侧说明与 `kbd`                                                                |
 | 提示                | 墨色底、浅字 12px、圆角 6，悬停 400ms 后出现                                                                                                                           |
 | 对话框              | 白底、圆角 12、`dialog` 阴影；遮罩淡入；面板从下方 16px、缩放 0.96 进入                                                                                                |
-| 属性面板            | 分组标题 14px semibold 加折叠箭头；每行“标签 / 值”高 40，标签 semibold；值可就地修改                                                                                   |
+| 属性面板            | 分组标题 12px semibold 加折叠箭头；每行“标签 / 值”高 28、12px，标签 semibold；值可就地修改                                                                             |
 | 空状态              | 居中：32×32 图标方块（`border-1` 描边）+ 14px semibold 标题 + 两行 `text-2` 说明 + 一个小次按钮                                                                        |
 | 色带                | 圆角 8、`<色相>.fill-1` 底，左侧小图标，一句话；用于状态事件、等待决定                                                                                                 |
-| 消息块              | 圆角 8、内边距 12/16；用户消息 `neutral.bg-2`，内部备注 `yellow.bg-2`；头像在块外左侧                                                                                  |
+| 消息块              | 圆角 8、内边距 12/16、正文 14/20；用户消息 `neutral.bg-2`，内部备注 `yellow.bg-2`；头像在块外左侧                                                                      |
 | 浮动操作条          | 底部居中，白底、圆角 12、1px `border-1`、`floating` 阴影、内边距 4；项为文字按钮加 `kbd`，分组之间留缝                                                                 |
 | 展开式输入框        | 点击操作条的“回复”后，在操作条上方展开：标题行（对象、`esc`、×）、输入区（聚焦 2px 蓝环）、工具行、发送按钮（带 `Ctrl ↵`）                                             |
 | 消息提示            | 右下角，白底圆角 8、`popover` 阴影，3 秒后消失                                                                                                                         |
-| 骨架屏              | `fill-1` 块加流光，替代转圈                                                                                                                                            |
+| 骨架屏              | `fill-1` 块，透明度呼吸，替代转圈                                                                                                                                      |
 
 ## 6. 页面模式
 
@@ -291,7 +291,7 @@ layout:
 ## 7. 动效
 
 - 只用三档时长：75ms（悬停与按下换色）、150ms（多数过渡、弹层）、300ms（对话框、折叠展开）；侧滑面板用 400ms 的 `panel` 曲线。
-- 弹层朝弹出方向位移 4px 加淡入；对话框从下方 16px、缩放 0.96 进入；折叠为高度动画；加载用骨架屏流光。
+- 弹层朝弹出方向位移 4px 加淡入；对话框从下方 16px、缩放 0.96 进入；折叠为高度动画；加载用骨架屏（透明度呼吸，不用渐变流光）。
 - 列表和面板切换只做淡入，不做依次进场。
 - 系统开启“减少动态效果”时，只保留透明度变化。
 
@@ -303,16 +303,21 @@ layout:
 
 `apps/web/src/assets/theme.css` 是唯一可以写颜色、字体、字号、字重、间距、圆角、阴影、时长取值的文件（契约 1.13、1.15）；其他样式一律引用变量（可用 `calc()`、`color-mix()` 组合变量，字号可用 `em`）。
 
-| 规范               | CSS 变量                                                                                                                                                                                    |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 色相角色           | `--neutral-bg-1` … `--yellow-solid-2`                                                                                                                                                       |
-| 语义别名           | `--page`、`--panel`、`--text`、`--text-muted`、`--text-subtle`、`--border`、`--border-strong`、`--hover`、`--selected`、`--primary`、`--primary-hover`、`--on-primary`、`--link`、`--focus` |
-| 字体 / 字号 / 字重 | `--font-sans`、`--font-mono` / `--font-size-2xs` … `--font-size-2xl` / `--font-weight-regular`、`-medium`、`-semibold`                                                                      |
-| 间距 / 圆角 / 阴影 | `--space-*` / `--radius-*` / `--shadow-card`、`-popover`、`-dialog`、`-floating`                                                                                                            |
-| 动效               | `--motion-fast`、`--motion-base`、`--motion-slow`、`--motion-panel`                                                                                                                         |
-| 布局               | `--layout-rail`、`--layout-nav`、`--layout-gap`、`--layout-list-panel`、`--layout-details`                                                                                                  |
+| 规范                      | CSS 变量                                                                                                                                                                                                                                                                   |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 色相角色                  | `--neutral-bg-1` … `--yellow-solid-2`（另有 `--neutral-on-solid`）                                                                                                                                                                                                         |
+| 语义别名                  | `--page`、`--panel`、`--text`、`--text-muted`、`--text-subtle`、`--border`、`--border-strong`、`--border-emphasis`、`--hover`、`--selected`、`--pressed`、`--primary`、`--primary-hover`、`--on-primary`、`--link`、`--focus`、`--tooltip-bg`、`--tooltip-text`、`--scrim` |
+| 字体 / 字号 / 行高 / 字重 | `--font-sans`、`--font-mono` / `--font-11` … `--font-32` / `--leading-16` … `--leading-40` / `--weight-400`、`--weight-475`、`--weight-550`                                                                                                                                |
+| 间距 / 圆角               | `--space-0-5` … `--space-16` / `--radius-2` … `--radius-12`、`--radius-full`                                                                                                                                                                                               |
+| 阴影                      | `--shadow-card`、`--shadow-popover`、`--shadow-dialog`、`--shadow-floating`、`--shadow-button`                                                                                                                                                                             |
+| 动效                      | `--motion-fast`、`--motion-base`、`--motion-slow`、`--motion-panel`（时长加曲线）；`--duration-fast`、`-base`、`-slow`、`-spin`、`-none`；`--tooltip-delay`                                                                                                                |
+| 布局与控件尺寸            | `--layout-rail`、`--layout-nav`、`--layout-gap`、`--layout-list-panel`、`--layout-details`；`--control-button`、`-input`、`-icon`、`-nav-item`、`-menu-item`、`-tab`、`-table-row`、`-table-head`                                                                          |
 
-公共组件放 `apps/web/src/components/`；开发环境提供组件展示页，集中展示全部组件与状态，浅色与深色并排。
+字号、圆角用带数值的名字，避免与 1.x 的同名变量（如 `--radius-md`）混淆。theme.css 末尾的“过渡别名”区保留 1.x 的变量名供未重写的页面使用，指向新令牌或保持原值，第 7 批删除；新代码不得引用它们。
+
+阴影规则：带模糊的阴影只能用阴影令牌；不带模糊的描边环与细线（如 `0 0 0 2px var(--focus)`、`inset 0 -1px 0 var(--border)`）可以直接写。时长只能用时长令牌。
+
+基础组件放 `apps/web/src/components/base/`（`Base` 前缀）；开发环境提供组件展示页 `/dev/components`（`?view=list | record | controls`），深色由系统设置切换。
 
 ## 10. 不要做
 
@@ -327,7 +332,7 @@ layout:
 | 批次 | 范围                                               | 状态            |
 | ---- | -------------------------------------------------- | --------------- |
 | 0    | 规范 2.0、契约 1.15、重写计划                      | 2026-10-17 完成 |
-| 1    | 令牌、基础组件与组件展示页；删除主题换肤与旧主题包 | 待办            |
+| 1    | 令牌、基础组件与组件展示页；删除主题换肤与旧主题包 | 2026-10-17 完成 |
 | 2    | 外壳：图标栏、二级菜单、内容面板、命令面板与快捷键 | 待办            |
 | 3    | 开发清单（TanStack Table）与清单 + 详情双面板      | 待办            |
 | 4    | 记录页：开发项详情与设计 / 开发助手合一            | 待办            |
