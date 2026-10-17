@@ -1,13 +1,44 @@
+/* vxe-table colours follow the site theme (DESIGN.md 11): its variables point at our tokens.
+   On :root, because its filters and popups render outside the table. */
+:root {
+  --vxe-ui-layout-background-color: var(--surface);
+  --vxe-ui-font-color: var(--text);
+  --vxe-ui-font-darken-color: var(--text);
+  --vxe-ui-font-lighten-color: var(--muted);
+  --vxe-ui-font-secondary-color: var(--muted);
+  --vxe-ui-font-disabled-color: var(--text-tertiary);
+  --vxe-ui-font-placeholder-color: var(--text-tertiary);
+  --vxe-ui-font-primary-color: var(--primary);
+  --vxe-ui-font-tinge-color: var(--border-strong);
+  --vxe-ui-base-popup-border-color: var(--border);
+  --vxe-ui-base-active-background-color: var(--active);
+  --vxe-ui-input-border-color: var(--control-border);
+  --vxe-ui-input-placeholder-color: var(--text-tertiary);
+  --vxe-ui-input-disabled-background-color: var(--surface-muted);
+  --vxe-ui-checkbox-icon-background-color: var(--surface);
+  --vxe-ui-table-border-color: var(--border);
+  --vxe-ui-table-header-background-color: var(--surface-muted);
+  --vxe-ui-table-column-to-row-background-color: var(--surface-muted);
+  --vxe-ui-table-row-striped-background-color: var(--surface-muted);
+  --vxe-ui-table-row-hover-background-color: var(--hover);
+  --vxe-ui-table-row-hover-striped-background-color: var(--hover);
+  --vxe-ui-table-row-current-background-color: var(--active);
+  --vxe-ui-table-row-hover-current-background-color: var(--active);
+  --vxe-ui-table-row-checkbox-checked-background-color: var(--active);
+  --vxe-ui-table-row-hover-checkbox-checked-background-color: var(--active);
+  --vxe-ui-table-row-radio-checked-background-color: var(--active);
+  --vxe-ui-table-row-hover-radio-checked-background-color: var(--active);
+  --vxe-ui-table-column-hover-background-color: var(--hover);
+  --vxe-ui-table-column-current-background-color: var(--active);
+  --vxe-ui-table-column-icon-border-color: var(--control-border);
+  --vxe-ui-table-resizable-line-color: var(--border-strong);
+  --vxe-ui-table-cell-placeholder-color: var(--text-tertiary);
+}
 .workbench-table {
   height: 100%;
   min-height: 0;
   min-width: 0;
   --vxe-ui-font-family: inherit;
-  --vxe-ui-font-color: var(--text);
-  --vxe-ui-font-primary-color: var(--primary);
-  --vxe-ui-table-border-color: var(--border);
-  --vxe-ui-table-header-background-color: var(--surface-muted);
-  --vxe-ui-table-row-hover-background-color: var(--hover);
   --vxe-ui-font-size-small: 14px;
 }
 .workbench-table .vxe-table {

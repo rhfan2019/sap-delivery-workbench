@@ -1,5 +1,7 @@
-/* Design tokens: 中性白 + 海军蓝 (docs/specs/DESIGN.md). Names stay; values follow the spec. */
-:root {
+/* Design tokens: 中性白 + 海军蓝 (docs/specs/DESIGN.md). Names stay; values follow the spec.
+   The default theme is also selectable as [data-ui-theme='navy'] so a preview can show it. */
+:root,
+[data-ui-theme='navy'] {
   color-scheme: light;
   --bg: #f7f7f8;
   --surface: #ffffff;
@@ -133,4 +135,154 @@
   --link: var(--story-muted);
   --focus: var(--story-focus);
   color: var(--text);
+}
+
+/* Themes people pick in 个人设置 › 外观 (DESIGN.md 11). Each overrides the same tokens; the
+   attribute sits on <html> for the whole site, or on a preview card for itself. */
+
+/* IBM Carbon: enterprise blue, square corners, Plex type. */
+[data-ui-theme='ibm'] {
+  color-scheme: light;
+  --bg: #f4f4f4;
+  --surface: #ffffff;
+  --surface-muted: #f4f4f4;
+  --text: #161616;
+  --muted: #525252;
+  --text-tertiary: #6f6f6f;
+  --border: #e0e0e0;
+  --border-strong: #c6c6c6;
+  --control-border: #8d8d8d;
+  --hover: #e8e8e8;
+  --active: #edf5ff;
+  --link: #0f62fe;
+  --primary: #0f62fe;
+  --primary-hover: #0050e6;
+  --focus: #0f62fe;
+  --on-primary: #ffffff;
+  --nav-bg: #ffffff;
+  --nav-text: #161616;
+  --nav-muted: #525252;
+  --nav-border: #e0e0e0;
+  --nav-hover: #e8e8e8;
+  --nav-active: #edf5ff;
+  --nav-focus: #0f62fe;
+  --error-bg: #fff1f1;
+  --error-text: #a2191f;
+  --error-border: #ffd7d9;
+  --success-bg: #defbe6;
+  --success-text: #0e6027;
+  --success-border: #a7f0ba;
+  --warning-bg: #fcf4d6;
+  --warning-text: #8e6a00;
+  --warning-border: #f1c21b;
+  --font-sans: 'IBM Plex Sans', 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  --radius-xs: 0;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
+  --radius-bubble: 4px;
+  --radius-composer: 4px;
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.1);
+  --shadow-popover: 0 2px 6px rgb(0 0 0 / 0.3);
+}
+
+/* Vercel: black and white, precise; blue only for links and focus. */
+[data-ui-theme='vercel'] {
+  color-scheme: light;
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-muted: #f5f5f5;
+  --text: #171717;
+  --muted: #4d4d4d;
+  --text-tertiary: #737373;
+  --border: #ebebeb;
+  --border-strong: #d4d4d4;
+  --control-border: #a1a1a1;
+  --hover: #f2f2f2;
+  --active: #ebebeb;
+  --link: #0070f3;
+  --primary: #171717;
+  --primary-hover: #383838;
+  --focus: #0070f3;
+  --on-primary: #ffffff;
+  --nav-bg: #fafafa;
+  --nav-text: #171717;
+  --nav-muted: #4d4d4d;
+  --nav-border: #ebebeb;
+  --nav-hover: #f0f0f0;
+  --nav-active: #ebebeb;
+  --nav-focus: #0070f3;
+  --error-bg: #fff0f0;
+  --error-text: #c50000;
+  --error-border: #f7d4d6;
+  --success-bg: #ecfdf3;
+  --success-text: #1a7f37;
+  --success-border: #c6efd2;
+  --warning-bg: #fff5e6;
+  --warning-text: #ab570a;
+  --warning-border: #ffdfb3;
+  --font-sans: Geist, Inter, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, Consolas, monospace;
+  --shadow-raised: 0 0 0 1px rgb(0 0 0 / 0.06), 0 4px 8px rgb(0 0 0 / 0.04);
+  --shadow-popover: 0 0 0 1px rgb(0 0 0 / 0.08), 0 8px 24px rgb(0 0 0 / 0.12);
+}
+
+/* Linear: dark engineering surface with an indigo accent. */
+[data-ui-theme='linear'] {
+  color-scheme: dark;
+  --bg: #08090a;
+  --surface: #0f1011;
+  --surface-muted: #18191a;
+  --text: #f7f8f8;
+  --muted: #a3a8b0;
+  --text-tertiary: #7d828a;
+  --border: #23252a;
+  --border-strong: #34343a;
+  --control-border: #565a63;
+  --hover: #1c1d1f;
+  --active: #23253a;
+  --link: #8f99ff;
+  --primary: #5e6ad2;
+  --primary-hover: #7170ff;
+  --focus: #8f99ff;
+  --on-primary: #ffffff;
+  --nav-bg: #08090a;
+  --nav-text: #f7f8f8;
+  --nav-muted: #a3a8b0;
+  --nav-border: #23252a;
+  --nav-hover: #18191a;
+  --nav-active: #23253a;
+  --nav-focus: #8f99ff;
+  --error-bg: #2a1215;
+  --error-text: #ff8a8a;
+  --error-border: #5c2327;
+  --success-bg: #0f2a1a;
+  --success-text: #5fd39a;
+  --success-border: #1f4d33;
+  --warning-bg: #2b2111;
+  --warning-text: #f0b44c;
+  --warning-border: #574018;
+  --scrim: #000000aa;
+  --font-sans: 'Inter Variable', Inter, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 16px rgb(0 0 0 / 0.35);
+  --shadow-popover: 0 8px 28px rgb(0 0 0 / 0.55);
+  --chart-1: #7aa2f7;
+  --chart-2: #5fd39a;
+  --chart-3: #f0b44c;
+  --tag-blue-bg: #10233d;
+  --tag-blue-text: #8ab8f0;
+  --tag-green-bg: #10291b;
+  --tag-green-text: #7fd1a1;
+  --tag-orange-bg: #33200f;
+  --tag-orange-text: #f0a875;
+  --tag-red-bg: #3a1513;
+  --tag-red-text: #f3928a;
+  --tag-purple-bg: #251a3d;
+  --tag-purple-text: #c0a8ee;
+  --tag-teal-bg: #0e2a29;
+  --tag-teal-text: #79d0ca;
+  --tag-yellow-bg: #2e2810;
+  --tag-yellow-text: #e6c35c;
 }

@@ -216,3 +216,22 @@ layout: # --layout-*
 - 不要用整块红色表达错误；不要用状态色做装饰。
 - 不要在对话里给助手加头像或气泡；不要默认展开执行过程。
 - 不要把第三方品牌的字体、Logo 或名称用到产品里。
+
+## 11. 主题
+
+用户 2026-10-16 要求在个人设置中提供主题切换（自己不改本文件和 theme.css）。入口：右上角头像 › 个人设置 › 外观。
+
+| 主题           | 来源                           | 特点                                                                               |
+| -------------- | ------------------------------ | ---------------------------------------------------------------------------------- |
+| 海军蓝（默认） | 本规范                         | 中性白底、海军蓝强调，对话排版参考 ChatGPT / Claude                                |
+| IBM Carbon     | awesome-design-md `ibm`        | 企业蓝 `#0f62fe`、直角（圆角 0–4px）、IBM Plex 字体，接近 SAP Fiori 的企业应用风格 |
+| Vercel         | awesome-design-md `vercel`     | 黑白极简，主按钮为黑色，蓝色只用于链接与焦点，Geist 字体                           |
+| Linear 深色    | awesome-design-md `linear.app` | 深色界面、靛蓝强调；标签色、状态色、图表色均有深色版本                             |
+
+实现：
+
+- 每个主题是 `theme.css` 中的一个 `[data-ui-theme='…']` 块，覆盖与默认主题相同的令牌（颜色、字体、圆角、阴影）；默认主题同时写作 `:root` 与 `[data-ui-theme='navy']`。页面与组件不感知主题，只引用令牌。
+- `services/theme.ts` 记住选择（本机浏览器 `localStorage`，键 `ui-theme`），并在应用挂载前写到 `<html data-ui-theme>`，首屏即为所选主题。个人设置中的预览卡片把同一属性设在卡片上，展示各自的配色与圆角。
+- 表格组件（vxe-table）的颜色变量在 `components/workbench-table/workbench-table.css` 中映射到令牌，随主题变化。
+- 新增主题：在 `theme.css` 增加一个块并设置第 11 节表格中的全部颜色令牌（`tests/unit/web/theme.test.mjs` 会检查），再在 `services/theme.ts` 的 `THEMES` 中登记名称与说明。
+- 字体只写字体栈，不下载网络字体：本机装有 IBM Plex / Geist / Inter 时使用，否则回退到系统字体与苹方 / 微软雅黑。
