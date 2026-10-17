@@ -1,43 +1,82 @@
-/* Default palette: 海军蓝 · 双区聚焦. Shared by authenticated and public routes. */
+/* Design tokens: 中性白 + 海军蓝 (docs/specs/DESIGN.md). Names stay; values follow the spec. */
 :root {
   color-scheme: light;
-  --bg: #f3f5f8;
+  --bg: #f7f7f8;
   --surface: #ffffff;
-  --text: #0a2240;
-  --muted: #42546a;
-  --border: #b3c0cf;
-  --control-border: #73869d;
-  --hover: #e8eef5;
-  --active: #dce9f6;
+  --surface-muted: #f2f3f5;
+  --text: #1f2328;
+  --muted: #5f6672;
+  --text-tertiary: #8b919a;
+  --border: #e5e7eb;
+  --border-strong: #d1d5db;
+  --control-border: #9aa3ae;
+  --hover: #f2f3f5;
+  --active: #eaf1f8;
   --link: #174b7a;
   --primary: #174b7a;
-  --primary-hover: #0a2240;
-  --focus: #255b8a;
+  --primary-hover: #0f3a61;
+  --focus: #2f6fb3;
   --on-primary: #ffffff;
-  --nav-bg: #0a2240;
-  --nav-text: #ffffff;
-  --nav-muted: #d4e1ef;
-  --nav-border: #385471;
-  --nav-hover: #163b60;
-  --nav-active: #255b8a;
-  --nav-focus: #b8d8ff;
-  --error-bg: #fff1f1;
-  --error-text: #922c2c;
-  --error-border: #c77575;
-  --success-bg: #edf7f3;
-  --success-text: #276650;
-  --scrim: #0a224070;
+  --nav-bg: #f7f7f8;
+  --nav-text: #1f2328;
+  --nav-muted: #5f6672;
+  --nav-border: #e5e7eb;
+  --nav-hover: #ecedef;
+  --nav-active: #eaf1f8;
+  --nav-focus: #2f6fb3;
+  --error-bg: #fef0ef;
+  --error-text: #b42318;
+  --error-border: #f1b5ae;
+  --success-bg: #e9f6ef;
+  --success-text: #1f7a4d;
+  --warning-bg: #fff5e1;
+  --warning-text: #8a5300;
+  --scrim: #1f232866;
+  --font-sans: Inter, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-bubble: 18px;
+  --radius-composer: 24px;
+  --shadow-raised: 0 1px 2px rgb(16 24 40 / 0.04), 0 4px 16px rgb(16 24 40 / 0.06);
+  --shadow-popover: 0 8px 28px rgb(16 24 40 / 0.14);
+  /* The login story and the home banner keep their navy until migrated (DESIGN.md 9). */
+  --story-bg: #0a2240;
+  --story-text: #ffffff;
+  --story-muted: #d4e1ef;
+  --story-border: #385471;
+  --story-hover: #163b60;
+  --story-active: #255b8a;
+  --story-focus: #b8d8ff;
 }
 
-/* Scoped inverse surfaces never change the light workspace or native dialogs. */
-.sidebar,
-.login-story {
+.sidebar {
   --text: var(--nav-text);
   --muted: var(--nav-muted);
   --border: var(--nav-border);
   --hover: var(--nav-hover);
   --active: var(--nav-active);
-  --link: var(--nav-muted);
   --focus: var(--nav-focus);
+  color: var(--text);
+}
+
+/* Scoped inverse surfaces: never change the light workspace or native dialogs. */
+.login-story,
+.welcome-banner {
+  --nav-bg: var(--story-bg);
+  --nav-text: var(--story-text);
+  --nav-muted: var(--story-muted);
+  --nav-border: var(--story-border);
+  --nav-hover: var(--story-hover);
+  --nav-active: var(--story-active);
+  --nav-focus: var(--story-focus);
+  --text: var(--story-text);
+  --muted: var(--story-muted);
+  --border: var(--story-border);
+  --hover: var(--story-hover);
+  --active: var(--story-active);
+  --link: var(--story-muted);
+  --focus: var(--story-focus);
   color: var(--text);
 }

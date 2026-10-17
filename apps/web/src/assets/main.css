@@ -1,5 +1,5 @@
 :root {
-  font-family: Inter, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  font-family: var(--font-sans);
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -538,7 +538,6 @@ input::placeholder {
   z-index: 30;
   padding: 23px 13px 13px;
   transition: width 0.2s;
-  box-shadow: 0 3px 12px #172e481f;
 }
 .sidebar-brand {
   display: flex;
@@ -651,7 +650,8 @@ input::placeholder {
 }
 .nav-item.active {
   background: var(--active);
-  color: #fff;
+  color: var(--primary);
+  font-weight: 500;
 }
 .nav-dot {
   width: 5px;
@@ -1698,12 +1698,17 @@ input::placeholder {
   }
 }
 
-.sidebar .brand-mark,
+.sidebar .brand-mark {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.sidebar .brand-mark > span {
+  color: #9cc3ea;
+}
 .login-story .brand-mark {
   background: var(--surface);
   color: var(--nav-bg);
 }
-.sidebar .brand-mark > span,
 .login-story .brand-mark > span {
   color: var(--nav-active);
 }

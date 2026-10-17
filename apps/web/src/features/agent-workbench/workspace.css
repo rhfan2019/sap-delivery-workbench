@@ -301,9 +301,12 @@
 }
 .work-item-title {
   display: flex;
+  flex: 0 1 auto;
+  min-width: 160px;
 }
 .work-switcher {
-  flex: 0 1 auto;
+  flex: 0 3 auto;
+  min-width: 120px;
   max-width: 380px;
 }
 /* The conversation in the header: quieter than the item title. */

@@ -378,6 +378,7 @@ export function buildTimeline({
         status: 'completed',
         createdAt: user.createdAt,
         authorName: user.authorName ?? null,
+        ...(user.payload?.answers?.length ? { answered: user.payload.answers.length } : {}),
       });
     // The outcome of an authorized test data run is stored as a second user message.
     const run = own.find((m) => m.role === 'user' && m.payload?.testDataRun);

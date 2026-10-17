@@ -97,6 +97,9 @@ test('the timeline has one user and one assistant message per turn', () => {
     ],
   );
   assert.equal(timeline[0].authorName, '陈顾问');
+  // A message answering questions is marked, so the bubble can stay one line.
+  assert.equal(timeline[2].answered, 1);
+  assert.equal(timeline[0].answered, undefined);
   assert.equal(timeline[1].decision.questions.length, 1);
   assert.deepEqual(timeline[1].answers, [{ question: question.question, label: '计划发货日' }]);
   assert.deepEqual(timeline[1].steps, []);

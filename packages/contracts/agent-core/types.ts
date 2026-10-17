@@ -62,6 +62,8 @@ export interface AgentMessage {
   steps?: AgentStep[];
   decision?: AgentDecision;
   answers?: { question: string; label: string }[];
+  // A user message that answers questions: how many (the record above shows them).
+  answered?: number;
   artifact?: AgentArtifactRef;
   error?: string;
   errorCode?: string;

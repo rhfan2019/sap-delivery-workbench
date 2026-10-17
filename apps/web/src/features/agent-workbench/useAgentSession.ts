@@ -268,6 +268,7 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
       status: 'completed',
       createdAt: new Date().toISOString(),
       authorName: identity.value?.user.displayName,
+      ...(answers?.length ? { answered: answers.length } : {}),
     });
     void follow(started.turnId);
     return true;

@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { Copy, RotateCcw, FileText, Sparkles } from '@lucide/vue';
+import { Copy, RotateCcw, FileText } from '@lucide/vue';
 import {
   Conversation,
   ConversationContent,
-  ConversationEmptyState,
   ConversationScrollButton,
 } from '@/components/ai-elements/conversation';
 import {
@@ -13,7 +12,6 @@ import {
   MessageActions,
   MessageAction,
 } from '@/components/ai-elements/message';
-import { Suggestion } from '@/components/ai-elements/suggestion';
 import ChatMarkdown from './ChatMarkdown.vue';
 import RunSteps from './RunSteps.vue';
 import type {
@@ -42,6 +40,24 @@ function undeclared(artifact: AgentArtifactRef) {
   if (Array.isArray(c.undeclared)) return c.undeclared as string[];
   return [...(c.plan?.undeclared ?? []), ...(c.code?.undeclared ? ['代码'] : [])];
 }
+// The card title is "question（background）"; the record shows the question alone.
+function shortTitle(title: string, message?: AgentMessage) {
+  const asked = message?.answers?.find((a) => title.startsWith(a.question))?.question;
+  if (asked) return asked;
+  const cut = title.indexOf('（');
+  return cut > 0 && title.endsWith('）') ? title.slice(0, cut) : title;
+}
+function answerOf(message: AgentMessage, title: string) {
+  return message.answers?.find((a) => title.startsWith(a.question))?.label;
+}
+const shortTime = (iso: string) =>
+  new Date(iso).toLocaleString('zh-CN', {
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
 // A reply with nothing to show (a turn that only asked questions) renders no empty block.
 function silent(message: AgentMessage, live: boolean) {
   return (
@@ -79,48 +95,6 @@ async function copy(text: string) {
     resize="instant"
   >
     <ConversationContent class="elements-content">
-      <ConversationEmptyState
-        v-if="!messages.length"
-        class="min-h-56"
-        :title="development ? '一起完成开发' : '一起把需求说明白'"
-        :description="
-          development
-            ? '描述需求、上传 FSD 或资料，助手会查询 SAP、提出必要问题，写出开发方案和代码。'
-            : '描述需求或上传资料，助手会查询 SAP、提出必要问题并编写 FSD。'
-        "
-      >
-        <template #icon><Sparkles class="size-8" /></template>
-      </ConversationEmptyState>
-      <div v-if="!messages.length" class="flex flex-wrap justify-center gap-2">
-        <template v-if="development">
-          <Suggestion
-            suggestion="请分析这个开发项的资料，先写开发方案，并列出需要我确认的问题。"
-            :disabled="readonly"
-            @click="emit('suggestion', $event)"
-            >梳理需求并出开发方案</Suggestion
-          >
-          <Suggestion
-            suggestion="需求已经清楚，请查询 SAP 后直接写开发方案和代码。"
-            :disabled="readonly"
-            @click="emit('suggestion', $event)"
-            >直接写方案和代码</Suggestion
-          >
-        </template>
-        <template v-else>
-          <Suggestion
-            suggestion="请分析这个开发项的需求，先找出需要客户确认的问题。"
-            :disabled="readonly"
-            @click="emit('suggestion', $event)"
-            >梳理需求与待确认问题</Suggestion
-          >
-          <Suggestion
-            suggestion="需求已经比较清楚，请直接查询 SAP 并起草 FSD 初稿。"
-            :disabled="readonly"
-            @click="emit('suggestion', $event)"
-            >直接起草 FSD 初稿</Suggestion
-          >
-        </template>
-      </div>
       <Message
         v-for="(message, index) in messages"
         :key="message.id"
@@ -138,15 +112,6 @@ async function copy(text: string) {
             new Date(message.createdAt).toLocaleString('zh-CN', { hour12: false })
           }}</time>
         </div>
-        <div
-          v-if="message.role === 'assistant'"
-          class="flex items-center gap-2 text-xs text-muted-foreground"
-        >
-          <Sparkles class="size-4" /><span>{{
-            development ? '开发助手' : quiet ? '设计助手' : 'FS 助手'
-          }}</span
-          ><span>{{ message.model }}</span>
-        </div>
         <template v-if="message.role === 'assistant' && message.runId">
           <slot v-if="busy && index === messages.length - 1" name="progress" :message="message" />
           <RunSteps
@@ -154,6 +119,7 @@ async function copy(text: string) {
             :steps="message.steps ?? []"
             :status="message.status"
             :run-id="message.runId"
+            :model="message.model"
             :started-at="message.createdAt"
             :finished-at="message.finishedAt"
           />
@@ -161,30 +127,44 @@ async function copy(text: string) {
         <MessageContent
           v-if="hasBody(message, busy && index === messages.length - 1)"
           class="max-w-full"
-          :class="{ 'w-full': message.role === 'assistant' }"
+          :class="message.role === 'assistant' ? 'w-full' : 'user-bubble'"
         >
-          <p v-if="message.role === 'user'" class="whitespace-pre-wrap break-words">
+          <!-- Answers repeat the record above: one line, the full text on demand. -->
+          <details v-if="message.role === 'user' && message.answered" class="answered">
+            <summary>已答复 {{ message.answered }} 个问题</summary>
+            <p class="whitespace-pre-wrap break-words">{{ message.content }}</p>
+          </details>
+          <p v-else-if="message.role === 'user'" class="whitespace-pre-wrap break-words">
             {{ message.content }}
           </p>
           <template v-else>
+            <!-- Answered questions: the question and the choice; options on demand. -->
             <section
               v-if="message.decision && message.status !== 'waiting_user'"
-              class="rounded-lg border p-4 text-sm"
+              class="decision-record"
               aria-label="业务问答记录"
             >
-              <strong>{{ message.answers?.length ? '已回答的问题' : '提出的问题' }}</strong>
-              <div v-for="q in message.decision.questions" :key="q.id" class="mt-3">
-                <p>{{ q.title }}</p>
-                <ul class="my-2 space-y-1 text-muted-foreground">
-                  <li v-for="o in q.options" :key="o.value">{{ o.label }} — {{ o.description }}</li>
-                </ul>
-                <p
-                  v-if="message.answers?.find((a) => q.title.startsWith(a.question))"
-                  class="font-medium"
-                >
-                  回答：{{ message.answers.find((a) => q.title.startsWith(a.question))?.label }}
-                </p>
+              <p class="decision-record-title">
+                {{ message.answers?.length ? '已确认的问题' : '提出的问题' }}
+              </p>
+              <div v-for="q in message.decision.questions" :key="q.id" class="decision-record-row">
+                <span>{{ shortTitle(q.title, message) }}</span>
+                <strong v-if="answerOf(message, q.title)" class="decision-record-choice">{{
+                  answerOf(message, q.title)
+                }}</strong>
+                <span v-else class="text-muted-foreground">未回答</span>
               </div>
+              <details>
+                <summary>查看问题说明和全部选项</summary>
+                <div v-for="q in message.decision.questions" :key="q.id" class="mt-2">
+                  <p>{{ q.title }}</p>
+                  <ul class="my-1 space-y-1 text-muted-foreground">
+                    <li v-for="o in q.options" :key="o.value">
+                      {{ o.label }} — {{ o.description }}
+                    </li>
+                  </ul>
+                </div>
+              </details>
             </section>
             <ChatMarkdown
               v-if="message.content"
@@ -200,15 +180,15 @@ async function copy(text: string) {
             <button
               v-if="message.artifact"
               type="button"
-              class="artifact-link"
+              class="artifact-card"
               @click="emit('openArtifact', message.artifact)"
             >
-              <FileText class="size-4 shrink-0" />
-              <span
-                >{{ development ? '开发方案与代码' : '功能说明书' }} · 第
-                {{ message.artifact.revision }} 版已保存</span
+              <span class="artifact-card-icon"><FileText class="size-5" /></span>
+              <span class="artifact-card-text"
+                ><strong>{{ development ? '开发方案与代码' : '功能说明书' }}</strong
+                ><small>第 {{ message.artifact.revision }} 版 · 已保存</small></span
               >
-              <span class="artifact-link-open">打开</span>
+              <span class="artifact-card-open">打开</span>
             </button>
             <p
               v-if="message.artifact && undeclared(message.artifact).length"
@@ -233,37 +213,26 @@ async function copy(text: string) {
             </div>
           </template>
         </MessageContent>
-        <!-- Failures, questions and saved versions already speak for themselves above. -->
         <p
           v-if="
             message.role === 'assistant' &&
             !busy &&
             index === messages.length - 1 &&
-            message.status !== 'failed' &&
-            message.status !== 'waiting_user' &&
-            !message.artifact
+            message.status === 'cancelled'
           "
           role="status"
-          class="rounded-lg bg-muted p-3 text-sm"
+          class="text-sm text-muted-foreground"
         >
-          {{
-            message.status === 'cancelled'
-              ? '已停止本轮运行。可补充需求后重新发送。'
-              : '可以继续补充需求，或提出修改意见。'
-          }}
+          已停止本轮运行。可补充需求后重新发送。
         </p>
         <MessageActions
           v-if="
             message.role === 'assistant' &&
-            (message.content ||
-              message.status === 'cancelled' ||
-              (canRetry && !busy && index === messages.length - 1))
+            !(busy && index === messages.length - 1) &&
+            (message.content || (canRetry && index === messages.length - 1))
           "
           class="items-center"
         >
-          <span v-if="message.status === 'cancelled'" class="text-xs text-muted-foreground"
-            >已停止，内容已保留</span
-          >
           <MessageAction v-if="message.content" label="复制回复" @click="copy(message.content)"
             ><Copy class="size-4"
           /></MessageAction>
@@ -274,6 +243,12 @@ async function copy(text: string) {
             @click="emit('retry')"
             ><RotateCcw class="size-4"
           /></MessageAction>
+          <time
+            v-if="message.finishedAt"
+            class="ml-1 text-xs text-muted-foreground"
+            :datetime="message.finishedAt"
+            >{{ shortTime(message.finishedAt) }}</time
+          >
         </MessageActions>
       </Message>
       <slot />
@@ -283,27 +258,101 @@ async function copy(text: string) {
   </Conversation>
 </template>
 <style scoped>
-/* A saved version is one highlighted line that opens it, not a card. */
-.artifact-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 100%;
-  margin-top: 4px;
-  padding: 6px 10px;
-  border: 1px solid #c7d7f0;
-  border-radius: 8px;
-  background: #f1f6fd;
-  color: var(--link, #174b7a);
+.answered summary {
+  cursor: pointer;
+}
+.answered p {
+  margin: 8px 0 0;
   font-size: 13px;
+  line-height: 20px;
+  color: var(--muted);
+}
+/* DESIGN.md 6: a saved version is a compact card row that opens the result panel. */
+.artifact-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(100%, 420px);
+  margin-top: 4px;
+  padding: 10px 14px 10px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
   text-align: left;
 }
-.artifact-link:hover {
-  background: #e3eefb;
+.artifact-card:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-muted);
 }
-.artifact-link-open {
+.artifact-card-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--active);
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.artifact-card-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.artifact-card-text strong {
+  font-size: 14px;
   font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+}
+.artifact-card-text small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.artifact-card-open {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary);
+}
+.decision-record {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+}
+.decision-record-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.decision-record-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+}
+.decision-record-row:first-of-type {
+  border-top: 0;
+}
+.decision-record-choice {
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--active);
+  color: var(--primary);
+  font-weight: 500;
+  font-size: 13px;
+}
+.decision-record details {
+  margin-top: 8px;
+  font-size: 13px;
+}
+.decision-record summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
 }
 </style>

@@ -154,7 +154,7 @@
 }
 .assistant-bottom {
   width: 100%;
-  max-width: 868px;
+  max-width: 808px;
   margin: 0 auto;
   padding: 4px 24px 12px;
   box-sizing: border-box;
@@ -308,4 +308,50 @@ select:focus-visible {
 .task-state button:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
+}
+
+/* DESIGN.md 6: an empty conversation is a start page (greeting, composer, suggestions). */
+.assistant-chat.is-start {
+  justify-content: safe center;
+  overflow-y: auto;
+  padding: 24px 0 10vh;
+}
+.start-greeting {
+  width: 100%;
+  max-width: 808px;
+  margin: 0 auto 20px;
+  padding: 0 24px;
+  text-align: center;
+}
+.start-greeting h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 600;
+  color: var(--text);
+}
+.start-greeting p {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+.start-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+.start-suggestions button {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+.start-suggestions button:hover {
+  background: var(--surface-muted);
+  color: var(--text);
 }

@@ -21,6 +21,7 @@ const props = defineProps<{
   note?: { text: string; at: number };
   status?: string;
   runId?: string;
+  model?: string;
   startedAt?: string;
   finishedAt?: string | null;
   clockOffsetMs?: number;
@@ -122,13 +123,13 @@ async function copyRunId() {
       :aria-expanded="expanded"
       @click="expanded = !expanded"
     >
+      <span>{{ summary }}</span>
       <ChevronRight
-        class="size-4 shrink-0 transition-transform"
+        class="size-3.5 shrink-0 transition-transform"
         :class="{ 'rotate-90': expanded }"
       />
-      <span>{{ summary }}</span>
     </button>
-    <div v-if="live || expanded" class="run-rows">
+    <div v-if="(live && activities.length) || expanded" class="run-rows">
       <ol v-if="activities.length">
         <li v-for="a in activities" :key="a.id">
           <button type="button" class="run-row" :aria-expanded="isOpen(a.id)" @click="toggle(a.id)">
@@ -212,7 +213,7 @@ async function copyRunId() {
         </li>
       </ol>
       <p v-if="!live && runId" class="run-meta">
-        运行编号 {{ runId }}
+        <template v-if="model">{{ model }} · </template>运行编号 {{ runId }}
         <button type="button" @click="copyRunId">{{ copied || '复制' }}</button>
       </p>
     </div>
@@ -243,23 +244,33 @@ async function copyRunId() {
 .run-summary:hover {
   color: var(--color-foreground);
 }
+.run-summary {
+  gap: 0.25rem;
+}
+/* DESIGN.md 6: expanded, the record is a bordered list with one row per activity. */
 .run-rows {
   margin-top: 0.5rem;
-  border-left: 2px solid var(--color-border);
-  padding-left: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
-.run-rows > ol {
-  display: grid;
-  gap: 0.25rem;
+.run-rows > ol > li + li {
+  border-top: 1px solid var(--border);
 }
 .run-row {
   display: flex;
   width: 100%;
   align-items: baseline;
   gap: 0.5rem;
-  border-radius: 0.375rem;
-  padding: 0.125rem 0;
+  padding: 0.5rem 0.875rem;
   text-align: left;
+}
+.run-row:hover {
+  background: var(--surface-muted);
+}
+.run-calls {
+  padding: 0 0.875rem 0.75rem 2.375rem !important;
+  margin: 0 !important;
 }
 .run-row > svg {
   align-self: center;
@@ -318,7 +329,9 @@ async function copyRunId() {
   font-size: 0.75rem;
 }
 .run-meta {
-  margin-top: 0.5rem;
+  margin: 0;
+  padding: 0.5rem 0.875rem;
+  border-top: 1px solid var(--border);
   color: var(--color-muted-foreground);
   font-size: 0.75rem;
   word-break: break-all;

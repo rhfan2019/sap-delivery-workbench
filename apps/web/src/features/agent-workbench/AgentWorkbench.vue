@@ -144,13 +144,38 @@ async function authorize(decision: 'approve' | 'reject', note: string) {
   }
 }
 const previewOpen = computed(() => !!activeAttachment.value);
+// A conversation with nothing in it opens on the start page: a greeting and the composer in
+// the middle, suggestions below (DESIGN.md 6).
+const empty = computed(() => !run.messages.value.length && !sending.value);
+const suggestions = computed(() =>
+  props.development
+    ? [
+        ['梳理需求并出开发方案', '请分析这个开发项的资料，先写开发方案，并列出需要我确认的问题。'],
+        ['直接写方案和代码', '需求已经清楚，请查询 SAP 后直接写开发方案和代码。'],
+      ]
+    : [
+        ['梳理需求与待确认问题', '请分析这个开发项的需求，先找出需要客户确认的问题。'],
+        ['直接起草 FSD 初稿', '需求已经比较清楚，请直接查询 SAP 并起草 FSD 初稿。'],
+      ],
+);
 </script>
 <template>
   <section class="assistant-test assistant-elements embedded" aria-label="AI助手">
     <Splitpanes class="assistant-split" :horizontal="compact" :maximize-panes="false">
       <Pane v-if="!compact || !previewOpen" :size="previewOpen ? 55 : 100" :min-size="30">
-        <div class="assistant-chat">
+        <div class="assistant-chat" :class="{ 'is-start': empty }">
+          <div v-if="empty" class="start-greeting">
+            <h1>{{ development ? '今天要开发什么？' : '今天要梳理哪个需求？' }}</h1>
+            <p>
+              {{
+                development
+                  ? '描述需求、上传 FSD 或资料，助手会查询 SAP、提出必要问题，写出开发方案和代码。'
+                  : '描述需求或上传资料，助手会查询 SAP、提出必要问题并编写 FSD。'
+              }}
+            </p>
+          </div>
           <ConversationTimeline
+            v-else
             quiet
             :development="development"
             :readonly="blocked || !editable"
@@ -252,7 +277,18 @@ const previewOpen = computed(() => !!activeAttachment.value);
                 </div>
               </ChatComposer>
             </div>
-            <div class="composer-footnote">
+            <div v-if="empty" class="start-suggestions">
+              <button
+                v-for="[label, text] in suggestions"
+                :key="label"
+                type="button"
+                :disabled="blocked || !editable"
+                @click="draft = text"
+              >
+                {{ label }}
+              </button>
+            </div>
+            <div v-else class="composer-footnote">
               <span>内容由 AI 生成，请结合业务与系统证据核对</span>
             </div>
           </div>
