@@ -1,56 +1,130 @@
 ---
-version: 1.1
-name: SAP 智能交付工作台 · 中性白 + 海军蓝
-date: 2026-10-16
+version: 2.0
+name: SAP 智能交付工作台 · Plain 风格
+date: 2026-10-17
 description: >-
-  面向 SAP 交付顾问的工作台。白色与浅灰构成层次，海军蓝只用于强调与操作；排版、留白与对话体验参考
-  ChatGPT 与 Claude（用户 2026-10-16 选定），表格与表单保持企业应用的信息密度。
+  全站界面的唯一规范。用户 2026-10-17 决定参照 Plain（app.plain.com）的导航、菜单、页面布局与设计语言
+  重写前端界面层，只保留一套外观（浅色与深色跟随系统），取消主题换肤。取值来自对 Plain 产品界面的实测，
+  见 docs/plans/2026-10-17-plain-style-redesign.md 第 1 节。
 
+# 颜色：灰阶加六种色相，每种色相有同一套角色。浅色值见下，深色值见第 2.3 节。
 colors:
-  canvas: '#FFFFFF' # 内容面：对话、表格、表单、文档
-  page: '#F7F7F8' # 页面底色与侧边栏
-  surface-muted: '#F2F3F5' # 用户气泡、表头、代码块、悬停
-  surface-sunken: '#ECEDEF' # 选中行、按下
-  hairline: '#E5E7EB' # 分隔线、卡片边框
-  hairline-strong: '#D1D5DB' # 输入框边框、强调分隔
-  control: '#9AA3AE' # 输入控件边框（对白底 ≥ 3:1 的非文字对比）
-  ink: '#1F2328' # 正文与标题
-  secondary: '#5F6672' # 次要文字（对白底 ≥ 4.5:1）
-  tertiary: '#8B919A' # 占位、时间戳、脚注（只用于 12px 以上的辅助信息）
-  primary: '#174B7A' # 海军蓝：主按钮、链接、选中、焦点
-  primary-hover: '#0F3A61'
-  primary-soft: '#EAF1F8' # 选中背景、强调标签底色
-  on-primary: '#FFFFFF'
-  focus: '#2F6FB3'
-  success: '#1F7A4D'
-  success-soft: '#E9F6EF'
-  warning: '#8A5300'
-  warning-soft: '#FFF5E1'
-  danger: '#B42318'
-  danger-soft: '#FEF0EF'
+  neutral:
+    {
+      bg-1: '#FFFFFF',
+      bg-2: '#F9F9FC',
+      fill-1: '#F0F0F5',
+      fill-2: '#E7E7EF',
+      fill-3: '#E0E0E9',
+      border-1: '#E7E7EF',
+      border-2: '#E0E0E9',
+      border-3: '#CDCDDB',
+      text-1: '#1F1F28',
+      text-2: '#636370',
+      text-3: '#8C8C9B',
+      icon-1: '#8E8E9C',
+      icon-2: '#ADADB7',
+      solid-1: '#1F1F28',
+      solid-2: '#0B0B0E',
+    }
+  blue:
+    {
+      bg-1: '#FDFDFF',
+      bg-2: '#F7F9FF',
+      fill-1: '#EEF2FF',
+      fill-2: '#E1E8FF',
+      fill-3: '#D3DDFF',
+      border-1: '#E1E8FF',
+      border-2: '#D3DDFF',
+      border-3: '#ADBCFF',
+      text-1: '#232964',
+      text-2: '#4A52D1',
+      icon-1: '#448BFF',
+      icon-2: '#7DAEFF',
+      solid-1: '#5C67F4',
+      solid-2: '#525CDB',
+    }
+  green:
+    {
+      bg-1: '#F9FFFB',
+      bg-2: '#F3FCF5',
+      fill-1: '#E2F9E8',
+      fill-2: '#CFF4D9',
+      fill-3: '#B7EEC8',
+      border-1: '#CFF4D9',
+      border-2: '#B7EEC8',
+      border-3: '#6ED795',
+      text-1: '#074022',
+      text-2: '#008046',
+      icon-1: '#00AB5F',
+      icon-2: '#66C589',
+      solid-1: '#00A85C',
+      solid-2: '#009652',
+    }
+  purple:
+    {
+      bg-1: '#FEFCFF',
+      bg-2: '#FDF7FD',
+      fill-1: '#FBEBFB',
+      fill-2: '#F7DEF8',
+      fill-3: '#F2D1F3',
+      border-1: '#F7DEF8',
+      border-2: '#F2D1F3',
+      border-3: '#DEADE3',
+      text-1: '#53195D',
+      text-2: '#953EA3',
+      icon-1: '#CA54DD',
+      icon-2: '#D48CDF',
+      solid-1: '#AB4ABA',
+      solid-2: '#A144AF',
+    }
+  red:
+    {
+      bg-1: '#FFFCFC',
+      bg-2: '#FFF7F7',
+      fill-1: '#FFEBE9',
+      fill-2: '#FFDBD7',
+      fill-3: '#FFCDC7',
+      border-1: '#FFDBD7',
+      border-2: '#FFCDC7',
+      border-3: '#F6A9A1',
+      text-1: '#651818',
+      text-2: '#D1282D',
+      icon-1: '#F14E4B',
+      icon-2: '#FF847D',
+      solid-1: '#E33D3D',
+      solid-2: '#D5292F',
+    }
+  yellow:
+    {
+      bg-1: '#FEFDFB',
+      bg-2: '#FFFAE9',
+      fill-1: '#FFF4C1',
+      fill-2: '#FFEA9C',
+      fill-3: '#FFE079',
+      border-1: '#FFEA9C',
+      border-2: '#FFE079',
+      border-3: '#E6C368',
+      text-1: '#453A1E',
+      text-2: '#987100',
+      icon-1: '#E79D00',
+      icon-2: '#EFB062',
+      solid-1: '#FFCB14',
+      solid-2: '#F4C224',
+    }
 
 typography:
   family-sans: "'Inter Variable', Inter, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif"
   family-mono: "'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace"
-  display: { size: 28px, line: 36px, weight: 600 } # 起始页问候语
-  title-lg: { size: 20px, line: 28px, weight: 600 } # 页面标题、文档 H1
-  title-md: { size: 17px, line: 26px, weight: 600 } # 区块标题、回复 H2
-  title-sm: { size: 15px, line: 22px, weight: 600 } # 卡片标题、回复 H3
-  reading: { size: 15px, line: 26px, weight: 400 } # 对话与文档正文
-  body: { size: 14px, line: 22px, weight: 400 } # 界面默认
-  caption: { size: 12px, line: 18px, weight: 400 } # 时间、计数、脚注
-  code: { size: 13px, line: 20px, weight: 400 }
-  sizes: { xs: 12px, sm: 13px, md: 14px, lg: 15px, xl: 17px, 2xl: 20px, 3xl: 28px } # --font-size-*
-  weights: { regular: 400, medium: 500, semibold: 600 } # --font-weight-*；不用 700 及以上
+  sizes: { 2xs: 11px, xs: 12px, sm: 14px, md: 16px, lg: 20px, xl: 24px, 2xl: 32px } # 行高依次 16/16/20/24/28/32/40
+  weights: { regular: 400, medium: 475, semibold: 550 } # Inter 可变字重；中文回退字体就近取 400/500/600
 
-# --space-N = N x 4px；页面区块间 24/32，组件内 8/12
 spacing:
   {
     0-5: 2px,
     1: 4px,
     1-5: 6px,
     2: 8px,
-    2-5: 10px,
     3: 12px,
     4: 16px,
     5: 20px,
@@ -61,201 +135,202 @@ spacing:
     16: 64px,
   }
 
-rounded: # --radius-*
-  xs: 4px # 徽标、细小元素
-  sm: 6px # 标签、小按钮
-  md: 8px # 按钮、输入框、菜单项
-  lg: 12px # 卡片、弹出层、表格外框
-  xl: 16px # 大面板
-  bubble: 18px # 用户气泡
-  composer: 24px
-  full: 9999px # 圆点、头像、胶囊
+rounded: { xs: 2px, sm: 4px, md: 6px, lg: 8px, xl: 10px, panel: 12px, full: 9999px }
 
 elevation:
-  none: 'none' # 卡片默认无阴影，用边框分层
-  raised: '0 1px 2px rgb(16 24 40 / 0.04), 0 4px 16px rgb(16 24 40 / 0.06)' # 输入框、浮动按钮
-  popover: '0 8px 28px rgb(16 24 40 / 0.14)' # 下拉、弹出卡片
+  card: '0 0 0 1px #20272C14, 0 1px 1px #20272C14' # 浮在页面底上的面板、卡片
+  popover: '0 1px 2px #20272C3D, 0 2px 6px 2px #20272C14, 0 2px 8px #20272C14' # 菜单、提示、下拉
+  dialog: '0 1px 2px #20272C3D, 0 2px 8px 2px #20272C14, 0 2px 16px #20272C14' # 对话框
+  floating: '0 1px 12px #0000000D, 0 0.5px 4px #0000000D' # 底部浮动操作条
 
-layout: # --layout-*
-  sidebar: 246px
-  sidebar-narrow: 220px # 1150px 以下
-  sidebar-collapsed: 70px
-  drawer: 480px # 右侧抽屉
-  conversation: 760px # 对话列最大宽度，居中
-  document: 820px # 文档阅读最大宽度
-  page-gutter: 24px
-  mobile-gutter: 16px
+motion:
+  fast: 75ms ease-in-out # 悬停、按下换色
+  base: 150ms ease-in-out # 多数过渡、弹层出现
+  slow: 300ms ease-in-out # 对话框、折叠展开
+  panel: 400ms cubic-bezier(0.32, 0.72, 0, 1) # 侧滑面板
+
+layout:
+  rail: 56px # 图标栏
+  nav: 248px # 二级菜单
+  gap: 8px # 面板与窗口、面板与面板之间的缝
+  list-panel: 400px # 双面板中左侧的列表
+  details: 384px # 右侧属性面板
+  control:
+    { button: 34px, input: 32px, nav-item: 32px, menu-item: 30px, tab: 28px, table-row: 44px }
 ---
 
 # 设计规范
 
-本文件是全站界面风格的唯一规范。新增或修改页面前先读本文件；实现时只用这里的令牌（CSS 变量，见第 8 节），不写新的颜色值。需要新令牌时先改本文件。
+本文件是全站界面的唯一规范，版本 2.0 整体替换 1.x（中性白 + 海军蓝、三套可换主题）。新外观参照 Plain：
+**结构清楚、颜色克制、反馈一致**。实现时只用这里的令牌（`apps/web/src/assets/theme.css` 中的 CSS 变量），不写新的取值；需要新令牌时先改本文件。
 
 ## 1. 原则
 
-1. **内容是主角，界面退后。** 白底、浅灰分层、细线分隔，不用重阴影、渐变和大面积色块。颜色只用来表达状态和可操作性。
-2. **一个强调色。** 海军蓝只用于主操作、链接、选中和焦点；同一视图只有一个实心主按钮。
-3. **层次靠字号与字重，不靠颜色和边框。** 标题 600、正文 400、辅助信息用次要色和 12px。
-4. **过程默认收起，结论在前。** 智能助手的执行过程收成一行，回复先给结论；需要用户决定的事单独突出（见第 6 节）。
-5. **企业密度。** 表格、表单、清单保持紧凑（行高 36–40px），对话与文档用阅读排版（15/26）。
+1. **几块白板浮在浅灰底上。** 页面底色 `neutral.bg-2`；内容在白色圆角面板里，面板四周留 8px 缝，用 `card` 阴影，不用粗边框分区。
+2. **颜色只表达语义。** 界面几乎全是灰阶；色相只出现在标签、色带、图标与状态上，每种用途有固定色相（第 2.2 节）。主按钮是墨色，不是彩色。
+3. **标题不加粗。** 页面标题 24px、字重 regular；层级靠字号和位置。正文 14px。
+4. **每个可交互元素都有短促、一致的反馈。** 悬停 75ms 换底色，弹层 150ms 位移 4px 淡入；不做弹跳、上浮、发光。
+5. **键盘优先。** 主要操作都有快捷键，并在按钮、菜单里用 `kbd` 标出来。
+6. **企业密度。** 表格行高 44px、菜单项 32px，控件小而准；留白靠面板缝与分组间距，不靠放大控件。
 
 ## 2. 颜色
 
-| 用途         | 令牌                                               | 说明                                       |
-| ------------ | -------------------------------------------------- | ------------------------------------------ |
-| 内容面       | `canvas` #FFFFFF                                   | 对话、表格、表单、文档                     |
-| 页面与侧边栏 | `page` #F7F7F8                                     | 侧边栏与页面底色相同，内容面用白色浮在其上 |
-| 浅灰面       | `surface-muted` #F2F3F5                            | 用户气泡、表头、代码块、悬停               |
-| 分隔         | `hairline` #E5E7EB                                 | 1px；卡片边框、表格行线                    |
-| 文字         | `ink` / `secondary` / `tertiary`                   | 三级，不再增加                             |
-| 强调         | `primary` #174B7A                                  | 主按钮、链接、选中、焦点环                 |
-| 状态         | `success` / `warning` / `danger` 及其 `-soft` 底色 | 文字用深色，底色用浅色；不用纯红、纯绿     |
+### 2.1 角色
 
-- 状态色只表达状态：成功、需确认（琥珀）、错误。不用状态色做装饰。
-- 链接用 `primary`，悬停加下划线；正文里不用彩色加粗。
+每种色相（neutral、blue、green、purple、red、yellow）都有同一组角色，CSS 变量为 `--<色相>-<角色>`：
+
+| 角色                  | 用途                                       |
+| --------------------- | ------------------------------------------ |
+| `bg-1` / `bg-2`       | 整块浅底：页面、色带、备注块               |
+| `fill-1/2/3`          | 标签底、按钮底、悬停与选中（数字越大越深） |
+| `border-1/2/3`        | 描边：分隔、输入框、强调描边               |
+| `text-1` / `text-2`   | 在浅底上的深色字 / 强调字（链接、标签字）  |
+| `icon-1` / `icon-2`   | 图标                                       |
+| `solid-1` / `solid-2` | 实心按钮、徽标、进度（2 为悬停或按下）     |
+
+### 2.2 语义（固定，不挪用）
+
+| 用途                         | 取色                                                         |
+| ---------------------------- | ------------------------------------------------------------ |
+| 页面底 / 面板                | `neutral.bg-2` / `neutral.bg-1`                              |
+| 正文 / 次要 / 辅助           | `neutral.text-1` / `neutral.text-2` / `neutral.text-3`       |
+| 分隔线 / 输入框边 / 强调边   | `neutral.border-1` / `neutral.border-2` / `neutral.border-3` |
+| 悬停 / 选中                  | `neutral.fill-1` / `neutral.fill-2`                          |
+| 主按钮                       | `neutral.solid-1` 底、白字，悬停 `neutral.solid-2`           |
+| 链接、焦点环、正在进行       | blue（链接 `text-2`，焦点环 2px `solid-1`）                  |
+| 已完成、AI 建议与 AI 图标    | green                                                        |
+| 内部备注、测试数据、需要留意 | yellow                                                       |
+| 等待用户决定、状态事件色带   | blue `fill-1` 色带                                           |
+| 延误、错误、删除             | red                                                          |
+| 自定义类别（标签、模板类别） | purple 及其他色相，由用户选择                                |
+
+阶段状态：未开始 neutral、进行中 blue、已完成 green、已延误 red、已取消 neutral（删除线）。
+
+### 2.3 深色
+
+深色模式跟随系统（`prefers-color-scheme`），不提供手动切换。深色值同样来自 Plain：neutral 依次为 bg `#121113 / #1A191B`，fill `#232225 / #2B292D / #323035`，border `#2B292D / #323035 / #49474E`，text `#EEEEF0 / #B5B2BC / #7C7A85`；各色相取对应的深色角色值（实现见 theme.css 的 `@media (prefers-color-scheme: dark)`）。主按钮在深色下为浅底深字。
 
 ## 3. 字体
 
-- 界面统一无衬线：Inter + 苹方 / 微软雅黑。代码与 SAP 对象名（表、字段、函数）用等宽字体。
-- 字号只用第 0 节的 8 级。界面默认 14px；对话与文档正文 15px、行高 26px。
-- 字重只用 400 / 500 / 600。加粗正文只用于真正的关键词，一段里不超过一处。
+- 无衬线：Inter 可变字体（随项目部署，`@fontsource-variable/inter`）加苹方 / 微软雅黑；代码与 SAP 对象名用等宽字体。
+- 字号只用 7 级：11（快捷键）、12（表头、标签、说明）、14（界面与正文默认）、16（阅读正文、消息）、20（面板标题）、24（页面标题）、32（登录页等少数场合）。
+- 字重只用 regular 400 / medium 475 / semibold 550。页面标题用 regular；菜单选中项、表格主列、属性面板标签用 semibold。
 
 ## 4. 布局
 
-- **应用框架**：左侧边栏（246px，与页面同色，细线分隔），右侧内容区。内容区顶部是页面标题行（高 56–64px，标题 17px/600）。
-- **工作台页面**（开发清单、后台）：内容面白色，圆角 12px，细线边框；表格占满宽度。
-- **对话页面**：对话列居中，最大 760px；输入框与对话列同宽；成果面板在右侧，可拖动宽度。
-- **文档阅读**：正文最大 820px，目录在左。
-- 间距用 4 的倍数；区块之间 24/32px，组件内部 8/12px。
-- 窄屏（≤ 800px）：侧边栏收起为抽屉，页面边距 16px，头部按钮只留图标。
+### 4.1 外壳
+
+```
+┌──┬──────────────┬─────────────────────────────────────────┐
+│图│ 组织 · 项目 ▾ │ ┌─────────────────────────────────────┐ │
+│标│ 搜索 Ctrl K   │ │ 标题                       主按钮   │ │
+│栏│ ───────────  │ │ 页签 · 搜索 · 筛选 F                │ │
+│  │ 二级菜单      │ │ 内容                                │ │
+│56│ 248          │ └─────────────────────────────────────┘ │
+└──┴──────────────┴─────────────────────────────────────────┘
+        页面底 neutral.bg-2，白色面板圆角 12，四周 8px 缝
+```
+
+- **图标栏**（56px）：模块入口为 32×32 图标按钮（圆角 6），选中 `neutral.fill-2` 底；悬停时显示深色提示。顺序：工作台、开发管理、知识与资产、后台管理；底部为通知、帮助、头像菜单。
+- **二级菜单**（248px）：顶部是组织名与项目切换器、搜索；下面是当前模块的菜单。菜单项高 32、圆角 6，左图标右计数；未选中为 `text-2`，选中为 `fill-2` 底、`text-1`、semibold。分组标题 12px 次要色，可折叠。
+- **内容面板**：白底、圆角 12、`card` 阴影。没有顶栏和面包屑，页面标题与主操作在面板内。
+- **双面板**：打开一条记录时，二级菜单收起，列表收窄为 400px 的面板，记录在右侧大面板中打开（第 6.3 节）。
+- **窄屏**（< 900px）：图标栏保留，二级菜单收进抽屉；双面板改为单面板加返回按钮。
+
+### 4.2 后台管理的菜单分组
+
+组织（企业资料、客户与项目、用户与成员、角色与权限）· 系统与模型（SAP 系统、大模型、技术验证）· 运行与审计（提示词与流程、运行任务、审计日志）。
 
 ## 5. 组件
 
-| 组件          | 规范                                                                                                                                                                                |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 主按钮        | `primary` 底、白字、圆角 8px、高 36px；每个视图最多一个                                                                                                                             |
-| 次按钮        | 白底、`hairline-strong` 边框、`ink` 字；悬停 `surface-muted`                                                                                                                        |
-| 文字按钮      | 无边框，`secondary` 字，悬停 `surface-muted` 底                                                                                                                                     |
-| 输入框 / 下拉 | 高 36px、圆角 8px、`control` 边框；焦点为 2px `focus` 外框                                                                                                                          |
-| 表格          | 表头 `surface-muted`、12–13px 次要色、左对齐；行高 40px；行间 `hairline`；不画竖线。例外：开发清单这类按阶段分组的宽表，分组表头用组色 14% 浅底，列间用 60% 浅竖线（参照 Airtable） |
-| 卡片          | 白底、`hairline` 边框、圆角 12px、内边距 16px；无阴影                                                                                                                               |
-| 标签 / 徽章   | 圆角 6px、12px；状态用对应 `-soft` 底 + 深色字                                                                                                                                      |
-| 弹出层        | 白底、圆角 12px、`popover` 阴影；点击外部或 Esc 关闭                                                                                                                                |
-| 提示条        | 浅色底 + 深色字 + 左侧图标；不用整块红色                                                                                                                                            |
-| 空状态        | 一句标题 + 一句说明 + 一个操作，不道歉                                                                                                                                              |
+| 组件                | 规范                                                                                                                                                                   |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 主按钮              | 墨色底白字，高 34、圆角 6、内边距 8/12、可带左图标与 `kbd`；轻投影；每个视图一个                                                                                       |
+| 次按钮              | 白底、`border-2` 描边、正文色；悬停 `fill-1`                                                                                                                           |
+| 文字按钮 / 图标按钮 | 无底；悬停 `fill-1`，按下 `fill-2`；图标按钮 32×32                                                                                                                     |
+| 快捷键 `kbd`        | 11px、semibold、`text-2`，白底、1px `border-1`、圆角 4、最小宽 18                                                                                                      |
+| 输入框              | 高 32、圆角 6、`border-2`；聚焦为 2px `blue.solid-1` 外环；搜索框左侧放图标                                                                                            |
+| 页签                | 纯文字 14px，高 28、圆角 6；选中 `fill-2` 底；可带计数                                                                                                                 |
+| 标签                | 12px、圆角 4、内边距 2/6；色相底 `fill-1`、字 `text-1`；类别标签可带左侧小图标                                                                                         |
+| 头像                | 圆角 4 的方块，首字母白字，底色取用户色相的 `solid-1`；20 / 24 / 32 三种尺寸                                                                                           |
+| 表格                | 无竖线、无外框；表头 12px semibold `text-2`、高 36；行高 44、行间 `border-1`；主列 14px semibold；悬停 `fill-1`；行尾 ⋯ 菜单；列可显示隐藏、拖动顺序与宽度，布局可保存 |
+| 菜单                | 白底、圆角 10、`popover` 阴影、上下内边距 4；项高 30、圆角 6、12–14px，左侧小彩色图标、右侧说明与 `kbd`                                                                |
+| 提示                | 墨色底、浅字 12px、圆角 6，悬停 400ms 后出现                                                                                                                           |
+| 对话框              | 白底、圆角 12、`dialog` 阴影；遮罩淡入；面板从下方 16px、缩放 0.96 进入                                                                                                |
+| 属性面板            | 分组标题 14px semibold 加折叠箭头；每行“标签 / 值”高 40，标签 semibold；值可就地修改                                                                                   |
+| 空状态              | 居中：32×32 图标方块（`border-1` 描边）+ 14px semibold 标题 + 两行 `text-2` 说明 + 一个小次按钮                                                                        |
+| 色带                | 圆角 8、`<色相>.fill-1` 底，左侧小图标，一句话；用于状态事件、等待决定                                                                                                 |
+| 消息块              | 圆角 8、内边距 12/16；用户消息 `neutral.bg-2`，内部备注 `yellow.bg-2`；头像在块外左侧                                                                                  |
+| 浮动操作条          | 底部居中，白底、圆角 12、1px `border-1`、`floating` 阴影、内边距 4；项为文字按钮加 `kbd`，分组之间留缝                                                                 |
+| 展开式输入框        | 点击操作条的“回复”后，在操作条上方展开：标题行（对象、`esc`、×）、输入区（聚焦 2px 蓝环）、工具行、发送按钮（带 `Ctrl ↵`）                                             |
+| 消息提示            | 右下角，白底圆角 8、`popover` 阴影，3 秒后消失                                                                                                                         |
+| 骨架屏              | `fill-1` 块加流光，替代转圈                                                                                                                                            |
 
-## 6. 智能助手对话
+## 6. 页面模式
 
-参考 ChatGPT 与 Claude 的成熟做法：
+### 6.1 列表页（开发清单等）
 
-- **起始页**（新对话）：页面中部是问候语（`display`，如“今天要梳理哪个需求？”），下方是大圆角输入框（圆角 24px、`raised` 阴影），输入框下方是 2–3 个建议入口（文字按钮）。不显示其他内容。
-- **用户消息**：右对齐，`surface-muted` 底、圆角 18px、最大宽度 80%；作者与时间悬停时显示。
-- **助手回复**：左对齐、无气泡、无“设计助手”标签；正文 15/26。回复下方一行操作图标（复制、时间）。
-- **执行过程**：回复上方一行灰色文字（如“查阅 9 张表 · 编写 7 个章节 · 用时 3 分 57 秒 ›”），点击后展开为带边框的列表；运行中显示一行动态状态（见 [agent-conversation-ux.md](agent-conversation-ux.md)）。
-- **回复排版**：H2 17px/600、H3 15px/600，段间距 12px；表格同第 5 节；SAP 对象名用等宽行内代码（`surface-muted` 底）。
-- **需要用户决定**：提问卡片（白底、细线、圆角 12px），选项为单选列表，推荐项带“推荐”标签。已回答的问题收成“问题 → 选择”的紧凑记录。
-- **成果**：回复末尾一行成果条（图标 + “功能说明书 · 第 n 版” + “打开”），点击在右侧成果面板打开。
-- **成果面板**：标题栏（44px）下只有一行工具栏：目录开关、版本、本版改动、定稿、导出；其余空间都给文档。目录默认收起，展开后可拖动调整宽度（记在本机）。
-- **批注**：在文档或代码中选中文字 → “批注” → 写意见 → “加入对话”，引用原文与意见插入输入框，由用户确认后发送（参照 Claude）；不再单独保存批注列表，旧批注仍在面板底部显示。
-- **输入框**：白底、圆角 24px、`raised` 阴影；左侧“添加文件”，右侧依次为 SAP 系统、模型、发送按钮（`primary` 圆形）。底栏文字统一 12px。
+图标 + 24px 标题，右上主按钮；下一行是页签与右侧的“筛选 F”“显示 V”；再下一行是占满宽度的搜索框；然后是表格。批量操作出现在选中行之后的浮动操作条里。
 
-## 7. 可访问性
+### 6.2 设置总览（后台管理）
 
-- 正文对比度 ≥ 4.5:1，控件边框与图标 ≥ 3:1。
-- 所有可交互元素有可见焦点环（2px `focus`）；不能只用颜色区分状态。
-- 尊重“减少动态效果”设置。
+居中一栏，最大宽 720；分组标题 16px 加一句说明，下面两列卡片（图标方块 + 标题 + 一句说明），分组之间用 `border-1` 细线分隔。子页面为同样宽度的“标题 + 说明 + 内容”。
 
-## 8. 实现映射（`apps/web/src/assets/theme.css`）
+### 6.3 记录页（开发项与设计 / 开发助手）
 
-**强制规则（契约 1.13，`npm run check:architecture` 检查）**：`apps/web/src` 中只有 `theme.css` 可以写颜色、字体、字号、字重、间距和圆角的取值；其他样式一律引用下面的变量（可以用 `calc()`、`color-mix()` 组合变量，字号可以用 `em`）。模板里不用 Tailwind 调色板颜色类（如 `text-amber-700`），改用映射到令牌的类（`text-warning`、`text-success`、`text-destructive`、`text-muted-foreground` 等）。第三方内置组件 `components/ai-elements`、`components/ui` 除外。**改风格时只改本文件和 theme.css。**
+- **顶栏**（56px）：模块头像、阶段标签、编号与标题、更新时间；右侧为视图切换（对话 / 文档）、属性面板开关、⋯。
+- **时间线**（左）：
+  - 日期分隔。
+  - 系统事件一行 14px 灰字，可嵌标签。
+  - 用户消息为浅灰消息块；助手回复为正文排版，不套块。
+  - 等待决定为 blue 色带；成果为一条事件，配 green 按钮“打开”；内部备注为 yellow 消息块。
+- **浮动操作条**：回复 R · 上传资料 U · 更多 | 让助手修订 B。
+- **属性面板**（右，384px）：开发项基本信息、四个阶段（负责人、状态）、功能说明书、资料、其他对话；各分组可折叠，没有内容时显示空状态。
+- **文档视图**：功能说明书占满右侧大面板，一行工具栏加可拖动宽度的目录。
 
-颜色令牌的变量名沿用旧名，只换值：
+## 7. 动效
 
-| DESIGN 令牌                                           | CSS 变量                                                                                           |
-| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `page`                                                | `--bg`、`--nav-bg`                                                                                 |
-| `canvas`                                              | `--surface`                                                                                        |
-| `surface-muted`                                       | `--hover`、`--surface-muted`                                                                       |
-| `primary-soft`                                        | `--active`、`--nav-active`                                                                         |
-| `hairline`                                            | `--border`、`--nav-border`                                                                         |
-| `control`                                             | `--control-border`                                                                                 |
-| `ink`                                                 | `--text`、`--nav-text`                                                                             |
-| `secondary`                                           | `--muted`、`--nav-muted`                                                                           |
-| `tertiary`                                            | `--text-tertiary`                                                                                  |
-| `primary` / `primary-hover` / `on-primary`            | `--primary`、`--link` / `--primary-hover` / `--on-primary`                                         |
-| `focus`                                               | `--focus`、`--nav-focus`                                                                           |
-| `danger(-soft)` / `success(-soft)` / `warning(-soft)` | `--error-text`(`--error-bg`) / `--success-text`(`--success-bg`) / `--warning-text`(`--warning-bg`) |
-| 字体                                                  | `--font-sans`、`--font-mono`                                                                       |
-| 字号 / 字重                                           | `--font-size-xs`…`--font-size-3xl` / `--font-weight-regular`、`-medium`、`-semibold`               |
-| 间距                                                  | `--space-0-5`…`--space-16`                                                                         |
-| 圆角 / 阴影                                           | `--radius-xs`…`--radius-full` / `--shadow-raised`、`--shadow-popover`                              |
-| 布局                                                  | `--layout-sidebar`、`--layout-sidebar-narrow`、`--layout-sidebar-collapsed`、`--layout-drawer`     |
-| 图表                                                  | `--chart-1`…`--chart-3`（按系列顺序）                                                              |
-| 标签色                                                | `--tag-{blue,green,orange,red,purple,teal,yellow}-bg` / `-text`（开发项标签，用户可选）            |
-| 深色品牌区                                            | `--story-*`（首页横幅，迁移前保留深蓝）                                                            |
+- 只用三档时长：75ms（悬停与按下换色）、150ms（多数过渡、弹层）、300ms（对话框、折叠展开）；侧滑面板用 400ms 的 `panel` 曲线。
+- 弹层朝弹出方向位移 4px 加淡入；对话框从下方 16px、缩放 0.96 进入；折叠为高度动画；加载用骨架屏流光。
+- 列表和面板切换只做淡入，不做依次进场。
+- 系统开启“减少动态效果”时，只保留透明度变化。
 
-2026-10-16 已用脚本把全站写死值替换为最接近的令牌：颜色按用途在文字、背景、边框令牌中取最接近者，半透明色写作 `color-mix(in srgb, var(--令牌) N%, transparent)`；字号、间距、圆角取最接近的一级（小于 12px 的字号统一升到 12px）。
+## 8. 可访问性
 
-## 9. 迁移计划
+正文对比度 ≥ 4.5:1，控件边框与图标 ≥ 3:1；所有可交互元素有可见焦点环（2px `blue.solid-1`）；不能只用颜色区分状态（标签带文字）；图标按钮有可读名称；快捷键不抢输入框里的按键。
 
-| 批次 | 范围                                                                      | 状态                            |
-| ---- | ------------------------------------------------------------------------- | ------------------------------- |
-| 0    | 全站写死值替换为令牌，并由检查器禁止新增（契约 1.13）                     | 2026-10-16 完成                 |
-| 1    | 令牌（`theme.css`）、侧边栏、智能助手起始页与对话页                       | 2026-10-16 完成                 |
-| 2    | 开发项工作区头部与成果面板、FSD 文档阅读：成果平铺不套卡片（参照 Claude） | 2026-10-17 完成                 |
-| 3    | 首页、开发清单（表格与筛选）：开发清单为分组表格 + 分段页签，首页待办     | 部分完成（开发清单 2026-10-17） |
-| 4    | 后台管理（组织、成员、模型、SAP 连接、审计）：按第 5 节重排版式           | 待办                            |
-| 5    | 登录页：去掉 `--story-*` 深色区，改为居中单卡（参照 Vercel）              | 2026-10-17 完成                 |
+## 9. 实现映射
 
-第 2～5 批只调整版式和组件用法，取值仍只用令牌。
+`apps/web/src/assets/theme.css` 是唯一可以写颜色、字体、字号、字重、间距、圆角、阴影、时长取值的文件（契约 1.13、1.15）；其他样式一律引用变量（可用 `calc()`、`color-mix()` 组合变量，字号可用 `em`）。
 
-每批完成后在设计、开发两个阶段与窄屏下实际查看；提交前运行 `npm run check:architecture`、`npm run check`、`npm run test:unit`。
+| 规范               | CSS 变量                                                                                                                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 色相角色           | `--neutral-bg-1` … `--yellow-solid-2`                                                                                                                                                       |
+| 语义别名           | `--page`、`--panel`、`--text`、`--text-muted`、`--text-subtle`、`--border`、`--border-strong`、`--hover`、`--selected`、`--primary`、`--primary-hover`、`--on-primary`、`--link`、`--focus` |
+| 字体 / 字号 / 字重 | `--font-sans`、`--font-mono` / `--font-size-2xs` … `--font-size-2xl` / `--font-weight-regular`、`-medium`、`-semibold`                                                                      |
+| 间距 / 圆角 / 阴影 | `--space-*` / `--radius-*` / `--shadow-card`、`-popover`、`-dialog`、`-floating`                                                                                                            |
+| 动效               | `--motion-fast`、`--motion-base`、`--motion-slow`、`--motion-panel`                                                                                                                         |
+| 布局               | `--layout-rail`、`--layout-nav`、`--layout-gap`、`--layout-list-panel`、`--layout-details`                                                                                                  |
+
+公共组件放 `apps/web/src/components/`；开发环境提供组件展示页，集中展示全部组件与状态，浅色与深色并排。
 
 ## 10. 不要做
 
-- 不要新增颜色值；不要用渐变、发光、彩色大面积背景。
-- 不要给卡片同时加边框和阴影；不要在卡片里再套卡片。
-- 不要用整块红色表达错误；不要用状态色做装饰。
-- 不要在对话里给助手加头像或气泡；不要默认展开执行过程。
-- 不要把第三方品牌的字体、Logo 或名称用到产品里。
+- 不新增取值；不用渐变、发光、上浮动效；不给卡片同时加粗边框和阴影；不在卡片里再套卡片。
+- 不用状态色做装饰；色相按第 2.2 节的语义使用。
+- 不复制 Plain 的标志、品牌绿、商业字体与文案。
 
-## 11. 主题
+## 11. 迁移
 
-用户 2026-10-16 决定：提供一键换主题，主题在工作台可承载的范围内完整复刻 awesome-design-md 的视觉语言（颜色、字体、字号节奏、组件形状、层次），不只换颜色。计划见 [主题系统实施计划](../plans/2026-10-16-theme-system.md)，契约 1.14。入口：右上角头像 › 个人设置 › 外观。
+按 [重写计划](../plans/2026-10-17-plain-style-redesign.md) 分批进行，每批完成后在浅色、深色与 1280 / 1440 / 1920 / 390 宽度下实际查看，并运行 `npm run check`、`npm run test:unit`。
 
-| 主题           | 来源                         | 特点                                                                                                   |
-| -------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------ |
-| 海军蓝（默认） | 本规范                       | 中性白底、海军蓝强调，对话排版参考 ChatGPT / Claude                                                    |
-| Airbnb         | awesome-design-md `airbnb`   | 温暖宽松：Rausch 红强调、8px 控件、14px 卡片、胶囊标签与导航、单层柔和阴影、粗标题；贴边白色侧边栏     |
-| Airtable       | awesome-design-md `airtable` | 克制的编辑风：深墨色文字与按钮、蓝色链接、色块代替阴影、细线输入框、奶油色页签与选中态、较轻的标题字重 |
-
-- **主题 × 模式**：每个主题有浅色与深色；模式为浅色、深色或跟随系统。两份来源只有浅色，深色按各自的色彩逻辑推导（Airtable 以其自带的深色面 `#181d26` 为基础）。
-- **存储**：选择存账号（`app.user_preference`，`GET/PUT /api/preferences`），并在本机缓存；首屏用缓存，登录后以账号为准。
-- **字体**：原字体为商业授权，用开源字体替代并随项目部署（npm `@fontsource-variable`，OFL）：Airbnb → Plus Jakarta Sans，Airtable 与海军蓝 → Inter；只在选中该主题时加载。中文回退苹方 / 微软雅黑。
-- **可访问性**：Airbnb 的 Rausch `#ff385c` 配白字只有 3.5:1，实心按钮改用其按下色 `#e00b41`（4.9:1），Rausch 保留给焦点与点缀。强调文字一律用 `--link`，不用 `--primary`（深色主题中实心色作文字对比度不足）。
-- **组件预览**：外观页下方用真实的公共组件（按钮、输入、页签、标签、提示、表格、对话气泡与输入框）展示当前主题，切换即可对照。
-
-**实现**：
-
-- 默认主题写在 `theme.css`（`:root` 与 `[data-ui-theme='navy']`，深色为 `[data-ui-theme='navy'][data-ui-mode='dark']`）；其他主题各一个主题包 `assets/themes/<主题>.css`，含 `[data-ui-theme='<主题>']` 与 `[data-ui-theme='<主题>'][data-ui-mode='dark']` 两块。
-- `services/theme.ts` 把选择写到 `<html data-ui-theme data-ui-mode>`，按需加载字体并与账号同步。预览卡片把同样的属性设在卡片上，展示各自的配色、字体与形状。
-- 组件令牌（第 12 节）在 `:root, [data-ui-theme]` 上声明，所以任何带主题属性的元素都会按自己的主题重新计算。
-- 表格组件（vxe-table）的颜色变量映射到令牌（`workbench-table.css`）；内置的 ai-elements / ui 组件的圆角映射到组件令牌（`elements.css`）。
-- **新增主题**：新建 `assets/themes/<主题>.css`，设置第 8 节全部颜色令牌（浅色、深色各一份）与需要改变的组件令牌，在 `main.ts` 引入，在 `services/theme.ts` 的 `THEMES` 登记名称、说明与字体；`tests/unit/web/theme.test.mjs` 会检查颜色令牌是否齐全、主题包是否改变了组件形状。
-
-## 12. 组件令牌
-
-公共组件只读组件令牌；组件令牌默认指向语义令牌（第 8 节），主题包覆盖它们来改变形状。页面里的按钮、输入框、卡片、页签、表格、徽标、弹窗样式已按选择器语义改为引用组件令牌（2026-10-16）。
-
-| 组件            | 令牌                                                                                                                                                                                                               |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 标题            | `--font-display`、`--heading-weight`、`--heading-letter-spacing`、`--page-title-size`、`--section-title-size`                                                                                                      |
-| 按钮            | `--button-height`、`--button-padding-x`、`--button-radius`、`--button-font-size`、`--button-font-weight`、`--button-shadow`、`--button-primary-{bg,text,hover-bg}`、`--button-secondary-{bg,text,border,hover-bg}` |
-| 输入框          | `--input-height`、`--input-radius`、`--input-bg`、`--input-text`、`--input-border`、`--input-border-width`、`--input-border-bottom-width`、`--input-focus-border`                                                  |
-| 卡片            | `--card-bg`、`--card-border`、`--card-border-width`、`--card-radius`、`--card-shadow`、`--card-padding`                                                                                                            |
-| 页签（`.tabs`） | `--tab-bar-border`、`--tab-color`、`--tab-active-color`、`--tab-active-bg`、`--tab-indicator`、`--tab-indicator-height`、`--tab-radius`、`--tab-font-weight`                                                       |
-| 表格            | `--table-header-bg`、`--table-header-text`、`--table-header-weight`、`--table-border`、`--table-row-hover`、`--table-row-height`                                                                                   |
-| 徽标            | `--badge-radius`、`--badge-font-weight`                                                                                                                                                                            |
-| 页面框架        | `--page-bg`、`--topbar-{bg,text,muted,border,height}`、`--sidebar-{bg,border,radius,inset,shadow}`、`--nav-item-{radius,active-bg,active-text}`                                                                    |
-| 弹窗            | `--dialog-radius`、`--dialog-shadow`                                                                                                                                                                               |
-| 对话            | `--bubble-{bg,text,radius}`、`--composer-{radius,border,shadow}`                                                                                                                                                   |
+| 批次 | 范围                                               | 状态            |
+| ---- | -------------------------------------------------- | --------------- |
+| 0    | 规范 2.0、契约 1.15、重写计划                      | 2026-10-17 完成 |
+| 1    | 令牌、基础组件与组件展示页；删除主题换肤与旧主题包 | 待办            |
+| 2    | 外壳：图标栏、二级菜单、内容面板、命令面板与快捷键 | 待办            |
+| 3    | 开发清单（TanStack Table）与清单 + 详情双面板      | 待办            |
+| 4    | 记录页：开发项详情与设计 / 开发助手合一            | 待办            |
+| 5    | 后台管理：设置总览与子页面                         | 待办            |
+| 6    | 首页、知识与资产、登录与修改密码                   | 待办            |
+| 7    | 收尾：删除旧样式与 vxe-table，全站验收             | 待办            |

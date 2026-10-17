@@ -1,6 +1,8 @@
 # 仓库目录与依赖契约
 
-版本：1.14。日期：2026-10-16。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.15。日期：2026-10-17。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.15 变更：依据[重写计划](../plans/2026-10-17-plain-style-redesign.md)（用户 2026-10-17 确认），前端界面层参照 Plain 重写，规范为 [DESIGN.md 2.0](../specs/DESIGN.md)。只保留一套外观（深色跟随系统），取消 1.14 的主题换肤：`apps/web/src/assets/themes/` 与主题包在第 1 批删除，届时 1.13 的检查规则不再放宽到该目录，`assets/theme.css` 恢复为唯一允许写颜色、字体、字号、字重、间距、圆角取值的文件，并新增阴影与动效时长同样只能取自令牌；前端不再调用 `GET/PUT /api/preferences`，该接口与 `app.user_preference` 的删除另行经用户确认。前端新增依赖 `@tanstack/vue-table`（开发清单表格），全部迁移后删除 `vxe-table`、`vxe-pc-ui`。公共界面组件归 `apps/web/src/components/`；组件展示页只在开发环境可用。后端、契约包与前端数据逻辑层不在本次重写范围内。
 
 1.14 变更：依据[主题系统实施计划](../plans/2026-10-16-theme-system.md)（用户 2026-10-16 确认），前端支持用户一键切换主题。主题包放 `apps/web/src/assets/themes/<主题>.css`，每个主题一个文件；它与 `assets/theme.css` 同为允许写颜色、字体、字号、字重、间距、圆角取值的文件（1.13 的检查规则同步放宽到该目录）。主题字体以 npm 字体包按需加载，不引用外网字体。用户的主题与明暗模式存 `app.user_preference`，归 platform（与账号、密码同层），接口为 `GET/PUT /api/preferences`。
 
