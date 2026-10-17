@@ -1,97 +1,78 @@
 <script setup lang="ts">
-import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import AppIcon from './AppIcon.vue';
+import { useRouter } from 'vue-router';
+import { Keyboard, LogOut, Settings } from '@lucide/vue';
+import BaseAvatar from './base/BaseAvatar.vue';
+import BaseMenu from './base/BaseMenu.vue';
+import BaseMenuItem from './base/BaseMenuItem.vue';
+import BaseMenuSeparator from './base/BaseMenuSeparator.vue';
 import { identity } from '../services/session';
+// The account menu at the foot of the icon rail.
 defineProps<{ busy: boolean }>();
-const emit = defineEmits<{ logout: [] }>();
-const route = useRoute();
-const open = ref(false);
-const root = ref<HTMLElement>();
-const trigger = ref<HTMLButtonElement>();
-function close(restoreFocus = true) {
-  if (!open.value) return;
-  open.value = false;
-  if (restoreFocus) trigger.value?.focus();
-}
-async function show(last = false) {
-  open.value = true;
-  await nextTick();
-  const items = root.value?.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled)');
-  items?.[last ? items.length - 1 : 0]?.focus();
-}
-function keydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') {
-    event.preventDefault();
-    close();
-    return;
-  }
-  if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
-  event.preventDefault();
-  const items = Array.from(
-    root.value?.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled)') ?? [],
-  );
-  const current = items.indexOf(document.activeElement as HTMLElement);
-  const index =
-    event.key === 'Home'
-      ? 0
-      : event.key === 'End'
-        ? items.length - 1
-        : (current + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
-  items[index]?.focus();
-}
-function outside(event: PointerEvent) {
-  if (!root.value?.contains(event.target as Node)) close(false);
-}
-function focusout(event: FocusEvent) {
-  if (!root.value?.contains(event.relatedTarget as Node | null)) close(false);
-}
-watch(
-  () => route.fullPath,
-  () => close(),
-);
-onMounted(() => document.addEventListener('pointerdown', outside));
-onUnmounted(() => document.removeEventListener('pointerdown', outside));
+const emit = defineEmits<{ logout: []; shortcuts: [] }>();
+const router = useRouter();
 </script>
 <template>
-  <div ref="root" class="user-menu" @focusout="focusout">
-    <button
-      ref="trigger"
-      class="avatar avatar-small user-menu-trigger"
-      aria-label="账户菜单"
-      aria-haspopup="menu"
-      aria-controls="account-menu"
-      :aria-expanded="open"
-      @click="open ? close() : show()"
-      @keydown.down.prevent="show()"
-      @keydown.up.prevent="show(true)"
-      @keydown.esc.prevent="close()"
-    >
-      {{ identity?.user.displayName.slice(0, 1) }}
-    </button>
-    <div v-if="open" class="user-menu-panel">
-      <div class="user-menu-profile">
-        <span class="avatar">{{ identity?.user.displayName.slice(0, 1) }}</span>
+  <BaseMenu side="right" align="end">
+    <template #trigger>
+      <button type="button" class="account" aria-label="账户菜单">
+        <BaseAvatar :name="identity?.user.displayName ?? '?'" :size="24" />
+      </button>
+    </template>
+    <div class="profile">
+      <BaseAvatar :name="identity?.user.displayName ?? '?'" :size="32" />
+      <div>
         <strong>{{ identity?.user.displayName }}</strong>
-        <span>{{ identity?.user.loginName }}</span>
-        <span>{{ identity?.organization.name }}</span>
-      </div>
-      <div id="account-menu" role="menu" aria-label="账户操作" @keydown="keydown">
-        <RouterLink to="/settings" role="menuitem" class="user-menu-item" @click="close()"
-          ><AppIcon name="settings" :size="17" />个人设置</RouterLink
-        >
-        <button
-          role="menuitem"
-          class="user-menu-item"
-          :disabled="busy"
-          @click="
-            close();
-            emit('logout');
-          "
-        >
-          <AppIcon name="logout" :size="17" />{{ busy ? '正在退出…' : '退出登录' }}
-        </button>
+        <span>{{ identity?.user.loginName }} · {{ identity?.organization.name }}</span>
       </div>
     </div>
-  </div>
+    <BaseMenuSeparator />
+    <BaseMenuItem @select="router.push('/settings')"
+      ><template #icon><Settings /></template>个人设置</BaseMenuItem
+    >
+    <BaseMenuItem kbd="?" @select="emit('shortcuts')"
+      ><template #icon><Keyboard /></template>键盘快捷键</BaseMenuItem
+    >
+    <BaseMenuSeparator />
+    <BaseMenuItem :disabled="busy" @select="emit('logout')"
+      ><template #icon><LogOut /></template>{{ busy ? '正在退出…' : '退出登录' }}</BaseMenuItem
+    >
+  </BaseMenu>
 </template>
+<style scoped>
+.account {
+  display: inline-grid;
+  place-items: center;
+  width: var(--control-icon);
+  height: var(--control-icon);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-6);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color var(--motion-fast);
+}
+.account:hover,
+.account[data-state='open'] {
+  background: var(--hover);
+}
+.account:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus);
+}
+.profile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 240px;
+  padding: var(--space-2) var(--space-3);
+}
+.profile strong {
+  display: block;
+  font-size: var(--font-14);
+  font-weight: var(--weight-550);
+}
+.profile span {
+  color: var(--text-muted);
+  font-size: var(--font-12);
+}
+</style>

@@ -1,5 +1,5 @@
 /* Conversation-first workspace. The application navigation remains shared. */
-.main-content:has(.item-workspace) {
+.shell-content:has(.item-workspace) {
   padding: 0;
   max-width: none;
   display: flex;

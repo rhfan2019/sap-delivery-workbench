@@ -89,3 +89,45 @@ export const home: MenuItem = {
   path: '/home',
 };
 export const menus = [home, ...groups.flatMap((group) => group.items)];
+
+// The shell (DESIGN.md 4.1): the icon rail lists modules; the secondary menu shows the current
+// module's items, in sections where a module has many (DESIGN.md 4.2).
+export interface Module {
+  id: string;
+  label: string;
+  icon: string;
+  path: string;
+  sections: { label?: string; items: MenuItem[] }[];
+}
+const pick = (ids: string[]) =>
+  ids.map((id) => menus.find((m) => m.id === id)).filter((m): m is MenuItem => !!m);
+export const modules: Module[] = [
+  { id: 'home', label: '工作台', icon: 'grid', path: home.path, sections: [{ items: [home] }] },
+  ...groups.map((group) => ({
+    id: group.id,
+    label: group.label,
+    icon: group.icon,
+    path: group.items[0].path,
+    sections:
+      group.id === 'admin'
+        ? [
+            {
+              label: '组织',
+              items: pick(['organization-profile', 'organization', 'members', 'permissions']),
+            },
+            {
+              label: '系统与模型',
+              items: pick(['connections', 'models', 'technical-verification']),
+            },
+            { label: '运行与审计', items: pick(['workflows', 'tasks', 'audit']) },
+          ]
+        : [{ items: group.items }],
+  })),
+];
+// The module a route belongs to: development items and their assistants belong to delivery.
+export function moduleOf(path: string): Module {
+  if (path.includes('/development-items/')) return modules.find((m) => m.id === 'delivery')!;
+  return (
+    modules.find((m) => m.sections.some((s) => s.items.some((i) => i.path === path))) ?? modules[0]
+  );
+}

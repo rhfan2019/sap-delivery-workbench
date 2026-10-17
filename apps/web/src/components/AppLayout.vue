@@ -1,14 +1,26 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useMediaQuery } from '@vueuse/core';
+import { Check, ChevronsUpDown, Menu, PanelLeft, Search, Star } from '@lucide/vue';
 import AppIcon from './AppIcon.vue';
 import ConfirmDialog from './ConfirmDialog.vue';
+import CommandPalette from './CommandPalette.vue';
 import UserMenu from './UserMenu.vue';
-import { groups, menus } from '../features/navigation';
+import BaseDialog from './base/BaseDialog.vue';
+import BaseIconButton from './base/BaseIconButton.vue';
+import BaseKbd from './base/BaseKbd.vue';
+import BaseMenu from './base/BaseMenu.vue';
+import BaseMenuItem from './base/BaseMenuItem.vue';
+import BaseMenuSeparator from './base/BaseMenuSeparator.vue';
+import BaseNavItem from './base/BaseNavItem.vue';
+import BaseToaster from './base/BaseToaster.vue';
+import { modules, moduleOf } from '../features/navigation';
 import { api, identity } from '../services/session';
+import { useShortcut } from '../services/shortcuts';
 import {
   projects,
-  currentProject as selected,
+  currentProject,
   defaultProject,
   projectError,
   loadProjects,
@@ -16,68 +28,48 @@ import {
   setDefaultProject,
   leaveDelivery,
 } from '../services/projectContext';
+
+// The shell (DESIGN.md 4.1): icon rail, the current module's menu, and the content panel. A record
+// page (a development item and its assistants) folds the menu away, as Plain does for a thread.
 const route = useRoute();
 const router = useRouter();
-function preference(key: string, fallback: string) {
+const module = computed(() => moduleOf(route.path));
+const record = computed(() => route.path.includes('/development-items/'));
+const narrow = useMediaQuery('(max-width: 760px)');
+function stored(key: string) {
   try {
-    return localStorage.getItem(key) ?? fallback;
+    return localStorage.getItem(key);
   } catch {
-    return fallback;
+    return null;
   }
 }
-const collapsed = ref(preference('sidebar', 'wide') === 'narrow');
-const mobile = ref(false);
-const search = ref('');
-const expanded = ref<Record<string, boolean>>({ delivery: true, knowledge: false, admin: false });
+const menuHidden = ref(stored('shell-menu') === 'hidden');
+const mobileMenu = ref(false);
+const palette = ref(false);
+const shortcuts = ref(false);
 const logoutError = ref('');
 const loggingOut = ref(false);
-const current = computed(
-  () =>
-    menus.find((m) => route.path === m.path)?.label ??
-    (/\/development-items\/[^/]+\/design$/.test(route.path)
-      ? '设计助手'
-      : /\/development-items\/[^/]+\/development$/.test(route.path)
-        ? '开发助手'
-        : route.path.startsWith('/projects/')
-          ? '项目概览'
-          : route.path === '/settings'
-            ? '个人设置'
-            : '页面导航'),
+const projectName = computed(
+  () => projects.value.find((p) => p.id === currentProject.value)?.name ?? '选择项目',
 );
-const results = computed(() =>
-  menus.filter((m) => m.label.toLowerCase().includes(search.value.trim().toLowerCase())),
-);
-watch(collapsed, () => {
+watch(menuHidden, (hidden) => {
   try {
-    localStorage.setItem('sidebar', collapsed.value ? 'narrow' : 'wide');
+    localStorage.setItem('shell-menu', hidden ? 'hidden' : 'shown');
   } catch {
-    /* preferences are optional */
+    // Storage may be refused; the choice then lasts for this page only.
   }
 });
 watch(
   () => route.path,
   () => {
-    mobile.value = false;
-    search.value = '';
-    for (const group of groups) {
-      if (group.items.some((i) => i.path === route.path)) expanded.value[group.id] = true;
-    }
+    mobileMenu.value = false;
+    void loadProjects();
   },
   { immediate: true },
 );
-watch(
-  () => route.path,
-  async () => {
-    await loadProjects();
-  },
-  { immediate: true },
-);
-function toggleGroup(id: string) {
-  if (collapsed.value) {
-    collapsed.value = false;
-    expanded.value[id] = true;
-  } else expanded.value[id] = !expanded.value[id];
-}
+useShortcut('Ctrl+K', () => (palette.value = true));
+useShortcut('[', () => (menuHidden.value = !menuHidden.value));
+useShortcut('?', () => (shortcuts.value = true));
 async function logout() {
   if (leaveDelivery.value && !(await leaveDelivery.value())) return;
   loggingOut.value = true;
@@ -92,161 +84,329 @@ async function logout() {
     loggingOut.value = false;
   }
 }
+const keys = [
+  ['Ctrl+K', '打开命令面板：跳转页面、切换项目'],
+  ['[', '收起或展开二级菜单'],
+  ['?', '查看键盘快捷键'],
+  ['Esc', '关闭弹层、对话框与输入框'],
+];
 </script>
 <template>
   <ConfirmDialog />
-  <div class="app-shell" :class="{ collapsed, 'mobile-open': mobile }">
-    <a class="skip-link" href="#main-content">跳转到主要内容</a
-    ><button v-if="mobile" class="nav-scrim" aria-label="关闭导航" @click="mobile = false"></button>
-    <aside class="sidebar" aria-label="主导航">
-      <div class="sidebar-brand">
-        <RouterLink to="/home" class="brand"
-          ><span class="brand-mark">S<span>↗</span></span
-          ><span class="wide-only"
-            >SAP 智能交付<span class="brand-sub">DELIVERY WORKBENCH</span
-            ><span class="brand-organization" :title="identity?.organization.name">{{
-              identity?.organization.name
-            }}</span></span
-          ></RouterLink
-        ><button
-          class="icon-button collapse-toggle"
-          :aria-label="collapsed ? '展开侧栏' : '收起侧栏'"
-          @click="collapsed = !collapsed"
-        >
-          <AppIcon :name="collapsed ? 'expand' : 'collapse'" /></button
-        ><button class="icon-button mobile-close" aria-label="关闭导航" @click="mobile = false">
-          <AppIcon name="x" />
-        </button>
-      </div>
-      <div class="sidebar-user">
-        <span class="avatar">{{ identity?.user.displayName.slice(0, 1) }}</span>
-        <div class="wide-only">
-          <small>你好，欢迎回来</small><strong>{{ identity?.user.displayName }}</strong>
-        </div>
-        <span class="online-dot wide-only" title="已登录"></span>
-      </div>
-      <div class="nav-search" v-if="!collapsed">
-        <AppIcon name="search" :size="17" /><input
-          v-model="search"
-          aria-label="搜索菜单"
-          placeholder="搜索菜单…"
-        /><span v-if="!search" class="search-hint">⌕</span
-        ><button v-else class="icon-button" aria-label="清除搜索" @click="search = ''">
-          <AppIcon name="x" :size="14" />
-        </button>
-      </div>
-      <button
-        v-else
-        class="nav-search icon-search"
-        aria-label="搜索菜单"
-        @click="collapsed = false"
-      >
-        <AppIcon name="search" />
-      </button>
-      <nav class="nav-scroll">
-        <template v-if="search.trim()"
-          ><p class="nav-caption">搜索结果 · {{ results.length }}</p>
-          <RouterLink
-            v-for="item in results"
-            :key="item.id"
-            :to="item.path"
-            class="nav-item"
-            :class="{ active: route.path === item.path }"
-            ><AppIcon :name="item.icon" /><span>{{ item.label }}</span></RouterLink
-          >
-          <p v-if="!results.length" class="search-empty">
-            未找到匹配菜单，试试“项目”或“测试”。
-          </p></template
-        ><template v-else>
-          <RouterLink
-            to="/home"
-            class="nav-item home-link"
-            :class="{ active: route.path === '/home' }"
-            title="工作台"
-            ><AppIcon name="grid" /><span class="wide-only">工作台</span
-            ><span class="nav-dot wide-only" v-if="route.path === '/home'"></span
-          ></RouterLink>
-          <p class="nav-caption wide-only">工作空间</p>
-          <section v-for="group in groups" :key="group.id" class="nav-group">
-            <button
-              class="nav-item group-button"
-              :class="{ 'group-active': group.items.some((i) => i.path === route.path) }"
-              :title="group.label"
-              :aria-expanded="!collapsed && expanded[group.id]"
-              @click="toggleGroup(group.id)"
-            >
-              <AppIcon :name="group.icon" /><span class="wide-only">{{ group.label }}</span
-              ><AppIcon
-                class="group-chevron wide-only"
-                :class="{ rotated: expanded[group.id] }"
-                name="chevron"
-                :size="15"
-              />
-            </button>
-            <div v-if="!collapsed && expanded[group.id]" class="subnav">
-              <RouterLink
-                v-for="item in group.items"
-                :key="item.id"
-                :to="item.path"
-                class="subnav-item"
-                :class="{ active: route.path === item.path }"
-                ><span>{{ item.label }}</span
-                ><span v-if="route.path === item.path" class="subnav-dot"></span
-              ></RouterLink>
-            </div>
-          </section>
-        </template>
-      </nav>
+  <div
+    class="shell"
+    :class="{ 'menu-hidden': menuHidden || record, 'menu-open': mobileMenu, record }"
+  >
+    <a class="skip-link" href="#main-content">跳转到主要内容</a>
+    <aside class="rail" aria-label="模块">
+      <RouterLink to="/home" class="mark" aria-label="SAP 智能交付工作台">S</RouterLink>
+      <BaseIconButton v-if="narrow" label="打开菜单" side="right" @click="mobileMenu = !mobileMenu"
+        ><Menu
+      /></BaseIconButton>
+      <BaseIconButton
+        v-for="m in modules"
+        :key="m.id"
+        :label="m.label"
+        :to="m.path"
+        :pressed="module.id === m.id"
+        side="right"
+        ><AppIcon :name="m.icon" :size="18"
+      /></BaseIconButton>
+      <span class="rail-space"></span>
+      <BaseIconButton label="搜索与跳转" kbd="Ctrl+K" side="right" @click="palette = true"
+        ><Search
+      /></BaseIconButton>
+      <UserMenu :busy="loggingOut" @logout="logout" @shortcuts="shortcuts = true" />
     </aside>
-    <div class="main-shell">
-      <header class="topbar">
-        <div class="breadcrumb">
-          <button
-            class="icon-button mobile-menu"
-            aria-label="打开导航"
-            @click="
-              mobile = true;
-              collapsed = false;
-            "
+    <button
+      v-if="mobileMenu"
+      type="button"
+      class="scrim"
+      aria-label="关闭菜单"
+      @click="mobileMenu = false"
+    ></button>
+    <nav class="menu" :aria-label="module.label + '菜单'">
+      <header class="menu-head">
+        <BaseMenu align="start">
+          <template #trigger>
+            <button type="button" class="project" :title="identity?.organization.name">
+              <span class="project-text"
+                ><strong>{{ projectName }}</strong
+                ><small>{{ identity?.organization.name }}</small></span
+              ><ChevronsUpDown class="project-chevron" />
+            </button>
+          </template>
+          <BaseMenuItem
+            v-for="p in projects"
+            :key="p.id"
+            :note="p.id === defaultProject ? '默认' : undefined"
+            @select="selectProject(p.id)"
+            ><template #icon
+              ><Check :style="{ visibility: p.id === currentProject ? 'visible' : 'hidden' }"
+            /></template>
+            {{ p.name }}</BaseMenuItem
           >
-            <AppIcon name="menu" /></button
-          ><AppIcon name="building" :size="17" /><span class="organization-name">{{
-            identity?.organization.name
-          }}</span
-          ><span class="breadcrumb-slash">/</span><strong>{{ current }}</strong>
-        </div>
-        <div class="topbar-right">
-          <label class="project-selector"
-            ><AppIcon name="folder" :size="16" /><select
-              :value="selected"
-              aria-label="切换项目"
-              @change="
-                async (event: Event) => {
-                  const control = event.target as HTMLSelectElement;
-                  await selectProject(control.value);
-                  control.value = selected;
-                }
-              "
-            >
-              <option value="">{{ projects.length ? '选择项目' : '暂无参与项目' }}</option>
-              <option v-for="project in projects" :key="project.id" :value="project.id">
-                {{ project.name }}
-              </option>
-            </select></label
-          ><button
-            class="text-button"
-            :disabled="!selected || selected === defaultProject"
-            @click="setDefaultProject"
+          <BaseMenuSeparator v-if="projects.length" />
+          <BaseMenuItem
+            tone="yellow"
+            :disabled="!currentProject || currentProject === defaultProject"
+            @select="setDefaultProject"
+            ><template #icon><Star /></template
+            >{{
+              currentProject && currentProject === defaultProject ? '已是默认项目' : '设为默认项目'
+            }}</BaseMenuItem
           >
-            {{ selected && selected === defaultProject ? '默认项目' : '设为默认' }}</button
-          ><span v-if="projectError" class="error-note" role="alert">{{ projectError }}</span
-          ><span class="topbar-divider"></span><UserMenu :busy="loggingOut" @logout="logout" />
-        </div>
+        </BaseMenu>
+        <BaseIconButton
+          label="收起菜单"
+          kbd="["
+          size="sm"
+          @click="narrow ? (mobileMenu = false) : (menuHidden = true)"
+          ><PanelLeft
+        /></BaseIconButton>
       </header>
+      <p v-if="projectError" class="menu-error" role="alert">{{ projectError }}</p>
+      <h2 class="menu-title">{{ module.label }}</h2>
+      <section v-for="(section, i) in module.sections" :key="i" class="menu-section">
+        <h3 v-if="section.label">{{ section.label }}</h3>
+        <BaseNavItem
+          v-for="item in section.items"
+          :key="item.id"
+          :to="item.path"
+          :label="item.label"
+          :active="route.path === item.path"
+          ><template #icon><AppIcon :name="item.icon" :size="16" /></template
+        ></BaseNavItem>
+      </section>
+    </nav>
+    <main id="main-content" class="shell-content">
+      <span v-if="menuHidden && !record && !narrow" class="show-menu"
+        ><BaseIconButton label="展开菜单" kbd="[" size="sm" @click="menuHidden = false"
+          ><PanelLeft /></BaseIconButton
+      ></span>
       <p v-if="logoutError" class="error-note" role="alert">{{ logoutError }}</p>
-      <main id="main-content" class="main-content">
-        <RouterView :key="route.meta.keepOnQuery ? route.path : route.fullPath" />
-      </main>
-    </div>
+      <RouterView :key="route.meta.keepOnQuery ? route.path : route.fullPath" />
+    </main>
+    <CommandPalette v-model:open="palette" />
+    <BaseDialog v-model:open="shortcuts" title="键盘快捷键">
+      <dl class="keys">
+        <template v-for="[k, text] in keys" :key="k">
+          <dt><BaseKbd :keys="k" /></dt>
+          <dd>{{ text }}</dd>
+        </template>
+      </dl>
+    </BaseDialog>
+    <BaseToaster />
   </div>
 </template>
+<style scoped>
+.shell {
+  display: grid;
+  grid-template-columns: var(--layout-rail) var(--layout-nav) minmax(0, 1fr);
+  height: 100dvh;
+  background: var(--page);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--font-14);
+  line-height: var(--leading-20);
+}
+.menu-hidden {
+  grid-template-columns: var(--layout-rail) 0 minmax(0, 1fr);
+}
+.skip-link {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 100;
+  padding: var(--space-1-5) var(--space-3);
+  border-radius: var(--radius-6);
+  background: var(--primary);
+  color: var(--on-primary);
+  transform: translateY(-200%);
+}
+.skip-link:focus {
+  transform: none;
+}
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+}
+.mark {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-bottom: var(--space-2);
+  border-radius: var(--radius-6);
+  background: var(--blue-solid-1);
+  color: var(--neutral-on-solid);
+  font-weight: var(--weight-550);
+  text-decoration: none;
+}
+.rail-space {
+  flex: 1;
+}
+.menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden auto;
+  padding: var(--space-2) var(--space-2) var(--space-4);
+  transition: opacity var(--motion-base);
+}
+.menu-hidden .menu {
+  visibility: hidden;
+  opacity: 0;
+}
+.menu-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+.project {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-6);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--motion-fast);
+}
+.project:hover,
+.project[data-state='open'] {
+  background: var(--hover);
+}
+.project:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus);
+}
+.project-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.project-text strong,
+.project-text small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.project-text strong {
+  font-size: var(--font-14);
+  font-weight: var(--weight-550);
+}
+.project-text small {
+  color: var(--text-muted);
+  font-size: var(--font-12);
+  line-height: var(--leading-16);
+}
+.project-chevron {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--neutral-icon-1);
+}
+.menu-error {
+  margin: 0 var(--space-2) var(--space-2);
+  color: var(--red-text-2);
+  font-size: var(--font-12);
+}
+.menu-title {
+  margin: 0 0 var(--space-1);
+  padding: 0 var(--space-2);
+  font-size: var(--font-14);
+  font-weight: var(--weight-550);
+}
+.menu-section {
+  display: grid;
+  gap: var(--space-0-5);
+}
+.menu-section h3 {
+  margin: var(--space-4) 0 var(--space-1);
+  padding: 0 var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--font-12);
+  font-weight: var(--weight-400);
+}
+.shell-content {
+  position: relative;
+  min-width: 0;
+  margin: var(--layout-gap) var(--layout-gap) var(--layout-gap) 0;
+  overflow: auto;
+  padding: var(--space-6) var(--space-8);
+  border-radius: var(--radius-12);
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
+}
+.record .shell-content {
+  padding: 0;
+  overflow: hidden;
+}
+.show-menu {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 3;
+}
+.keys {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  margin: 0;
+}
+.keys dd {
+  margin: 0;
+  color: var(--text-muted);
+}
+.scrim {
+  display: none;
+}
+@media (max-width: 760px) {
+  .shell,
+  .menu-hidden {
+    grid-template-columns: var(--layout-rail) minmax(0, 1fr);
+  }
+  .menu {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: var(--layout-rail);
+    z-index: 50;
+    width: var(--layout-nav);
+    background: var(--page);
+    box-shadow: var(--shadow-dialog);
+    transform: translateX(calc(-100% - var(--layout-rail)));
+    transition: transform var(--motion-panel);
+  }
+  .menu-hidden .menu {
+    visibility: visible;
+    opacity: 1;
+  }
+  .menu-open .menu {
+    transform: none;
+  }
+  .scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 49;
+    display: block;
+    border: 0;
+    background: var(--scrim);
+  }
+  .shell-content {
+    padding: var(--space-4);
+  }
+}
+</style>

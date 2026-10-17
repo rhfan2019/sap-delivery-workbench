@@ -485,7 +485,7 @@
 }
 
 /* Keep the page header anchored when the drawer narrows the list. */
-.main-shell:has(.models-page) {
+.shell-content:has(.models-page) {
   overflow-anchor: none;
 }
 

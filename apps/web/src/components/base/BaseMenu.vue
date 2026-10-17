@@ -6,10 +6,13 @@ import {
   DropdownMenuTrigger,
 } from 'reka-ui';
 // A dropdown menu (DESIGN.md 5): put BaseMenuItem, BaseMenuSeparator and BaseMenuLabel inside.
-withDefaults(defineProps<{ align?: 'start' | 'center' | 'end'; side?: 'top' | 'bottom' }>(), {
-  align: 'start',
-  side: 'bottom',
-});
+withDefaults(
+  defineProps<{ align?: 'start' | 'center' | 'end'; side?: 'top' | 'bottom' | 'right' | 'left' }>(),
+  {
+    align: 'start',
+    side: 'bottom',
+  },
+);
 </script>
 <template>
   <DropdownMenuRoot>

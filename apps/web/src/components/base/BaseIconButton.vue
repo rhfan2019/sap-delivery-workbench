@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router';
 import BaseTooltip from './BaseTooltip.vue';
 // Square icon button with an accessible name; shows the name as a tooltip unless told not to.
+// With `to` it is a link (the icon rail).
 withDefaults(
   defineProps<{
     label: string;
@@ -8,32 +10,44 @@ withDefaults(
     pressed?: boolean;
     tooltip?: boolean;
     kbd?: string;
+    to?: string;
+    side?: 'top' | 'right' | 'bottom' | 'left';
   }>(),
-  { size: 'md', tooltip: true },
+  { size: 'md', tooltip: true, side: 'top' },
 );
+// Declared so the click reaches the button itself, not the tooltip wrapper around it.
+const emit = defineEmits<{ click: [event: MouseEvent] }>();
 </script>
 <template>
-  <BaseTooltip v-if="tooltip" :text="label" :kbd="kbd">
-    <button
-      type="button"
+  <BaseTooltip v-if="tooltip" :text="label" :kbd="kbd" :side="side">
+    <component
+      :is="to ? RouterLink : 'button'"
+      :to="to"
+      :type="to ? undefined : 'button'"
       class="base-icon-button"
       :class="[size, { pressed }]"
       :aria-label="label"
-      :aria-pressed="pressed ?? undefined"
+      :aria-pressed="to ? undefined : (pressed ?? undefined)"
+      :aria-current="to && pressed ? 'page' : undefined"
+      @click="emit('click', $event)"
     >
       <slot />
-    </button>
+    </component>
   </BaseTooltip>
-  <button
+  <component
+    :is="to ? RouterLink : 'button'"
     v-else
-    type="button"
+    :to="to"
+    :type="to ? undefined : 'button'"
     class="base-icon-button"
     :class="[size, { pressed }]"
     :aria-label="label"
-    :aria-pressed="pressed ?? undefined"
+    :aria-pressed="to ? undefined : (pressed ?? undefined)"
+    :aria-current="to && pressed ? 'page' : undefined"
+    @click="emit('click', $event)"
   >
     <slot />
-  </button>
+  </component>
 </template>
 <style scoped>
 .base-icon-button {

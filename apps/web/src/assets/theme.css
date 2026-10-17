@@ -458,15 +458,6 @@
   }
 }
 
-.sidebar {
-  --text: var(--nav-text);
-  --muted: var(--nav-muted);
-  --border: var(--nav-border);
-  --hover: var(--nav-hover);
-  --active: var(--nav-active);
-  --focus: var(--nav-focus);
-  color: var(--text);
-}
 
 /* Scoped inverse surface of the home banner until the home page is rewritten. */
 .welcome-banner {
