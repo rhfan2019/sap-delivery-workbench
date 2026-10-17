@@ -186,7 +186,7 @@ onMounted(reload);
     <p v-if="error" class="error-note" role="alert">{{ error }}</p>
     <p v-if="loading && !organization" class="loading-state">正在加载管理数据…</p>
     <template v-if="organization && identity?.canManageOrganization"
-      ><nav class="admin-tabs" aria-label="成员管理范围">
+      ><nav class="tabs admin-tabs" aria-label="成员管理范围">
         <button
           v-for="entry in [
             { id: 'account', label: '用户账号' },

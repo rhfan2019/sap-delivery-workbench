@@ -101,10 +101,10 @@
   width: min(480px, calc(100vw - 32px));
   max-height: 85dvh;
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
+  border-radius: var(--dialog-radius);
   padding: 0;
   color: var(--text);
-  box-shadow: 0 16px 64px color-mix(in srgb, var(--story-bg) 19%, transparent);
+  box-shadow: var(--dialog-shadow);
 }
 .column-dialog::backdrop {
   background: color-mix(in srgb, var(--story-bg) 38%, transparent);
@@ -208,10 +208,10 @@
   font: inherit;
   font-size: var(--font-size-sm);
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
+  border-radius: var(--button-radius);
   padding: var(--space-1-5) var(--space-2-5);
   background: var(--surface);
-  color: var(--primary);
+  color: var(--link);
   cursor: pointer;
 }
 .column-dialog button:disabled {
@@ -219,8 +219,8 @@
   cursor: default;
 }
 .column-dialog button.primary-button {
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
 }
 
 .workbench-table .column-sort .sort-inactive {
@@ -233,5 +233,5 @@
 .workbench-table .field-display:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: -2px;
-  border-radius: var(--radius-xs);
+  border-radius: var(--input-radius);
 }

@@ -159,9 +159,9 @@ onBeforeUnmount(() => {
 .selection-comment-form {
   position: fixed;
   z-index: 60;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--input-bg);
   color: var(--text);
   box-shadow: 0 6px 24px color-mix(in srgb, var(--story-bg) 18%, transparent);
   font-size: var(--font-size-sm);
@@ -196,10 +196,10 @@ onBeforeUnmount(() => {
 .selection-comment-form textarea {
   width: 100%;
   resize: vertical;
-  border: 1px solid var(--control-border);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
   padding: var(--space-1-5) var(--space-2);
-  background: var(--surface);
+  background: var(--input-bg);
   color: var(--text);
   font: inherit;
 }
@@ -214,15 +214,15 @@ onBeforeUnmount(() => {
 }
 .selection-comment-form button {
   border: 1px solid var(--control-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--button-radius);
   padding: var(--space-1) var(--space-3);
   background: var(--surface);
   color: var(--text);
 }
 .selection-comment-form button.primary {
   border-color: var(--primary);
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
 }
 .selection-comment-form button:disabled {
   opacity: 0.5;

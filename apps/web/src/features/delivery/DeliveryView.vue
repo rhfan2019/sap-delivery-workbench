@@ -625,7 +625,7 @@ onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
     </p>
     <p v-if="readOnly && loaded" class="help-note">此项目已归档，只能查看。</p>
 
-    <nav class="scope-tabs" aria-label="清单范围">
+    <nav class="tabs scope-tabs" aria-label="清单范围">
       <button
         v-for="s in scopes"
         :key="s.id"

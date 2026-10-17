@@ -82,9 +82,9 @@ async function query() {
 
 <style scoped>
 .technical-panel {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  border-radius: var(--card-radius);
   padding: var(--space-6);
   margin-bottom: var(--space-5);
 }
@@ -109,17 +109,17 @@ async function query() {
 .technical-query input {
   width: min(100%, 360px);
   padding: var(--space-2-5) var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--input-bg);
   color: inherit;
 }
 .technical-query button {
   padding: var(--space-2-5) var(--space-5);
-  border-radius: var(--radius-sm);
+  border-radius: var(--button-radius);
   border: 0;
   background: var(--link);
-  color: var(--on-primary);
+  color: var(--button-primary-text);
   cursor: pointer;
 }
 .technical-query button:disabled {

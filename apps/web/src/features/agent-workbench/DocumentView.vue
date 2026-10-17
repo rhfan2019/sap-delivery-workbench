@@ -181,7 +181,7 @@ function download() {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--surface);
+  background: var(--card-bg);
   border-left: 1px solid var(--active);
   min-height: 0;
 }
@@ -216,7 +216,7 @@ function download() {
   cursor: pointer;
   color: var(--muted);
   padding: var(--space-1-5);
-  border-radius: var(--radius-sm);
+  border-radius: var(--button-radius);
   min-height: 32px;
 }
 .spec-panel button:hover {
@@ -276,7 +276,7 @@ function download() {
 .outline-row button[aria-current] {
   color: var(--focus);
   background: var(--active);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--button-font-weight);
 }
 .spec-body {
   min-width: 0;

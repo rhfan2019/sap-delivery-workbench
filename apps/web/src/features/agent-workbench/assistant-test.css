@@ -46,7 +46,7 @@
   padding: var(--space-2) var(--space-2-5);
   color: var(--muted);
   min-height: 36px;
-  border-radius: var(--radius-md);
+  border-radius: var(--button-radius);
   font-size: var(--font-size-xs);
   cursor: pointer;
 }
@@ -99,7 +99,7 @@
   padding: var(--space-2) var(--space-2-5);
   font-size: var(--font-size-xs);
   min-height: 32px;
-  border-radius: var(--radius-md);
+  border-radius: var(--button-radius);
   cursor: pointer;
 }
 .mode-switch button.active {
@@ -188,7 +188,7 @@
   border: 0;
   background: var(--surface-muted);
   color: var(--muted);
-  border-radius: var(--radius-sm);
+  border-radius: var(--button-radius);
   padding: var(--space-1) var(--space-2);
   cursor: pointer;
 }

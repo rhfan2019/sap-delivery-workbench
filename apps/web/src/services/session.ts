@@ -30,7 +30,7 @@ export class ApiError extends Error {
 export async function api<T>(
   path: string,
   body?: unknown,
-  method?: 'POST' | 'PATCH' | 'DELETE',
+  method?: 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   options?: { headers?: HeadersInit; signal?: AbortSignal },
 ): Promise<T> {
   let response: Response;

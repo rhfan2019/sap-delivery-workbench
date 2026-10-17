@@ -98,7 +98,7 @@ onMounted(load);
     <p v-if="error" class="error-note" role="alert">{{ error }}</p>
     <p v-if="loading && !organization" class="loading-state">正在加载企业资料…</p>
     <template v-if="organization && identity?.canManageOrganization"
-      ><nav class="admin-tabs" aria-label="客户与项目范围">
+      ><nav class="tabs admin-tabs" aria-label="客户与项目范围">
         <button
           :class="{ active: activeTab === 'customer' }"
           :aria-current="activeTab === 'customer' ? 'page' : undefined"

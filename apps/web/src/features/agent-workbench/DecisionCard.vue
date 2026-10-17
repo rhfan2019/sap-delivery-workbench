@@ -162,9 +162,9 @@ small {
 textarea {
   width: 100%;
   min-height: 80px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--input-border);
   padding: var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--input-radius);
   font: inherit;
 }
 </style>

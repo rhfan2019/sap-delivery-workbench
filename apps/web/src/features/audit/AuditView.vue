@@ -147,7 +147,7 @@ onMounted(reload);
       </div>
     </div>
 
-    <nav class="admin-tabs" aria-label="审计视图">
+    <nav class="tabs admin-tabs" aria-label="审计视图">
       <button
         v-for="t in TABS"
         :key="t.id"

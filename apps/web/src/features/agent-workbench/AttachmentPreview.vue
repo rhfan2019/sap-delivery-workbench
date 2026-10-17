@@ -98,7 +98,7 @@ button {
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: var(--radius-lg);
+  border-radius: var(--button-radius);
   background: transparent;
   cursor: pointer;
   color: var(--muted);

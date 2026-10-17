@@ -275,9 +275,9 @@ async function copy(text: string) {
   width: min(100%, 420px);
   margin-top: var(--space-1);
   padding: var(--space-2-5) var(--space-3) var(--space-2-5) var(--space-2-5);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  background: var(--card-bg);
   color: var(--text);
   text-align: left;
 }
@@ -290,9 +290,9 @@ async function copy(text: string) {
   place-items: center;
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-md);
+  border-radius: var(--card-radius);
   background: var(--active);
-  color: var(--primary);
+  color: var(--link);
   flex-shrink: 0;
 }
 .artifact-card-text {
@@ -312,7 +312,7 @@ async function copy(text: string) {
 .artifact-card-open {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
-  color: var(--primary);
+  color: var(--link);
 }
 .decision-record {
   margin-bottom: var(--space-3);
@@ -342,7 +342,7 @@ async function copy(text: string) {
   padding: var(--space-0-5) var(--space-2);
   border-radius: var(--radius-sm);
   background: var(--active);
-  color: var(--primary);
+  color: var(--link);
   font-weight: var(--font-weight-medium);
   font-size: var(--font-size-sm);
 }

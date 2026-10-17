@@ -233,7 +233,7 @@ async function copyRunId() {
   align-items: center;
   gap: var(--space-1-5);
   max-width: 100%;
-  border-radius: var(--radius-sm);
+  border-radius: var(--card-radius);
   padding: var(--space-0-5) var(--space-1) var(--space-0-5) 0;
   color: var(--color-muted-foreground);
   font-size: var(--font-size-sm);
@@ -318,8 +318,8 @@ async function copyRunId() {
   white-space: nowrap;
 }
 .run-table th {
-  background: var(--color-muted);
-  font-weight: var(--font-weight-medium);
+  background: var(--table-header-bg);
+  font-weight: var(--table-header-weight);
 }
 .run-raw summary {
   cursor: pointer;

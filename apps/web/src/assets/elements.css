@@ -26,10 +26,11 @@
   --color-border: var(--border);
   --color-input: var(--control-border);
   --color-ring: var(--focus);
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
+  /* Vendored components follow the component tokens of the active theme. */
+  --radius-sm: var(--badge-radius);
+  --radius-md: var(--button-radius);
+  --radius-lg: var(--card-radius);
+  --radius-xl: var(--dialog-radius);
 }
 @layer base {
   .assistant-elements,
@@ -85,7 +86,9 @@
   max-width: 80%;
 }
 .assistant-elements .user-bubble {
-  border-radius: var(--radius-bubble);
+  border-radius: var(--bubble-radius);
+  background: var(--bubble-bg);
+  color: var(--bubble-text);
   padding: var(--space-2-5) var(--space-4);
   font-size: var(--font-size-lg);
   line-height: 24px;
@@ -133,10 +136,10 @@
   margin-bottom: 0.5em;
 }
 .assistant-elements .elements-composer [data-slot='input-group'] {
-  border-radius: var(--radius-composer);
-  border-color: var(--border);
-  background: var(--surface);
-  box-shadow: var(--shadow-raised);
+  border-radius: var(--composer-radius);
+  border-color: var(--composer-border);
+  background: var(--input-bg);
+  box-shadow: var(--composer-shadow);
 }
 .assistant-elements .elements-composer textarea {
   font: inherit;
@@ -147,8 +150,8 @@
   outline: none;
 }
 .assistant-elements .elements-composer [data-slot='input-group']:has(textarea:focus-visible) {
-  border-color: var(--border-strong);
-  box-shadow: var(--shadow-raised);
+  border-color: var(--input-focus-border);
+  box-shadow: var(--composer-shadow);
 }
 .assistant-elements .user-message-meta {
   width: 100%;

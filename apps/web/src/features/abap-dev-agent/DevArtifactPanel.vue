@@ -215,7 +215,7 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
         未声明的修改：{{ warnings(shown).join('、') }}（助手改了但没有说明原因，请重点核对）
       </p>
       <!-- Code and plan are the two views; comparing versions and the basis are tools on them. -->
-      <nav class="dev-tabs" aria-label="成果内容">
+      <nav class="tabs dev-tabs" aria-label="成果内容">
         <button v-for="t in VIEWS" :key="t.id" :aria-pressed="tab === t.id" @click="tab = t.id">
           {{ t.label }}
         </button>
@@ -370,20 +370,8 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
   overflow: auto;
   padding-bottom: var(--space-3);
 }
-.dev-tabs {
-  display: flex;
-  gap: var(--space-1);
-  border-bottom: 1px solid var(--active);
-}
-.dev-tabs button {
-  padding: var(--space-1-5) var(--space-3);
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: none;
-}
-.dev-tabs button[aria-pressed='true'] {
-  border-bottom-color: currentColor;
-  font-weight: var(--font-weight-semibold);
+.dev-tabs > button {
+  font-size: var(--font-size-sm);
 }
 .dev-tools {
   display: flex;

@@ -35,9 +35,9 @@
 .settings-dialog input:not([type='checkbox']) {
   box-sizing: border-box;
   height: 34px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--input-bg);
   color: var(--text);
   padding: 0 var(--space-2-5);
   min-width: 0;
@@ -126,8 +126,8 @@
   padding: var(--space-1-5);
   background: var(--surface);
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  box-shadow: 0 10px 28px color-mix(in srgb, var(--story-bg) 14%, transparent);
+  border-radius: var(--dialog-radius);
+  box-shadow: var(--dialog-shadow);
 }
 .menu-panel.align-right {
   left: auto;
@@ -140,7 +140,7 @@
   gap: var(--space-2-5);
   padding: var(--space-2) var(--space-2-5);
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--button-radius);
   background: none;
   color: var(--text);
   font-size: var(--font-size-sm);
@@ -166,31 +166,13 @@
 
 /* Scope tabs, toolbar, filters */
 .scope-tabs {
-  display: flex;
-  gap: var(--space-5);
-  border-bottom: 1px solid var(--border);
   margin-bottom: var(--space-2-5);
-  overflow-x: auto;
-}
-.scope-tabs button {
-  border: 0;
-  border-bottom: 3px solid transparent;
-  background: none;
-  padding: var(--space-2) var(--space-0-5);
-  color: var(--muted);
-  cursor: pointer;
-  white-space: nowrap;
-}
-.scope-tabs button.active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
-  font-weight: var(--font-weight-semibold);
 }
 .scope-tabs span {
   margin-left: var(--space-1-5);
   font-size: var(--font-size-xs);
   padding: var(--space-0-5) var(--space-1-5);
-  border-radius: var(--radius-lg);
+  border-radius: var(--tab-radius);
   background: var(--active);
 }
 .list-toolbar {
@@ -216,9 +198,9 @@
   gap: var(--space-1-5);
   height: 34px;
   padding: 0 var(--space-2-5);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--input-bg);
   color: var(--muted);
 }
 .delivery-page .search-box input {
@@ -235,7 +217,7 @@
   height: 32px;
   padding: 0 var(--space-2-5);
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
+  border-radius: var(--button-radius);
   background: var(--surface);
   color: var(--text);
   font-size: var(--font-size-sm);
@@ -266,7 +248,7 @@
 .batch-bar strong {
   font-size: var(--font-size-sm);
   margin-right: var(--space-1-5);
-  color: var(--primary);
+  color: var(--link);
 }
 .table-tools {
   display: flex;
@@ -518,7 +500,7 @@
 .status-pill {
   display: inline-block;
   padding: var(--space-0-5) var(--space-2);
-  border-radius: var(--radius-lg);
+  border-radius: var(--badge-radius);
   font-size: var(--font-size-xs);
   line-height: 18px;
   background: var(--surface-muted);
@@ -580,7 +562,7 @@
   align-items: center;
   gap: var(--space-0-5);
   padding: var(--space-0-5) var(--space-1-5);
-  border-radius: var(--radius-xs);
+  border-radius: var(--badge-radius);
   font-size: var(--font-size-xs);
   line-height: 18px;
   background: var(--surface-muted);
@@ -658,7 +640,7 @@
   padding: 0;
   color: var(--text);
   background: var(--surface);
-  box-shadow: -12px 0 32px color-mix(in srgb, var(--story-bg) 10%, transparent);
+  box-shadow: var(--dialog-shadow);
 }
 .item-drawer form {
   height: 100%;
@@ -717,7 +699,7 @@
   border: 0;
   background: none;
   padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
+  border-radius: var(--button-radius);
   color: var(--muted);
   font-size: var(--font-size-xs);
   cursor: pointer;
@@ -908,7 +890,7 @@
   min-height: 34px;
   padding: var(--space-0-5) var(--space-1-5);
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
+  border-radius: var(--badge-radius);
   background: var(--surface);
 }
 .tag-picker.disabled {
@@ -931,7 +913,7 @@
   padding: var(--space-1);
   background: var(--surface);
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
+  border-radius: var(--badge-radius);
   box-shadow: 0 8px 22px color-mix(in srgb, var(--story-bg) 12%, transparent);
 }
 .tag-suggestions button {
@@ -941,7 +923,7 @@
   border: 0;
   background: none;
   padding: var(--space-1-5) var(--space-2);
-  border-radius: var(--radius-xs);
+  border-radius: var(--button-radius);
   cursor: pointer;
   font-size: var(--font-size-sm);
 }
@@ -959,9 +941,9 @@
 }
 .objects-editor th {
   text-align: left;
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--table-header-weight);
   font-size: var(--font-size-xs);
-  color: var(--muted);
+  color: var(--table-header-text);
   padding: 0 var(--space-1) var(--space-1);
 }
 .objects-editor td {
@@ -993,7 +975,7 @@
 .rich-toolbar button {
   border: 1px solid transparent;
   background: none;
-  border-radius: var(--radius-xs);
+  border-radius: var(--button-radius);
   padding: var(--space-0-5) var(--space-1-5);
   font-size: var(--font-size-xs);
   cursor: pointer;
@@ -1021,10 +1003,10 @@
   max-height: 88dvh;
   padding: 0;
   border: 0;
-  border-radius: var(--radius-lg);
+  border-radius: var(--dialog-radius);
   color: var(--text);
   background: var(--surface);
-  box-shadow: 0 20px 60px color-mix(in srgb, var(--story-bg) 23%, transparent);
+  box-shadow: var(--dialog-shadow);
 }
 .batch-dialog::backdrop,
 .import-dialog::backdrop,
@@ -1148,12 +1130,12 @@
 .import-table :is(th, td) {
   text-align: left;
   padding: var(--space-1-5) var(--space-2-5);
-  border-bottom: 1px solid var(--active);
+  border-bottom: 1px solid var(--table-border);
 }
 .import-table th {
   position: sticky;
   top: 0;
-  background: var(--bg);
+  background: var(--table-header-bg);
 }
 .import-table tr.bad td {
   background: var(--error-bg);
@@ -1165,8 +1147,8 @@
   gap: var(--space-3) var(--space-4);
   padding: var(--space-3);
   margin-bottom: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
   background: var(--bg);
   font-size: var(--font-size-sm);
 }

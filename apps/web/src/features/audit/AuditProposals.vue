@@ -82,7 +82,7 @@ onMounted(load);
   padding: var(--space-2-5);
   border: 0;
   background: transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--button-radius);
   cursor: pointer;
 }
 .audit-proposal-list button.active {

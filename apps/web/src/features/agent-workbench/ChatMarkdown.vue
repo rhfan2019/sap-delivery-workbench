@@ -144,7 +144,7 @@ watch(
 }
 .chat-markdown :deep(:is(th, td)) {
   padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--table-border);
   text-align: left;
   white-space: normal;
   min-width: 80px;
@@ -153,8 +153,8 @@ watch(
   border-bottom: 0;
 }
 .chat-markdown :deep(th) {
-  background: var(--surface-muted);
-  font-weight: var(--font-weight-medium);
+  background: var(--table-header-bg);
+  font-weight: var(--table-header-weight);
 }
 .chat-markdown :deep(a) {
   color: var(--link);

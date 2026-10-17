@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import AppIcon from './AppIcon.vue';
 import ConfirmDialog from './ConfirmDialog.vue';
 import UserMenu from './UserMenu.vue';
 import { groups, menus } from '../features/navigation';
 import { api, identity } from '../services/session';
+import { syncAppearance } from '../services/theme';
 import {
   projects,
   currentProject as selected,
@@ -92,6 +93,8 @@ async function logout() {
     loggingOut.value = false;
   }
 }
+// The account's theme and mode (个人设置 › 外观) replace this browser's cached choice.
+onMounted(() => void syncAppearance());
 </script>
 <template>
   <ConfirmDialog />
@@ -244,7 +247,9 @@ async function logout() {
         </div>
       </header>
       <p v-if="logoutError" class="error-note" role="alert">{{ logoutError }}</p>
-      <main id="main-content" class="main-content"><RouterView :key="route.meta.keepOnQuery ? route.path : route.fullPath" /></main>
+      <main id="main-content" class="main-content">
+        <RouterView :key="route.meta.keepOnQuery ? route.path : route.fullPath" />
+      </main>
       <footer class="app-footer">
         <span>SAP 智能交付平台</span><span>连接专业，让交付更进一步。</span>
       </footer>

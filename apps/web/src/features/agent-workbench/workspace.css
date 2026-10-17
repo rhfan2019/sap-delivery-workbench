@@ -75,7 +75,7 @@
   padding: var(--space-0-5) var(--space-2);
   background: var(--active);
   color: var(--focus);
-  border-radius: var(--radius-xs);
+  border-radius: var(--badge-radius);
   white-space: nowrap;
 }
 .work-header-actions {
@@ -253,8 +253,8 @@
   padding: var(--space-3) var(--space-4);
   background: var(--surface);
   border: 1px solid var(--work-border);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 12px 32px color-mix(in srgb, var(--story-bg) 13%, transparent);
+  border-radius: var(--dialog-radius);
+  box-shadow: var(--dialog-shadow);
 }
 .work-popover-right {
   left: auto;
@@ -364,8 +364,8 @@
   min-width: 0;
   height: 32px;
   padding: 0 var(--space-2);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
   font: inherit;
   font-size: var(--font-size-sm);
 }
@@ -537,8 +537,8 @@
 .work-actions select,
 .design-basis select {
   max-width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
 }
 .work-document .chat-markdown,
 .work-candidate .chat-markdown {
@@ -555,9 +555,9 @@
   box-sizing: border-box;
   margin: var(--space-1-5) 0 var(--space-4);
   padding: var(--space-2-5);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--input-bg);
   font: var(--font-size-sm)/1.7 inherit;
   resize: vertical;
 }

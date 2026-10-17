@@ -60,7 +60,7 @@
 }
 .audit-status {
   display: inline-block;
-  border-radius: var(--radius-sm);
+  border-radius: var(--badge-radius);
   padding: var(--space-0-5) var(--space-2);
   font-size: var(--font-size-xs);
   white-space: nowrap;

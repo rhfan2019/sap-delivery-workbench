@@ -219,19 +219,41 @@ layout: # --layout-*
 
 ## 11. 主题
 
-用户 2026-10-16 要求在个人设置中提供主题切换（自己不改本文件和 theme.css）。入口：右上角头像 › 个人设置 › 外观。
+用户 2026-10-16 决定：提供一键换主题，主题在工作台可承载的范围内完整复刻 awesome-design-md 的视觉语言（颜色、字体、字号节奏、组件形状、层次），不只换颜色。计划见 [主题系统实施计划](../plans/2026-10-16-theme-system.md)，契约 1.14。入口：右上角头像 › 个人设置 › 外观。
 
-| 主题           | 来源                           | 特点                                                                               |
-| -------------- | ------------------------------ | ---------------------------------------------------------------------------------- |
-| 海军蓝（默认） | 本规范                         | 中性白底、海军蓝强调，对话排版参考 ChatGPT / Claude                                |
-| IBM Carbon     | awesome-design-md `ibm`        | 企业蓝 `#0f62fe`、直角（圆角 0–4px）、IBM Plex 字体，接近 SAP Fiori 的企业应用风格 |
-| Vercel         | awesome-design-md `vercel`     | 黑白极简，主按钮为黑色，蓝色只用于链接与焦点，Geist 字体                           |
-| Linear 深色    | awesome-design-md `linear.app` | 深色界面、靛蓝强调；标签色、状态色、图表色均有深色版本                             |
+| 主题           | 来源                         | 特点                                                                                                   |
+| -------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 海军蓝（默认） | 本规范                       | 中性白底、海军蓝强调，对话排版参考 ChatGPT / Claude                                                    |
+| Airbnb         | awesome-design-md `airbnb`   | 温暖宽松：Rausch 红强调、8px 控件、14px 卡片、胶囊标签与导航、单层柔和阴影、粗标题；贴边白色侧边栏     |
+| Airtable       | awesome-design-md `airtable` | 克制的编辑风：深墨色文字与按钮、蓝色链接、色块代替阴影、细线输入框、奶油色页签与选中态、较轻的标题字重 |
 
-实现：
+- **主题 × 模式**：每个主题有浅色与深色；模式为浅色、深色或跟随系统。两份来源只有浅色，深色按各自的色彩逻辑推导（Airtable 以其自带的深色面 `#181d26` 为基础）。
+- **存储**：选择存账号（`app.user_preference`，`GET/PUT /api/preferences`），并在本机缓存；首屏用缓存，登录后以账号为准。
+- **字体**：原字体为商业授权，用开源字体替代并随项目部署（npm `@fontsource-variable`，OFL）：Airbnb → Plus Jakarta Sans，Airtable 与海军蓝 → Inter；只在选中该主题时加载。中文回退苹方 / 微软雅黑。
+- **可访问性**：Airbnb 的 Rausch `#ff385c` 配白字只有 3.5:1，实心按钮改用其按下色 `#e00b41`（4.9:1），Rausch 保留给焦点与点缀。强调文字一律用 `--link`，不用 `--primary`（深色主题中实心色作文字对比度不足）。
+- **组件预览**：外观页下方用真实的公共组件（按钮、输入、页签、标签、提示、表格、对话气泡与输入框）展示当前主题，切换即可对照。
 
-- 每个主题是 `theme.css` 中的一个 `[data-ui-theme='…']` 块，覆盖与默认主题相同的令牌（颜色、字体、圆角、阴影）；默认主题同时写作 `:root` 与 `[data-ui-theme='navy']`。页面与组件不感知主题，只引用令牌。
-- `services/theme.ts` 记住选择（本机浏览器 `localStorage`，键 `ui-theme`），并在应用挂载前写到 `<html data-ui-theme>`，首屏即为所选主题。个人设置中的预览卡片把同一属性设在卡片上，展示各自的配色与圆角。
-- 表格组件（vxe-table）的颜色变量在 `components/workbench-table/workbench-table.css` 中映射到令牌，随主题变化。
-- 新增主题：在 `theme.css` 增加一个块并设置第 11 节表格中的全部颜色令牌（`tests/unit/web/theme.test.mjs` 会检查），再在 `services/theme.ts` 的 `THEMES` 中登记名称与说明。
-- 字体只写字体栈，不下载网络字体：本机装有 IBM Plex / Geist / Inter 时使用，否则回退到系统字体与苹方 / 微软雅黑。
+**实现**：
+
+- 默认主题写在 `theme.css`（`:root` 与 `[data-ui-theme='navy']`，深色为 `[data-ui-theme='navy'][data-ui-mode='dark']`）；其他主题各一个主题包 `assets/themes/<主题>.css`，含 `[data-ui-theme='<主题>']` 与 `[data-ui-theme='<主题>'][data-ui-mode='dark']` 两块。
+- `services/theme.ts` 把选择写到 `<html data-ui-theme data-ui-mode>`，按需加载字体并与账号同步。预览卡片把同样的属性设在卡片上，展示各自的配色、字体与形状。
+- 组件令牌（第 12 节）在 `:root, [data-ui-theme]` 上声明，所以任何带主题属性的元素都会按自己的主题重新计算。
+- 表格组件（vxe-table）的颜色变量映射到令牌（`workbench-table.css`）；内置的 ai-elements / ui 组件的圆角映射到组件令牌（`elements.css`）。
+- **新增主题**：新建 `assets/themes/<主题>.css`，设置第 8 节全部颜色令牌（浅色、深色各一份）与需要改变的组件令牌，在 `main.ts` 引入，在 `services/theme.ts` 的 `THEMES` 登记名称、说明与字体；`tests/unit/web/theme.test.mjs` 会检查颜色令牌是否齐全、主题包是否改变了组件形状。
+
+## 12. 组件令牌
+
+公共组件只读组件令牌；组件令牌默认指向语义令牌（第 8 节），主题包覆盖它们来改变形状。页面里的按钮、输入框、卡片、页签、表格、徽标、弹窗样式已按选择器语义改为引用组件令牌（2026-10-16）。
+
+| 组件            | 令牌                                                                                                                                                                                                               |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 标题            | `--font-display`、`--heading-weight`、`--heading-letter-spacing`、`--page-title-size`、`--section-title-size`                                                                                                      |
+| 按钮            | `--button-height`、`--button-padding-x`、`--button-radius`、`--button-font-size`、`--button-font-weight`、`--button-shadow`、`--button-primary-{bg,text,hover-bg}`、`--button-secondary-{bg,text,border,hover-bg}` |
+| 输入框          | `--input-height`、`--input-radius`、`--input-bg`、`--input-text`、`--input-border`、`--input-border-width`、`--input-border-bottom-width`、`--input-focus-border`                                                  |
+| 卡片            | `--card-bg`、`--card-border`、`--card-border-width`、`--card-radius`、`--card-shadow`、`--card-padding`                                                                                                            |
+| 页签（`.tabs`） | `--tab-bar-border`、`--tab-color`、`--tab-active-color`、`--tab-active-bg`、`--tab-indicator`、`--tab-indicator-height`、`--tab-radius`、`--tab-font-weight`                                                       |
+| 表格            | `--table-header-bg`、`--table-header-text`、`--table-header-weight`、`--table-border`、`--table-row-hover`、`--table-row-height`                                                                                   |
+| 徽标            | `--badge-radius`、`--badge-font-weight`                                                                                                                                                                            |
+| 页面框架        | `--page-bg`、`--topbar-{bg,text,muted,border,height}`、`--sidebar-{bg,border,radius,inset,shadow}`、`--nav-item-{radius,active-bg,active-text}`                                                                    |
+| 弹窗            | `--dialog-radius`、`--dialog-shadow`                                                                                                                                                                               |
+| 对话            | `--bubble-{bg,text,radius}`、`--composer-{radius,border,shadow}`                                                                                                                                                   |

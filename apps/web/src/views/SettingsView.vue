@@ -14,7 +14,7 @@ async function choose(next: string) {
 <template>
   <section>
     <header class="page-heading"><h1>个人设置</h1></header>
-    <nav class="sap-settings-tabs" aria-label="个人设置页签">
+    <nav class="tabs sap-settings-tabs" aria-label="个人设置页签">
       <button :class="{ active: tab === 'security' }" @click="choose('security')">账号安全</button
       ><button :class="{ active: tab === 'project' }" @click="choose('project')">项目参数</button
       ><button :class="{ active: tab === 'appearance' }" @click="choose('appearance')">外观</button>

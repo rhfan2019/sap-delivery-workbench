@@ -10,9 +10,9 @@
   gap: var(--space-4);
   padding: var(--space-6);
   margin-bottom: var(--space-6);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  background: var(--card-bg);
 }
 .organization-summary h2 {
   display: flex;
@@ -36,7 +36,7 @@
   justify-content: center;
   background: var(--active);
   color: var(--link);
-  border-radius: var(--radius-lg);
+  border-radius: var(--card-radius);
   width: 52px;
   height: 52px;
   flex-shrink: 0;
@@ -152,9 +152,9 @@
 }
 .customer-card {
   padding: var(--space-5) var(--space-4) 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
   min-width: 0;
 }
 .customer-card.selected {
@@ -169,7 +169,7 @@
 .customer-card .icon-tile {
   width: 42px;
   height: 42px;
-  border-radius: var(--radius-md);
+  border-radius: var(--card-radius);
 }
 .customer-card h3 {
   font-size: var(--font-size-lg);
@@ -234,10 +234,10 @@
   align-items: center;
   background: var(--active);
   color: var(--link);
-  border-radius: var(--radius-sm);
+  border-radius: var(--badge-radius);
   padding: var(--space-1) var(--space-2);
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--badge-font-weight);
   white-space: nowrap;
 }
 .admin-badge.muted {
@@ -258,15 +258,15 @@
   text-align: left;
 }
 .admin-table th {
-  font-weight: var(--font-weight-medium);
-  color: var(--muted);
-  background: var(--hover);
+  font-weight: var(--table-header-weight);
+  color: var(--table-header-text);
+  background: var(--table-header-bg);
   padding: var(--space-3);
   white-space: nowrap;
 }
 .admin-table td {
   padding: var(--space-4) var(--space-3);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--table-border);
 }
 .admin-table tr:last-child td {
   border-bottom: 0;
@@ -322,20 +322,7 @@
   font-size: var(--font-size-xs);
 }
 .admin-tabs {
-  display: flex;
-  gap: var(--space-8);
-  border-bottom: 1px solid var(--border);
   margin-bottom: var(--space-6);
-}
-.admin-tabs button {
-  padding: var(--space-3) var(--space-0-5) var(--space-4);
-  color: var(--muted);
-  border-bottom: 2px solid transparent;
-}
-.admin-tabs button.active {
-  border-color: var(--link);
-  color: var(--text);
-  font-weight: var(--font-weight-semibold);
 }
 .table-intro {
   font-size: var(--font-size-xs);
@@ -346,10 +333,10 @@
   margin: var(--space-1-5) 0 0;
 }
 .admin-filter-select {
-  background: var(--surface);
+  background: var(--input-bg);
   color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
   padding: var(--space-2);
   font-size: var(--font-size-xs);
 }
@@ -395,7 +382,7 @@
 .admin-pagination button {
   padding: var(--space-1-5) var(--space-2-5);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--button-radius);
 }
 .members-workspace:has(.member-assignment) {
   grid-template-columns: 180px minmax(0, 1fr) 265px;
@@ -478,11 +465,11 @@
   width: min(540px, calc(100vw - 32px));
   max-height: 90dvh;
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--dialog-radius);
   padding: 0;
   background: var(--surface);
   color: var(--text);
-  box-shadow: 0 24px 80px color-mix(in srgb, var(--story-bg) 20%, transparent);
+  box-shadow: var(--dialog-shadow);
 }
 .admin-dialog::backdrop {
   background: var(--scrim);
@@ -521,8 +508,8 @@
 .dialog-body textarea {
   width: 100%;
   padding: var(--space-2-5) var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
   background: var(--bg);
   color: var(--text);
   font: inherit;
@@ -674,5 +661,5 @@
 .dialog-body input,
 .dialog-body select,
 .dialog-body textarea {
-  border-color: var(--control-border);
+  border-color: var(--input-border);
 }
