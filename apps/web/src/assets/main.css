@@ -248,183 +248,6 @@ p {
   margin-top: var(--space-1);
   opacity: 1;
 }
-.login-page {
-  min-height: 100dvh;
-  display: grid;
-  grid-template-columns: 54% 46%;
-  background: var(--surface);
-}
-.login-story {
-  padding: var(--space-10) 8% var(--space-6) 9%;
-  background: var(--nav-bg);
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: hidden;
-}
-.story-body {
-  margin: auto 0;
-  padding: var(--space-16) 0 var(--space-10);
-  position: relative;
-  z-index: 1;
-}
-.story-body > .eyebrow {
-  font-size: var(--font-size-xs);
-  letter-spacing: 1.7px;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2-5);
-  color: var(--muted);
-}
-.tiny-line {
-  width: 24px;
-  height: 1px;
-  background: var(--control-border);
-}
-.story-body h1 {
-  font-size: clamp(var(--font-size-3xl), 3.5vw, var(--font-size-3xl));
-  line-height: 1.48;
-  letter-spacing: -1.5px;
-  font-weight: var(--font-weight-semibold);
-}
-.blue-dot {
-  color: var(--text-tertiary);
-}
-.story-description {
-  font-size: var(--font-size-md);
-  color: var(--muted);
-  margin-top: var(--space-5);
-  line-height: 2;
-}
-.delivery-art {
-  height: 236px;
-  position: relative;
-  margin-top: var(--space-5);
-  background-image:
-    linear-gradient(color-mix(in srgb, var(--muted) 4%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--muted) 4%, transparent) 1px, transparent 1px);
-  background-size: 48px 48px;
-  border: 1px solid color-mix(in srgb, var(--border-strong) 18%, transparent);
-  border-radius: var(--radius-lg);
-}
-.art-orbit {
-  position: absolute;
-  border: 1px solid color-mix(in srgb, var(--control-border) 29%, transparent);
-  border-radius: var(--radius-full);
-  left: 50%;
-  top: 44%;
-  transform: translate(-50%, -50%);
-}
-.orbit-one {
-  width: 238px;
-  height: 170px;
-}
-.orbit-two {
-  width: 300px;
-  height: 212px;
-}
-.art-center {
-  position: absolute;
-  left: 50%;
-  top: 45%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  color: var(--muted);
-  gap: var(--space-2-5);
-  white-space: nowrap;
-}
-.art-center span {
-  font-size: var(--font-size-sm);
-  letter-spacing: 1px;
-}
-.art-center small {
-  font-size: var(--font-size-xs);
-  letter-spacing: 2px;
-  color: var(--muted);
-}
-.art-cross {
-  position: absolute;
-  color: var(--text-tertiary);
-  font-weight: var(--font-weight-regular);
-  font-size: var(--font-size-3xl);
-}
-.cross-one {
-  top: 25px;
-  right: 27px;
-}
-.cross-two {
-  left: 30px;
-  bottom: 68px;
-}
-.flow-steps {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  bottom: 8px;
-  left: 0;
-  right: 0;
-  background: var(--nav-bg);
-  padding: var(--space-3) 0;
-  gap: var(--space-2);
-}
-.flow-steps span {
-  font-size: var(--font-size-xs);
-  white-space: nowrap;
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  gap: var(--space-1-5);
-}
-.flow-steps b {
-  font-size: var(--font-size-xs);
-  background: var(--hover);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
-  padding: var(--space-1);
-  font-weight: var(--font-weight-medium);
-}
-.flow-steps i {
-  height: 1px;
-  background: var(--border-strong);
-  flex: 1;
-}
-.story-footer {
-  display: flex;
-  justify-content: space-between;
-  font-size: var(--font-size-xs);
-  letter-spacing: 1px;
-  color: var(--muted);
-  gap: var(--space-2-5);
-}
-.login-panel {
-  display: flex;
-  flex-direction: column;
-  padding: var(--space-10) 10% var(--space-6);
-  position: relative;
-}
-.edition {
-  align-self: flex-end;
-  display: flex;
-  align-items: center;
-  gap: var(--space-1-5);
-  font-size: var(--font-size-xs);
-  color: var(--muted);
-}
-.edition > span {
-  width: 5px;
-  height: 5px;
-  border-radius: var(--radius-full);
-  background: var(--muted);
-}
-.login-form-wrap {
-  width: 100%;
-  max-width: 355px;
-  margin: auto;
-  padding: var(--space-16) 0;
-}
 .form-symbol {
   width: 50px;
   height: 50px;
@@ -436,20 +259,6 @@ p {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   margin-bottom: var(--space-8);
-}
-.login-form-wrap h2 {
-  font-size: var(--font-size-3xl);
-  letter-spacing: -0.6px;
-}
-.login-form-wrap > .muted {
-  font-size: var(--font-size-xs);
-  margin-top: var(--space-3);
-  margin-bottom: var(--space-8);
-}
-.login-form-wrap .eyebrow {
-  font-size: var(--font-size-xs);
-  margin-bottom: var(--space-2-5);
-  letter-spacing: 2px;
 }
 form label {
   display: block;
@@ -495,22 +304,6 @@ input::placeholder {
   color: var(--muted);
   font-size: var(--font-size-xs);
 }
-.form-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: var(--space-4);
-  font-size: var(--font-size-xs);
-  color: var(--muted);
-}
-.form-meta > span {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-.form-meta .text-button {
-  font-size: var(--font-size-xs);
-}
 .login-submit {
   width: 100%;
   margin-top: var(--space-6);
@@ -518,19 +311,6 @@ input::placeholder {
   height: 47px;
   font-size: var(--font-size-sm);
   padding: 0 var(--space-4);
-}
-.login-hint {
-  text-align: center;
-  font-size: var(--font-size-xs);
-  color: var(--muted);
-  margin-top: var(--space-6);
-}
-.login-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-3);
-  font-size: var(--font-size-xs);
-  color: var(--muted);
 }
 .password-page {
   min-height: 100dvh;
@@ -1459,28 +1239,6 @@ input::placeholder {
   .surface {
     padding: var(--space-4);
   }
-  .login-story {
-    padding-left: 8%;
-    padding-right: 8%;
-  }
-  .flow-steps {
-    gap: var(--space-1);
-  }
-  .flow-steps span {
-    gap: var(--space-0-5);
-    font-size: var(--font-size-xs);
-  }
-  .story-footer {
-    font-size: var(--font-size-xs);
-  }
-  .login-panel {
-    padding-left: 10%;
-    padding-right: 10%;
-  }
-  .login-footer {
-    font-size: var(--font-size-xs);
-    flex-wrap: wrap;
-  }
 }
 @media (max-width: 950px) {
   .dashboard-lower {
@@ -1503,49 +1261,6 @@ input::placeholder {
   }
   .date-label {
     display: none;
-  }
-  .login-page {
-    grid-template-columns: 48% 52%;
-  }
-  .login-story {
-    padding: var(--space-8) 9%;
-  }
-  .story-body {
-    padding-top: var(--space-12);
-  }
-  .story-body h1 {
-    font-size: var(--font-size-3xl);
-  }
-  .delivery-art {
-    height: 210px;
-  }
-  .flow-steps {
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    justify-content: center;
-  }
-  .flow-steps i {
-    display: none;
-  }
-  .orbit-one {
-    width: 175px;
-    height: 140px;
-  }
-  .orbit-two {
-    width: 220px;
-    height: 180px;
-  }
-  .story-description {
-    font-size: var(--font-size-xs);
-  }
-  .story-footer {
-    flex-wrap: wrap;
-  }
-  .login-panel {
-    padding: var(--space-8) 10%;
-  }
-  .login-form-wrap h2 {
-    font-size: var(--font-size-2xl);
   }
 }
 @media (max-width: 700px) {
@@ -1636,53 +1351,6 @@ input::placeholder {
     padding: var(--space-5) var(--space-4);
     font-size: var(--font-size-xs);
   }
-  .login-page {
-    display: block;
-  }
-  .login-story {
-    padding: var(--space-6) var(--space-6) var(--space-6);
-  }
-  .login-story .brand {
-    font-size: var(--font-size-lg);
-  }
-  .story-body {
-    padding: var(--space-8) 0 0;
-  }
-  .story-body h1 {
-    font-size: var(--font-size-3xl);
-    line-height: 1.35;
-  }
-  .story-body > .eyebrow {
-    font-size: var(--font-size-xs);
-  }
-  .story-description,
-  .delivery-art,
-  .story-footer {
-    display: none;
-  }
-  .login-panel {
-    padding: var(--space-5) var(--space-6);
-    min-height: 520px;
-  }
-  .edition {
-    display: none;
-  }
-  .login-form-wrap {
-    padding: var(--space-4) 0 var(--space-8);
-    max-width: 420px;
-  }
-  .login-form-wrap .form-symbol {
-    display: none;
-  }
-  .login-form-wrap h2 {
-    font-size: var(--font-size-2xl);
-  }
-  .login-form-wrap > .muted {
-    margin-bottom: var(--space-6);
-  }
-  .login-footer {
-    font-size: var(--font-size-xs);
-  }
   .password-page {
     padding: var(--space-5);
   }
@@ -1756,13 +1424,6 @@ input::placeholder {
 .sidebar .brand-mark > span {
   color: var(--text-tertiary);
 }
-.login-story .brand-mark {
-  background: var(--surface);
-  color: var(--nav-bg);
-}
-.login-story .brand-mark > span {
-  color: var(--nav-active);
-}
 .sidebar .avatar {
   background: var(--nav-hover);
   color: var(--nav-text);
@@ -1792,14 +1453,6 @@ input::placeholder,
 textarea::placeholder {
   color: var(--muted);
   opacity: 1;
-}
-.login-story .delivery-art,
-.login-story .art-orbit {
-  border-color: var(--nav-border);
-}
-.login-story .blue-dot,
-.login-story .art-cross {
-  color: var(--nav-muted);
 }
 .user-menu {
   position: relative;

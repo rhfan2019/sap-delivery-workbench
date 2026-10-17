@@ -30,7 +30,7 @@ colors:
   danger-soft: '#FEF0EF'
 
 typography:
-  family-sans: "Inter, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif"
+  family-sans: "'Inter Variable', Inter, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif"
   family-mono: "'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace"
   display: { size: 28px, line: 36px, weight: 600 } # 起始页问候语
   title-lg: { size: 20px, line: 28px, weight: 600 } # 页面标题、文档 H1
@@ -41,6 +41,7 @@ typography:
   caption: { size: 12px, line: 18px, weight: 400 } # 时间、计数、脚注
   code: { size: 13px, line: 20px, weight: 400 }
   sizes: { xs: 12px, sm: 13px, md: 14px, lg: 15px, xl: 17px, 2xl: 20px, 3xl: 28px } # --font-size-*
+  display-size: clamp(36px, 4.4vw, 64px) # --font-size-display，只用于登录页主标题
   weights: { regular: 400, medium: 500, semibold: 600 } # --font-weight-*；不用 700 及以上
 
 # --space-N = N x 4px；页面区块间 24/32，组件内 8/12
@@ -117,7 +118,7 @@ layout: # --layout-*
 ## 3. 字体
 
 - 界面统一无衬线：Inter + 苹方 / 微软雅黑。代码与 SAP 对象名（表、字段、函数）用等宽字体。
-- 字号只用第 0 节的 8 级。界面默认 14px；对话与文档正文 15px、行高 26px。
+- 字号只用第 0 节的 8 级；登录页主标题另用一级展示字号 `--font-size-display`（36–64px 随宽度变化），其他页面不用。界面默认 14px；对话与文档正文 15px、行高 26px。
 - 字重只用 400 / 500 / 600。加粗正文只用于真正的关键词，一段里不超过一处。
 
 ## 4. 布局
@@ -190,7 +191,7 @@ layout: # --layout-*
 | 布局                                                  | `--layout-sidebar`、`--layout-sidebar-narrow`、`--layout-sidebar-collapsed`、`--layout-drawer`     |
 | 图表                                                  | `--chart-1`…`--chart-3`（按系列顺序）                                                              |
 | 标签色                                                | `--tag-{blue,green,orange,red,purple,teal,yellow}-bg` / `-text`（开发项标签，用户可选）            |
-| 深色品牌区                                            | `--story-*`（登录页左侧、首页横幅，迁移前保留深蓝）                                                |
+| 深色品牌区                                            | `--story-*`（首页横幅，迁移前保留深蓝）                                                            |
 
 2026-10-16 已用脚本把全站写死值替换为最接近的令牌：颜色按用途在文字、背景、边框令牌中取最接近者，半透明色写作 `color-mix(in srgb, var(--令牌) N%, transparent)`；字号、间距、圆角取最接近的一级（小于 12px 的字号统一升到 12px）。
 
@@ -203,7 +204,7 @@ layout: # --layout-*
 | 2    | 开发项工作区头部与成果面板、FSD 文档阅读：按第 5 节重排版式     | 待办            |
 | 3    | 首页、开发清单（表格与筛选）：按第 5 节重排版式                 | 待办            |
 | 4    | 后台管理（组织、成员、模型、SAP 连接、审计）：按第 5 节重排版式 | 待办            |
-| 5    | 登录页：去掉 `--story-*` 深色区，按规范重做                     | 待办            |
+| 5    | 登录页：去掉 `--story-*` 深色区，按规范重做                     | 2026-10-17 完成 |
 
 第 2～5 批只调整版式和组件用法，取值仍只用令牌。
 

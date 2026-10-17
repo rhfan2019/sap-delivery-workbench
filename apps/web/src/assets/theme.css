@@ -36,7 +36,7 @@
   --success-border: #b5dfc6;
   --warning-border: #f1d7a6;
   --scrim: #1f232866;
-  --font-sans: Inter, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  --font-sans: 'Inter Variable', Inter, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
   /* Type scale (DESIGN.md 3): nothing smaller than 12px. */
   --font-size-xs: 12px;
@@ -46,6 +46,8 @@
   --font-size-xl: 17px;
   --font-size-2xl: 20px;
   --font-size-3xl: 28px;
+  /* The one display size: the login page headline (DESIGN.md 3). */
+  --font-size-display: clamp(36px, 4.4vw, 64px);
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
@@ -97,7 +99,7 @@
   --tag-yellow-text: #806414;
   --shadow-raised: 0 1px 2px rgb(16 24 40 / 0.04), 0 4px 16px rgb(16 24 40 / 0.06);
   --shadow-popover: 0 8px 28px rgb(16 24 40 / 0.14);
-  /* The login story and the home banner keep their navy until migrated (DESIGN.md 9). */
+  /* The home banner keeps its navy until migrated (DESIGN.md 9). */
   --story-bg: #0a2240;
   --story-text: #ffffff;
   --story-muted: #d4e1ef;
@@ -118,7 +120,6 @@
 }
 
 /* Scoped inverse surfaces: never change the light workspace or native dialogs. */
-.login-story,
 .welcome-banner {
   --nav-bg: var(--story-bg);
   --nav-text: var(--story-text);
