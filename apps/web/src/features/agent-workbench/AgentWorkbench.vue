@@ -16,6 +16,7 @@ import { useAttachments } from './useAttachments';
 import type { useAgentSession } from './useAgentSession';
 import { api } from '../../services/session';
 import { restoreDraft } from './presentation.mjs';
+import { useShortcut } from '../../services/shortcuts';
 import { Button } from '@/components/ui/button';
 import type { ModelRecord } from '../models/types';
 import type { AgentArtifactRef } from '@sap-delivery-workbench/contracts/agent-core/types';
@@ -76,6 +77,11 @@ watch(run.quoted, async (q) => {
 const { open, onChange } = useFileDialog({ multiple: true, reset: true });
 onChange((files) => void addFiles(files));
 const { isOverDropZone } = useDropZone(composer, { onDrop: () => {} });
+// R puts the cursor in the composer, U opens the file picker (DESIGN.md 6.3).
+useShortcut('R', () => composer.value?.querySelector('textarea')?.focus());
+useShortcut('U', () => {
+  if (props.editable && !props.blocked && !sending.value) open();
+});
 
 function base64(file: File) {
   return new Promise<string>((resolve, reject) => {

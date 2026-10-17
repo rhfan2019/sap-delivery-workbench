@@ -109,7 +109,7 @@ provide(PROMPT_INPUT_KEY, context);
               type="button"
               variant="ghost"
               size="sm"
-              class="max-w-48 text-xs font-normal text-muted-foreground"
+              class="min-w-0 max-w-48 shrink text-xs font-normal text-muted-foreground"
               aria-label="选择模型"
               :disabled="busy || loading || blocked"
               ><span class="truncate">{{ selectedName }}</span

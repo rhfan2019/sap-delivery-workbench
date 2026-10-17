@@ -186,6 +186,8 @@
   --layout-gap: 8px;
   --layout-list-panel: 400px;
   --layout-details: 384px;
+  /* The record page bar and the side panel headers line up at one height. */
+  --layout-record-bar: 48px;
   --control-button: 34px;
   --control-input: 32px;
   --control-icon: 32px;

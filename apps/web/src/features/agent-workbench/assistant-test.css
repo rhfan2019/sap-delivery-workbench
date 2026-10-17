@@ -1,57 +1,13 @@
+/* The conversation column of an assistant (DESIGN.md 6): the timeline, then the floating
+   composer at the bottom; an empty conversation is a start page. */
 .assistant-test {
   display: flex;
   flex-direction: column;
   min-height: 480px;
   height: calc(100dvh - 116px);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
+  background: var(--panel);
   overflow: hidden;
-  color: var(--primary-hover);
-}
-.assistant-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-4) var(--space-6);
-  gap: var(--space-3);
-  border-bottom: 1px solid var(--active);
-  flex-shrink: 0;
-}
-.assistant-title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-.assistant-title h1 {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
-  margin: 0;
-  letter-spacing: -0.3px;
-}
-.assistant-title > span {
-  font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
-}
-.header-actions {
-  display: flex;
-  gap: var(--space-2);
-}
-.header-actions button {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1-5);
-  border: 0;
-  background: transparent;
-  padding: var(--space-2) var(--space-2-5);
-  color: var(--muted);
-  min-height: 36px;
-  border-radius: var(--button-radius);
-  font-size: var(--font-size-xs);
-  cursor: pointer;
-}
-.header-actions button:hover {
-  background: var(--bg);
+  color: var(--text);
 }
 .assistant-split {
   flex: 1;
@@ -64,93 +20,18 @@
   overflow: hidden;
 }
 .assistant-split :deep(.splitpanes__splitter) {
-  background: var(--nav-hover);
+  background: var(--border);
 }
 .assistant-split.splitpanes--vertical > :deep(.splitpanes__splitter) {
-  width: 5px;
+  width: 1px;
   cursor: col-resize;
 }
 .assistant-split.splitpanes--horizontal > :deep(.splitpanes__splitter) {
-  height: 5px;
+  height: 1px;
   cursor: row-resize;
 }
-.chat-toolbar {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2-5);
-  padding: var(--space-3) var(--space-6);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-}
-.mode-switch {
-  display: flex;
-  background: var(--surface-muted);
-  border-radius: var(--radius-md);
-  padding: var(--space-0-5);
-  gap: var(--space-0-5);
-}
-.mode-switch button {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1-5);
-  border: 0;
-  background: transparent;
-  color: var(--text-tertiary);
-  padding: var(--space-2) var(--space-2-5);
-  font-size: var(--font-size-xs);
-  min-height: 32px;
-  border-radius: var(--button-radius);
-  cursor: pointer;
-}
-.mode-switch button.active {
-  background: var(--surface);
-  color: var(--primary-hover);
-  box-shadow: var(--shadow-card);
-}
-.type-picker select {
-  border: 0;
-  background: transparent;
-  color: var(--text-tertiary);
-  padding: var(--space-2) var(--space-1);
-  max-width: 130px;
-  font-size: var(--font-size-xs);
-  cursor: pointer;
-  min-height: 36px;
-}
-.target-toggle {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1-5);
-  margin-left: auto;
-  border: 0;
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--muted);
-  padding: var(--space-2);
-  font-size: var(--font-size-xs);
-  cursor: pointer;
-}
-.target-toggle small {
-  font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
-  border-left: 1px solid var(--border);
-  padding-left: var(--space-1-5);
-}
-.target-toggle:hover {
-  background: var(--bg);
-}
-.target-settings {
-  flex-shrink: 0;
-  max-height: 240px;
-  overflow: auto;
-  border-bottom: 1px solid var(--active);
-}
-.target-settings :deep(.target-panel) {
-  border: 0;
-  margin: 0;
-  padding: var(--space-2-5) var(--space-6);
-  background: var(--bg);
-  border-radius: 0;
+.assistant-split :deep(.splitpanes__splitter:hover) {
+  background: var(--blue-solid-1);
 }
 .assistant-bottom {
   width: 100%;
@@ -159,43 +40,35 @@
   padding: var(--space-1) var(--space-6) var(--space-3);
   box-sizing: border-box;
   flex-shrink: 0;
-  background: var(--surface);
+  background: var(--panel);
 }
 .assistant-notice {
-  padding: var(--space-2-5) var(--space-3);
-  margin: 0 0 var(--space-2-5);
-  border-radius: var(--radius-md);
-  background: var(--warning-bg);
-  color: var(--warning-text);
-  font-size: var(--font-size-xs);
-  line-height: 1.6;
+  padding: var(--space-2) var(--space-3);
+  margin: 0 0 var(--space-2);
+  border-radius: var(--radius-6);
+  background: var(--yellow-fill-1);
+  color: var(--yellow-text-1);
+  font-size: var(--font-12);
+  line-height: var(--leading-20);
 }
 .assistant-notice a {
-  color: var(--focus);
+  color: var(--link);
 }
 .attachment-status {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-1-5);
   align-items: center;
-  font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
+  font-size: var(--font-12);
+  color: var(--text-muted);
   margin: 0 0 var(--space-2);
   max-height: 78px;
   overflow: auto;
 }
-.attachment-status button {
-  border: 0;
-  background: var(--surface-muted);
-  color: var(--muted);
-  border-radius: var(--button-radius);
-  padding: var(--space-1) var(--space-2);
-  cursor: pointer;
-}
 .attachment-status span {
   padding: var(--space-0-5) var(--space-1-5);
-  background: var(--bg);
-  border-radius: var(--radius-xs);
+  background: var(--neutral-fill-1);
+  border-radius: var(--radius-4);
 }
 .composer-footnote {
   display: flex;
@@ -203,35 +76,9 @@
   justify-content: center;
   gap: var(--space-3);
   margin-top: var(--space-2);
-  font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
-  line-height: 1.6;
-}
-.composer-footnote details {
-  position: relative;
-}
-.composer-footnote summary {
-  cursor: pointer;
-}
-.composer-footnote details[open] {
-  position: absolute;
-  bottom: 18px;
-  right: 30px;
-  max-width: 320px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--space-3);
-  box-shadow: var(--shadow-popover);
-  z-index: 3;
-  overflow-wrap: anywhere;
-}
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  font-size: var(--font-11);
+  color: var(--text-subtle);
+  line-height: var(--leading-16);
 }
 button:disabled,
 select:disabled {
@@ -243,74 +90,8 @@ select:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
-@media (max-width: 700px) {
-  .assistant-header {
-    padding: var(--space-3) var(--space-4);
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .header-actions {
-    flex-wrap: wrap;
-  }
-  .header-actions button,
-  .assistant-title h1 {
-    white-space: nowrap;
-  }
-  .assistant-title > span {
-    display: none;
-  }
-  .chat-toolbar {
-    padding: var(--space-2-5) var(--space-3);
-    gap: var(--space-1);
-  }
-  .target-toggle span {
-    display: none;
-  }
-  .target-toggle small {
-    border: 0;
-    padding: 0;
-  }
-  .mode-switch button {
-    padding: var(--space-2);
-  }
-  .type-picker select {
-    max-width: 102px;
-  }
-  .assistant-bottom {
-    padding: var(--space-1) var(--space-3) var(--space-2-5);
-  }
-  .assistant-test {
-    height: calc(100dvh - 100px);
-    border-radius: var(--radius-lg);
-  }
-  .composer-footnote {
-    font-size: var(--font-size-xs);
-    gap: var(--space-2);
-  }
-}
-.task-state {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-  padding: var(--space-2-5) var(--space-5);
-  border-bottom: 1px solid var(--active);
-  color: var(--muted);
-  font-size: var(--font-size-xs);
-  line-height: 1.6;
-}
-.task-state button {
-  background: transparent;
-  color: var(--focus);
-  border: 0;
-  cursor: pointer;
-  padding: var(--space-0-5) var(--space-1-5);
-}
-.task-state button:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
 
-/* DESIGN.md 6: an empty conversation is a start page (greeting, composer, suggestions). */
+/* An empty conversation is a start page (greeting, composer, suggestions). */
 .assistant-chat.is-start {
   justify-content: safe center;
   overflow-y: auto;
@@ -325,15 +106,16 @@ select:focus-visible {
 }
 .start-greeting h1 {
   margin: 0;
-  font-size: var(--font-size-3xl);
-  line-height: 36px;
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-24);
+  line-height: var(--leading-32);
+  font-weight: var(--weight-550);
   color: var(--text);
 }
 .start-greeting p {
   margin: var(--space-2) 0 0;
-  font-size: var(--font-size-md);
-  color: var(--muted);
+  font-size: var(--font-14);
+  line-height: var(--leading-20);
+  color: var(--text-muted);
 }
 .start-suggestions {
   display: flex;
@@ -343,15 +125,28 @@ select:focus-visible {
   margin-top: var(--space-4);
 }
 .start-suggestions button {
-  padding: var(--space-1-5) var(--space-3);
+  height: var(--control-button);
+  padding: 0 var(--space-3);
   border: 1px solid var(--border);
-  border-radius: var(--radius-full);
-  background: var(--surface);
-  color: var(--muted);
-  font-size: var(--font-size-sm);
+  border-radius: var(--radius-6);
+  background: var(--panel);
+  color: var(--text-muted);
+  font-size: var(--font-14);
+  box-shadow: var(--shadow-card);
   cursor: pointer;
+  transition:
+    background var(--motion-fast),
+    color var(--motion-fast);
 }
 .start-suggestions button:hover {
-  background: var(--surface-muted);
+  background: var(--hover);
   color: var(--text);
+}
+@media (max-width: 700px) {
+  .assistant-bottom {
+    padding: var(--space-1) var(--space-3) var(--space-2-5);
+  }
+  .assistant-test {
+    height: calc(100dvh - 100px);
+  }
 }

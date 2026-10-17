@@ -6,31 +6,31 @@
 @source '../components';
 @source '../features';
 @theme inline {
-  --color-background: var(--surface);
+  --color-background: var(--panel);
   --color-foreground: var(--text);
-  --color-card: var(--surface);
+  --color-card: var(--panel);
   --color-card-foreground: var(--text);
-  --color-popover: var(--surface);
+  --color-popover: var(--panel);
   --color-popover-foreground: var(--text);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--on-primary);
   --color-secondary: var(--hover);
   --color-secondary-foreground: var(--text);
-  --color-muted: var(--bg);
-  --color-muted-foreground: var(--muted);
+  --color-muted: var(--neutral-fill-1);
+  --color-muted-foreground: var(--text-muted);
   --color-accent: var(--hover);
   --color-accent-foreground: var(--text);
-  --color-destructive: var(--error-text);
-  --color-success: var(--success-text);
-  --color-warning: var(--warning-text);
+  --color-destructive: var(--red-text-2);
+  --color-success: var(--green-text-2);
+  --color-warning: var(--yellow-text-2);
   --color-border: var(--border);
-  --color-input: var(--control-border);
+  --color-input: var(--border-strong);
   --color-ring: var(--focus);
-  /* Vendored components follow the component tokens of the active theme. */
-  --radius-sm: var(--badge-radius);
-  --radius-md: var(--button-radius);
-  --radius-lg: var(--card-radius);
-  --radius-xl: var(--dialog-radius);
+  /* Vendored components follow the Plain radii (DESIGN.md 3.4). */
+  --radius-sm: var(--radius-4);
+  --radius-md: var(--radius-6);
+  --radius-lg: var(--radius-8);
+  --radius-xl: var(--radius-12);
 }
 @layer base {
   .assistant-elements,
@@ -70,7 +70,8 @@
   /* StickToBottom owns scrolling on its inner scrollRef. */
   overflow: hidden;
 }
-/* DESIGN.md 6: one centred reading column; turns breathe, the inside of a turn stays tight. */
+/* DESIGN.md 6: one centred reading column; turns breathe, the inside of a turn stays tight.
+   Messages are Plain blocks: the person's on a light grey fill, the assistant's on the page. */
 .assistant-elements .elements-content {
   width: min(100%, 808px);
   margin-inline: auto;
@@ -86,17 +87,17 @@
   max-width: 80%;
 }
 .assistant-elements .user-bubble {
-  border-radius: var(--bubble-radius);
-  background: var(--bubble-bg);
-  color: var(--bubble-text);
-  padding: var(--space-2-5) var(--space-4);
-  font-size: var(--font-size-lg);
-  line-height: 24px;
+  border-radius: var(--radius-8);
+  background: var(--neutral-fill-1);
+  color: var(--text);
+  padding: var(--space-2-5) var(--space-3);
+  font-size: var(--font-14);
+  line-height: var(--leading-24);
 }
 /* Who sent it and when: on hover, like the actions under a reply. */
 .assistant-elements .user-message-meta {
   opacity: 0;
-  transition: opacity var(--duration-base);
+  transition: opacity var(--motion-base);
 }
 .assistant-elements .elements-message:hover .user-message-meta,
 .assistant-elements .elements-message:focus-within .user-message-meta {
@@ -105,7 +106,8 @@
 .assistant-elements .elements-markdown {
   min-width: 0;
   overflow-wrap: anywhere;
-  line-height: 1.6;
+  font-size: var(--font-14);
+  line-height: var(--leading-24);
 }
 .assistant-elements .elements-markdown pre,
 .assistant-elements .elements-markdown table {
@@ -119,14 +121,13 @@
   color: var(--link);
   text-decoration: underline;
 }
-.assistant-elements .elements-markdown h1 {
-  font-size: var(--font-size-2xl);
-}
-.assistant-elements .elements-markdown h2 {
-  font-size: var(--font-size-2xl);
+.assistant-elements .elements-markdown :is(h1, h2) {
+  font-size: var(--font-20);
+  font-weight: var(--weight-550);
 }
 .assistant-elements .elements-markdown h3 {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-16);
+  font-weight: var(--weight-550);
 }
 .assistant-elements .elements-markdown :is(h1, h2, h3, h4) {
   margin: 1em 0 0.4em;
@@ -136,22 +137,26 @@
   margin-bottom: 0.5em;
 }
 .assistant-elements .elements-composer [data-slot='input-group'] {
-  border-radius: var(--composer-radius);
-  border-color: var(--composer-border);
-  background: var(--input-bg);
-  box-shadow: var(--composer-shadow);
+  border-radius: var(--radius-12);
+  border-color: var(--border);
+  background: var(--panel);
+  box-shadow: var(--shadow-floating);
+  transition: box-shadow var(--motion-base);
 }
 .assistant-elements .elements-composer textarea {
   font: inherit;
-  line-height: 1.65;
+  font-size: var(--font-14);
+  line-height: var(--leading-24);
   resize: none;
   border: 0;
   box-shadow: none;
   outline: none;
 }
 .assistant-elements .elements-composer [data-slot='input-group']:has(textarea:focus-visible) {
-  border-color: var(--input-focus-border);
-  box-shadow: var(--composer-shadow);
+  border-color: var(--focus);
+  box-shadow:
+    0 0 0 1px var(--focus),
+    var(--shadow-floating);
 }
 .assistant-elements .user-message-meta {
   width: 100%;
