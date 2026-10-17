@@ -48,7 +48,6 @@ const emit = defineEmits<{
   agent: [label: string];
 }>();
 const more = ref(false);
-const dialog = ref<HTMLDialogElement>();
 const body = ref<HTMLElement>();
 const creating = computed(() => !props.item);
 const editing = ref(creating.value);
@@ -131,7 +130,6 @@ function jump(key: string) {
 let trigger: HTMLElement | null = null;
 onMounted(() => {
   trigger = document.activeElement as HTMLElement;
-  dialog.value?.show();
   if (creating.value)
     void nextTick(() => body.value?.querySelector<HTMLElement>('select,input')?.focus());
 });
@@ -142,11 +140,10 @@ defineExpose({ dirty, busy });
 </script>
 
 <template>
-  <dialog
-    ref="dialog"
+  <section
     class="item-drawer"
+    role="region"
     aria-labelledby="item-drawer-title"
-    @cancel.prevent="emit('close')"
     @keydown.esc.stop.prevent="emit('close')"
   >
     <form @submit.prevent="save">
@@ -293,5 +290,5 @@ defineExpose({ dirty, busy });
         </template>
       </footer>
     </form>
-  </dialog>
+  </section>
 </template>

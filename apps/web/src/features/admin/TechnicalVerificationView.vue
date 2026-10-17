@@ -59,7 +59,7 @@ async function query() {
           </button>
         </div>
         <p class="technical-note">
-          本页面仅读取表定义，不读取业务数据。当前使用独立验证连接，不受右上角项目切换影响。
+          本页面仅读取表定义，不读取业务数据。当前使用独立验证连接，不受左上角项目切换影响。
         </p>
       </form>
       <section class="technical-panel" :aria-busy="busy">

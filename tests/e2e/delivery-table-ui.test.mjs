@@ -120,15 +120,17 @@ test('development list: page/batch/row actions, inline edit, grouped drawer, col
 
   await mkdir('.runtime/artifacts/delivery-table', { recursive: true });
   await page.screenshot({ path: '.runtime/artifacts/delivery-table/list.png' });
-  // Page actions live in the heading; batch actions appear only after selection.
-  for (const name of ['清单设置', '导入 / 导出'])
-    await page.getByRole('button', { name, exact: true }).waitFor();
+  // Page actions live in the heading (settings under 导入 / 导出); batch actions appear only
+  // after selection.
+  await page.getByRole('button', { name: '导入 / 导出', exact: true }).click();
+  await page.getByRole('menuitem', { name: '清单设置' }).waitFor();
+  await page.keyboard.press('Escape');
   assert.equal(await page.getByRole('button', { name: '批量修改' }).count(), 0);
   await page.getByRole('checkbox', { name: '选择 00001', exact: true }).check();
   await page.getByRole('checkbox', { name: '选择 00002', exact: true }).check();
   await page.getByText('已选 2 项', { exact: true }).waitFor();
   await page.screenshot({ path: '.runtime/artifacts/delivery-table/batch.png' });
-  for (const name of ['批量修改', '批量复制', '导出选中项', '删除'])
+  for (const name of ['批量修改', '复制', '导出', '删除'])
     assert.equal(await page.getByRole('button', { name, exact: true }).isEnabled(), true);
   await page.getByRole('button', { name: '删除', exact: true }).click();
   await page.getByText(/00001《采购订单执行清单》/).waitFor();
@@ -142,31 +144,34 @@ test('development list: page/batch/row actions, inline edit, grouped drawer, col
     /\/development-items\/i0\/design$/,
   );
   // Row actions are a hover bar: design and development icons, the rest under "more".
-  const firstRow = page.locator('.vxe-body--row').filter({ hasText: '00001' }).first();
+  const firstRow = page.locator('tbody tr').filter({ hasText: '00001' }).first();
   await firstRow.hover();
-  await page.getByRole('button', { name: '开发 00001', exact: true }).first().click();
-  await page.getByText('“开发”Agent 即将开发').waitFor();
+  // Reports and functions open the development assistant; other kinds are announced as coming.
+  assert.match(
+    await page.getByRole('link', { name: '开发 00001', exact: true }).first().getAttribute('href'),
+    /\/development-items\/i0\/development$/,
+  );
   await firstRow.hover();
   await page.getByRole('button', { name: '00001 的更多操作', exact: true }).first().click();
   await page.getByRole('menuitem', { name: '顾问测试' }).click();
   await page.getByText('“顾问测试”Agent 即将开发').waitFor();
 
   // Inline edit: a choice saves on change; a failure stays in the cell with the value.
-  const row = page.locator('.vxe-body--row').filter({ hasText: '00001' }).first();
-  await row.locator('.column-priority .inline-cell').click();
-  await row.locator('.column-priority select').selectOption('medium');
+  const row = page.locator('tbody tr').filter({ hasText: '00001' }).first();
+  await row.locator('.td-priority .inline-cell').click();
+  await row.locator('.td-priority select').selectOption('medium');
   await row.getByRole('alert').filter({ hasText: '测试保存冲突' }).waitFor();
-  assert.equal(await row.locator('.column-priority select').inputValue(), 'medium');
+  assert.equal(await row.locator('.td-priority select').inputValue(), 'medium');
   rejectSave = false;
-  await row.locator('.column-priority select').selectOption('low');
-  await row.locator('.column-priority select').waitFor({ state: 'detached' });
+  await row.locator('.td-priority select').selectOption('low');
+  await row.locator('.td-priority select').waitFor({ state: 'detached' });
   assert.equal(items[0].priority, 'low');
   // Open phases past their planned end are flagged without changing data.
-  assert.ok((await row.locator('.column-fsd\\.status').innerText()).includes('逾期'));
+  assert.ok((await row.locator('.td-fsd\\.status').innerText()).includes('逾期'));
 
   // Drawer: one page grouped by section, no tabs; edit and save the changed fields only.
   await page.getByRole('button', { name: '查看 00001', exact: true }).click();
-  const drawer = page.locator('.item-drawer[open]');
+  const drawer = page.locator('.item-drawer');
   await drawer.waitFor();
   assert.equal(await drawer.getByRole('tab').count(), 0);
   for (const name of [
@@ -194,15 +199,15 @@ test('development list: page/batch/row actions, inline edit, grouped drawer, col
   await page.getByRole('button', { name: '查看 00002', exact: true }).click();
   await drawer.getByRole('heading', { name: '供应商未清项批量清账' }).waitFor();
   assert.doesNotMatch(await drawer.locator('.phase-strip').innerText(), /%/);
-  await page.getByRole('heading', { name: '开发清单', exact: true }).click();
+  await page.keyboard.press('Escape');
   await drawer.waitFor({ state: 'detached' });
 
   // Column settings persist per user and project.
-  await page.getByRole('button', { name: '列设置', exact: true }).click();
+  await page.getByRole('button', { name: '显示', exact: true }).click();
   await page.getByLabel('显示业务功能点', { exact: true }).check();
   await page.getByRole('button', { name: '完成', exact: true }).click();
   await page.reload();
-  await page.getByRole('button', { name: '列设置', exact: true }).click();
+  await page.getByRole('button', { name: '显示', exact: true }).click();
   assert.equal(await page.getByLabel('显示业务功能点', { exact: true }).isChecked(), true);
   await page.getByRole('button', { name: '恢复默认', exact: true }).click();
   await page.getByRole('button', { name: '完成', exact: true }).click();

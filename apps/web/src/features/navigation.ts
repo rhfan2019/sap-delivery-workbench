@@ -107,7 +107,8 @@ export const modules: Module[] = [
     id: group.id,
     label: group.label,
     icon: group.icon,
-    path: group.items[0].path,
+    // The rail opens the page people use most: the development list for 开发管理.
+    path: (group.items.find((i) => i.id === 'development-items') ?? group.items[0]).path,
     sections:
       group.id === 'admin'
         ? [

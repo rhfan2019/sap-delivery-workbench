@@ -15,8 +15,17 @@ function typing(target: EventTarget | null) {
   const el = target as HTMLElement | null;
   return !!el?.closest?.('input, textarea, select, [contenteditable=""], [contenteditable="true"]');
 }
+// Dialogs, menus and popovers handle their own keys (Esc closes them first).
+function inOverlay(target: EventTarget | null) {
+  const el = target as HTMLElement | null;
+  return !!el?.closest?.(
+    '[role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [data-reka-popper-content-wrapper]',
+  );
+}
 function listen(event: KeyboardEvent) {
   if (event.defaultPrevented || event.isComposing || event.altKey) return;
+  if (inOverlay(event.target) || document.querySelector('[role="dialog"][data-state="open"]'))
+    return;
   const key = name(event);
   if (!key.startsWith('Ctrl+') && typing(event.target)) return;
   const list = handlers.get(key);

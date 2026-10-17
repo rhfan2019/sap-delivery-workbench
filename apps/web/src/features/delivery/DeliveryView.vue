@@ -7,7 +7,6 @@ import {
   RefreshCw,
   Columns3,
   SlidersHorizontal,
-  ChevronDown,
   X,
   Search,
   Copy,
@@ -21,7 +20,19 @@ import {
   Code2,
   ClipboardCheck,
   UserCheck,
+  ListChecks,
 } from '@lucide/vue';
+import BaseActionBar from '../../components/base/BaseActionBar.vue';
+import BaseButton from '../../components/base/BaseButton.vue';
+import BaseIconButton from '../../components/base/BaseIconButton.vue';
+import BaseInput from '../../components/base/BaseInput.vue';
+import BaseMenu from '../../components/base/BaseMenu.vue';
+import BaseMenuItem from '../../components/base/BaseMenuItem.vue';
+import BaseMenuSeparator from '../../components/base/BaseMenuSeparator.vue';
+import BasePopover from '../../components/base/BasePopover.vue';
+import BaseTabs from '../../components/base/BaseTabs.vue';
+import { toast as notify } from '../../components/base/toast';
+import { useShortcut } from '../../services/shortcuts';
 import WorkbenchTable from '../../components/workbench-table/WorkbenchTable.vue';
 import { api, ApiError, identity } from '../../services/session';
 import { currentProject, projects, leaveDelivery } from '../../services/projectContext';
@@ -55,8 +66,7 @@ const readOnly = ref(true),
   loading = ref(false),
   loaded = ref(false),
   busy = ref(false);
-const error = ref(''),
-  toast = ref('');
+const error = ref('');
 const checked = ref<string[]>([]);
 const table = ref<{ openColumns: () => void }>();
 const drawer = ref<InstanceType<typeof ItemDrawer> | null>(null);
@@ -72,7 +82,7 @@ const columns = computed(() => tableColumns(fields.value));
 const base = computed(() => '/projects/' + currentProject.value + '/development-items');
 const drawerItem = computed(() => items.value.find((i) => i.id === drawerId.value) ?? null);
 const projectName = computed(
-  () => projects.value.find((p) => p.id === currentProject.value)?.name || '请在右上角选择项目',
+  () => projects.value.find((p) => p.id === currentProject.value)?.name || '请在左上角选择项目',
 );
 const columnStorageKey = computed(
   () =>
@@ -90,7 +100,6 @@ const search = ref(''),
   priorityFilter = ref(''),
   difficultyFilter = ref(''),
   personFilter = ref('');
-const advanced = ref(false);
 const sortField = ref(''),
   sortOrder = ref<'asc' | 'desc' | null>(null);
 const page = ref(1),
@@ -329,14 +338,8 @@ function replace(item: Item) {
 }
 // Success messages float briefly instead of pushing the table down.
 function say(message: string) {
-  showToast(message);
+  notify(message, 'green');
   error.value = '';
-}
-let toastTimer = 0;
-function showToast(message: string) {
-  toast.value = message;
-  clearTimeout(toastTimer);
-  toastTimer = window.setTimeout(() => (toast.value = ''), 2600);
 }
 
 // --- guards ------------------------------------------------------------------------------
@@ -361,7 +364,6 @@ function beforeUnload(event: BeforeUnloadEvent) {
 onMounted(() => window.addEventListener('beforeunload', beforeUnload));
 onBeforeUnmount(() => {
   generation++;
-  clearTimeout(toastTimer);
   window.removeEventListener('beforeunload', beforeUnload);
   if (leaveDelivery.value === safeLeave) leaveDelivery.value = null;
 });
@@ -429,28 +431,9 @@ async function removeOne(item: Item) {
     busy.value = false;
   }
 }
-const comingSoon = (label: string) => showToast(`“${label}”Agent 即将开发`);
+const comingSoon = (label: string) => notify(`“${label}”Agent 即将开发`);
 // Development types the development agent can generate code for (reports and functions).
 const DEV_AGENT_KINDS = ['report', 'function'];
-// Row menu is rendered at page level: table cells clip overflowing content.
-const rowMenu = ref<{ item: Item; x: number; y: number } | null>(null);
-function toggleRowMenu(item: Item, event: MouseEvent) {
-  if (rowMenu.value?.item.id === item.id) return closeRowMenu();
-  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-  const width = 200;
-  rowMenu.value = {
-    item,
-    x: Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8)),
-    y: rect.bottom + 4 + 260 > window.innerHeight ? rect.top - 264 : rect.bottom + 4,
-  };
-}
-const closeRowMenu = () => (rowMenu.value = null);
-function takeRowMenu() {
-  const item = rowMenu.value!.item;
-  rowMenu.value = null;
-  return item;
-}
-
 // --- batch actions -----------------------------------------------------------------------
 const selectedItems = computed(() => items.value.filter((i) => checked.value.includes(i.id)));
 async function batch(action: string, extra: Record<string, unknown> = {}) {
@@ -537,223 +520,202 @@ async function exportExcel(ids: string[] | null, label: string) {
     busy.value = false;
   }
 }
+function downloadTemplate() {
+  const link = document.createElement('a');
+  link.href = '/api' + base.value + '/import-template';
+  link.download = '';
+  link.click();
+}
 async function imported(summary: string) {
   dialog.value = '';
   await load();
   say(summary);
 }
-function closeMenus(event: MouseEvent) {
-  const target = event.target as HTMLElement;
-  if (!target.closest('.menu-anchor')) menu.value = '';
-  if (!target.closest('.row-menu, .row-actions')) rowMenu.value = null;
+// The list's keys (DESIGN.md 1.5): N new, F filters, V columns, J / K next and previous item while
+// one is open, Esc closes it.
+const filterOpen = ref(false);
+const filterCount = computed(() => activeFilters.value.filter((f) => f.key !== 'search').length);
+function step(direction: number) {
+  if (!drawerId.value) return;
+  const index = rows.value.findIndex((i) => i.id === drawerId.value);
+  const next = rows.value[index + direction];
+  if (next) void open(next.id);
 }
-// Clicking outside the drawer and the table rows closes the drawer (rows switch it instead).
-function outsideDrawer(event: MouseEvent) {
-  if (drawerId.value === null || dialog.value) return;
-  const target = event.target as HTMLElement;
-  if (!target.isConnected || target === document.documentElement) return;
-  if (target.closest('dialog, .vxe-body--row, .menu-panel, .toast, [data-keep-drawer]')) return;
-  void closeDrawer();
-}
-onMounted(() => document.addEventListener('mousedown', outsideDrawer));
-onBeforeUnmount(() => document.removeEventListener('mousedown', outsideDrawer));
-onMounted(() => document.addEventListener('click', closeMenus));
-onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
+useShortcut('N', () => !readOnly.value && loaded.value && void openCreate());
+useShortcut('F', () => (filterOpen.value = true));
+useShortcut('V', () => table.value?.openColumns());
+useShortcut('J', () => step(1));
+useShortcut('K', () => step(-1));
+useShortcut('Escape', () => drawerId.value !== null && void closeDrawer());
 </script>
 
 <template>
-  <div class="delivery-page" :class="{ 'drawer-open': drawerId !== null }">
-    <div class="delivery-heading">
-      <div class="heading-title">
-        <h1>开发清单</h1>
-        <span class="muted">{{ projectName }}</span>
-      </div>
-      <div class="page-actions">
-        <button class="secondary-button compact" :disabled="!loaded" @click="dialog = 'settings'">
-          <Settings2 :size="15" />清单设置
-        </button>
-        <div class="menu-anchor">
-          <button
-            class="secondary-button compact"
-            :aria-expanded="menu === 'excel'"
-            :disabled="!loaded || busy"
-            @click="menu = menu === 'excel' ? '' : 'excel'"
+  <div class="delivery-page" :class="{ split: drawerId !== null }">
+    <header class="list-head">
+      <ListChecks class="list-icon" />
+      <h1>开发清单</h1>
+      <span class="list-project">{{ projectName }}</span>
+      <span class="head-actions">
+        <BaseMenu align="end">
+          <template #trigger>
+            <BaseButton :disabled="!loaded || busy"
+              ><template #icon><FileSpreadsheet /></template>导入 / 导出</BaseButton
+            >
+          </template>
+          <BaseMenuItem tone="blue" :disabled="readOnly" @select="dialog = 'import'"
+            ><template #icon><FileUp /></template>从 Excel 导入</BaseMenuItem
           >
-            <FileSpreadsheet :size="15" />导入 / 导出<ChevronDown :size="14" />
-          </button>
-          <div v-if="menu === 'excel'" class="menu-panel" role="menu">
-            <button
-              role="menuitem"
-              :disabled="readOnly"
-              @click="((menu = ''), (dialog = 'import'))"
-            >
-              <FileUp :size="15" />从 Excel 导入
-            </button>
-            <a
-              role="menuitem"
-              :href="'/api' + base + '/import-template'"
-              download
-              @click="menu = ''"
-              ><FileDown :size="15" />下载导入模板</a
-            >
-            <button
-              role="menuitem"
-              :disabled="!filtered.length"
-              @click="
-                exportExcel(
-                  filtered.map((i) => i.id),
-                  `筛选结果 ${filtered.length} 项`,
-                )
-              "
-            >
-              <FileDown :size="15" />导出筛选结果（{{ filtered.length }} 项）
-            </button>
-          </div>
-        </div>
-        <button
-          class="primary-button compact"
+          <BaseMenuItem tone="blue" @select="downloadTemplate"
+            ><template #icon><FileDown /></template>下载导入模板</BaseMenuItem
+          >
+          <BaseMenuItem
+            tone="green"
+            :disabled="!filtered.length"
+            :note="`${filtered.length} 项`"
+            @select="
+              exportExcel(
+                filtered.map((i) => i.id),
+                `筛选结果 ${filtered.length} 项`,
+              )
+            "
+            ><template #icon><FileDown /></template>导出筛选结果</BaseMenuItem
+          >
+          <BaseMenuSeparator />
+          <BaseMenuItem :disabled="!loaded" @select="dialog = 'settings'"
+            ><template #icon><Settings2 /></template>清单设置</BaseMenuItem
+          >
+        </BaseMenu>
+        <BaseButton
+          variant="primary"
+          kbd="N"
           data-keep-drawer
           :disabled="readOnly || !loaded"
           @click="openCreate"
+          ><template #icon><Plus /></template>新建开发项</BaseButton
         >
-          <Plus :size="16" />新建开发项
-        </button>
-      </div>
-    </div>
+      </span>
+    </header>
     <p v-if="error" class="error-note" role="alert">
       {{ error }}<button class="text-button" @click="load()">重新加载</button>
     </p>
     <p v-if="readOnly && loaded" class="help-note">此项目已归档，只能查看。</p>
 
-    <nav class="tabs scope-tabs" aria-label="清单范围">
-      <button
-        v-for="s in scopes"
-        :key="s.id"
-        :class="{ active: scope === s.id }"
-        :aria-pressed="scope === s.id"
-        @click="scope = s.id"
-      >
-        {{ s.name }}<span>{{ s.count }}</span>
-      </button>
-    </nav>
-
-    <div class="list-toolbar">
-      <template v-if="checked.length">
-        <div class="batch-bar" role="toolbar" aria-label="批量操作">
-          <strong role="status">已选 {{ checked.length }} 项</strong>
-          <button
-            class="tool-button"
-            :disabled="readOnly || busy"
-            @click="((batchError = ''), (dialog = 'batch'))"
-          >
-            <PenSquare :size="15" />批量修改
-          </button>
-          <button class="tool-button" :disabled="readOnly || busy" @click="batchCopy">
-            <Copy :size="15" />批量复制
-          </button>
-          <button
-            class="tool-button"
-            :disabled="busy"
-            @click="exportExcel(checked, `选中的 ${checked.length} 项`)"
-          >
-            <FileDown :size="15" />导出选中项
-          </button>
-          <button class="tool-button danger" :disabled="readOnly || busy" @click="batchDelete">
-            <Trash2 :size="15" />删除
-          </button>
-          <button class="tool-button quiet" :disabled="busy" @click="checked = []">取消选择</button>
-        </div>
-      </template>
-      <template v-else>
-        <div class="filters">
-          <label class="search-box"
-            ><Search :size="15" /><input
-              v-model="search"
-              aria-label="搜索开发清单"
-              placeholder="编号、名称、事务码或开发对象"
-          /></label>
-          <select v-model="moduleFilter" aria-label="按模块筛选">
-            <option value="">全部模块</option>
-            <option v-for="(label, key) in OPTIONS.module" :key="key" :value="key">
-              {{ label }}
-            </option>
-          </select>
-          <select v-model="tagFilter" aria-label="按标签筛选">
-            <option value="">全部标签</option>
-            <option v-for="t in tags" :key="t.id" :value="t.id">{{ t.name }}</option>
-          </select>
-          <select v-model="phaseFilter" aria-label="状态所属阶段">
-            <option value="">任一阶段</option>
-            <option v-for="p in PHASES" :key="p.key" :value="p.key">{{ p.label }}</option>
-          </select>
-          <select v-model="statusFilter" aria-label="按状态筛选">
-            <option value="">全部状态</option>
-            <option v-for="(label, key) in OPTIONS.status" :key="key" :value="key">
-              {{ label }}
-            </option>
-          </select>
-          <button class="tool-button quiet" :aria-expanded="advanced" @click="advanced = !advanced">
-            <SlidersHorizontal :size="15" />更多筛选
-          </button>
-        </div>
-      </template>
-      <div class="table-tools">
+    <div class="list-bar">
+      <BaseTabs
+        v-model="scope"
+        label="清单范围"
+        :tabs="scopes.map((s) => ({ id: s.id, label: s.name, count: s.count }))"
+      />
+      <span class="bar-end">
         <span v-if="loading && loaded" class="refresh-status" role="status">更新中…</span>
-        <button
-          class="icon-button"
-          aria-label="刷新"
-          title="刷新"
-          :disabled="loading"
-          @click="load()"
+        <BasePopover v-model:open="filterOpen" align="end">
+          <template #trigger>
+            <BaseButton variant="ghost" size="sm" kbd="F"
+              ><template #icon><SlidersHorizontal /></template>筛选<span
+                v-if="filterCount"
+                class="filter-count"
+                >{{ filterCount }}</span
+              ></BaseButton
+            >
+          </template>
+          <div class="filter-panel" aria-label="筛选条件">
+            <label
+              >模块<select v-model="moduleFilter">
+                <option value="">全部</option>
+                <option v-for="(label, key) in OPTIONS.module" :key="key" :value="key">
+                  {{ label }}
+                </option>
+              </select></label
+            >
+            <label
+              >类型<select v-model="kindFilter">
+                <option value="">全部</option>
+                <option v-for="(label, key) in OPTIONS.kind" :key="key" :value="key">
+                  {{ label }}
+                </option>
+              </select></label
+            >
+            <label
+              >阶段状态<span class="pair"
+                ><select v-model="phaseFilter" aria-label="状态所属阶段">
+                  <option value="">任一阶段</option>
+                  <option v-for="p in PHASES" :key="p.key" :value="p.key">
+                    {{ p.label }}
+                  </option></select
+                ><select v-model="statusFilter" aria-label="状态">
+                  <option value="">全部状态</option>
+                  <option v-for="(label, key) in OPTIONS.status" :key="key" :value="key">
+                    {{ label }}
+                  </option>
+                </select></span
+              ></label
+            >
+            <label
+              >负责人<select v-model="personFilter">
+                <option value="">全部</option>
+                <option v-for="m in members" :key="m.id" :value="m.id">{{ m.displayName }}</option>
+              </select></label
+            >
+            <label
+              >标签<select v-model="tagFilter">
+                <option value="">全部</option>
+                <option v-for="t in tags" :key="t.id" :value="t.id">{{ t.name }}</option>
+              </select></label
+            >
+            <label
+              >优先级<select v-model="priorityFilter">
+                <option value="">全部</option>
+                <option v-for="(label, key) in OPTIONS.priority" :key="key" :value="key">
+                  {{ label }}
+                </option>
+              </select></label
+            >
+            <label
+              >难易度<select v-model="difficultyFilter">
+                <option value="">全部</option>
+                <option v-for="(label, key) in OPTIONS.difficulty" :key="key" :value="key">
+                  {{ label }}
+                </option>
+              </select></label
+            >
+            <footer>
+              <BaseButton variant="ghost" size="sm" :disabled="!filterCount" @click="clearFilters"
+                >清除全部</BaseButton
+              ><BaseButton variant="primary" size="sm" @click="filterOpen = false">完成</BaseButton>
+            </footer>
+          </div>
+        </BasePopover>
+        <BaseButton variant="ghost" size="sm" kbd="V" @click="table?.openColumns()"
+          ><template #icon><Columns3 /></template>显示</BaseButton
         >
-          <RefreshCw :size="16" />
-        </button>
-        <button
-          class="icon-button"
-          aria-label="列设置"
-          title="列设置"
-          @click="table?.openColumns()"
-        >
-          <Columns3 :size="16" />
-        </button>
-      </div>
+        <BaseIconButton label="刷新" size="sm" :disabled="loading" @click="load()"
+          ><RefreshCw
+        /></BaseIconButton>
+      </span>
     </div>
-    <div v-if="advanced && !checked.length" class="filters advanced">
-      <select v-model="kindFilter" aria-label="按类型筛选">
-        <option value="">全部类型</option>
-        <option v-for="(label, key) in OPTIONS.kind" :key="key" :value="key">{{ label }}</option>
-      </select>
-      <select v-model="priorityFilter" aria-label="按优先级筛选">
-        <option value="">全部优先级</option>
-        <option v-for="(label, key) in OPTIONS.priority" :key="key" :value="key">
-          {{ label }}
-        </option>
-      </select>
-      <select v-model="difficultyFilter" aria-label="按难易度筛选">
-        <option value="">全部难易度</option>
-        <option v-for="(label, key) in OPTIONS.difficulty" :key="key" :value="key">
-          {{ label }}
-        </option>
-      </select>
-      <select v-model="personFilter" aria-label="按负责人筛选">
-        <option value="">全部负责人</option>
-        <option v-for="m in members" :key="m.id" :value="m.id">{{ m.displayName }}</option>
-      </select>
+    <div class="list-search">
+      <BaseInput
+        v-model="search"
+        placeholder="搜索编号、名称、事务码或开发对象"
+        label="搜索开发清单"
+        ><template #icon><Search /></template
+      ></BaseInput>
     </div>
     <div v-if="activeFilters.length" class="filter-chips" aria-label="已生效的筛选">
       <button
         v-for="f in activeFilters"
         :key="f.key"
+        type="button"
         :aria-label="'移除筛选 ' + f.label"
         @click="f.clear"
       >
-        {{ f.label }}<X :size="12" />
+        {{ f.label }}<X />
       </button>
-      <button class="text-button" @click="clearFilters">清除全部</button>
+      <button type="button" class="clear-all" @click="clearFilters">清除全部</button>
     </div>
 
-    <section class="delivery-list">
-      <div class="table-scroll">
+    <section class="list-area">
+      <div class="list-column">
         <WorkbenchTable
           ref="table"
           v-model:checked="checked"
@@ -763,6 +725,8 @@ onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
           :sort-field="sortField"
           :sort-order="sortOrder"
           :current-id="drawerId ?? undefined"
+          :compact="drawerId !== null"
+          :compact-keys="['code', 'name', 'fsd.status']"
           :loading="loading && !loaded"
           :view-key="filterKey()"
           :disabled="busy"
@@ -812,13 +776,13 @@ onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
             >
               {{ item.name }}
             </button>
-            <div v-else-if="column.key === 'actions'" class="row-actions" @click.stop>
+            <div v-else-if="column.key === 'actions'" class="row-actions" data-no-open>
               <RouterLink
                 class="row-icon"
                 :to="`/projects/${currentProject}/development-items/${item.id}/design`"
                 :aria-label="'设计 ' + item.code"
                 title="设计"
-                ><Sparkles :size="16"
+                ><Sparkles
               /></RouterLink>
               <RouterLink
                 v-if="DEV_AGENT_KINDS.includes(item.kind)"
@@ -826,26 +790,43 @@ onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
                 :to="`/projects/${currentProject}/development-items/${item.id}/development`"
                 :aria-label="'开发 ' + item.code"
                 title="开发"
-                ><Code2 :size="16"
+                ><Code2
               /></RouterLink>
               <button
                 v-else
+                type="button"
                 class="row-icon"
                 :aria-label="'开发 ' + item.code"
                 title="开发"
                 @click="comingSoon('开发')"
               >
-                <Code2 :size="16" />
+                <Code2 />
               </button>
-              <button
-                class="row-icon"
-                :aria-label="item.code + ' 的更多操作'"
-                title="更多"
-                :aria-expanded="rowMenu?.item.id === item.id"
-                @click="toggleRowMenu(item, $event)"
-              >
-                <MoreHorizontal :size="16" />
-              </button>
+              <BaseMenu align="end">
+                <template #trigger>
+                  <button type="button" class="row-icon" :aria-label="item.code + ' 的更多操作'">
+                    <MoreHorizontal />
+                  </button>
+                </template>
+                <BaseMenuItem tone="blue" @select="comingSoon('顾问测试')"
+                  ><template #icon><ClipboardCheck /></template>顾问测试</BaseMenuItem
+                >
+                <BaseMenuItem tone="purple" @select="comingSoon('IT/用户测试')"
+                  ><template #icon><UserCheck /></template>IT/用户测试</BaseMenuItem
+                >
+                <BaseMenuSeparator />
+                <BaseMenuItem @select="open(item.id)"
+                  ><template #icon><PenSquare /></template>查看 / 编辑</BaseMenuItem
+                >
+                <BaseMenuItem
+                  :disabled="readOnly || busy"
+                  @select="((checked = [item.id]), batchCopy())"
+                  ><template #icon><Copy /></template>复制</BaseMenuItem
+                >
+                <BaseMenuItem danger :disabled="readOnly || busy" @select="removeOne(item)"
+                  ><template #icon><Trash2 /></template>删除</BaseMenuItem
+                >
+              </BaseMenu>
             </div>
             <InlineCell
               v-else-if="fields.find((f) => f.key === column.key)"
@@ -857,60 +838,91 @@ onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
             />
           </template>
           <template #empty>
-            <button v-if="activeFilters.length" class="text-button" @click="clearFilters">
-              清除所有筛选
-            </button>
-            <button
-              data-keep-drawer
-              v-else-if="currentProject && !items.length && !readOnly && loaded"
-              class="text-button"
-              @click="openCreate"
+            <BaseButton v-if="activeFilters.length" size="sm" @click="clearFilters"
+              >清除所有筛选</BaseButton
             >
-              新建第一个开发项
-            </button>
+            <BaseButton
+              v-else-if="currentProject && !items.length && !readOnly && loaded"
+              size="sm"
+              data-keep-drawer
+              @click="openCreate"
+              ><template #icon><Plus /></template>新建第一个开发项</BaseButton
+            >
           </template>
         </WorkbenchTable>
+        <footer class="list-footer">
+          <span
+            >{{ filtered.length ? (page - 1) * pageSize + 1 : 0 }}–{{
+              Math.min(page * pageSize, filtered.length)
+            }}
+            / 共 {{ filtered.length }} 项</span
+          >
+          <label
+            >每页<select v-model.number="pageSize" aria-label="每页数量">
+              <option :value="20">20</option>
+              <option :value="50">50</option>
+              <option :value="100">100</option>
+            </select></label
+          >
+          <span class="pager">
+            <BaseButton variant="ghost" size="sm" :disabled="page <= 1" @click="page--"
+              >上一页</BaseButton
+            ><span>{{ page }} / {{ pages }}</span
+            ><BaseButton variant="ghost" size="sm" :disabled="page >= pages" @click="page++"
+              >下一页</BaseButton
+            >
+          </span>
+        </footer>
       </div>
-      <footer class="list-footer">
-        <span
-          >{{ filtered.length ? (page - 1) * pageSize + 1 : 0 }}–{{
-            Math.min(page * pageSize, filtered.length)
-          }}
-          / 共 {{ filtered.length }} 项</span
-        >
-        <label
-          >每页<select v-model.number="pageSize" aria-label="每页数量">
-            <option :value="20">20</option>
-            <option :value="50">50</option>
-            <option :value="100">100</option>
-          </select></label
-        >
-        <div class="pager">
-          <button class="tool-button quiet" :disabled="page <= 1" @click="page--">上一页</button
-          ><span>{{ page }} / {{ pages }}</span
-          ><button class="tool-button quiet" :disabled="page >= pages" @click="page++">
-            下一页
-          </button>
-        </div>
-      </footer>
+      <ItemDrawer
+        v-if="drawerId !== null && currentProject"
+        :key="drawerId || 'new'"
+        ref="drawer"
+        :item="drawerItem"
+        :fields="fields"
+        :ctx="ctx"
+        :base="base"
+        :project-id="currentProject"
+        :read-only="readOnly"
+        :create-tag="createTag"
+        @close="closeDrawer"
+        @saved="saved"
+        @delete="removeOne"
+        @agent="comingSoon"
+      />
     </section>
 
-    <ItemDrawer
-      v-if="drawerId !== null && currentProject"
-      :key="drawerId || 'new'"
-      ref="drawer"
-      :item="drawerItem"
-      :fields="fields"
-      :ctx="ctx"
-      :base="base"
-      :project-id="currentProject"
-      :read-only="readOnly"
-      :create-tag="createTag"
-      @close="closeDrawer"
-      @saved="saved"
-      @delete="removeOne"
-      @agent="comingSoon"
-    />
+    <div v-if="checked.length" class="batch-dock">
+      <BaseActionBar>
+        <div>
+          <span class="batch-count" role="status">已选 {{ checked.length }} 项</span>
+          <BaseButton
+            variant="ghost"
+            :disabled="readOnly || busy"
+            @click="((batchError = ''), (dialog = 'batch'))"
+            ><template #icon><PenSquare /></template>批量修改</BaseButton
+          >
+          <BaseButton variant="ghost" :disabled="readOnly || busy" @click="batchCopy"
+            ><template #icon><Copy /></template>复制</BaseButton
+          >
+          <BaseButton
+            variant="ghost"
+            :disabled="busy"
+            @click="exportExcel(checked, `选中的 ${checked.length} 项`)"
+            ><template #icon><FileDown /></template>导出</BaseButton
+          >
+          <BaseButton variant="danger" :disabled="readOnly || busy" @click="batchDelete"
+            ><template #icon><Trash2 /></template>删除</BaseButton
+          >
+        </div>
+        <div>
+          <BaseButton variant="ghost" :disabled="busy" @click="checked = []"
+            ><template #icon><X /></template>取消选择</BaseButton
+          >
+        </div>
+      </BaseActionBar>
+    </div>
+
     <BatchEditDialog
       v-if="dialog === 'batch'"
       :count="checked.length"
@@ -938,38 +950,5 @@ onBeforeUnmount(() => document.removeEventListener('click', closeMenus));
       @close="dialog = ''"
       @changed="load()"
     />
-    <div
-      v-if="rowMenu"
-      class="menu-panel row-menu"
-      role="menu"
-      :style="{ top: rowMenu.y + 'px', left: rowMenu.x + 'px' }"
-    >
-      <button role="menuitem" @click="(closeRowMenu(), comingSoon('顾问测试'))">
-        <ClipboardCheck :size="15" />顾问测试
-      </button>
-      <button role="menuitem" @click="(closeRowMenu(), comingSoon('IT/用户测试'))">
-        <UserCheck :size="15" />IT/用户测试
-      </button>
-      <hr />
-      <button role="menuitem" @click="(open(rowMenu.item.id), closeRowMenu())">
-        <PenSquare :size="15" />查看 / 编辑
-      </button>
-      <button
-        role="menuitem"
-        :disabled="readOnly || busy"
-        @click="((checked = [rowMenu.item.id]), closeRowMenu(), batchCopy())"
-      >
-        <Copy :size="15" />复制
-      </button>
-      <button
-        role="menuitem"
-        class="danger"
-        :disabled="readOnly || busy"
-        @click="removeOne(takeRowMenu())"
-      >
-        <Trash2 :size="15" />删除
-      </button>
-    </div>
-    <div v-if="toast" class="toast" role="status">{{ toast }}</div>
   </div>
 </template>

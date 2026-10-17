@@ -211,7 +211,8 @@ test('pending items: customer tabs, model drawer/default, menu navigation and de
       path: '.runtime/artifacts/todo-implementation-20261004/models.png',
       fullPage: true,
     });
-    await page.getByRole('link', { name: '开发清单', exact: true }).click();
+    // The icon rail switches module; 开发管理 opens the development list.
+    await page.getByRole('link', { name: '开发管理', exact: true }).click();
     await page
       .getByRole('link', { name: '设计 00001', exact: true })
       .waitFor({ state: 'attached' });
@@ -221,9 +222,14 @@ test('pending items: customer tabs, model drawer/default, menu navigation and de
       await page.getByRole('link', { name: '设计 00001', exact: true }).getAttribute('href'),
       /\/projects\/p1\/development-items\/i1\/design$/,
     );
-    await page.locator('.vxe-body--row').filter({ hasText: '00001' }).first().hover();
-    await page.getByRole('button', { name: '开发 00001', exact: true }).first().click();
-    await page.getByText('“开发”Agent 即将开发').waitFor();
+    await page.locator('tbody tr').filter({ hasText: '00001' }).first().hover();
+    assert.match(
+      await page
+        .getByRole('link', { name: '开发 00001', exact: true })
+        .first()
+        .getAttribute('href'),
+      /\/projects\/p1\/development-items\/i1\/development$/,
+    );
     await page.getByRole('checkbox', { name: '选择 00001', exact: true }).check();
     await page.getByRole('button', { name: '删除', exact: true }).click();
     await page.getByRole('button', { name: '确认继续' }).click();
