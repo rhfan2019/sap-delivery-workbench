@@ -82,24 +82,24 @@ async function query() {
 
 <style scoped>
 .technical-panel {
-  border: 1px solid var(--card-border);
-  background: var(--card-bg);
-  border-radius: var(--card-radius);
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: var(--radius-10);
   padding: var(--space-6);
   margin-bottom: var(--space-5);
 }
 .technical-panel h2 {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-14);
   margin: 0 0 var(--space-3);
 }
 .technical-panel p {
-  color: var(--muted);
+  color: var(--text-muted);
   line-height: 1.7;
 }
 .technical-panel label {
   display: block;
   margin: var(--space-5) 0 var(--space-2);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--weight-550);
 }
 .technical-query {
   display: flex;
@@ -109,17 +109,17 @@ async function query() {
 .technical-query input {
   width: min(100%, 360px);
   padding: var(--space-2-5) var(--space-3);
-  border: 1px solid var(--input-border);
-  border-radius: var(--input-radius);
-  background: var(--input-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-6);
+  background: var(--panel);
   color: inherit;
 }
 .technical-query button {
   padding: var(--space-2-5) var(--space-5);
-  border-radius: var(--button-radius);
+  border-radius: var(--radius-6);
   border: 0;
   background: var(--link);
-  color: var(--button-primary-text);
+  color: var(--on-primary);
   cursor: pointer;
 }
 .technical-query button:disabled {
@@ -127,7 +127,7 @@ async function query() {
   cursor: wait;
 }
 .technical-note {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
   margin-top: var(--space-4);
 }
 .technical-result-heading {
@@ -137,22 +137,22 @@ async function query() {
   flex-wrap: wrap;
 }
 .technical-result-heading span {
-  color: var(--muted);
-  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  font-size: var(--font-14);
 }
 pre {
-  background: var(--bg);
+  background: var(--page);
   border: 1px solid var(--border);
   padding: var(--space-4);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-6);
   max-height: 540px;
   overflow: auto;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-14);
   line-height: 1.6;
 }
 .technical-empty {
   padding: var(--space-16) var(--space-3);
   text-align: center;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 </style>

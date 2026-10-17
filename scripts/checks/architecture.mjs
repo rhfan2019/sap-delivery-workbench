@@ -77,7 +77,16 @@ const literalColour =
 const tailwindPalette =
   /\b(?:text|bg|border|ring|fill|stroke|from|to|via|outline|decoration|divide|placeholder|caret|accent|shadow)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|black|white)(?:-\d{2,3})?\b/;
 const outsideVar = (value) => value.replace(/var\([^()]*(?:\([^()]*\))*[^()]*\)/g, ' ');
-export function checkDesignTokens(file, content = '') {
+// Contract 1.16: only defined variables. The 1.x names were removed with the last old page, so a
+// var() must name a token of theme.css or a property the web code itself declares; Tailwind and
+// reka-ui runtime properties are theirs.
+const runtimeProperty = /^--(tw-|reka-|radix-)/;
+export function declaredProperties(content = '') {
+  return new Set(
+    [...content.matchAll(/(?:^|[\s{;'"`])(--[a-z][\w-]*)\s*['"`]?\s*:/gim)].map((m) => m[1]),
+  );
+}
+export function checkDesignTokens(file, content = '', defined = null) {
   if (!file.startsWith('apps/web/src/') || file === tokenSource || vendoredStyles.test(file))
     return [];
   const errors = [];
@@ -97,6 +106,10 @@ export function checkDesignTokens(file, content = '') {
     errors.push(`${file}: Literal colour in code`);
   for (const css of styles) {
     const plain = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    if (defined)
+      for (const [, name] of plain.matchAll(/var\(\s*(--[\w-]+)/g))
+        if (!defined.has(name) && !runtimeProperty.test(name))
+          errors.push(`${file}: var(${name}) is not a design token (DESIGN.md 9)`);
     for (const [, prop, raw] of plain.matchAll(
       /(?<![\w-])(-?-?[a-z][\w-]*)\s*:\s*([^;{}]+?)\s*(?=[;}])/gi,
     )) {
@@ -428,8 +441,11 @@ export async function checkRepository(directory = root) {
       : '';
     errors.push(...checkLegacy(file, text));
   }
-  for (const file of list.filter((p) => /^apps\/web\/src\/.*\.(css|vue|ts|mts|mjs)$/.test(p)))
-    errors.push(...checkDesignTokens(file, await readFile(resolve(directory, file), 'utf8')));
+  const webFiles = list.filter((p) => /^apps\/web\/src\/.*\.(css|vue|ts|mts|mjs)$/.test(p));
+  const webText = new Map();
+  for (const file of webFiles) webText.set(file, await readFile(resolve(directory, file), 'utf8'));
+  const defined = new Set([...webText.values()].flatMap((text) => [...declaredProperties(text)]));
+  for (const file of webFiles) errors.push(...checkDesignTokens(file, webText.get(file), defined));
   return errors;
 }
 

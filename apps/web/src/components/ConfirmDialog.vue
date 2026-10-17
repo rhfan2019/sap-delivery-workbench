@@ -63,7 +63,7 @@ function trap(event: KeyboardEvent) {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: color-mix(in srgb, var(--story-bg) 50%, transparent);
+  background: var(--scrim);
   display: grid;
   place-items: center;
   padding: var(--space-6);
@@ -79,19 +79,19 @@ function trap(event: KeyboardEvent) {
   background: transparent;
 }
 .confirm-scrim section {
-  background: var(--surface);
+  background: var(--panel);
   max-width: 480px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-12);
   padding: var(--space-6);
   color: var(--primary-hover);
   box-shadow: var(--shadow-dialog);
 }
 .confirm-scrim h2 {
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-20);
   margin: 0;
 }
 .confirm-scrim p {
-  font-size: var(--font-size-md);
+  font-size: var(--font-14);
   line-height: 1.8;
   margin: var(--space-4) 0 var(--space-6);
 }

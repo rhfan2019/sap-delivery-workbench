@@ -65,7 +65,7 @@ watch(
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--surface);
+  background: var(--panel);
   min-width: 0;
 }
 header {
@@ -80,15 +80,15 @@ header > div {
   min-width: 0;
 }
 h2 {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-14);
   margin: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 header p {
-  font-size: var(--font-size-xs);
-  color: var(--muted);
+  font-size: var(--font-12);
+  color: var(--text-muted);
   margin: var(--space-1-5) 0 0;
 }
 button {
@@ -98,13 +98,13 @@ button {
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: var(--button-radius);
+  border-radius: var(--radius-6);
   background: transparent;
   cursor: pointer;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 button:hover {
-  background: var(--surface-muted);
+  background: var(--neutral-fill-1);
 }
 button:focus-visible {
   outline: 2px solid var(--focus);
@@ -124,7 +124,7 @@ button:focus-visible {
 .preview-content pre {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font: var(--font-size-md)/1.9 var(--font-mono);
+  font: var(--font-14)/1.9 var(--font-mono);
   margin: 0;
   color: var(--primary-hover);
 }
@@ -139,8 +139,8 @@ button:focus-visible {
 }
 .preview-unavailable {
   text-align: center;
-  color: var(--muted);
+  color: var(--text-muted);
   margin-top: var(--space-16);
-  font-size: var(--font-size-md);
+  font-size: var(--font-14);
 }
 </style>

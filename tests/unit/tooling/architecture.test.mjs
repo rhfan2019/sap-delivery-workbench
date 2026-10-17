@@ -6,6 +6,7 @@ import {
   checkTestDiscovery,
   checkDesignTokens,
   checkLegacy,
+  declaredProperties,
 } from '../../../scripts/checks/architecture.mjs';
 
 const files = new Set([
@@ -346,4 +347,17 @@ test('web styles use design tokens, never literal colours, fonts, sizes, spacing
     ),
     [],
   );
+});
+
+test('contract 1.16 allows only defined variables: the 1.x names are gone', () => {
+  const defined = declaredProperties(':root { --panel: #fff; --text-muted: #666; }');
+  const css = (body) =>
+    checkDesignTokens('apps/web/src/features/x/x.css', `.a { ${body} }`, defined).join();
+  assert.equal(css('color: var(--text-muted); background: var(--panel);'), '');
+  assert.match(css('color: var(--muted);'), /var\(--muted\) is not a design token/);
+  assert.match(css('background: var(--surface);'), /var\(--surface\)/);
+  assert.equal(css('box-shadow: var(--tw-ring-shadow); height: var(--reka-x);'), '');
+  // Properties a page declares itself (also from an inline :style) count as defined.
+  const local = declaredProperties(`<div :style="{ '--outline-width': w }"></div>`);
+  assert.deepEqual([...local], ['--outline-width']);
 });

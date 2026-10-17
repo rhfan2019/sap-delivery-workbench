@@ -239,8 +239,8 @@ function download() {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--card-bg);
-  border-left: 1px solid var(--active);
+  background: var(--panel);
+  border-left: 1px solid var(--blue-fill-1);
   min-height: 0;
 }
 .spec-embedded {
@@ -258,7 +258,7 @@ function download() {
 }
 .spec-toolbar button[aria-pressed='true'] {
   color: var(--text);
-  background: var(--surface-muted);
+  background: var(--neutral-fill-1);
 }
 .spec-embedded .spec-body {
   padding-inline: var(--space-4) 0;
@@ -268,19 +268,19 @@ function download() {
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-5);
-  font-size: var(--font-size-sm);
-  border-bottom: 1px solid var(--active);
+  font-size: var(--font-14);
+  border-bottom: 1px solid var(--blue-fill-1);
   color: var(--primary-hover);
 }
 .spec-label {
   border-radius: var(--radius-full);
-  background: var(--success-bg);
-  color: var(--success-text);
+  background: var(--green-fill-1);
+  color: var(--green-text-2);
   padding: var(--space-0-5) var(--space-2);
 }
 .spec-panel header span {
-  font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
+  font-size: var(--font-12);
+  color: var(--text-subtle);
 }
 .spec-panel header button {
   margin-left: auto;
@@ -292,27 +292,27 @@ function download() {
   background: transparent;
   border: 0;
   cursor: pointer;
-  color: var(--muted);
+  color: var(--text-muted);
   padding: var(--space-1-5);
-  border-radius: var(--button-radius);
+  border-radius: var(--radius-6);
   min-height: 32px;
 }
 .spec-panel button:hover {
-  background: var(--surface-muted);
+  background: var(--neutral-fill-1);
 }
 .spec-toolbar {
   display: flex;
   align-items: center;
   padding: var(--space-2-5) var(--space-4);
   gap: var(--space-2);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
 }
 .spec-toolbar span {
   margin-right: auto;
-  color: var(--warning-text);
+  color: var(--yellow-text-2);
 }
 .spec-toolbar button {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
 }
 .spec-body {
   flex: 1;
@@ -360,11 +360,11 @@ function download() {
   align-items: start;
 }
 .outline-row button {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
   text-align: left;
   line-height: 1.6;
   overflow-wrap: anywhere;
-  color: var(--muted);
+  color: var(--text-muted);
   min-width: 0;
 }
 .outline-row .outline-toggle,
@@ -375,8 +375,8 @@ function download() {
 }
 .outline-row button[aria-current] {
   color: var(--focus);
-  background: var(--active);
-  font-weight: var(--button-font-weight);
+  background: var(--blue-fill-1);
+  font-weight: var(--weight-475);
 }
 .spec-body {
   min-width: 0;
@@ -391,7 +391,7 @@ function download() {
   .spec-outline {
     flex: 0 0 auto;
     max-height: 140px;
-    border-bottom: 1px solid var(--active);
+    border-bottom: 1px solid var(--blue-fill-1);
   }
   .outline-resizer {
     display: none;
@@ -401,8 +401,8 @@ function download() {
   flex-wrap: wrap;
 }
 .spec-body details {
-  font-size: var(--font-size-xs);
-  color: var(--muted);
+  font-size: var(--font-12);
+  color: var(--text-muted);
   margin-top: var(--space-5);
 }
 .spec-body a {

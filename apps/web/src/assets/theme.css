@@ -186,6 +186,8 @@
   --layout-gap: 8px;
   --layout-list-panel: 400px;
   --layout-details: 384px;
+  /* The model editor drawer. */
+  --layout-drawer: 480px;
   /* The record page bar and the side panel headers line up at one height. */
   --layout-record-bar: 48px;
   --control-button: 34px;
@@ -300,47 +302,9 @@
   }
 }
 
-/* ---------------------------------------------------------------------------------------
-   Transitional names (DESIGN.md 11): the pages not yet rewritten read these. Each points at a
-   token above, or keeps its old value where a new value would break an old layout. Removed
-   in batch 7 with the last old page. */
+/* Tag colours people pick for development items, stored by name (DESIGN.md 2.2). Orange and
+   teal have no hue of their own in the scale. */
 :root {
-  --bg: var(--page);
-  --surface: var(--panel);
-  --surface-muted: var(--neutral-fill-1);
-  --muted: var(--text-muted);
-  --text-tertiary: var(--text-subtle);
-  --control-border: var(--neutral-border-3);
-  --active: var(--blue-fill-1);
-  --nav-bg: var(--page);
-  --nav-text: var(--text);
-  --nav-muted: var(--text-muted);
-  --nav-border: var(--border);
-  --nav-hover: var(--hover);
-  --nav-active: var(--selected);
-  --nav-focus: var(--focus);
-  --error-bg: var(--red-fill-1);
-  --error-text: var(--red-text-2);
-  --error-border: var(--red-border-2);
-  --success-bg: var(--green-fill-1);
-  --success-text: var(--green-text-2);
-  --success-border: var(--green-border-2);
-  --warning-bg: var(--yellow-fill-1);
-  --warning-text: var(--yellow-text-2);
-  --warning-border: var(--yellow-border-2);
-  --chart-1: var(--blue-solid-1);
-  --chart-2: var(--green-solid-1);
-  --chart-3: var(--yellow-icon-1);
-  --story-bg: var(--neutral-solid-1);
-  --story-text: var(--neutral-on-solid);
-  --story-muted: color-mix(in srgb, var(--neutral-on-solid) 75%, transparent);
-  --story-border: color-mix(in srgb, var(--neutral-on-solid) 20%, transparent);
-  --story-hover: color-mix(in srgb, var(--neutral-on-solid) 10%, transparent);
-  --story-active: color-mix(in srgb, var(--neutral-on-solid) 18%, transparent);
-  --story-focus: var(--blue-icon-2);
-  --shadow-raised: var(--shadow-card);
-
-  /* Tag colours people pick for development items (stored by name). */
   --tag-blue-bg: var(--blue-fill-1);
   --tag-blue-text: var(--blue-text-2);
   --tag-green-bg: var(--green-fill-1);
@@ -355,101 +319,6 @@
   --tag-orange-text: #a2561c;
   --tag-teal-bg: #ddf2f1;
   --tag-teal-text: #1f6d69;
-
-  /* Old type and shape scales keep their values so old layouts hold. */
-  --font-size-xs: 12px;
-  --font-size-sm: 13px;
-  --font-size-md: 14px;
-  --font-size-lg: 15px;
-  --font-size-xl: 17px;
-  --font-size-2xl: 20px;
-  --font-size-3xl: 28px;
-  --font-weight-regular: var(--weight-400);
-  --font-weight-medium: var(--weight-475);
-  --font-weight-semibold: var(--weight-550);
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-bubble: 18px;
-  --radius-composer: 24px;
-  --layout-sidebar: 246px;
-  --layout-sidebar-narrow: 220px;
-  --layout-sidebar-collapsed: 70px;
-  --layout-drawer: 480px;
-
-  /* Old component tokens, now in the new look. */
-  --font-display: var(--font-sans);
-  --heading-weight: var(--weight-475);
-  --heading-letter-spacing: 0;
-  --page-title-size: var(--font-24);
-  --section-title-size: var(--font-16);
-  --page-bg: var(--page);
-  --button-height: var(--control-button);
-  --button-padding-x: var(--space-3);
-  --button-radius: var(--radius-6);
-  --button-font-size: var(--font-14);
-  --button-font-weight: var(--weight-400);
-  --button-primary-bg: var(--primary);
-  --button-primary-text: var(--on-primary);
-  --button-primary-hover-bg: var(--primary-hover);
-  --button-secondary-bg: var(--panel);
-  --button-secondary-text: var(--text);
-  --button-secondary-border: var(--border-strong);
-  --button-secondary-hover-bg: var(--hover);
-  --button-shadow: none;
-  --input-height: var(--control-input);
-  --input-radius: var(--radius-6);
-  --input-bg: var(--panel);
-  --input-text: var(--text);
-  --input-border: var(--border-strong);
-  --input-border-width: 1px;
-  --input-border-bottom-width: 1px;
-  --input-focus-border: var(--focus);
-  --card-bg: var(--panel);
-  --card-border: var(--border);
-  --card-border-width: 1px;
-  --card-radius: var(--radius-10);
-  --card-shadow: none;
-  --card-padding: var(--space-5);
-  --tab-bar-border: var(--border);
-  --tab-color: var(--text-muted);
-  --tab-active-color: var(--text);
-  --tab-active-bg: var(--selected);
-  --tab-indicator: transparent;
-  --tab-indicator-height: 0px;
-  --tab-radius: var(--radius-6);
-  --tab-font-weight: var(--weight-400);
-  --table-header-bg: var(--panel);
-  --table-header-text: var(--text-muted);
-  --table-header-weight: var(--weight-550);
-  --table-border: var(--border);
-  --table-row-hover: var(--hover);
-  --table-row-height: var(--control-table-row);
-  --badge-radius: var(--radius-4);
-  --badge-font-weight: var(--weight-475);
-  --topbar-bg: transparent;
-  --topbar-text: var(--text);
-  --topbar-muted: var(--text-muted);
-  --topbar-border: var(--border);
-  --topbar-height: 56px;
-  --sidebar-bg: var(--page);
-  --sidebar-border: transparent;
-  --sidebar-radius: 0px;
-  --sidebar-inset: 0px;
-  --sidebar-shadow: none;
-  --nav-item-radius: var(--radius-6);
-  --nav-item-active-bg: var(--selected);
-  --nav-item-active-text: var(--text);
-  --dialog-radius: var(--radius-12);
-  --dialog-shadow: var(--shadow-dialog);
-  --bubble-bg: var(--neutral-bg-2);
-  --bubble-text: var(--text);
-  --bubble-radius: var(--radius-8);
-  --composer-radius: var(--radius-12);
-  --composer-border: var(--border);
-  --composer-shadow: var(--shadow-floating);
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -459,4 +328,3 @@
     --tag-teal-text: #79d0ca;
   }
 }
-

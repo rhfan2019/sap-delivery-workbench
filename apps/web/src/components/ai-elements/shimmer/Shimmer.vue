@@ -48,7 +48,7 @@ const componentClasses = computed(() =>
 const componentStyle = computed((): CSSProperties => ({
   '--spread': `${dynamicSpread.value}px`,
   backgroundImage:
-    'var(--bg), linear-gradient(var(--color-muted-foreground), var(--color-muted-foreground))',
+    'var(--page), linear-gradient(var(--color-muted-foreground), var(--color-muted-foreground))',
 }));
 
 const MotionComponent = computed(() => {

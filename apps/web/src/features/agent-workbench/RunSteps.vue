@@ -220,7 +220,7 @@ async function copyRunId() {
 <style scoped>
 .run-activity {
   width: 100%;
-  font-size: var(--font-size-md);
+  font-size: var(--font-14);
 }
 .run-activity ol,
 .run-activity ul {
@@ -233,10 +233,10 @@ async function copyRunId() {
   align-items: center;
   gap: var(--space-1-5);
   max-width: 100%;
-  border-radius: var(--card-radius);
+  border-radius: var(--radius-10);
   padding: var(--space-0-5) var(--space-1) var(--space-0-5) 0;
   color: var(--color-muted-foreground);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-14);
   text-align: left;
 }
 .run-summary:hover {
@@ -249,7 +249,7 @@ async function copyRunId() {
 .run-rows {
   margin-top: var(--space-2);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-12);
   overflow: hidden;
 }
 .run-rows > ol > li + li {
@@ -264,7 +264,7 @@ async function copyRunId() {
   text-align: left;
 }
 .run-row:hover {
-  background: var(--surface-muted);
+  background: var(--neutral-fill-1);
 }
 .run-calls {
   padding: 0 var(--space-3) var(--space-3) var(--space-10) !important;
@@ -280,7 +280,7 @@ async function copyRunId() {
   display: grid;
   gap: var(--space-2);
   margin: var(--space-1) 0 var(--space-2) var(--space-6);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-14);
 }
 .run-code,
 .run-text,
@@ -288,11 +288,11 @@ async function copyRunId() {
   margin-top: var(--space-1);
   max-height: 8rem;
   overflow: auto;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-6);
   background: var(--color-muted);
   padding: var(--space-1-5) var(--space-2);
   font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
   white-space: pre-wrap;
   word-break: break-all;
 }
@@ -308,7 +308,7 @@ async function copyRunId() {
 }
 .run-table table {
   border-collapse: collapse;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
 }
 .run-table th,
 .run-table td {
@@ -318,20 +318,20 @@ async function copyRunId() {
   white-space: nowrap;
 }
 .run-table th {
-  background: var(--table-header-bg);
-  font-weight: var(--table-header-weight);
+  background: var(--panel);
+  font-weight: var(--weight-550);
 }
 .run-raw summary {
   cursor: pointer;
   color: var(--color-muted-foreground);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
 }
 .run-meta {
   margin: 0;
   padding: var(--space-2) var(--space-3);
   border-top: 1px solid var(--border);
   color: var(--color-muted-foreground);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
   word-break: break-all;
 }
 .run-meta button {

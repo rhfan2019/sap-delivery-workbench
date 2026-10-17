@@ -160,12 +160,12 @@ onBeforeUnmount(() => {
 .selection-comment-form {
   position: fixed;
   z-index: 60;
-  border: 1px solid var(--input-border);
-  border-radius: var(--input-radius);
-  background: var(--input-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-6);
+  background: var(--panel);
   color: var(--text);
   box-shadow: var(--shadow-popover);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-14);
 }
 .selection-comment-button {
   display: inline-flex;
@@ -173,7 +173,7 @@ onBeforeUnmount(() => {
   gap: var(--space-1);
   height: 32px;
   padding: 0 var(--space-2-5);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--weight-475);
   cursor: pointer;
 }
 .selection-comment-button:hover {
@@ -190,23 +190,23 @@ onBeforeUnmount(() => {
   margin: 0;
   padding-left: var(--space-2);
   border-left: 3px solid var(--border);
-  color: var(--muted);
+  color: var(--text-muted);
   max-height: 3.2em;
   overflow: hidden;
 }
 .selection-comment-form textarea {
   width: 100%;
   resize: vertical;
-  border: 1px solid var(--input-border);
-  border-radius: var(--input-radius);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-6);
   padding: var(--space-1-5) var(--space-2);
-  background: var(--input-bg);
+  background: var(--panel);
   color: var(--text);
   font: inherit;
 }
 .selection-comment-form p {
   margin: 0;
-  color: var(--error-text);
+  color: var(--red-text-2);
 }
 .selection-comment-form div {
   display: flex;
@@ -214,16 +214,16 @@ onBeforeUnmount(() => {
   gap: var(--space-2);
 }
 .selection-comment-form button {
-  border: 1px solid var(--control-border);
-  border-radius: var(--button-radius);
+  border: 1px solid var(--border-emphasis);
+  border-radius: var(--radius-6);
   padding: var(--space-1) var(--space-3);
-  background: var(--surface);
+  background: var(--panel);
   color: var(--text);
 }
 .selection-comment-form button.primary {
   border-color: var(--primary);
-  background: var(--button-primary-bg);
-  color: var(--button-primary-text);
+  background: var(--primary);
+  color: var(--on-primary);
 }
 .selection-comment-form button:disabled {
   opacity: 0.5;

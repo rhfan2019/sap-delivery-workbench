@@ -263,9 +263,9 @@ async function copy(text: string) {
 }
 .answered p {
   margin: var(--space-2) 0 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-14);
   line-height: 20px;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 /* DESIGN.md 6: a saved version is a compact card row that opens the result panel. */
 .artifact-card {
@@ -275,23 +275,23 @@ async function copy(text: string) {
   width: min(100%, 420px);
   margin-top: var(--space-1);
   padding: var(--space-2-5) var(--space-3) var(--space-2-5) var(--space-2-5);
-  border: 1px solid var(--card-border);
-  border-radius: var(--card-radius);
-  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-10);
+  background: var(--panel);
   color: var(--text);
   text-align: left;
 }
 .artifact-card:hover {
   border-color: var(--border-strong);
-  background: var(--surface-muted);
+  background: var(--neutral-fill-1);
 }
 .artifact-card-icon {
   display: grid;
   place-items: center;
   width: 40px;
   height: 40px;
-  border-radius: var(--card-radius);
-  background: var(--active);
+  border-radius: var(--radius-10);
+  background: var(--blue-fill-1);
   color: var(--link);
   flex-shrink: 0;
 }
@@ -302,29 +302,29 @@ async function copy(text: string) {
   flex-direction: column;
 }
 .artifact-card-text strong {
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-14);
+  font-weight: var(--weight-550);
 }
 .artifact-card-text small {
-  font-size: var(--font-size-xs);
-  color: var(--muted);
+  font-size: var(--font-12);
+  color: var(--text-muted);
 }
 .artifact-card-open {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--font-14);
+  font-weight: var(--weight-475);
   color: var(--link);
 }
 .decision-record {
   margin-bottom: var(--space-3);
   padding: var(--space-3) var(--space-3);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  font-size: var(--font-size-md);
+  border-radius: var(--radius-12);
+  font-size: var(--font-14);
 }
 .decision-record-title {
   margin: 0 0 var(--space-2);
-  font-size: var(--font-size-xs);
-  color: var(--muted);
+  font-size: var(--font-12);
+  color: var(--text-muted);
 }
 .decision-record-row {
   display: flex;
@@ -340,19 +340,19 @@ async function copy(text: string) {
 }
 .decision-record-choice {
   padding: var(--space-0-5) var(--space-2);
-  border-radius: var(--radius-sm);
-  background: var(--active);
+  border-radius: var(--radius-6);
+  background: var(--blue-fill-1);
   color: var(--link);
-  font-weight: var(--font-weight-medium);
-  font-size: var(--font-size-sm);
+  font-weight: var(--weight-475);
+  font-size: var(--font-14);
 }
 .decision-record details {
   margin-top: var(--space-2);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-14);
 }
 .decision-record summary {
   cursor: pointer;
-  color: var(--muted);
-  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-size: var(--font-12);
 }
 </style>

@@ -264,7 +264,7 @@ async function copy(text: string) {
 </template>
 <style scoped>
 .audit-comment {
-  border-top: 1px solid var(--active);
+  border-top: 1px solid var(--blue-fill-1);
   padding: var(--space-2) 0;
 }
 .audit-comment-body {

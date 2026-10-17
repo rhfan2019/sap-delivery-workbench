@@ -323,7 +323,7 @@ layout:
 | 动效                      | `--motion-fast`、`--motion-base`、`--motion-slow`、`--motion-panel`（时长加曲线）；`--duration-fast`、`-base`、`-slow`、`-spin`、`-none`；`--tooltip-delay`                                                                                                                |
 | 布局与控件尺寸            | `--layout-rail`、`--layout-nav`、`--layout-gap`、`--layout-list-panel`、`--layout-details`、`--layout-record-bar`；`--control-button`、`-input`、`-icon`、`-nav-item`、`-menu-item`、`-tab`、`-table-row`、`-table-head`                                                   |
 
-字号、圆角用带数值的名字，避免与 1.x 的同名变量（如 `--radius-md`）混淆。theme.css 末尾的“过渡别名”区保留 1.x 的变量名供未重写的页面使用，指向新令牌或保持原值，第 7 批删除；新代码不得引用它们。
+字号、圆角用带数值的名字，避免与 1.x 的同名变量（如 `--radius-md`）混淆。1.x 的变量名已在第 7 批全部删除；样式中的 `var(--…)` 只能引用本表的令牌或页面自己声明的属性，检查器会拒绝其他名字（契约 1.16）。另有两个正式令牌：开发项标签颜色 `--tag-<颜色>-bg / -text`（按名称存储），模型抽屉宽度 `--layout-drawer`。
 
 阴影规则：带模糊的阴影只能用阴影令牌；不带模糊的描边环与细线（如 `0 0 0 2px var(--focus)`、`inset 0 -1px 0 var(--border)`）可以直接写。时长只能用时长令牌。
 
@@ -348,4 +348,4 @@ layout:
 | 4    | 记录页：开发项详情与设计 / 开发助手合一            | 2026-10-17 完成 |
 | 5    | 后台管理：设置总览与子页面                         | 2026-10-17 完成 |
 | 6    | 首页、知识与资产、登录与修改密码                   | 2026-10-17 完成 |
-| 7    | 收尾：删除旧样式与 vxe-table，全站验收             | 待办            |
+| 7    | 收尾：删除旧样式与 vxe-table，全站验收             | 2026-10-17 完成 |

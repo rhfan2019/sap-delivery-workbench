@@ -122,15 +122,15 @@ fieldset {
   margin: 0;
 }
 legend {
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-14);
+  font-weight: var(--weight-550);
 }
 label {
   display: flex;
   gap: var(--space-3);
   padding: var(--space-3);
   align-items: flex-start;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-8);
   cursor: pointer;
   margin: var(--space-1) 0;
   width: 100%;
@@ -154,17 +154,17 @@ label > span {
 }
 small {
   display: block;
-  color: var(--muted);
-  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-size: var(--font-12);
   line-height: 1.65;
   margin-top: var(--space-1);
 }
 textarea {
   width: 100%;
   min-height: 80px;
-  border: 1px solid var(--input-border);
+  border: 1px solid var(--border-strong);
   padding: var(--space-3);
-  border-radius: var(--input-radius);
+  border-radius: var(--radius-6);
   font: inherit;
 }
 </style>

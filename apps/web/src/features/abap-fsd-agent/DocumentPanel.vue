@@ -234,19 +234,19 @@ async function handleComments() {
   min-height: 28px;
   max-width: 180px;
   padding: 0 var(--space-2);
-  border: 1px solid var(--input-border);
-  background: var(--input-bg);
-  font-size: var(--font-size-xs);
+  border: 1px solid var(--border-strong);
+  background: var(--panel);
+  font-size: var(--font-12);
 }
 .document-final {
   margin-left: auto;
   min-height: 28px;
   padding: 0 var(--space-2);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
 }
 .document-changes {
   position: relative;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 .document-changes summary {
   cursor: pointer;
@@ -262,14 +262,14 @@ async function handleComments() {
   overflow: auto;
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface);
+  border-radius: var(--radius-8);
+  background: var(--panel);
   box-shadow: var(--shadow-popover);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
 }
 .document-alert {
-  color: var(--warning-text);
-  font-size: var(--font-size-xs);
+  color: var(--yellow-text-2);
+  font-size: var(--font-12);
 }
 .document-panel > :not(.document-reader) {
   flex-shrink: 0;
@@ -284,21 +284,21 @@ async function handleComments() {
   padding-bottom: var(--space-3);
 }
 .comment-item {
-  border: 1px solid var(--active);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--blue-fill-1);
+  border-radius: var(--radius-8);
   padding: var(--space-2-5) var(--space-3);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-14);
 }
 blockquote {
   margin: 0 0 var(--space-1-5);
   padding-left: var(--space-2);
   border-left: 3px solid var(--border-strong);
-  color: var(--muted);
+  color: var(--text-muted);
 }
 .comment-item.resolved {
   opacity: 0.6;
 }
 .comment-reply {
-  color: var(--success-text);
+  color: var(--green-text-2);
 }
 </style>

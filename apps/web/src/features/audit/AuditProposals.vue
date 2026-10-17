@@ -82,11 +82,11 @@ onMounted(load);
   padding: var(--space-2-5);
   border: 0;
   background: transparent;
-  border-radius: var(--button-radius);
+  border-radius: var(--radius-6);
   cursor: pointer;
 }
 .audit-proposal-list button.active {
-  background: var(--surface-muted, #f1f5f9);
+  background: var(--neutral-fill-1);
 }
 @media (max-width: 900px) {
   .audit-proposals {

@@ -1,13 +1,13 @@
 .audit-page {
-  --audit-warn-text: var(--warning-text);
-  --audit-warn-bg: var(--warning-bg);
-  --audit-chart-1: var(--chart-1);
-  --audit-chart-2: var(--chart-2);
-  --audit-chart-3: var(--chart-3);
+  --audit-warn-text: var(--yellow-text-2);
+  --audit-warn-bg: var(--yellow-fill-1);
+  --audit-chart-1: var(--blue-solid-1);
+  --audit-chart-2: var(--green-solid-1);
+  --audit-chart-3: var(--yellow-icon-1);
 }
 .audit-page .mono {
   font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
 }
 .audit-page .num {
   text-align: right;
@@ -18,7 +18,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--font-size-xl) !important;
+  font-size: var(--font-16) !important;
   word-break: break-all;
 }
 .audit-locate {
@@ -60,32 +60,32 @@
 }
 .audit-status {
   display: inline-block;
-  border-radius: var(--badge-radius);
+  border-radius: var(--radius-4);
   padding: var(--space-0-5) var(--space-2);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
   white-space: nowrap;
   background: var(--hover);
-  color: var(--muted);
+  color: var(--text-muted);
 }
 .audit-status.danger {
-  background: var(--error-bg);
-  color: var(--error-text);
+  background: var(--red-fill-1);
+  color: var(--red-text-2);
 }
 .audit-status.warn {
   background: var(--audit-warn-bg);
   color: var(--audit-warn-text);
 }
 .audit-status.ok {
-  background: var(--success-bg);
-  color: var(--success-text);
+  background: var(--green-fill-1);
+  color: var(--green-text-2);
 }
 .audit-flag {
   color: var(--audit-warn-text);
   margin-left: var(--space-0-5);
 }
 .audit-danger {
-  color: var(--error-text);
-  font-weight: var(--font-weight-semibold);
+  color: var(--red-text-2);
+  font-weight: var(--weight-550);
 }
 .audit-section {
   padding: var(--space-4) var(--space-5);
@@ -95,20 +95,20 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--font-size-md);
+  font-size: var(--font-14);
   margin: 0 0 var(--space-3);
 }
 .audit-section h3 {
-  font-size: var(--font-size-xs);
-  color: var(--muted);
+  font-size: var(--font-12);
+  color: var(--text-muted);
   margin: 0 0 var(--space-2);
 }
 .audit-note {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
   margin-top: var(--space-2);
 }
 .audit-conclusion.danger {
-  border-left: 3px solid var(--error-border);
+  border-left: 3px solid var(--red-border-2);
 }
 .audit-conclusion p {
   margin: var(--space-1-5) 0;
@@ -119,10 +119,10 @@
   grid-template-columns: max-content 1fr;
   gap: var(--space-1-5) var(--space-4);
   margin: 0;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
 }
 .audit-ids dt {
-  color: var(--muted);
+  color: var(--text-muted);
 }
 .audit-ids dd {
   margin: 0;
@@ -133,7 +133,7 @@
   margin-top: var(--space-1-5);
   padding: var(--space-2) var(--space-2-5);
   background: var(--hover);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-6);
   white-space: pre-wrap;
 }
 .audit-turns {
@@ -142,7 +142,7 @@
   gap: var(--space-1-5);
   align-items: center;
   margin-top: var(--space-3);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
 }
 .audit-turns .audit-note {
   flex-basis: 100%;
@@ -152,8 +152,8 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-1-5);
-  font-size: var(--font-size-xs);
-  color: var(--muted);
+  font-size: var(--font-12);
+  color: var(--text-muted);
 }
 .audit-budget {
   display: grid;
@@ -165,7 +165,7 @@
   grid-template-columns: 72px 1fr auto;
   gap: var(--space-2-5);
   align-items: center;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
   margin-bottom: var(--space-1-5);
 }
 .audit-bar {
@@ -173,7 +173,7 @@
   display: block;
   height: 8px;
   background: var(--hover);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-4);
   overflow: hidden;
 }
 .audit-bar i,
@@ -181,11 +181,11 @@
   position: absolute;
   inset: 0 auto 0 0;
   background: var(--link);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-4);
 }
 .audit-bar b,
 .audit-bar i.full {
-  background: var(--error-text);
+  background: var(--red-text-2);
 }
 .audit-bars {
   list-style: none;
@@ -197,7 +197,7 @@
   grid-template-columns: minmax(150px, max-content) minmax(90px, max-content) 1fr 40px;
   gap: var(--space-3);
   align-items: center;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
   padding: var(--space-1) 0;
 }
 .audit-bars strong {
@@ -214,16 +214,16 @@
   flex-direction: column;
   gap: var(--space-1);
   padding: var(--space-3) var(--space-4);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
 }
 .audit-kpi strong {
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-20);
   font-variant-numeric: tabular-nums;
 }
 .audit-rejected {
   border-top: 1px solid var(--border);
   padding: var(--space-2-5) 0;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
 }
 .audit-rejected ul {
   margin: var(--space-1-5) 0;
@@ -236,14 +236,14 @@
   word-break: break-all;
   background: var(--hover);
   padding: var(--space-2-5);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
+  border-radius: var(--radius-6);
+  font-size: var(--font-12);
 }
 .audit-timeline {
   list-style: none;
   padding: 0;
   margin: var(--space-2-5) 0 0;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
 }
 .audit-timeline li {
   display: grid;
@@ -260,17 +260,17 @@
 }
 .audit-gap {
   grid-column: 1 / -1;
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--weight-550);
   padding: var(--space-0-5) var(--space-2);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-4);
 }
 .audit-timeline li.gap-warn .audit-gap {
   background: var(--audit-warn-bg);
   color: var(--audit-warn-text);
 }
 .audit-timeline li.gap-alert .audit-gap {
-  background: var(--error-bg);
-  color: var(--error-text);
+  background: var(--red-fill-1);
+  color: var(--red-text-2);
 }
 .audit-flagged td {
   background: var(--audit-warn-bg);
@@ -280,7 +280,7 @@
   grid-template-columns: 80px 1fr;
   gap: var(--space-2-5);
   align-items: center;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
 }
 .audit-spark svg {
   width: 100%;

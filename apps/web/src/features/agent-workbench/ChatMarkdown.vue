@@ -66,7 +66,7 @@ watch(
 <style scoped>
 /* DESIGN.md 6: reading type for replies and documents. */
 .chat-markdown {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-14);
   line-height: 26px;
   color: var(--text);
   overflow-wrap: anywhere;
@@ -86,43 +86,43 @@ watch(
 }
 .chat-markdown :deep(:is(h1, h2, h3, h4)) {
   margin: var(--space-6) 0 var(--space-2);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--weight-550);
   color: var(--text);
 }
 .chat-markdown :deep(:is(h1, h2, h3, h4):first-child) {
   margin-top: 0;
 }
 .chat-markdown :deep(h1) {
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-20);
   line-height: 28px;
 }
 .chat-markdown :deep(h2) {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-16);
   line-height: 26px;
 }
 .chat-markdown :deep(:is(h3, h4)) {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-14);
   line-height: 22px;
 }
 .chat-markdown :deep(strong) {
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--weight-550);
 }
 .chat-markdown :deep(pre) {
   max-width: 100%;
   overflow: auto;
   margin: 0 0 var(--space-3);
   padding: var(--space-3) var(--space-3);
-  border-radius: var(--radius-md);
-  background: var(--surface-muted);
+  border-radius: var(--radius-8);
+  background: var(--neutral-fill-1);
   font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-14);
   line-height: 20px;
   white-space: pre;
 }
 .chat-markdown :deep(code) {
   padding: var(--space-0-5) var(--space-1);
-  border-radius: var(--radius-sm);
-  background: var(--surface-muted);
+  border-radius: var(--radius-6);
+  background: var(--neutral-fill-1);
   font-family: var(--font-mono);
   font-size: 0.85em;
 }
@@ -136,15 +136,15 @@ watch(
   overflow: auto;
   margin: var(--space-1) 0 var(--space-4);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-12);
   border-collapse: separate;
   border-spacing: 0;
-  font-size: var(--font-size-md);
+  font-size: var(--font-14);
   line-height: 22px;
 }
 .chat-markdown :deep(:is(th, td)) {
   padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--table-border);
+  border-bottom: 1px solid var(--border);
   text-align: left;
   white-space: normal;
   min-width: 80px;
@@ -154,11 +154,11 @@ watch(
 }
 .chat-markdown :deep(tbody) {
   /* The markdown renderer sets its table body semibold. */
-  font-weight: var(--font-weight-regular);
+  font-weight: var(--weight-400);
 }
 .chat-markdown :deep(th) {
-  background: var(--table-header-bg);
-  font-weight: var(--table-header-weight);
+  background: var(--panel);
+  font-weight: var(--weight-550);
 }
 .chat-markdown :deep(a) {
   color: var(--link);
@@ -171,7 +171,7 @@ watch(
   margin: 0 0 var(--space-3);
   padding-left: var(--space-3);
   border-left: 3px solid var(--border-strong);
-  color: var(--muted);
+  color: var(--text-muted);
 }
 .chat-markdown :deep(hr) {
   margin: var(--space-5) 0;

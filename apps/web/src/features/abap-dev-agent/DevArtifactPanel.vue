@@ -361,7 +361,7 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
   padding-bottom: var(--space-3);
 }
 .dev-tabs > button {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-14);
 }
 .dev-tools {
   display: flex;
@@ -369,7 +369,7 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
   margin-left: auto;
 }
 .dev-tools button {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-14);
 }
 .dev-reader {
   flex: 1;
@@ -377,52 +377,52 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
   border-top: 1px solid var(--border);
 }
 .dev-warning {
-  color: var(--warning-text);
-  font-size: var(--font-size-sm);
+  color: var(--yellow-text-2);
+  font-size: var(--font-14);
 }
 .dev-hunk p {
   margin: var(--space-2) 0 var(--space-1);
-  font-size: var(--font-size-xs);
-  color: var(--muted);
+  font-size: var(--font-12);
+  color: var(--text-muted);
 }
 .dev-hunk pre {
   margin: 0;
   padding: var(--space-2);
   overflow-x: auto;
-  border: 1px solid var(--active);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
+  border: 1px solid var(--blue-fill-1);
+  border-radius: var(--radius-6);
+  font-size: var(--font-12);
   line-height: 1.5;
 }
 .dev-hunk span[data-change='+'] {
-  background: var(--success-bg);
-  color: var(--success-text);
+  background: var(--green-fill-1);
+  color: var(--green-text-2);
 }
 .dev-hunk span[data-change='-'] {
-  background: var(--error-bg);
-  color: var(--error-text);
+  background: var(--red-fill-1);
+  color: var(--red-text-2);
 }
 .dev-basis ul {
   margin: 0;
   padding-left: var(--space-4);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-14);
 }
 .comment-item {
-  border: 1px solid var(--active);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--blue-fill-1);
+  border-radius: var(--radius-8);
   padding: var(--space-2-5) var(--space-3);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-14);
 }
 blockquote {
   margin: 0 0 var(--space-1-5);
   padding-left: var(--space-2);
   border-left: 3px solid var(--border-strong);
-  color: var(--muted);
+  color: var(--text-muted);
 }
 .comment-item.resolved {
   opacity: 0.6;
 }
 .comment-reply {
-  color: var(--success-text);
+  color: var(--green-text-2);
 }
 </style>

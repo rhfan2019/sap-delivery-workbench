@@ -7,9 +7,9 @@
   margin-bottom: var(--space-6);
 }
 .model-default-summary {
-  font-size: var(--font-size-md);
+  font-size: var(--font-14);
   margin: 0 0 var(--space-6);
-  color: var(--muted);
+  color: var(--text-muted);
 }
 .model-default-summary strong {
   color: var(--text);
@@ -29,13 +29,13 @@
   align-items: center;
   gap: var(--space-2-5);
   border: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: var(--radius-md);
+  background: var(--panel);
+  border-radius: var(--radius-8);
   padding: 0 var(--space-3);
   width: 360px;
   max-width: 45%;
   height: 44px;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 .model-search input {
   border: 0;
@@ -52,10 +52,10 @@
 }
 .models-toolbar select {
   height: 44px;
-  border: 1px solid var(--input-border);
-  background: var(--input-bg);
+  border: 1px solid var(--border-strong);
+  background: var(--panel);
   color: var(--text);
-  border-radius: var(--input-radius);
+  border-radius: var(--radius-6);
   padding: 0 var(--space-8) 0 var(--space-3);
   font: inherit;
 }
@@ -64,8 +64,8 @@
   white-space: nowrap;
 }
 .model-list-surface {
-  background: var(--card-bg);
-  border-radius: var(--card-radius);
+  background: var(--panel);
+  border-radius: var(--radius-10);
   min-height: 220px;
 }
 .model-table-scroll {
@@ -76,27 +76,27 @@
   border-collapse: separate;
   border-spacing: 0;
   table-layout: auto;
-  font-size: var(--font-size-md);
+  font-size: var(--font-14);
 }
 .model-table thead {
-  color: var(--table-header-text);
-  background: var(--table-header-bg);
+  color: var(--text-muted);
+  background: var(--panel);
 }
 .model-table th {
   text-align: left;
-  font-size: var(--font-size-sm);
-  font-weight: var(--table-header-weight);
+  font-size: var(--font-14);
+  font-weight: var(--weight-550);
   padding: var(--space-4) var(--space-4);
 }
 .model-table th:first-child {
-  border-radius: var(--card-radius) 0 0 0;
+  border-radius: var(--radius-10) 0 0 0;
 }
 .model-table th:last-child {
-  border-radius: 0 var(--card-radius) 0 0;
+  border-radius: 0 var(--radius-10) 0 0;
 }
 .model-table td {
   padding: var(--space-5) var(--space-4);
-  border-bottom: 1px solid var(--table-border);
+  border-bottom: 1px solid var(--border);
   vertical-align: middle;
   height: 84px;
   box-sizing: border-box;
@@ -105,10 +105,10 @@
   outline-offset: -2px;
 }
 .model-table tbody tr:hover {
-  background: var(--surface-muted);
+  background: var(--neutral-fill-1);
 }
 .model-table tbody tr.selected {
-  background: var(--active);
+  background: var(--blue-fill-1);
   outline: 1px solid var(--focus);
 }
 .model-table tbody tr:focus-within {
@@ -129,7 +129,7 @@
   place-items: center;
   border: 0;
   background: transparent;
-  color: var(--muted);
+  color: var(--text-muted);
   cursor: pointer;
   padding: var(--space-1);
 }
@@ -147,8 +147,8 @@
   text-align: left;
   color: var(--text);
   font: inherit;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-14);
+  font-weight: var(--weight-550);
   line-height: 1.4;
   cursor: pointer;
   overflow-wrap: anywhere;
@@ -158,8 +158,8 @@
 }
 .model-table small {
   display: block;
-  color: var(--muted);
-  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-size: var(--font-12);
   margin-top: var(--space-1-5);
   line-height: 1.5;
   overflow-wrap: anywhere;
@@ -169,12 +169,12 @@
 }
 .model-default-badge {
   margin-left: var(--space-2);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
   padding: var(--space-0-5) var(--space-1);
   color: var(--focus);
-  background: var(--active);
-  border-radius: var(--badge-radius);
-  font-weight: var(--badge-font-weight);
+  background: var(--blue-fill-1);
+  border-radius: var(--radius-4);
+  font-weight: var(--weight-475);
   white-space: nowrap;
 }
 .model-test-state {
@@ -182,20 +182,20 @@
   align-items: center;
   gap: var(--space-1-5);
   white-space: nowrap;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-14);
 }
 .model-test-state.passed {
-  color: var(--success-text);
+  color: var(--green-text-2);
 }
 .model-test-state.failed,
 .model-test-state.timeout {
-  color: var(--error-text);
+  color: var(--red-text-2);
 }
 .model-test-state.running {
   color: var(--link);
 }
 .model-test-state.untested {
-  color: var(--muted);
+  color: var(--text-muted);
 }
 .model-row-actions {
   display: flex;
@@ -205,7 +205,7 @@
 }
 .model-row-actions .text-button {
   padding: var(--space-1) 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-14);
 }
 .model-row-actions .icon-button {
   width: 28px;
@@ -219,12 +219,12 @@
   right: 0;
   top: 100%;
   z-index: 5;
-  background: var(--card-bg);
+  background: var(--panel);
   min-width: 168px;
   padding: var(--space-1-5);
-  border: 1px solid var(--card-border);
-  border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-10);
+  box-shadow: none;
 }
 .model-more-panel button {
   border: 0;
@@ -248,13 +248,13 @@
   cursor: not-allowed;
 }
 .model-more-panel .model-delete {
-  color: var(--error-text);
+  color: var(--red-text-2);
 }
 .model-table small.model-pending {
-  color: var(--warning-text);
+  color: var(--yellow-text-2);
 }
 .model-apply {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
   margin-top: var(--space-1-5);
 }
 .model-pagination {
@@ -262,8 +262,8 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-5) var(--space-5);
-  color: var(--muted);
-  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  font-size: var(--font-14);
 }
 .model-pagination > div {
   display: flex;
@@ -272,29 +272,29 @@
 }
 .model-pagination .icon-button {
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-6);
 }
 .model-list-note {
-  font-size: var(--font-size-xs);
-  color: var(--muted);
+  font-size: var(--font-12);
+  color: var(--text-muted);
   margin-top: var(--space-4);
   line-height: 1.7;
 }
 .model-empty {
   text-align: center;
   padding: var(--space-16) var(--space-5);
-  color: var(--muted);
+  color: var(--text-muted);
 }
 .model-empty svg {
-  color: var(--text-tertiary);
+  color: var(--text-subtle);
 }
 .model-empty h2 {
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-20);
   color: var(--text);
   margin: var(--space-4) 0 var(--space-2);
 }
 .model-empty p {
-  font-size: var(--font-size-md);
+  font-size: var(--font-14);
   margin-bottom: var(--space-5);
 }
 .model-drawer {
@@ -310,11 +310,11 @@
   border-left: 1px solid var(--border);
   padding: 0;
   color: var(--text);
-  background: var(--surface);
-  box-shadow: var(--dialog-shadow);
+  background: var(--panel);
+  box-shadow: var(--shadow-dialog);
 }
 .model-drawer::backdrop {
-  background: color-mix(in srgb, var(--story-bg) 3%, transparent);
+  background: var(--neutral-bg-2);
 }
 .model-drawer form {
   height: 100%;
@@ -326,15 +326,15 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  border-bottom: 1px solid var(--active);
+  border-bottom: 1px solid var(--blue-fill-1);
 }
 .model-drawer h2 {
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-20);
   margin: 0 0 var(--space-2-5);
 }
 .model-drawer header p {
-  color: var(--muted);
-  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  font-size: var(--font-14);
   margin: 0;
 }
 .model-drawer-body {
@@ -344,10 +344,10 @@
 }
 .model-drawer section {
   padding: var(--space-6) 0;
-  border-bottom: 1px solid var(--active);
+  border-bottom: 1px solid var(--blue-fill-1);
 }
 .model-drawer h3 {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-14);
   margin: 0 0 var(--space-5);
 }
 .model-drawer label {
@@ -356,16 +356,16 @@
   gap: var(--space-3);
   align-items: center;
   margin-top: var(--space-4);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-14);
 }
 .model-drawer input,
 .model-drawer select {
   box-sizing: border-box;
   width: 100%;
   height: 40px;
-  border: 1px solid var(--input-border);
-  border-radius: var(--input-radius);
-  background: var(--input-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-6);
+  background: var(--panel);
   color: var(--text);
   padding: 0 var(--space-2-5);
   font: inherit;
@@ -377,11 +377,11 @@
   outline-offset: 1px;
 }
 .model-drawer b {
-  color: var(--error-text);
+  color: var(--red-text-2);
 }
 .model-drawer .model-field-help {
-  font-size: var(--font-size-xs);
-  color: var(--muted);
+  font-size: var(--font-12);
+  color: var(--text-muted);
   line-height: 1.7;
   margin: var(--space-3) 0;
 }
@@ -390,7 +390,7 @@
   align-items: center;
   gap: var(--space-4);
   margin-top: var(--space-5);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-14);
 }
 .model-secret > span:nth-child(2) {
   display: flex;
@@ -401,22 +401,22 @@
   margin-left: auto;
 }
 .model-cancel-key {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
   margin-top: var(--space-2);
 }
 .model-inline-note {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
   line-height: 1.7;
   padding: var(--space-3);
-  background: var(--active);
-  border-radius: var(--radius-xs);
+  background: var(--blue-fill-1);
+  border-radius: var(--radius-4);
   margin-top: var(--space-5);
   color: var(--link);
 }
 .model-help {
   margin: var(--space-5) 0;
-  color: var(--muted);
-  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-size: var(--font-12);
 }
 .model-help summary {
   cursor: pointer;
@@ -431,13 +431,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--surface-muted);
-  border-radius: var(--radius-sm);
+  background: var(--neutral-fill-1);
+  border-radius: var(--radius-6);
   padding: var(--space-3);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-14);
 }
 .model-probe-strip .secondary-button {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-12);
   padding: var(--space-2) var(--space-3);
 }
 .model-drawer footer {
@@ -446,15 +446,15 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  background: var(--surface);
+  background: var(--panel);
 }
 .model-drawer footer > span {
   margin-right: auto;
-  color: var(--muted);
-  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-size: var(--font-12);
 }
 .model-drawer footer button {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-14);
 }
 @media (min-width: 1450px) {
   .models-page.drawer-visible {
