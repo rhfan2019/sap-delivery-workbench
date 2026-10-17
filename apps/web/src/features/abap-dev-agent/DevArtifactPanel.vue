@@ -115,22 +115,14 @@ async function toggleFinal() {
   }
 }
 
-// Errors stay in the comment box, which remains open for another try.
-async function addComment(anchorText: string, body: string, context: unknown) {
+function addComment(anchorText: string, body: string, context: unknown) {
   if (!shown.value) return;
   const at = context as { target: DevTarget; line: number | null };
-  await api(
-    `${sessionUrl.value}/comments`,
-    {
-      target: at.target,
-      anchorText,
-      anchorVersion: shown.value.version,
-      anchorLine: at.line,
-      body,
-    },
-    'POST',
-  );
-  await run.refresh();
+  const source =
+    at.target === 'code'
+      ? `代码第 ${shown.value.version} 版${at.line ? '第 ' + at.line + ' 行' : ''}`
+      : `开发方案第 ${shown.value.version} 版`;
+  run.quote(source, anchorText, body);
 }
 
 async function setStatus(id: string, status: 'open' | 'resolved') {
@@ -297,7 +289,7 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
           </ul>
         </section>
       </div>
-      <section class="document-comments" aria-label="批注">
+      <section v-if="comments.length" class="document-comments" aria-label="批注">
         <div class="work-section-heading">
           <h3>
             批注 <small>{{ openComments.length }} 条未解决</small>
@@ -311,9 +303,6 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
             让助手处理批注
           </button>
         </div>
-        <p v-if="!comments.length" class="work-muted">
-          在代码或开发方案中选中文字，点旁边的“批注”即可添加。
-        </p>
         <article
           v-for="c in comments"
           :key="c.id"

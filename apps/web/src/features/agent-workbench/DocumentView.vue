@@ -7,7 +7,7 @@ import {
   ArtifactAction,
 } from '@/components/ai-elements/artifact';
 import { Button } from '@/components/ui/button';
-import { X, Download, FileText } from '@lucide/vue';
+import { X, Download, FileText, ListTree } from '@lucide/vue';
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { visibleOutline, type OutlineItem } from './outline.mjs';
 import type { AgentArtifactRef } from '@sap-delivery-workbench/contracts/agent-core/types';
@@ -36,7 +36,43 @@ const body = ref<HTMLElement | null>(null),
 const headings = ref<OutlineItem[]>([]),
   collapsed = ref(new Set<string>()),
   activeHeading = ref(''),
-  showOutline = ref(true);
+  showOutline = ref(false);
+// The outline's width follows the reader's last drag, kept in this browser.
+const OUTLINE_WIDTH = 'document-outline-width';
+const clampWidth = (value: number) => Math.min(420, Math.max(140, value));
+const outlineWidth = ref(clampWidth(Number(readStored(OUTLINE_WIDTH)) || 200));
+function readStored(key: string) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function keepWidth() {
+  try {
+    localStorage.setItem(OUTLINE_WIDTH, String(outlineWidth.value));
+  } catch {
+    // Private windows may refuse storage; the width then lasts for this page only.
+  }
+}
+function startResize(event: PointerEvent) {
+  const startX = event.clientX,
+    start = outlineWidth.value;
+  const move = (e: PointerEvent) => (outlineWidth.value = clampWidth(start + e.clientX - startX));
+  const stop = () => {
+    window.removeEventListener('pointermove', move);
+    window.removeEventListener('pointerup', stop);
+    document.body.style.removeProperty('user-select');
+    keepWidth();
+  };
+  document.body.style.userSelect = 'none';
+  window.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', stop);
+}
+function nudgeWidth(delta: number) {
+  outlineWidth.value = clampWidth(outlineWidth.value + delta);
+  keepWidth();
+}
 const visibleHeadings = computed(() => visibleOutline(headings.value, collapsed.value));
 let scrollFrame = 0;
 function toggle(id: string) {
@@ -134,14 +170,15 @@ function download() {
         variant="ghost"
         size="sm"
         :aria-expanded="showOutline"
+        :aria-pressed="showOutline"
         @click="showOutline = !showOutline"
-        >目录</Button
+        ><ListTree :size="14" />目录</Button
       >
       <slot name="actions" /><Button v-if="!embedded" variant="ghost" size="sm" @click="download"
         ><Download :size="14" />Markdown</Button
       >
     </div>
-    <div class="spec-reading">
+    <div class="spec-reading" :style="{ '--outline-width': outlineWidth + 'px' }">
       <nav v-show="showOutline" ref="nav" class="spec-outline" aria-label="说明书章节目录">
         <div
           v-for="item in visibleHeadings"
@@ -171,6 +208,20 @@ function download() {
           </Button>
         </div>
       </nav>
+      <div
+        v-show="showOutline"
+        class="outline-resizer"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="拖动调整目录宽度"
+        :aria-valuenow="outlineWidth"
+        aria-valuemin="140"
+        aria-valuemax="420"
+        tabindex="0"
+        @pointerdown.prevent="startResize"
+        @keydown.left.prevent="nudgeWidth(-20)"
+        @keydown.right.prevent="nudgeWidth(20)"
+      ></div>
       <div ref="body" class="spec-body" @scroll.passive="onScroll" @mouseup="selected">
         <slot />
         <ChatMarkdown
@@ -198,7 +249,16 @@ function download() {
   background: transparent;
 }
 .spec-embedded .spec-toolbar {
-  padding-inline: 0;
+  gap: var(--space-1-5);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--border);
+}
+.spec-embedded .spec-toolbar button {
+  min-height: 28px;
+}
+.spec-toolbar button[aria-pressed='true'] {
+  color: var(--text);
+  background: var(--surface-muted);
 }
 .spec-embedded .spec-body {
   padding-inline: var(--space-4) 0;
@@ -267,11 +327,33 @@ function download() {
   overflow: hidden;
 }
 .spec-outline {
-  flex: 0 0 170px;
+  flex: 0 0 var(--outline-width, 200px);
   min-width: 0;
   overflow: auto;
   padding: var(--space-2-5) var(--space-1-5);
-  border-right: 1px solid var(--active);
+}
+/* A 9px grip over a 1px line; the line thickens on hover and focus. */
+.outline-resizer {
+  position: relative;
+  flex: 0 0 9px;
+  margin: 0 calc(-1 * var(--space-1));
+  z-index: 1;
+  cursor: col-resize;
+  touch-action: none;
+}
+.outline-resizer::after {
+  content: '';
+  position: absolute;
+  inset: 0 4px;
+  background: var(--border);
+}
+.outline-resizer:hover::after,
+.outline-resizer:focus-visible::after {
+  inset: 0 3px;
+  background: var(--focus);
+}
+.outline-resizer:focus-visible {
+  outline: none;
 }
 .outline-row {
   display: flex;
@@ -309,8 +391,10 @@ function download() {
   .spec-outline {
     flex: 0 0 auto;
     max-height: 140px;
-    border-right: 0;
     border-bottom: 1px solid var(--active);
+  }
+  .outline-resizer {
+    display: none;
   }
 }
 .spec-toolbar {

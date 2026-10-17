@@ -1,12 +1,13 @@
 <script setup lang="ts">
 // Selecting text in a document or the code offers a small “批注” button beside the selection;
 // only clicking it opens the comment box. Both float above the page, so nothing moves.
+// `save` hands the comment on (the panels quote it into the conversation).
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { MessageSquarePlus } from '@lucide/vue';
 
 const props = defineProps<{
   disabled?: boolean;
-  save: (text: string, body: string, context: unknown) => Promise<void>;
+  save: (text: string, body: string, context: unknown) => void | Promise<void>;
 }>();
 
 type State = {
@@ -140,7 +141,7 @@ onBeforeUnmount(() => {
         v-model="body"
         rows="3"
         aria-label="批注内容"
-        placeholder="写下修改意见，Ctrl + Enter 提交"
+        placeholder="写下修改意见，Ctrl + Enter 加入对话"
         @keydown.ctrl.enter.prevent="submit"
         @keydown.meta.enter.prevent="submit"
       />
@@ -148,7 +149,7 @@ onBeforeUnmount(() => {
       <div>
         <button type="button" @click="close">取消</button>
         <button type="submit" class="primary" :disabled="saving || !body.trim()">
-          {{ saving ? '正在保存…' : '添加批注' }}
+          {{ saving ? '正在加入…' : '加入对话' }}
         </button>
       </div>
     </form>

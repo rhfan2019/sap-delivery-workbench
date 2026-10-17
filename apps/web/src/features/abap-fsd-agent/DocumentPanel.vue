@@ -91,15 +91,8 @@ async function toggleFinal() {
   }
 }
 
-// Errors stay in the comment box, which remains open for another try.
-async function addComment(anchorText: string, body: string) {
-  if (!shown.value) return;
-  await api(
-    `${props.base}/sessions/${run.sessionId.value}/comments`,
-    { anchorText, anchorVersion: shown.value.revision, body },
-    'POST',
-  );
-  await run.refresh();
+function addComment(anchorText: string, body: string) {
+  if (shown.value) run.quote(`功能说明书第 ${shown.value.revision} 版`, anchorText, body);
 }
 
 async function setStatus(id: string, status: 'open' | 'resolved') {
@@ -123,62 +116,16 @@ async function handleComments() {
   <section class="work-document document-panel">
     <p v-if="!latest && !live" class="work-empty">还没有文档。在对话中描述需求，助手会编写 FSD。</p>
     <template v-else>
-      <div class="work-actions">
-        <label
-          >查看版本<select
-            :value="version ?? ''"
-            :disabled="live"
-            @change="
-              emit(
-                'version',
-                ($event.target as HTMLSelectElement).value
-                  ? Number(($event.target as HTMLSelectElement).value)
-                  : null,
-              )
-            "
-          >
-            <option value="">最新版本{{ latest ? ' · 第 ' + latest.revision + ' 版' : '' }}</option>
-            <option v-for="d in documents" :key="d.version" :value="d.version">
-              第 {{ d.version }} 版{{ d.labels.length ? ' · ' + d.labels.join('、') : '' }}
-            </option>
-          </select></label
-        >
-        <button
-          v-if="shown && !live"
-          :disabled="!canEdit || saving"
-          :aria-pressed="isFinal"
-          @click="toggleFinal"
-        >
-          {{ isFinal ? '取消定稿' : '标为定稿' }}
-        </button>
-        <a
-          v-if="shown && !live"
-          :href="`/api${base}/sessions/${run.sessionId.value}/export?version=${shown.revision}`"
-          >导出 Markdown</a
-        >
-      </div>
       <p v-if="live" role="status" class="work-inline-note">
         助手正在编写，本轮结束后保存为新版本。
       </p>
-      <p v-if="loading" role="status">正在读取版本…</p>
+      <p v-if="loading" role="status" class="work-inline-note">正在读取版本…</p>
       <p v-if="error" role="alert" class="work-error">{{ error }}</p>
-      <div
-        v-if="shown?.comparison && !live && shown.comparison.actual?.length"
-        class="document-changes"
-      >
-        <details>
-          <summary>本版改动 {{ shown.comparison.actual.length }} 个章节</summary>
-          <p>{{ shown.comparison.actual.map((c) => c.heading).join('、') }}</p>
-        </details>
-        <p v-if="shown.comparison.undeclared.length" role="alert">
-          未声明的修改：{{
-            shown.comparison.undeclared.join('、')
-          }}（助手改了但没有说明原因，请重点核对）
-        </p>
-        <p v-if="shown.comparison.unapplied.length">
-          声明了但未改动：{{ shown.comparison.unapplied.join('、') }}
-        </p>
-      </div>
+      <p v-if="!live && shown?.comparison?.undeclared.length" role="alert" class="document-alert">
+        未声明的修改：{{
+          shown.comparison.undeclared.join('、')
+        }}（助手改了但没有说明原因，请重点核对）
+      </p>
       <SelectionComment ref="selection" :disabled="!canEdit || live || !shown" :save="addComment">
         <DocumentView
           v-if="viewed"
@@ -187,9 +134,58 @@ async function handleComments() {
           :closable="false"
           embedded
           @select="selection?.offer($event)"
-        />
+        >
+          <!-- One toolbar row: version, what changed, final, export (the outline toggle is first). -->
+          <template #actions>
+            <select
+              class="document-version"
+              aria-label="查看版本"
+              :value="version ?? ''"
+              :disabled="live"
+              @change="
+                emit(
+                  'version',
+                  ($event.target as HTMLSelectElement).value
+                    ? Number(($event.target as HTMLSelectElement).value)
+                    : null,
+                )
+              "
+            >
+              <option value="">最新 · 第 {{ latest?.revision ?? 1 }} 版</option>
+              <option v-for="d in documents" :key="d.version" :value="d.version">
+                第 {{ d.version }} 版{{ d.labels.length ? ' · ' + d.labels.join('、') : '' }}
+              </option>
+            </select>
+            <details
+              v-if="shown?.comparison && !live && shown.comparison.actual?.length"
+              class="document-changes"
+            >
+              <summary>改动 {{ shown.comparison.actual.length }} 章</summary>
+              <div class="document-changes-list">
+                <p>{{ shown.comparison.actual.map((c) => c.heading).join('、') }}</p>
+                <p v-if="shown.comparison.unapplied.length">
+                  声明了但未改动：{{ shown.comparison.unapplied.join('、') }}
+                </p>
+              </div>
+            </details>
+            <button
+              v-if="shown && !live"
+              class="document-final"
+              :disabled="!canEdit || saving"
+              :aria-pressed="isFinal"
+              @click="toggleFinal"
+            >
+              {{ isFinal ? '取消定稿' : '标为定稿' }}
+            </button>
+            <a
+              v-if="shown && !live"
+              :href="`/api${base}/sessions/${run.sessionId.value}/export?version=${shown.revision}`"
+              >导出</a
+            >
+          </template>
+        </DocumentView>
       </SelectionComment>
-      <section class="document-comments" aria-label="批注">
+      <section v-if="comments.length" class="document-comments" aria-label="批注">
         <div class="work-section-heading">
           <h3>
             批注 <small>{{ openComments.length }} 条未解决</small>
@@ -203,9 +199,6 @@ async function handleComments() {
             让助手处理批注
           </button>
         </div>
-        <p v-if="!run.comments.value.length" class="work-muted">
-          在文档中选中文字，点旁边的“批注”即可添加。
-        </p>
         <article
           v-for="c in run.comments.value"
           :key="c.id"
@@ -235,7 +228,48 @@ async function handleComments() {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2-5);
+  gap: var(--space-2);
+}
+.document-version {
+  min-height: 28px;
+  max-width: 180px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  font-size: var(--font-size-xs);
+}
+.document-final {
+  margin-left: auto;
+  min-height: 28px;
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-xs);
+}
+.document-changes {
+  position: relative;
+  color: var(--muted);
+}
+.document-changes summary {
+  cursor: pointer;
+  white-space: nowrap;
+}
+.document-changes-list {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  z-index: 5;
+  width: min(360px, 70vw);
+  max-height: 240px;
+  overflow: auto;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-popover);
+  font-size: var(--font-size-xs);
+}
+.document-alert {
+  color: var(--warning-text);
+  font-size: var(--font-size-xs);
 }
 .document-panel > :not(.document-reader) {
   flex-shrink: 0;
@@ -243,22 +277,11 @@ async function handleComments() {
 .document-reader {
   flex: 1;
   min-height: 240px;
-  border-top: 1px solid var(--border);
-}
-.document-changes summary {
-  cursor: pointer;
 }
 .document-comments {
   max-height: 30%;
   overflow: auto;
   padding-bottom: var(--space-3);
-}
-.document-changes {
-  font-size: var(--font-size-sm);
-  color: var(--muted);
-}
-.document-changes [role='alert'] {
-  color: var(--warning-text);
 }
 .comment-item {
   border: 1px solid var(--active);

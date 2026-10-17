@@ -68,6 +68,19 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
   const detail = shallowRef<any>(null);
   const drafts = ref<Record<string, string>>({});
   const comments = ref<any[]>([]);
+  // A comment on a selection in the artifact panel goes into the conversation, the way Claude
+  // quotes a selection into a reply: the composer appends it to the draft for the user to send.
+  const quoted = ref<{ text: string; at: number } | null>(null);
+  function quote(source: string, anchor: string, body: string) {
+    const lines = anchor
+      .trim()
+      .split('\n')
+      .map((line) => '> ' + line);
+    quoted.value = {
+      text: `关于${source}的这段：\n${lines.join('\n')}\n\n${body}`,
+      at: Date.now(),
+    };
+  }
   const attachments = ref<AgentAttachment[]>([]);
   const canEdit = ref(false);
   const busy = computed(() => ['waiting', 'streaming', 'stopping'].includes(status.value));
@@ -338,6 +351,8 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
     detail,
     drafts,
     comments,
+    quoted,
+    quote,
     attachments,
     canEdit,
     load,

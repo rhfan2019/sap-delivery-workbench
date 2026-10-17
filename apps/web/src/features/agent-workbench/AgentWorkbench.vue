@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useDropZone, useFileDialog, useMediaQuery } from '@vueuse/core';
 import { Splitpanes, Pane } from 'splitpanes';
 import 'splitpanes/dist/splitpanes.css';
@@ -65,6 +65,14 @@ watch(
   () => sending.value || uploading.value || preparing.value,
   (value) => emit('busy', value),
 );
+watch(run.quoted, async (q) => {
+  if (!q) return;
+  draft.value = draft.value.trim() ? `${draft.value.trimEnd()}\n\n${q.text}` : q.text;
+  await nextTick();
+  const input = composer.value?.querySelector('textarea');
+  input?.focus();
+  input?.setSelectionRange(input.value.length, input.value.length);
+});
 const { open, onChange } = useFileDialog({ multiple: true, reset: true });
 onChange((files) => void addFiles(files));
 const { isOverDropZone } = useDropZone(composer, { onDrop: () => {} });
