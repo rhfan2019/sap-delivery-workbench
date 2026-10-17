@@ -87,3 +87,14 @@ router.beforeEach(async (to) => {
   )
     return '/home';
 });
+// A lazy page whose module cannot be fetched (a dev server that re-bundled its dependencies, or a
+// deploy that replaced the chunks) would otherwise leave the click doing nothing: load the page
+// afresh instead, once per target so a real outage does not loop.
+router.onError((error, to) => {
+  if (!/dynamically imported module|Importing a module script failed/i.test(String(error))) return;
+  const key = `reload:${to.fullPath}`;
+  if (sessionStorage.getItem(key)) return;
+  sessionStorage.setItem(key, '1');
+  window.location.assign(to.fullPath);
+});
+router.afterEach((to) => sessionStorage.removeItem(`reload:${to.fullPath}`));

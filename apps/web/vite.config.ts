@@ -13,4 +13,7 @@ export default defineConfig({
     proxy: { '/api': 'http://127.0.0.1:3001' },
   },
   preview: { port: 4173, strictPort: true },
+  // Crawl every page, lazy routes included, so the dev server bundles all dependencies at start
+  // instead of re-bundling (and failing the page's import) the first time an assistant page opens.
+  optimizeDeps: { entries: ['index.html', 'src/**/*.vue'] },
 });
