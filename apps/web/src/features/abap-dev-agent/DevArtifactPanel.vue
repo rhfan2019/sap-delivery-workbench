@@ -254,6 +254,7 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
               class="dev-reader"
               :artifact="{ id: 'plan', revision: shown?.version ?? 0, markdown: viewedPlan }"
               :closable="false"
+              embedded
               @select="selection?.offer($event, { target: 'plan', line: null })"
             />
           </template>
@@ -384,8 +385,7 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
 .dev-reader {
   flex: 1;
   min-height: 0;
-  border: 1px solid var(--active);
-  border-radius: var(--radius-md);
+  border-top: 1px solid var(--border);
 }
 .dev-warning {
   color: var(--warning-text);

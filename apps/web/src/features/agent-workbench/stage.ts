@@ -5,7 +5,6 @@ import type { AgentSession } from '@sap-delivery-workbench/contracts/agent-core/
 // panel that shows what the agent produced (FSD document, or plan and code).
 export interface StageConfig {
   agent: 'abap-fsd-agent' | 'abap-dev-agent';
-  stageLabel: string;
   assistantName: string;
   readonlyNote: string;
   sessionsHeading: string;

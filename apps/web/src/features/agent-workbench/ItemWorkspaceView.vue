@@ -309,7 +309,6 @@ onBeforeUnmount(() => controller.abort());
           <p>{{ richText(state.item.businessFunction) || '尚未填写业务功能点' }}</p>
         </section>
       </div>
-      <span class="stage-label">{{ config.stageLabel }}</span>
       <div ref="switcher" class="work-popover-anchor work-switcher">
         <button
           class="work-title-button work-switcher-button"

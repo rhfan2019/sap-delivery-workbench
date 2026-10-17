@@ -6,7 +6,6 @@ import DevArtifactPanel from './DevArtifactPanel.vue';
 const route = useRoute();
 const config: StageConfig = {
   agent: 'abap-dev-agent',
-  stageLabel: '开发',
   assistantName: '开发助手',
   readonlyNote: '当前为只读，仅开发负责人或项目管理员可以修改。',
   sessionsHeading: '本开发项的开发对话',

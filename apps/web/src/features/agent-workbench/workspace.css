@@ -5,12 +5,9 @@
   display: flex;
   min-height: 0;
 }
-.main-shell:has(.item-workspace) .app-footer {
-  display: none;
-}
 .item-workspace {
   width: 100%;
-  height: calc(100dvh - 76px);
+  /* Fills the content area whatever the theme's top bar height. */
   min-height: 460px;
   display: flex;
   flex-direction: column;
@@ -69,14 +66,6 @@
   color: var(--muted);
   white-space: nowrap;
   text-decoration: none;
-}
-.stage-label {
-  font-size: var(--font-size-xs);
-  padding: var(--space-0-5) var(--space-2);
-  background: var(--active);
-  color: var(--focus);
-  border-radius: var(--badge-radius);
-  white-space: nowrap;
 }
 .work-header-actions {
   margin-left: auto;
@@ -313,7 +302,7 @@
 .item-workspace .work-switcher-button {
   min-height: 32px;
   padding: var(--space-1) var(--space-2-5);
-  border: 1px solid var(--work-border);
+  border: 0;
   color: var(--muted);
   font-size: var(--font-size-sm);
 }
@@ -540,7 +529,6 @@
   background: var(--input-bg);
   border: 1px solid var(--input-border);
 }
-.work-document .chat-markdown,
 .work-candidate .chat-markdown {
   background: var(--surface);
   padding: var(--space-5);
@@ -633,7 +621,6 @@
 }
 @media (max-width: 800px) {
   .item-workspace {
-    height: calc(100dvh - 64px);
     min-height: 400px;
   }
   .item-work-header {
@@ -653,7 +640,17 @@
     max-width: 100%;
     flex: 1;
   }
-  .work-panel-toggle span {
+  .work-item-title {
+    flex: 1;
+    min-width: 0;
+  }
+  .work-switcher {
+    min-width: 0;
+  }
+  /* Icons only, so the header fits a phone. */
+  .work-panel-toggle span,
+  .work-switcher-button span,
+  .work-header-actions button span {
     display: none;
   }
   .work-panel-header {
@@ -667,9 +664,6 @@
   }
   /* Icons only in the header on a phone. */
   .work-header-actions button > span,
-  .item-work-header .stage-label {
-    display: none;
-  }
   .work-header-actions {
     gap: 0;
   }
@@ -685,15 +679,9 @@
   .item-workspace .expand-panel {
     display: none;
   }
-  .work-document .chat-markdown {
-    padding: var(--space-3);
-  }
   .work-notice,
   .work-error {
     padding: var(--space-2) var(--space-3);
-  }
-  .stage-label {
-    padding: var(--space-0-5) var(--space-1);
   }
 }
 .work-session-pick strong {

@@ -250,9 +250,6 @@ onMounted(() => void syncAppearance());
       <main id="main-content" class="main-content">
         <RouterView :key="route.meta.keepOnQuery ? route.path : route.fullPath" />
       </main>
-      <footer class="app-footer">
-        <span>SAP 智能交付平台</span><span>连接专业，让交付更进一步。</span>
-      </footer>
     </div>
   </div>
 </template>

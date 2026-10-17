@@ -6,7 +6,6 @@ import DocumentPanel from './DocumentPanel.vue';
 const route = useRoute();
 const config: StageConfig = {
   agent: 'abap-fsd-agent',
-  stageLabel: '设计',
   assistantName: '设计助手',
   readonlyNote: '当前为只读，仅设计负责人或项目管理员可以修改。',
   sessionsHeading: '本开发项的设计对话',

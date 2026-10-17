@@ -185,6 +185,7 @@ async function handleComments() {
           class="document-reader"
           :artifact="viewed"
           :closable="false"
+          embedded
           @select="selection?.offer($event)"
         />
       </SelectionComment>
@@ -242,8 +243,7 @@ async function handleComments() {
 .document-reader {
   flex: 1;
   min-height: 240px;
-  border: 1px solid var(--active);
-  border-radius: var(--radius-md);
+  border-top: 1px solid var(--border);
 }
 .document-changes summary {
   cursor: pointer;

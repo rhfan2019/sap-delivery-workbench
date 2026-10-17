@@ -24,7 +24,7 @@ const widthOf = (f: FieldDef) =>
           : f.key.endsWith('.status')
             ? 132
             : f.type === 'member' || f.customType === 'member'
-              ? 96
+              ? 120
               : f.type === 'select' || f.type === 'effort'
                 ? 80
                 : 140;

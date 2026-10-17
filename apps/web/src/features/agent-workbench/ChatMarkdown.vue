@@ -152,6 +152,10 @@ watch(
 .chat-markdown :deep(tr:last-child td) {
   border-bottom: 0;
 }
+.chat-markdown :deep(tbody) {
+  /* The markdown renderer sets its table body semibold. */
+  font-weight: var(--font-weight-regular);
+}
 .chat-markdown :deep(th) {
   background: var(--table-header-bg);
   font-weight: var(--table-header-weight);

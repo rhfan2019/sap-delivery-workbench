@@ -13,9 +13,15 @@ import { visibleOutline, type OutlineItem } from './outline.mjs';
 import type { AgentArtifactRef } from '@sap-delivery-workbench/contracts/agent-core/types';
 import ChatMarkdown from './ChatMarkdown.vue';
 const props = withDefaults(
-  defineProps<{ artifact: AgentArtifactRef & { markdown: string }; closable?: boolean }>(),
+  defineProps<{
+    artifact: AgentArtifactRef & { markdown: string };
+    closable?: boolean;
+    // Inside an artifact panel that already shows the title, version and export.
+    embedded?: boolean;
+  }>(),
   {
     closable: true,
+    embedded: false,
   },
 );
 // `select` reports text the reader selects in the document, for adding a comment.
@@ -110,9 +116,10 @@ function download() {
 <template>
   <Artifact
     class="spec-panel assistant-elements h-full rounded-none border-0"
+    :class="{ 'spec-embedded': embedded }"
     aria-label="已保存功能说明书"
   >
-    <ArtifactHeader>
+    <ArtifactHeader v-if="!embedded">
       <FileText :size="17" /><ArtifactTitle>功能说明书</ArtifactTitle
       ><span>第 {{ artifact.revision }} 版</span
       ><span v-for="label in artifact.labels ?? []" :key="label" class="spec-label">{{
@@ -130,7 +137,7 @@ function download() {
         @click="showOutline = !showOutline"
         >目录</Button
       >
-      <slot name="actions" /><Button variant="ghost" size="sm" @click="download"
+      <slot name="actions" /><Button v-if="!embedded" variant="ghost" size="sm" @click="download"
         ><Download :size="14" />Markdown</Button
       >
     </div>
@@ -184,6 +191,17 @@ function download() {
   background: var(--card-bg);
   border-left: 1px solid var(--active);
   min-height: 0;
+}
+.spec-embedded {
+  border-left: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.spec-embedded .spec-toolbar {
+  padding-inline: 0;
+}
+.spec-embedded .spec-body {
+  padding-inline: var(--space-4) 0;
 }
 .spec-panel header {
   display: flex;

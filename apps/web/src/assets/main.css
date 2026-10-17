@@ -954,14 +954,6 @@ input::placeholder {
   gap: var(--space-1-5);
   margin-top: var(--space-4);
 }
-.app-footer {
-  display: flex;
-  flex-shrink: 0;
-  justify-content: space-between;
-  padding: var(--space-1-5) var(--space-8);
-  color: var(--muted);
-  font-size: var(--font-size-xs);
-}
 .project-row {
   display: flex;
   align-items: center;
@@ -1346,10 +1338,6 @@ input::placeholder {
   }
   .dashboard-lower {
     margin-top: var(--space-6);
-  }
-  .app-footer {
-    padding: var(--space-5) var(--space-4);
-    font-size: var(--font-size-xs);
   }
   .password-page {
     padding: var(--space-5);
