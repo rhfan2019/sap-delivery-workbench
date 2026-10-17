@@ -4,6 +4,7 @@ import {
   checkImport,
   importsOf,
   checkTestDiscovery,
+  checkDesignTokens,
   checkLegacy,
 } from '../../../scripts/checks/architecture.mjs';
 
@@ -266,4 +267,62 @@ test('contract 1.8 keeps SAP write tools inside the test data executor', () => {
     [],
   );
   assert.deepEqual(checkLegacy('apps/web/src/views/LoginView.vue', "icon: 'lock'"), []);
+});
+
+test('web styles use design tokens, never literal colours, fonts, sizes, spacing or radii', () => {
+  const css = (body) => checkDesignTokens('apps/web/src/features/x/x.css', `.a {\n${body}\n}`);
+  for (const [body, error] of [
+    ['  color: #1f2328;', /literal colour/],
+    ['  background: rgba(0, 0, 0, 0.1);', /literal colour/],
+    ['  border-color: white;', /literal colour/],
+    ['  --local: #e4e9f0;', /literal colour/],
+    ['  font-family: Consolas, monospace;', /literal font/],
+    ['  font: 12px/1.8 inherit;', /literal font/],
+    ['  font-size: 13px;', /literal font size/],
+    ['  font-weight: 650;', /literal font weight/],
+    ['  padding: 6px var(--space-2);', /literal spacing/],
+    ['  gap: 0.5rem;', /literal spacing/],
+    ['  border-radius: 50%;', /literal radius/],
+  ])
+    assert.match(css(body).join(), error, body);
+  assert.deepEqual(
+    css(
+      [
+        '  color: var(--text);',
+        '  background: color-mix(in srgb, var(--primary) 10%, transparent);',
+        '  font-family: var(--font-mono);',
+        '  font: var(--font-size-sm)/1.6 inherit;',
+        '  font-size: 0.85em;',
+        '  font-weight: var(--font-weight-semibold);',
+        '  padding: 0 calc(-1 * var(--space-2));',
+        '  margin-left: calc(var(--layout-sidebar) + var(--space-6));',
+        '  border-radius: var(--radius-full);',
+        '  width: 240px;',
+      ].join('\n'),
+    ),
+    [],
+  );
+  // Vue: style blocks and palette classes in templates; theme.css and vendored components are exempt.
+  assert.match(
+    checkDesignTokens(
+      'apps/web/src/a.vue',
+      '<template><p class="text-amber-700"/></template>',
+    ).join(),
+    /Palette colour class text-amber-700/,
+  );
+  assert.match(
+    checkDesignTokens('apps/web/src/a.vue', '<style scoped>.a { color: #fff; }</style>').join(),
+    /literal colour/,
+  );
+  assert.deepEqual(
+    checkDesignTokens('apps/web/src/assets/theme.css', ':root { --text: #1f2328; }'),
+    [],
+  );
+  assert.deepEqual(
+    checkDesignTokens(
+      'apps/web/src/components/ui/button/Button.vue',
+      '<style>.a{color:#000}</style>',
+    ),
+    [],
+  );
 });

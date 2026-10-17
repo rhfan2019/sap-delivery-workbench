@@ -1,5 +1,5 @@
 ---
-version: 1.0
+version: 1.1
 name: SAP 智能交付工作台 · 中性白 + 海军蓝
 date: 2026-10-16
 description: >-
@@ -40,25 +40,47 @@ typography:
   body: { size: 14px, line: 22px, weight: 400 } # 界面默认
   caption: { size: 12px, line: 18px, weight: 400 } # 时间、计数、脚注
   code: { size: 13px, line: 20px, weight: 400 }
-  weights: [400, 500, 600] # 不用 700 及以上
+  sizes: { xs: 12px, sm: 13px, md: 14px, lg: 15px, xl: 17px, 2xl: 20px, 3xl: 28px } # --font-size-*
+  weights: { regular: 400, medium: 500, semibold: 600 } # --font-weight-*；不用 700 及以上
 
-spacing: [4, 8, 12, 16, 24, 32, 48] # px；页面区块间 24/32，组件内 8/12
+# --space-N = N x 4px；页面区块间 24/32，组件内 8/12
+spacing:
+  {
+    0-5: 2px,
+    1: 4px,
+    1-5: 6px,
+    2: 8px,
+    2-5: 10px,
+    3: 12px,
+    4: 16px,
+    5: 20px,
+    6: 24px,
+    8: 32px,
+    10: 40px,
+    12: 48px,
+    16: 64px,
+  }
 
-rounded:
+rounded: # --radius-*
+  xs: 4px # 徽标、细小元素
   sm: 6px # 标签、小按钮
   md: 8px # 按钮、输入框、菜单项
   lg: 12px # 卡片、弹出层、表格外框
-  xl: 18px # 用户气泡
+  xl: 16px # 大面板
+  bubble: 18px # 用户气泡
   composer: 24px
-  pill: 9999px
+  full: 9999px # 圆点、头像、胶囊
 
 elevation:
   none: 'none' # 卡片默认无阴影，用边框分层
   raised: '0 1px 2px rgb(16 24 40 / 0.04), 0 4px 16px rgb(16 24 40 / 0.06)' # 输入框、浮动按钮
   popover: '0 8px 28px rgb(16 24 40 / 0.14)' # 下拉、弹出卡片
 
-layout:
+layout: # --layout-*
   sidebar: 246px
+  sidebar-narrow: 220px # 1150px 以下
+  sidebar-collapsed: 70px
+  drawer: 480px # 右侧抽屉
   conversation: 760px # 对话列最大宽度，居中
   document: 820px # 文档阅读最大宽度
   page-gutter: 24px
@@ -143,7 +165,9 @@ layout:
 
 ## 8. 实现映射（`apps/web/src/assets/theme.css`）
 
-令牌以 CSS 变量提供，变量名保持不变，只换值：
+**强制规则（契约 1.13，`npm run check:architecture` 检查）**：`apps/web/src` 中只有 `theme.css` 可以写颜色、字体、字号、字重、间距和圆角的取值；其他样式一律引用下面的变量（可以用 `calc()`、`color-mix()` 组合变量，字号可以用 `em`）。模板里不用 Tailwind 调色板颜色类（如 `text-amber-700`），改用映射到令牌的类（`text-warning`、`text-success`、`text-destructive`、`text-muted-foreground` 等）。第三方内置组件 `components/ai-elements`、`components/ui` 除外。**改风格时只改本文件和 theme.css。**
+
+颜色令牌的变量名沿用旧名，只换值：
 
 | DESIGN 令牌                                           | CSS 变量                                                                                           |
 | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
@@ -159,19 +183,29 @@ layout:
 | `primary` / `primary-hover` / `on-primary`            | `--primary`、`--link` / `--primary-hover` / `--on-primary`                                         |
 | `focus`                                               | `--focus`、`--nav-focus`                                                                           |
 | `danger(-soft)` / `success(-soft)` / `warning(-soft)` | `--error-text`(`--error-bg`) / `--success-text`(`--success-bg`) / `--warning-text`(`--warning-bg`) |
-| 字体、圆角、阴影                                      | `--font-sans`、`--font-mono`、`--radius-*`、`--shadow-raised`、`--shadow-popover`                  |
+| 字体                                                  | `--font-sans`、`--font-mono`                                                                       |
+| 字号 / 字重                                           | `--font-size-xs`…`--font-size-3xl` / `--font-weight-regular`、`-medium`、`-semibold`               |
+| 间距                                                  | `--space-0-5`…`--space-16`                                                                         |
+| 圆角 / 阴影                                           | `--radius-xs`…`--radius-full` / `--shadow-raised`、`--shadow-popover`                              |
+| 布局                                                  | `--layout-sidebar`、`--layout-sidebar-narrow`、`--layout-sidebar-collapsed`、`--layout-drawer`     |
+| 图表                                                  | `--chart-1`…`--chart-3`（按系列顺序）                                                              |
+| 标签色                                                | `--tag-{blue,green,orange,red,purple,teal,yellow}-bg` / `-text`（开发项标签，用户可选）            |
+| 深色品牌区                                            | `--story-*`（登录页左侧、首页横幅，迁移前保留深蓝）                                                |
 
-组件中残留的写死颜色（如 `#23344b`、`#e8edf2`）在各页面迁移时替换为变量。
+2026-10-16 已用脚本把全站写死值替换为最接近的令牌：颜色按用途在文字、背景、边框令牌中取最接近者，半透明色写作 `color-mix(in srgb, var(--令牌) N%, transparent)`；字号、间距、圆角取最接近的一级（小于 12px 的字号统一升到 12px）。
 
 ## 9. 迁移计划
 
-| 批次 | 范围                                                | 状态            |
-| ---- | --------------------------------------------------- | --------------- |
-| 1    | 令牌（`theme.css`）、侧边栏、智能助手起始页与对话页 | 2026-10-16 实施 |
-| 2    | 开发项工作区头部与成果面板、FSD 文档阅读            | 待办            |
-| 3    | 首页、开发清单（表格与筛选）                        | 待办            |
-| 4    | 后台管理（组织、成员、模型、SAP 连接、审计）        | 待办            |
-| 5    | 登录页                                              | 待办            |
+| 批次 | 范围                                                            | 状态            |
+| ---- | --------------------------------------------------------------- | --------------- |
+| 0    | 全站写死值替换为令牌，并由检查器禁止新增（契约 1.13）           | 2026-10-16 完成 |
+| 1    | 令牌（`theme.css`）、侧边栏、智能助手起始页与对话页             | 2026-10-16 完成 |
+| 2    | 开发项工作区头部与成果面板、FSD 文档阅读：按第 5 节重排版式     | 待办            |
+| 3    | 首页、开发清单（表格与筛选）：按第 5 节重排版式                 | 待办            |
+| 4    | 后台管理（组织、成员、模型、SAP 连接、审计）：按第 5 节重排版式 | 待办            |
+| 5    | 登录页：去掉 `--story-*` 深色区，按规范重做                     | 待办            |
+
+第 2～5 批只调整版式和组件用法，取值仍只用令牌。
 
 每批完成后在设计、开发两个阶段与窄屏下实际查看；提交前运行 `npm run check:architecture`、`npm run check`、`npm run test:unit`。
 

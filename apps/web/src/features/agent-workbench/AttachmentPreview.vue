@@ -65,31 +65,31 @@ watch(
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--surface);
   min-width: 0;
 }
 header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 16px 18px;
-  border-bottom: 1px solid #e5eaf0;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-4);
+  border-bottom: 1px solid var(--border);
 }
 header > div {
   min-width: 0;
 }
 h2 {
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   margin: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 header p {
-  font-size: 11px;
-  color: #697586;
-  margin: 6px 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--muted);
+  margin: var(--space-1-5) 0 0;
 }
 button {
   flex-shrink: 0;
@@ -98,22 +98,22 @@ button {
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: transparent;
   cursor: pointer;
-  color: #52667c;
+  color: var(--muted);
 }
 button:hover {
-  background: #f1f4f8;
+  background: var(--surface-muted);
 }
 button:focus-visible {
-  outline: 2px solid #347cf3;
+  outline: 2px solid var(--focus);
 }
 .preview-content {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 20px;
+  padding: var(--space-5);
 }
 .preview-content > img {
   display: block;
@@ -124,11 +124,9 @@ button:focus-visible {
 .preview-content pre {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font:
-    14px/1.9 ui-monospace,
-    monospace;
+  font: var(--font-size-md)/1.9 var(--font-mono);
   margin: 0;
-  color: #24364d;
+  color: var(--primary-hover);
 }
 .preview-content:has(iframe) {
   padding: 0;
@@ -141,8 +139,8 @@ button:focus-visible {
 }
 .preview-unavailable {
   text-align: center;
-  color: #697586;
-  margin-top: 60px;
-  font-size: 14px;
+  color: var(--muted);
+  margin-top: var(--space-16);
+  font-size: var(--font-size-md);
 }
 </style>

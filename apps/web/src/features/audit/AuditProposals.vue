@@ -66,23 +66,23 @@ onMounted(load);
 .audit-proposals {
   display: grid;
   grid-template-columns: minmax(220px, 300px) 1fr;
-  gap: 16px;
+  gap: var(--space-4);
   align-items: start;
 }
 .audit-proposal-list {
   display: flex;
   flex-direction: column;
-  padding: 8px;
+  padding: var(--space-2);
 }
 .audit-proposal-list button {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-0-5);
   text-align: left;
-  padding: 10px;
+  padding: var(--space-2-5);
   border: 0;
   background: transparent;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 .audit-proposal-list button.active {

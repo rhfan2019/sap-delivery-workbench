@@ -84,13 +84,13 @@ async function query() {
 .technical-panel {
   border: 1px solid var(--border);
   background: var(--surface);
-  border-radius: 10px;
-  padding: 24px;
-  margin-bottom: 20px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin-bottom: var(--space-5);
 }
 .technical-panel h2 {
-  font-size: 16px;
-  margin: 0 0 12px;
+  font-size: var(--font-size-lg);
+  margin: 0 0 var(--space-3);
 }
 .technical-panel p {
   color: var(--muted);
@@ -98,28 +98,28 @@ async function query() {
 }
 .technical-panel label {
   display: block;
-  margin: 22px 0 8px;
-  font-weight: 600;
+  margin: var(--space-5) 0 var(--space-2);
+  font-weight: var(--font-weight-semibold);
 }
 .technical-query {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   flex-wrap: wrap;
 }
 .technical-query input {
   width: min(100%, 360px);
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   color: inherit;
 }
 .technical-query button {
-  padding: 10px 20px;
-  border-radius: 6px;
+  padding: var(--space-2-5) var(--space-5);
+  border-radius: var(--radius-sm);
   border: 0;
   background: var(--link);
-  color: white;
+  color: var(--on-primary);
   cursor: pointer;
 }
 .technical-query button:disabled {
@@ -127,31 +127,31 @@ async function query() {
   cursor: wait;
 }
 .technical-note {
-  font-size: 12px;
-  margin-top: 16px;
+  font-size: var(--font-size-xs);
+  margin-top: var(--space-4);
 }
 .technical-result-heading {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
   flex-wrap: wrap;
 }
 .technical-result-heading span {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--font-size-sm);
 }
 pre {
   background: var(--bg);
   border: 1px solid var(--border);
-  padding: 18px;
-  border-radius: 6px;
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
   max-height: 540px;
   overflow: auto;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   line-height: 1.6;
 }
 .technical-empty {
-  padding: 64px 12px;
+  padding: var(--space-16) var(--space-3);
   text-align: center;
   color: var(--muted);
 }

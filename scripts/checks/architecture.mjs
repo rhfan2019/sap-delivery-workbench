@@ -67,6 +67,69 @@ export function checkLegacy(file, content = '') {
   if (write) errors.push(`${file}: SAP write tool ${write[1]} outside ${sapWriter}`);
   return errors;
 }
+// Contract 1.13: the web styles use the design tokens of theme.css (docs/specs/DESIGN.md);
+// colours, fonts, font sizes and weights, spacing and radii are never written literally.
+const tokenSource = 'apps/web/src/assets/theme.css';
+const vendoredStyles = /^apps\/web\/src\/components\/(ai-elements|ui)\//;
+const literalColour =
+  /#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklch|oklab)\(|\b(?:white|black|red|green|blue|gray|grey|orange|yellow|purple|pink|navy|silver|teal)\b/i;
+const tailwindPalette =
+  /\b(?:text|bg|border|ring|fill|stroke|from|to|via|outline|decoration|divide|placeholder|caret|accent|shadow)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|black|white)(?:-\d{2,3})?\b/;
+const outsideVar = (value) => value.replace(/var\([^()]*(?:\([^()]*\))*[^()]*\)/g, ' ');
+export function checkDesignTokens(file, content = '') {
+  if (!file.startsWith('apps/web/src/') || file === tokenSource || vendoredStyles.test(file))
+    return [];
+  const errors = [];
+  const styles = file.endsWith('.css')
+    ? [content]
+    : file.endsWith('.vue')
+      ? [...content.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1])
+      : [];
+  if (file.endsWith('.vue')) {
+    const template = content.replace(/<style[^>]*>[\s\S]*?<\/style>/g, '');
+    for (const [palette] of template.matchAll(new RegExp(tailwindPalette, 'g')))
+      errors.push(`${file}: Palette colour class ${palette} instead of a design token`);
+    if (/style="[^"]*#[0-9a-f]{3,8}\b/i.test(template))
+      errors.push(`${file}: Literal colour in an inline style`);
+  }
+  if (/\.(ts|mts|mjs)$/.test(file) && /['"`]#[0-9a-f]{3,8}['"`]/i.test(content))
+    errors.push(`${file}: Literal colour in code`);
+  for (const css of styles) {
+    const plain = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const [, prop, raw] of plain.matchAll(
+      /(?<![\w-])(-?-?[a-z][\w-]*)\s*:\s*([^;{}]+?)\s*(?=[;}])/gi,
+    )) {
+      const value = outsideVar(raw);
+      const at = `${file}: ${prop}: ${raw.trim().slice(0, 60)}`;
+      if (
+        !/^(font|grid-template|grid-area|transition|animation)/.test(prop) &&
+        literalColour.test(value)
+      )
+        errors.push(`${at} — literal colour`);
+      if (prop.startsWith('--')) continue;
+      if (prop === 'font-family' && !/^(inherit)?$/.test(value.trim()))
+        errors.push(`${at} — literal font`);
+      // The shorthand may keep a line height after "/"; sizes and families come from tokens.
+      const font = value
+        .replace(/\/\s*[\d.]+(px)?/g, ' ')
+        .replace(/\b(inherit|normal|italic)\b/g, ' ');
+      if (prop === 'font' && /[a-z]{3,}|\d(px|rem)/i.test(font))
+        errors.push(`${at} — literal font`);
+      if (prop === 'font-size' && /\d(px|rem)\b/.test(value))
+        errors.push(`${at} — literal font size`);
+      if (prop === 'font-weight' && /\d|bold|normal/.test(value))
+        errors.push(`${at} — literal font weight`);
+      if (
+        /^(padding|margin)(-[a-z-]+)?$|^(row-|column-)?gap$/.test(prop) &&
+        /\d(px|rem)\b/.test(value)
+      )
+        errors.push(`${at} — literal spacing`);
+      if (/^border(-[a-z]+-[a-z]+)?-radius$/.test(prop) && /\d(px|rem|%)/.test(value))
+        errors.push(`${at} — literal radius`);
+    }
+  }
+  return errors;
+}
 const workspace = (file) =>
   file.startsWith('apps/web/')
     ? 'web'
@@ -350,6 +413,8 @@ export async function checkRepository(directory = root) {
       : '';
     errors.push(...checkLegacy(file, text));
   }
+  for (const file of list.filter((p) => /^apps\/web\/src\/.*\.(css|vue|ts|mts|mjs)$/.test(p)))
+    errors.push(...checkDesignTokens(file, await readFile(resolve(directory, file), 'utf8')));
   return errors;
 }
 
@@ -360,6 +425,6 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
     process.exitCode = 1;
   } else
     console.log(
-      'Architecture contract verified: layout, imports, exports, dependencies and test ownership.',
+      'Architecture contract verified: layout, imports, exports, dependencies, test ownership and design tokens.',
     );
 }

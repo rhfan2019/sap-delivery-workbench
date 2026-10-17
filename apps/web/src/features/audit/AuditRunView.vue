@@ -265,8 +265,8 @@ async function copy(text: string) {
 </template>
 <style scoped>
 .audit-comment {
-  border-top: 1px solid #edf0f3;
-  padding: 8px 0;
+  border-top: 1px solid var(--active);
+  padding: var(--space-2) 0;
 }
 .audit-comment-body {
   white-space: pre-wrap;
@@ -274,7 +274,7 @@ async function copy(text: string) {
 .audit-comment-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: flex-start;
 }
 .audit-comment-form textarea {

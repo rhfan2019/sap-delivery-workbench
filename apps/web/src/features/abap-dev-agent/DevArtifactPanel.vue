@@ -353,7 +353,7 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 .dev-panel > :not(.dev-content) {
   flex-shrink: 0;
@@ -368,84 +368,84 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
 .document-comments {
   max-height: 30%;
   overflow: auto;
-  padding-bottom: 12px;
+  padding-bottom: var(--space-3);
 }
 .dev-tabs {
   display: flex;
-  gap: 4px;
-  border-bottom: 1px solid #e8edf2;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--active);
 }
 .dev-tabs button {
-  padding: 6px 12px;
+  padding: var(--space-1-5) var(--space-3);
   border: 0;
   border-bottom: 2px solid transparent;
   background: none;
 }
 .dev-tabs button[aria-pressed='true'] {
   border-bottom-color: currentColor;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 .dev-tools {
   display: flex;
-  gap: 4px;
+  gap: var(--space-1);
   margin-left: auto;
 }
 .dev-tools button {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
 }
 .dev-reader {
   flex: 1;
   min-height: 0;
-  border: 1px solid #e8edf2;
-  border-radius: 8px;
+  border: 1px solid var(--active);
+  border-radius: var(--radius-md);
 }
 .dev-warning {
-  color: #b45309;
-  font-size: 13px;
+  color: var(--warning-text);
+  font-size: var(--font-size-sm);
 }
 .dev-hunk p {
-  margin: 8px 0 4px;
-  font-size: 12px;
-  color: #64748b;
+  margin: var(--space-2) 0 var(--space-1);
+  font-size: var(--font-size-xs);
+  color: var(--muted);
 }
 .dev-hunk pre {
   margin: 0;
-  padding: 8px;
+  padding: var(--space-2);
   overflow-x: auto;
-  border: 1px solid #e8edf2;
-  border-radius: 6px;
-  font-size: 12px;
+  border: 1px solid var(--active);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
   line-height: 1.5;
 }
 .dev-hunk span[data-change='+'] {
-  background: #ecfdf5;
-  color: #047857;
+  background: var(--success-bg);
+  color: var(--success-text);
 }
 .dev-hunk span[data-change='-'] {
-  background: #fef2f2;
-  color: #b91c1c;
+  background: var(--error-bg);
+  color: var(--error-text);
 }
 .dev-basis ul {
   margin: 0;
-  padding-left: 18px;
-  font-size: 13px;
+  padding-left: var(--space-4);
+  font-size: var(--font-size-sm);
 }
 .comment-item {
-  border: 1px solid #e8edf2;
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 13px;
+  border: 1px solid var(--active);
+  border-radius: var(--radius-md);
+  padding: var(--space-2-5) var(--space-3);
+  font-size: var(--font-size-sm);
 }
 blockquote {
-  margin: 0 0 6px;
-  padding-left: 8px;
-  border-left: 3px solid #cbd5e1;
-  color: #64748b;
+  margin: 0 0 var(--space-1-5);
+  padding-left: var(--space-2);
+  border-left: 3px solid var(--border-strong);
+  color: var(--muted);
 }
 .comment-item.resolved {
   opacity: 0.6;
 }
 .comment-reply {
-  color: #0f766e;
+  color: var(--success-text);
 }
 </style>

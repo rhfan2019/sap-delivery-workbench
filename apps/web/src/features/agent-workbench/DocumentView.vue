@@ -181,66 +181,66 @@ function download() {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: white;
-  border-left: 1px solid #e8edf2;
+  background: var(--surface);
+  border-left: 1px solid var(--active);
   min-height: 0;
 }
 .spec-panel header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 20px;
-  font-size: 13px;
-  border-bottom: 1px solid #edf0f3;
-  color: #334155;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid var(--active);
+  color: var(--primary-hover);
 }
 .spec-label {
-  border-radius: 999px;
-  background: #ecfdf5;
-  color: #047857;
-  padding: 1px 8px;
+  border-radius: var(--radius-full);
+  background: var(--success-bg);
+  color: var(--success-text);
+  padding: var(--space-0-5) var(--space-2);
 }
 .spec-panel header span {
-  font-size: 11px;
-  color: #94a3b8;
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
 }
 .spec-panel header button {
   margin-left: auto;
 }
 .spec-panel button {
   display: flex;
-  gap: 5px;
+  gap: var(--space-1);
   align-items: center;
   background: transparent;
   border: 0;
   cursor: pointer;
-  color: #64748b;
-  padding: 7px;
-  border-radius: 6px;
+  color: var(--muted);
+  padding: var(--space-1-5);
+  border-radius: var(--radius-sm);
   min-height: 32px;
 }
 .spec-panel button:hover {
-  background: #f1f3f5;
+  background: var(--surface-muted);
 }
 .spec-toolbar {
   display: flex;
   align-items: center;
-  padding: 10px 16px;
-  gap: 8px;
-  font-size: 11px;
+  padding: var(--space-2-5) var(--space-4);
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
 }
 .spec-toolbar span {
   margin-right: auto;
-  color: #a0763d;
+  color: var(--warning-text);
 }
 .spec-toolbar button {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .spec-body {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 12px 24px 36px;
+  padding: var(--space-3) var(--space-6) var(--space-8);
 }
 .spec-reading {
   flex: 1;
@@ -252,31 +252,31 @@ function download() {
   flex: 0 0 170px;
   min-width: 0;
   overflow: auto;
-  padding: 10px 6px;
-  border-right: 1px solid #e8edf2;
+  padding: var(--space-2-5) var(--space-1-5);
+  border-right: 1px solid var(--active);
 }
 .outline-row {
   display: flex;
   align-items: start;
 }
 .outline-row button {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   text-align: left;
   line-height: 1.6;
   overflow-wrap: anywhere;
-  color: #475569;
+  color: var(--muted);
   min-width: 0;
 }
 .outline-row .outline-toggle,
 .outline-spacer {
   flex: 0 0 20px;
   width: 20px;
-  padding: 6px 2px;
+  padding: var(--space-1-5) var(--space-0-5);
 }
 .outline-row button[aria-current] {
-  color: #1d4ed8;
-  background: #eff6ff;
-  font-weight: 600;
+  color: var(--focus);
+  background: var(--active);
+  font-weight: var(--font-weight-semibold);
 }
 .spec-body {
   min-width: 0;
@@ -292,21 +292,21 @@ function download() {
     flex: 0 0 auto;
     max-height: 140px;
     border-right: 0;
-    border-bottom: 1px solid #e8edf2;
+    border-bottom: 1px solid var(--active);
   }
 }
 .spec-toolbar {
   flex-wrap: wrap;
 }
 .spec-body details {
-  font-size: 12px;
-  color: #64748b;
-  margin-top: 20px;
+  font-size: var(--font-size-xs);
+  color: var(--muted);
+  margin-top: var(--space-5);
 }
 .spec-body a {
-  color: #2563eb;
+  color: var(--focus);
 }
 button:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--focus);
 }
 </style>

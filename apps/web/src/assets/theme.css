@@ -31,14 +31,68 @@
   --success-text: #1f7a4d;
   --warning-bg: #fff5e1;
   --warning-text: #8a5300;
+  --success-border: #b5dfc6;
+  --warning-border: #f1d7a6;
   --scrim: #1f232866;
   --font-sans: Inter, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  /* Type scale (DESIGN.md 3): nothing smaller than 12px. */
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 15px;
+  --font-size-xl: 17px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 28px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  /* Spacing scale (DESIGN.md 4): --space-N is N x 4px. */
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-2-5: 10px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  --radius-xl: 16px;
   --radius-bubble: 18px;
   --radius-composer: 24px;
+  --radius-full: 9999px;
+  /* Layout dimensions (DESIGN.md 4). */
+  --layout-sidebar: 246px;
+  --layout-sidebar-narrow: 220px;
+  --layout-sidebar-collapsed: 70px;
+  --layout-drawer: 480px;
+  /* Chart series, in order. */
+  --chart-1: #2f6fb6;
+  --chart-2: #2e8a6a;
+  --chart-3: #b06a1a;
+  /* Tag colours people pick for development items: background and text. */
+  --tag-blue-bg: #e1edfb;
+  --tag-blue-text: #1d5a96;
+  --tag-green-bg: #e1f3e8;
+  --tag-green-text: #23704a;
+  --tag-orange-bg: #fdecdc;
+  --tag-orange-text: #a2561c;
+  --tag-red-bg: #fde4e1;
+  --tag-red-text: #a83a30;
+  --tag-purple-bg: #efe6fa;
+  --tag-purple-text: #6542a1;
+  --tag-teal-bg: #ddf2f1;
+  --tag-teal-text: #1f6d69;
+  --tag-yellow-bg: #fbf3d0;
+  --tag-yellow-text: #806414;
   --shadow-raised: 0 1px 2px rgb(16 24 40 / 0.04), 0 4px 16px rgb(16 24 40 / 0.06);
   --shadow-popover: 0 8px 28px rgb(16 24 40 / 0.14);
   /* The login story and the home banner keep their navy until migrated (DESIGN.md 9). */

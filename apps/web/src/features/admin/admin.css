@@ -2,28 +2,28 @@
   min-width: 0;
 }
 .admin-page .page-heading {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
 }
 .organization-summary {
   display: flex;
   align-items: center;
-  gap: 18px;
-  padding: 24px;
-  margin-bottom: 24px;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
 }
 .organization-summary h2 {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 22px;
+  gap: var(--space-3);
+  font-size: var(--font-size-2xl);
 }
 .organization-summary p {
   color: var(--muted);
-  font-size: 12px;
-  margin-top: 8px;
+  font-size: var(--font-size-xs);
+  margin-top: var(--space-2);
 }
 .organization-summary > button {
   margin-left: auto;
@@ -36,29 +36,29 @@
   justify-content: center;
   background: var(--active);
   color: var(--link);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   width: 52px;
   height: 52px;
   flex-shrink: 0;
 }
 .summary-separator {
-  margin: 0 12px;
+  margin: 0 var(--space-3);
   color: var(--border);
 }
 .admin-workspace {
   display: grid;
   grid-template-columns: 200px minmax(0, 1fr);
-  gap: 22px;
+  gap: var(--space-5);
   align-items: start;
 }
 .admin-content {
   min-width: 0;
 }
 .relation-tree {
-  padding: 20px 12px;
+  padding: var(--space-5) var(--space-3);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   min-height: 460px;
 }
 .tree-heading,
@@ -67,26 +67,26 @@
 .tree-customer-line {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .tree-heading {
   justify-content: space-between;
   color: var(--muted);
-  margin: 0 6px 25px;
+  margin: 0 var(--space-1-5) var(--space-6);
 }
 .tree-heading h2 {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: var(--text);
 }
 .tree-root {
-  padding: 0 8px 18px;
+  padding: 0 var(--space-2) var(--space-4);
 }
 .tree-node {
   text-align: left;
   min-width: 0;
-  padding: 10px 8px;
-  border-radius: 6px;
-  font-size: 12px;
+  padding: var(--space-2-5) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
   width: 100%;
 }
 .tree-node span:not(.count-badge) {
@@ -100,29 +100,29 @@
 .tree-node.selected {
   background: var(--active);
   color: var(--link);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 .tree-all {
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 .tree-all .count-badge {
   margin-left: auto;
 }
 .tree-toggle {
-  padding: 3px;
+  padding: var(--space-0-5);
   display: flex;
 }
 .tree-toggle .folded {
   transform: rotate(-90deg);
 }
 .tree-projects {
-  margin: 0 0 10px 19px;
+  margin: 0 0 var(--space-2-5) var(--space-5);
   border-left: 1px solid var(--border);
-  padding-left: 8px;
+  padding-left: var(--space-2);
 }
 .tree-empty {
-  padding: 10px;
-  font-size: 11px;
+  padding: var(--space-2-5);
+  font-size: var(--font-size-xs);
   color: var(--muted);
 }
 .admin-toolbar,
@@ -131,10 +131,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
 }
 .admin-toolbar {
-  margin-bottom: 18px;
+  margin-bottom: var(--space-4);
   flex-wrap: wrap;
 }
 .toolbar-actions {
@@ -142,19 +142,19 @@
   flex-wrap: wrap;
 }
 .admin-page h2 .count-badge {
-  margin-left: 6px;
+  margin-left: var(--space-1-5);
   vertical-align: middle;
 }
 .customer-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--space-4);
 }
 .customer-card {
-  padding: 20px 18px 0;
+  padding: var(--space-5) var(--space-4) 0;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   min-width: 0;
 }
 .customer-card.selected {
@@ -164,27 +164,27 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 18px;
+  margin-bottom: var(--space-4);
 }
 .customer-card .icon-tile {
   width: 42px;
   height: 42px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 .customer-card h3 {
-  font-size: 16px;
+  font-size: var(--font-size-lg);
   overflow-wrap: anywhere;
 }
 .customer-code {
   color: var(--muted);
-  font-size: 11px;
-  margin-top: 6px;
+  font-size: var(--font-size-xs);
+  margin-top: var(--space-1-5);
   overflow-wrap: anywhere;
 }
 .customer-description {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--muted);
-  margin-top: 14px;
+  margin-top: var(--space-3);
   min-height: 44px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -194,10 +194,10 @@
 .customer-project-count {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 12px;
+  gap: var(--space-1-5);
+  font-size: var(--font-size-xs);
   color: var(--muted);
-  margin: 18px 0;
+  margin: var(--space-4) 0;
 }
 .customer-project-count strong {
   color: var(--text);
@@ -207,23 +207,23 @@
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
-  padding: 14px 0;
-  gap: 8px;
-  font-size: 12px;
+  padding: var(--space-3) 0;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
 }
 .text-link,
 .admin-footnote {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 .text-link,
 .text-button {
   color: var(--link);
 }
 .text-button {
-  padding: 4px 0;
-  font-size: 12px;
+  padding: var(--space-1) 0;
+  font-size: var(--font-size-xs);
 }
 .text-button:hover,
 .text-link:hover {
@@ -234,10 +234,10 @@
   align-items: center;
   background: var(--active);
   color: var(--link);
-  border-radius: 5px;
-  padding: 4px 8px;
-  font-size: 11px;
-  font-weight: 500;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
   white-space: nowrap;
 }
 .admin-badge.muted {
@@ -246,7 +246,7 @@
   margin: 0;
 }
 .related-projects {
-  margin-top: 22px;
+  margin-top: var(--space-5);
 }
 .admin-table-wrap {
   overflow-x: auto;
@@ -254,114 +254,114 @@
 .admin-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   text-align: left;
 }
 .admin-table th {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--muted);
   background: var(--hover);
-  padding: 12px;
+  padding: var(--space-3);
   white-space: nowrap;
 }
 .admin-table td {
-  padding: 16px 12px;
+  padding: var(--space-4) var(--space-3);
   border-bottom: 1px solid var(--border);
 }
 .admin-table tr:last-child td {
   border-bottom: 0;
 }
 .admin-table td strong {
-  font-weight: 550;
+  font-weight: var(--font-weight-semibold);
 }
 .admin-table .date-cell {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--muted);
   line-height: 1.7;
   white-space: nowrap;
 }
 .section-heading {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 .section-heading h2 {
-  font-size: 16px;
+  font-size: var(--font-size-lg);
 }
 .row-actions {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-3);
   white-space: nowrap;
 }
 .admin-footnote {
   color: var(--muted);
-  font-size: 11px;
-  margin-top: 18px;
+  font-size: var(--font-size-xs);
+  margin-top: var(--space-4);
   line-height: 1.7;
 }
 .admin-empty {
   text-align: center;
-  padding: 48px 22px;
+  padding: var(--space-12) var(--space-5);
   color: var(--muted);
 }
 .admin-empty h3 {
-  margin: 16px 0 8px;
+  margin: var(--space-4) 0 var(--space-2);
   color: var(--text);
-  font-size: 16px;
+  font-size: var(--font-size-lg);
 }
 .admin-empty p {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
 }
 .admin-empty .secondary-button {
-  margin-top: 20px;
+  margin-top: var(--space-5);
 }
 .table-empty,
 .loading-state {
-  padding: 36px 16px !important;
+  padding: var(--space-8) var(--space-4) !important;
   text-align: center;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
 }
 .admin-tabs {
   display: flex;
-  gap: 30px;
+  gap: var(--space-8);
   border-bottom: 1px solid var(--border);
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
 }
 .admin-tabs button {
-  padding: 12px 2px 16px;
+  padding: var(--space-3) var(--space-0-5) var(--space-4);
   color: var(--muted);
   border-bottom: 2px solid transparent;
 }
 .admin-tabs button.active {
   border-color: var(--link);
   color: var(--text);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 .table-intro {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--muted);
-  margin: 5px 0 16px;
+  margin: var(--space-1) 0 var(--space-4);
 }
 .section-heading .table-intro {
-  margin: 6px 0 0;
+  margin: var(--space-1-5) 0 0;
 }
 .admin-filter-select {
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 9px;
-  font-size: 12px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  font-size: var(--font-size-xs);
 }
 .member-identity {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 .member-identity p {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--muted);
-  margin-top: 3px;
+  margin-top: var(--space-0-5);
 }
 .admin-page .avatar {
   display: inline-flex;
@@ -369,37 +369,37 @@
   align-items: center;
   width: 34px;
   height: 34px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   background: var(--active);
   color: var(--link);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   flex-shrink: 0;
 }
 .self-label {
   color: var(--muted);
-  font-weight: 400;
-  margin-left: 4px;
+  font-weight: var(--font-weight-regular);
+  margin-left: var(--space-1);
 }
 .admin-pagination {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
-  font-size: 11px;
+  gap: var(--space-3);
+  font-size: var(--font-size-xs);
   color: var(--muted);
-  padding: 18px 0 0;
+  padding: var(--space-4) 0 0;
 }
 .admin-pagination > span:first-child {
   margin-right: auto;
 }
 .admin-pagination button {
-  padding: 7px 10px;
+  padding: var(--space-1-5) var(--space-2-5);
   border: 1px solid var(--border);
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
 }
 .members-workspace:has(.member-assignment) {
   grid-template-columns: 180px minmax(0, 1fr) 265px;
-  gap: 16px;
+  gap: var(--space-4);
 }
 .project-members-surface {
   min-width: 0;
@@ -407,28 +407,28 @@
 }
 .member-assignment {
   border: 1px solid var(--border);
-  border-radius: 9px;
-  padding: 20px 16px;
+  border-radius: var(--radius-md);
+  padding: var(--space-5) var(--space-4);
   background: var(--surface);
 }
 .member-assignment header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 .member-assignment h2 {
-  font-size: 15px;
+  font-size: var(--font-size-lg);
 }
 .assignment-label {
-  font-size: 12px;
-  margin-bottom: 10px;
+  font-size: var(--font-size-xs);
+  margin-bottom: var(--space-2-5);
 }
 .member-assignment .filter-input input {
   width: 100%;
 }
 .assignment-list {
-  margin: 16px 0;
+  margin: var(--space-4) 0;
   max-height: 350px;
   overflow: auto;
 }
@@ -436,8 +436,8 @@
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 12px 6px;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-1-5);
   border-bottom: 1px solid var(--border);
   cursor: pointer;
 }
@@ -458,13 +458,13 @@
   overflow-wrap: anywhere;
 }
 .assignment-user strong {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
 }
 .assignment-user small {
   display: block;
   color: var(--muted);
-  font-size: 10px;
-  margin-top: 3px;
+  font-size: var(--font-size-xs);
+  margin-top: var(--space-0-5);
 }
 .assignment-user.unavailable {
   opacity: 0.55;
@@ -472,17 +472,17 @@
 }
 .member-assignment form > .primary-button {
   width: 100%;
-  margin-top: 14px;
+  margin-top: var(--space-3);
 }
 .admin-dialog {
   width: min(540px, calc(100vw - 32px));
   max-height: 90dvh;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 0;
   background: var(--surface);
   color: var(--text);
-  box-shadow: 0 24px 80px #102a4333;
+  box-shadow: 0 24px 80px color-mix(in srgb, var(--story-bg) 20%, transparent);
 }
 .admin-dialog::backdrop {
   background: var(--scrim);
@@ -492,26 +492,26 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px;
+  padding: var(--space-6);
   border-bottom: 1px solid var(--border);
 }
 .admin-dialog .eyebrow {
-  font-size: 9px;
+  font-size: var(--font-size-xs);
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 .dialog-body {
-  padding: 24px;
+  padding: var(--space-6);
 }
 .dialog-description {
   color: var(--muted);
-  font-size: 12px;
-  margin-bottom: 20px;
+  font-size: var(--font-size-xs);
+  margin-bottom: var(--space-5);
 }
 .dialog-body label {
   display: block;
-  margin: 16px 0 8px;
-  font-size: 12px;
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: var(--font-size-xs);
 }
 .dialog-body label span {
   color: var(--link);
@@ -520,13 +520,13 @@
 .dialog-body select,
 .dialog-body textarea {
   width: 100%;
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--bg);
   color: var(--text);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
 }
 .dialog-body textarea {
   resize: vertical;
@@ -542,38 +542,38 @@
 .field-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: var(--space-4);
 }
 .admin-dialog footer {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 18px 24px;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
   border-top: 1px solid var(--border);
 }
 .help-note {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   line-height: 1.8;
   color: var(--muted);
-  margin-top: 12px;
+  margin-top: var(--space-3);
 }
 .credential-value {
-  padding: 12px;
+  padding: var(--space-3);
   border: 1px solid var(--border);
   background: var(--bg);
-  border-radius: 6px;
-  font-family: monospace;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
   overflow-wrap: anywhere;
   user-select: all;
 }
 .admin-page .success-note {
-  padding: 12px 16px;
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--active);
   color: var(--link);
-  font-size: 12px;
-  margin-bottom: 18px;
+  font-size: var(--font-size-xs);
+  margin-bottom: var(--space-4);
 }
 .admin-page button:disabled {
   cursor: not-allowed;
@@ -592,13 +592,13 @@
 @media (max-width: 1050px) {
   .admin-workspace {
     grid-template-columns: 170px minmax(0, 1fr);
-    gap: 16px;
+    gap: var(--space-4);
   }
   .organization-summary {
     flex-wrap: wrap;
   }
   .organization-summary > button {
-    margin-left: 70px;
+    margin-left: var(--layout-sidebar-collapsed);
   }
   .admin-toolbar .toolbar-actions {
     justify-content: flex-start;
@@ -608,7 +608,7 @@
   .admin-page .page-heading {
     flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
+    gap: var(--space-4);
   }
   .admin-page .page-heading .toolbar-actions {
     justify-content: flex-start;
@@ -632,17 +632,17 @@
     grid-template-columns: minmax(0, 1fr);
   }
   .organization-summary {
-    padding: 18px;
-    gap: 12px;
+    padding: var(--space-4);
+    gap: var(--space-3);
   }
   .organization-summary h2 {
-    font-size: 19px;
+    font-size: var(--font-size-2xl);
   }
   .organization-summary > button {
     margin-left: 0;
   }
   .organization-summary p {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
   }
   .organization-emblem {
     width: 40px;
@@ -666,7 +666,7 @@
   }
   .admin-dialog header,
   .dialog-body {
-    padding: 20px;
+    padding: var(--space-5);
   }
 }
 

@@ -137,14 +137,12 @@ async function copyRunId() {
               v-if="a.status === 'running'"
               class="size-4 shrink-0 animate-spin text-muted-foreground"
             />
-            <Check v-else class="size-4 shrink-0 text-emerald-700" />
+            <Check v-else class="size-4 shrink-0 text-success" />
             <span class="shrink-0 font-medium">{{ a.title }}</span>
             <span class="min-w-0 flex-1 text-muted-foreground">{{ a.detail }}</span>
             <span class="shrink-0 text-xs text-muted-foreground">
               <template v-if="a.count > 1">{{ a.count }} 次</template>
-              <span v-if="a.failures" class="text-amber-700">
-                · {{ a.failures }} 次未成功</span
-              ></span
+              <span v-if="a.failures" class="text-warning"> · {{ a.failures }} 次未成功</span></span
             >
           </button>
           <ul v-if="isOpen(a.id)" class="run-calls">
@@ -196,7 +194,7 @@ async function copyRunId() {
                   </li>
                   <li v-if="!s.preview.items.length" class="text-muted-foreground">没有找到</li>
                 </ul>
-                <p v-else-if="s.preview.kind === 'error'" class="flex gap-1 text-amber-800">
+                <p v-else-if="s.preview.kind === 'error'" class="flex gap-1 text-warning">
                   <TriangleAlert class="mt-0.5 size-3.5 shrink-0" />{{ s.preview.text }}
                 </p>
                 <pre v-else-if="s.preview.text" class="run-text">{{ s.preview.text }}</pre>
@@ -222,7 +220,7 @@ async function copyRunId() {
 <style scoped>
 .run-activity {
   width: 100%;
-  font-size: 0.875rem;
+  font-size: var(--font-size-md);
 }
 .run-activity ol,
 .run-activity ul {
@@ -233,23 +231,23 @@ async function copyRunId() {
 .run-summary {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: var(--space-1-5);
   max-width: 100%;
-  border-radius: 0.375rem;
-  padding: 0.125rem 0.25rem 0.125rem 0;
+  border-radius: var(--radius-sm);
+  padding: var(--space-0-5) var(--space-1) var(--space-0-5) 0;
   color: var(--color-muted-foreground);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   text-align: left;
 }
 .run-summary:hover {
   color: var(--color-foreground);
 }
 .run-summary {
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 /* DESIGN.md 6: expanded, the record is a bordered list with one row per activity. */
 .run-rows {
-  margin-top: 0.5rem;
+  margin-top: var(--space-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -261,15 +259,15 @@ async function copyRunId() {
   display: flex;
   width: 100%;
   align-items: baseline;
-  gap: 0.5rem;
-  padding: 0.5rem 0.875rem;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
   text-align: left;
 }
 .run-row:hover {
   background: var(--surface-muted);
 }
 .run-calls {
-  padding: 0 0.875rem 0.75rem 2.375rem !important;
+  padding: 0 var(--space-3) var(--space-3) var(--space-10) !important;
   margin: 0 !important;
 }
 .run-row > svg {
@@ -280,64 +278,64 @@ async function copyRunId() {
 }
 .run-calls {
   display: grid;
-  gap: 0.5rem;
-  margin: 0.25rem 0 0.5rem 1.5rem;
-  font-size: 0.8125rem;
+  gap: var(--space-2);
+  margin: var(--space-1) 0 var(--space-2) var(--space-6);
+  font-size: var(--font-size-sm);
 }
 .run-code,
 .run-text,
 .run-raw pre {
-  margin-top: 0.25rem;
+  margin-top: var(--space-1);
   max-height: 8rem;
   overflow: auto;
-  border-radius: 0.375rem;
+  border-radius: var(--radius-sm);
   background: var(--color-muted);
-  padding: 0.375rem 0.5rem;
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 0.75rem;
+  padding: var(--space-1-5) var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
   white-space: pre-wrap;
   word-break: break-all;
 }
 .run-changes {
-  margin-top: 0.25rem;
+  margin-top: var(--space-1);
   display: grid;
-  gap: 0.125rem;
+  gap: var(--space-0-5);
 }
 .run-table {
-  margin-top: 0.25rem;
+  margin-top: var(--space-1);
   max-width: 100%;
   overflow-x: auto;
 }
 .run-table table {
   border-collapse: collapse;
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
 }
 .run-table th,
 .run-table td {
   border: 1px solid var(--color-border);
-  padding: 0.125rem 0.5rem;
+  padding: var(--space-0-5) var(--space-2);
   text-align: left;
   white-space: nowrap;
 }
 .run-table th {
   background: var(--color-muted);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .run-raw summary {
   cursor: pointer;
   color: var(--color-muted-foreground);
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
 }
 .run-meta {
   margin: 0;
-  padding: 0.5rem 0.875rem;
+  padding: var(--space-2) var(--space-3);
   border-top: 1px solid var(--border);
   color: var(--color-muted-foreground);
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
   word-break: break-all;
 }
 .run-meta button {
-  margin-left: 0.5rem;
+  margin-left: var(--space-2);
   text-decoration: underline;
 }
 </style>

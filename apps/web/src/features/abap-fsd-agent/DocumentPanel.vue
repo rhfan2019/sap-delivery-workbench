@@ -234,7 +234,7 @@ async function handleComments() {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 .document-panel > :not(.document-reader) {
   flex-shrink: 0;
@@ -242,8 +242,8 @@ async function handleComments() {
 .document-reader {
   flex: 1;
   min-height: 240px;
-  border: 1px solid #e8edf2;
-  border-radius: 8px;
+  border: 1px solid var(--active);
+  border-radius: var(--radius-md);
 }
 .document-changes summary {
   cursor: pointer;
@@ -251,31 +251,31 @@ async function handleComments() {
 .document-comments {
   max-height: 30%;
   overflow: auto;
-  padding-bottom: 12px;
+  padding-bottom: var(--space-3);
 }
 .document-changes {
-  font-size: 13px;
-  color: #475569;
+  font-size: var(--font-size-sm);
+  color: var(--muted);
 }
 .document-changes [role='alert'] {
-  color: #b45309;
+  color: var(--warning-text);
 }
 .comment-item {
-  border: 1px solid #e8edf2;
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 13px;
+  border: 1px solid var(--active);
+  border-radius: var(--radius-md);
+  padding: var(--space-2-5) var(--space-3);
+  font-size: var(--font-size-sm);
 }
 blockquote {
-  margin: 0 0 6px;
-  padding-left: 8px;
-  border-left: 3px solid #cbd5e1;
-  color: #64748b;
+  margin: 0 0 var(--space-1-5);
+  padding-left: var(--space-2);
+  border-left: 3px solid var(--border-strong);
+  color: var(--muted);
 }
 .comment-item.resolved {
   opacity: 0.6;
 }
 .comment-reply {
-  color: #0f766e;
+  color: var(--success-text);
 }
 </style>

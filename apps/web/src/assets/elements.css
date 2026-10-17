@@ -21,6 +21,8 @@
   --color-accent: var(--hover);
   --color-accent-foreground: var(--text);
   --color-destructive: var(--error-text);
+  --color-success: var(--success-text);
+  --color-warning: var(--warning-text);
   --color-border: var(--border);
   --color-input: var(--control-border);
   --color-ring: var(--focus);
@@ -32,8 +34,6 @@
 @layer base {
   .assistant-elements,
   .elements-overlay {
-    --border: #dce3eb;
-    --control-border: #c1cedd;
   }
   .assistant-elements *,
   .elements-overlay *,
@@ -73,21 +73,21 @@
 .assistant-elements .elements-content {
   width: min(100%, 808px);
   margin-inline: auto;
-  padding: 28px 24px 16px;
-  gap: 28px;
+  padding: var(--space-6) var(--space-6) var(--space-4);
+  gap: var(--space-6);
 }
 .assistant-elements .elements-message {
   max-width: 100%;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 .assistant-elements .elements-message.is-user {
   max-width: 80%;
 }
 .assistant-elements .user-bubble {
   border-radius: var(--radius-bubble);
-  padding: 10px 16px;
-  font-size: 15px;
+  padding: var(--space-2-5) var(--space-4);
+  font-size: var(--font-size-lg);
   line-height: 24px;
 }
 /* Who sent it and when: on hover, like the actions under a reply. */
@@ -117,13 +117,13 @@
   text-decoration: underline;
 }
 .assistant-elements .elements-markdown h1 {
-  font-size: 1.5rem;
+  font-size: var(--font-size-2xl);
 }
 .assistant-elements .elements-markdown h2 {
-  font-size: 1.3rem;
+  font-size: var(--font-size-2xl);
 }
 .assistant-elements .elements-markdown h3 {
-  font-size: 1.15rem;
+  font-size: var(--font-size-xl);
 }
 .assistant-elements .elements-markdown :is(h1, h2, h3, h4) {
   margin: 1em 0 0.4em;
@@ -169,7 +169,7 @@
 }
 @media (max-width: 600px) {
   .assistant-elements .elements-content {
-    padding: 16px 12px;
+    padding: var(--space-4) var(--space-3);
   }
   .assistant-elements .elements-message.is-user {
     max-width: 94%;

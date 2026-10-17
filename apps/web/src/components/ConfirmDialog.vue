@@ -63,10 +63,10 @@ function trap(event: KeyboardEvent) {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: #0a224080;
+  background: color-mix(in srgb, var(--story-bg) 50%, transparent);
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: var(--space-6);
   width: 100vw;
   height: 100dvh;
   max-width: none;
@@ -79,25 +79,25 @@ function trap(event: KeyboardEvent) {
   background: transparent;
 }
 .confirm-scrim section {
-  background: white;
+  background: var(--surface);
   max-width: 480px;
-  border-radius: 12px;
-  padding: 26px;
-  color: #0a2240;
-  box-shadow: 0 16px 60px #0a224040;
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  color: var(--primary-hover);
+  box-shadow: 0 16px 60px color-mix(in srgb, var(--story-bg) 25%, transparent);
 }
 .confirm-scrim h2 {
-  font-size: 19px;
+  font-size: var(--font-size-2xl);
   margin: 0;
 }
 .confirm-scrim p {
-  font-size: 14px;
+  font-size: var(--font-size-md);
   line-height: 1.8;
-  margin: 16px 0 24px;
+  margin: var(--space-4) 0 var(--space-6);
 }
 .confirm-scrim section > div {
   display: flex;
-  gap: 10px;
+  gap: var(--space-2-5);
   flex-wrap: wrap;
 }
 </style>

@@ -112,27 +112,27 @@ function submit() {
 </template>
 <style scoped>
 .decision-card {
-  margin-block: 8px;
+  margin-block: var(--space-2);
   width: 100%;
   min-width: 0;
 }
 fieldset {
   border: 0;
-  padding: 12px 0;
+  padding: var(--space-3) 0;
   margin: 0;
 }
 legend {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
 }
 label {
   display: flex;
-  gap: 12px;
-  padding: 12px;
+  gap: var(--space-3);
+  padding: var(--space-3);
   align-items: flex-start;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  margin: 4px 0;
+  margin: var(--space-1) 0;
   width: 100%;
   min-width: 0;
 }
@@ -144,7 +144,7 @@ label:has(input:checked) {
   width: 16px;
   height: 16px;
   padding: 0;
-  margin-top: 4px;
+  margin-top: var(--space-1);
   accent-color: var(--primary);
 }
 label > span {
@@ -155,16 +155,16 @@ label > span {
 small {
   display: block;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   line-height: 1.65;
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 textarea {
   width: 100%;
   min-height: 80px;
   border: 1px solid var(--border);
-  padding: 12px;
-  border-radius: 8px;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
   font: inherit;
 }
 </style>

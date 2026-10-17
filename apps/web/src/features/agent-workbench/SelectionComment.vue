@@ -160,19 +160,19 @@ onBeforeUnmount(() => {
   position: fixed;
   z-index: 60;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--surface);
   color: var(--text);
-  box-shadow: 0 6px 24px rgb(10 34 64 / 0.18);
-  font-size: 13px;
+  box-shadow: 0 6px 24px color-mix(in srgb, var(--story-bg) 18%, transparent);
+  font-size: var(--font-size-sm);
 }
 .selection-comment-button {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   height: 32px;
-  padding: 0 10px;
-  font-weight: 500;
+  padding: 0 var(--space-2-5);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
 }
 .selection-comment-button:hover {
@@ -181,13 +181,13 @@ onBeforeUnmount(() => {
 .selection-comment-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
   width: 340px;
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
 }
 .selection-comment-form blockquote {
   margin: 0;
-  padding-left: 8px;
+  padding-left: var(--space-2);
   border-left: 3px solid var(--border);
   color: var(--muted);
   max-height: 3.2em;
@@ -197,8 +197,8 @@ onBeforeUnmount(() => {
   width: 100%;
   resize: vertical;
   border: 1px solid var(--control-border);
-  border-radius: 6px;
-  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1-5) var(--space-2);
   background: var(--surface);
   color: var(--text);
   font: inherit;
@@ -210,12 +210,12 @@ onBeforeUnmount(() => {
 .selection-comment-form div {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .selection-comment-form button {
   border: 1px solid var(--control-border);
-  border-radius: 6px;
-  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-3);
   background: var(--surface);
   color: var(--text);
 }

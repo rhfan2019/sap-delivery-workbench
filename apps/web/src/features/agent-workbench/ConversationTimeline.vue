@@ -192,7 +192,7 @@ async function copy(text: string) {
             </button>
             <p
               v-if="message.artifact && undeclared(message.artifact).length"
-              class="text-xs text-amber-700"
+              class="text-xs text-warning"
             >
               注意：以下部分有改动但助手没有说明原因，请重点核对：{{
                 undeclared(message.artifact).join('、')
@@ -262,8 +262,8 @@ async function copy(text: string) {
   cursor: pointer;
 }
 .answered p {
-  margin: 8px 0 0;
-  font-size: 13px;
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-sm);
   line-height: 20px;
   color: var(--muted);
 }
@@ -271,10 +271,10 @@ async function copy(text: string) {
 .artifact-card {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   width: min(100%, 420px);
-  margin-top: 4px;
-  padding: 10px 14px 10px 10px;
+  margin-top: var(--space-1);
+  padding: var(--space-2-5) var(--space-3) var(--space-2-5) var(--space-2-5);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
@@ -302,28 +302,28 @@ async function copy(text: string) {
   flex-direction: column;
 }
 .artifact-card-text strong {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
 }
 .artifact-card-text small {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--muted);
 }
 .artifact-card-open {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--primary);
 }
 .decision-record {
-  margin-bottom: 12px;
-  padding: 12px 14px;
+  margin-bottom: var(--space-3);
+  padding: var(--space-3) var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  font-size: 14px;
+  font-size: var(--font-size-md);
 }
 .decision-record-title {
-  margin: 0 0 8px;
-  font-size: 12px;
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-xs);
   color: var(--muted);
 }
 .decision-record-row {
@@ -331,28 +331,28 @@ async function copy(text: string) {
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 4px 16px;
-  padding: 6px 0;
+  gap: var(--space-1) var(--space-4);
+  padding: var(--space-1-5) 0;
   border-top: 1px solid var(--border);
 }
 .decision-record-row:first-of-type {
   border-top: 0;
 }
 .decision-record-choice {
-  padding: 2px 8px;
+  padding: var(--space-0-5) var(--space-2);
   border-radius: var(--radius-sm);
   background: var(--active);
   color: var(--primary);
-  font-weight: 500;
-  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
 }
 .decision-record details {
-  margin-top: 8px;
-  font-size: 13px;
+  margin-top: var(--space-2);
+  font-size: var(--font-size-sm);
 }
 .decision-record summary {
   cursor: pointer;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
 }
 </style>

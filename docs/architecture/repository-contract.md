@@ -1,6 +1,8 @@
 # 仓库目录与依赖契约
 
-版本：1.12。日期：2026-10-16。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.13。日期：2026-10-16。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.13 变更：用户 2026-10-16 要求全站严格按设计规范取值。界面风格的唯一规范是 [docs/specs/DESIGN.md](../specs/DESIGN.md)，令牌以 CSS 变量定义在 `apps/web/src/assets/theme.css`（唯一允许写颜色、字体、字号、字重、间距、圆角取值的文件）。`apps/web/src` 下其余样式（`.css` 与 `.vue` 的样式块）只能引用令牌，模板不得使用 Tailwind 调色板颜色类；第三方内置组件 `components/ai-elements`、`components/ui` 除外（其颜色经 `elements.css` 映射到令牌）。改风格时改 DESIGN.md 与 theme.css，不逐页修改。新增检查规则见第 9 节。
 
 1.12 变更：用户 2026-10-16 澄清各助手使用的 SAP 系统，并决定 FSD 阶段只写测试数据需求：设计助手默认连接 QAS（含业务数据，用于梳理逻辑），开发助手默认连接 DEV，测试助手（预留）使用 QAS；对话界面可按消息选择 DEV 或 QAS。设计助手不再查找或建立测试单据，测试数据的查找与建立工具保留在公共层，留给 abap-test-agent。见 3.4 节。
 
@@ -179,6 +181,8 @@ docs/architecture 放唯一架构契约与审计；docs/specs 放版本化设计
 ## 9. 可执行验收
 
 npm run check:architecture 必须检查：受控根目录、workspace 清单、跨应用违规依赖、应用反向导入 scripts、contracts 反向依赖、跨包物理路径、缺失本地导入、前端 Node 校验入口，以及测试文件是否被发现。检查器自身必须有违规反例测试。
+
+1.13 新增检查：`apps/web/src` 下除 `assets/theme.css` 与 `components/ai-elements`、`components/ui` 外，样式中不得出现颜色字面值（十六进制、`rgb()`/`hsl()` 等函数、颜色名称，含自定义属性的值）、字体族名称、`px`/`rem` 字号、数字或 `bold` 字重、`padding`/`margin`/`gap` 的 `px`/`rem` 值与 `border-radius` 的字面值；`.vue` 模板不得使用 Tailwind 调色板颜色类或在内联样式中写颜色；前端代码不得以字符串写十六进制颜色。取值一律引用 theme.css 的变量（允许 `calc()`、`color-mix()` 组合令牌，允许 `em` 相对字号）。
 
 1.8 新增检查：`apps/api/` 下除 `apps/api/src/modules/sap/test-data.mjs` 外，不得以字符串形式引用 MCP 写入类工具名（`createObject`、`lock`、`unLock`、`setObjectSource`、`activateByName`、`runClass`、`deleteObject`），保证所有 SAP 写入都经过代码审查、用户授权与运行记录。
 
