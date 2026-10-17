@@ -244,7 +244,7 @@ async function logout() {
         </div>
       </header>
       <p v-if="logoutError" class="error-note" role="alert">{{ logoutError }}</p>
-      <main id="main-content" class="main-content"><RouterView :key="route.fullPath" /></main>
+      <main id="main-content" class="main-content"><RouterView :key="route.meta.keepOnQuery ? route.path : route.fullPath" /></main>
       <footer class="app-footer">
         <span>SAP 智能交付平台</span><span>连接专业，让交付更进一步。</span>
       </footer>

@@ -20,10 +20,14 @@ export const router = createRouter({
         {
           path: 'projects/:projectId/development-items/:itemId/design',
           component: () => import('../features/abap-fsd-agent/ItemWorkspaceRoute.vue'),
+          // ?session= switches the conversation inside the view; it must not remount it.
+          meta: { keepOnQuery: true },
         },
         {
           path: 'projects/:projectId/development-items/:itemId/development',
           component: () => import('../features/abap-dev-agent/ItemWorkspaceRoute.vue'),
+          // ?session= switches the conversation inside the view; it must not remount it.
+          meta: { keepOnQuery: true },
         },
         {
           path: 'workspace/organization',
