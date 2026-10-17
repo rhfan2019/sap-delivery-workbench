@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import pg from 'pg';
 import { databaseConfig } from './platform/database.mjs';
 import { createAuth, failure } from './platform/auth.mjs';
+import { getPreferences, savePreferences } from './platform/preferences.mjs';
 import { registerAdminRoutes } from './modules/admin/routes.mjs';
 import { registerAbapFsdAgent } from './modules/abap-fsd-agent/routes.mjs';
 import { registerAbapDevAgent } from './modules/abap-dev-agent/routes.mjs';
@@ -105,6 +106,15 @@ export async function createApp({
     await auth.changePassword(current, req.body?.currentPassword, req.body?.newPassword, req.ip);
     reply.header('Set-Cookie', cookie('', 0));
     return { ok: true };
+  });
+  // Contract 1.14: a person's theme and light/dark mode, kept with the account.
+  app.get('/api/preferences', async (req) => {
+    const current = await requireSession(req);
+    return getPreferences(pool, current.user.id);
+  });
+  app.put('/api/preferences', async (req) => {
+    const current = await requireSession(req);
+    return savePreferences(pool, current.user.id, req.body ?? {});
   });
   const projectSql = `SELECT p.id,p.code,p.name,p.status,p.is_paused AS "isPaused",p.description,
     p.planned_start_date AS "plannedStartDate",p.planned_end_date AS "plannedEndDate",c.name AS "customerName"

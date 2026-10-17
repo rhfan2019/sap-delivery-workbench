@@ -1,6 +1,8 @@
 # 仓库目录与依赖契约
 
-版本：1.13。日期：2026-10-16。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.14。日期：2026-10-16。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.14 变更：依据[主题系统实施计划](../plans/2026-10-16-theme-system.md)（用户 2026-10-16 确认），前端支持用户一键切换主题。主题包放 `apps/web/src/assets/themes/<主题>.css`，每个主题一个文件；它与 `assets/theme.css` 同为允许写颜色、字体、字号、字重、间距、圆角取值的文件（1.13 的检查规则同步放宽到该目录）。主题字体以 npm 字体包按需加载，不引用外网字体。用户的主题与明暗模式存 `app.user_preference`，归 platform（与账号、密码同层），接口为 `GET/PUT /api/preferences`。
 
 1.13 变更：用户 2026-10-16 要求全站严格按设计规范取值。界面风格的唯一规范是 [docs/specs/DESIGN.md](../specs/DESIGN.md)，令牌以 CSS 变量定义在 `apps/web/src/assets/theme.css`（唯一允许写颜色、字体、字号、字重、间距、圆角取值的文件）。`apps/web/src` 下其余样式（`.css` 与 `.vue` 的样式块）只能引用令牌，模板不得使用 Tailwind 调色板颜色类；第三方内置组件 `components/ai-elements`、`components/ui` 除外（其颜色经 `elements.css` 映射到令牌）。改风格时改 DESIGN.md 与 theme.css，不逐页修改。新增检查规则见第 9 节。
 

@@ -78,6 +78,32 @@ test('real HTTP authentication, forced password change, session revocation and p
     assert.equal(response.json().mustChangePassword, true);
     const cookie = response.headers['set-cookie'].split(';')[0];
     assert.match(response.headers['set-cookie'], /HttpOnly/);
+    // Contract 1.14: the theme and mode follow the account; defaults until the person picks.
+    assert.equal((await request('GET', '/api/preferences')).statusCode, 401);
+    assert.deepEqual((await request('GET', '/api/preferences', null, cookie)).json(), {
+      theme: 'navy',
+      mode: 'system',
+    });
+    assert.deepEqual(
+      (await request('PUT', '/api/preferences', { theme: 'airbnb', mode: 'dark' }, cookie)).json(),
+      { theme: 'airbnb', mode: 'dark' },
+    );
+    assert.deepEqual((await request('PUT', '/api/preferences', { mode: 'light' }, cookie)).json(), {
+      theme: 'airbnb',
+      mode: 'light',
+    });
+    assert.equal(
+      (await request('PUT', '/api/preferences', { mode: 'dim' }, cookie)).statusCode,
+      400,
+    );
+    assert.equal(
+      (await request('PUT', '/api/preferences', { theme: '<b>' }, cookie)).statusCode,
+      400,
+    );
+    assert.deepEqual((await request('GET', '/api/preferences', null, cookie)).json(), {
+      theme: 'airbnb',
+      mode: 'light',
+    });
     assert.equal((await request('GET', '/api/projects', undefined, cookie)).statusCode, 403);
     assert.equal(
       (

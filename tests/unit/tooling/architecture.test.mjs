@@ -318,6 +318,15 @@ test('web styles use design tokens, never literal colours, fonts, sizes, spacing
     checkDesignTokens('apps/web/src/assets/theme.css', ':root { --text: #1f2328; }'),
     [],
   );
+  // Contract 1.14: theme packages hold values too, but only directly in assets/themes/.
+  assert.deepEqual(
+    checkDesignTokens('apps/web/src/assets/themes/airbnb.css', '.a { --primary: #ff385c; }'),
+    [],
+  );
+  assert.match(
+    checkDesignTokens('apps/web/src/assets/themes/x/y.css', '.a { color: #fff; }').join(),
+    /literal colour/,
+  );
   assert.deepEqual(
     checkDesignTokens(
       'apps/web/src/components/ui/button/Button.vue',
