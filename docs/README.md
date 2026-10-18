@@ -3,6 +3,7 @@
 本仓库保留与源码版本对应的工程文档；外部知识库可维护产品研究，但应用和测试不能依赖本机知识库路径。
 
 - [目录与依赖契约](architecture/repository-contract.md)：新增、修改、移动、删除文件的唯一目录规范。
+- [平台定位方向决策](architecture/2026-10-17-platform-positioning-decision.md)：平台定位为实施方内部的交付生产工具；资产与产出物归属、默认托管与客户内网部署、项目结束处理、对现有设计的影响（草稿，待确认）。
 - [目录重构记录](architecture/refactor-record.md)：原问题、迁移清单与实际验证结果。
 - [实施计划](plans/2026-10-08-repository-refactor.md)：本轮执行任务。
 - [ABAP FSD 开发计划](plans/2026-10-08-abap-fsd-backend.md)：LangGraph 版设计助手的实施记录（历史，该链路已删除）。
