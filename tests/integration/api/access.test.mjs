@@ -206,19 +206,32 @@ test('roles, assignments and project data scope decide what each person can do',
       );
       assert.equal(r.statusCode, 403, 'other modules are read-only');
       assert.equal(r.json().details.permission, 'delivery.item:edit');
-      // Moving an MM item into FICO needs FICO rights too.
-      const moved = await item('MM', cookies.dev);
-      assert.equal(
-        (
-          await req(
-            'PATCH',
-            itemUrl('MM'),
-            { rowVersion: moved.rowVersion, changes: { module: 'FICO' } },
-            cookies.dev,
-          )
-        ).statusCode,
-        403,
+      // Backlog BUG-004: new items only go into the creator's modules; a mis-filed item can be
+      // handed over by whoever may edit it where it is, and then it is out of their hands.
+      const list = `/api/projects/${project}/development-items`;
+      r = await req('POST', list, { name: 'Wrong', module: 'FICO', kind: 'report' }, cookies.dev);
+      assert.equal(r.statusCode, 403);
+      assert.equal(r.json().details.permission, 'delivery.item:create');
+      r = await req('POST', list, { name: 'Moved', module: 'MM', kind: 'report' }, cookies.dev);
+      assert.equal(r.statusCode, 201, r.body);
+      const url = list + '/' + r.json().id;
+      r = await req(
+        'PATCH',
+        url,
+        { rowVersion: r.json().rowVersion, changes: { module: 'FICO' } },
+        cookies.dev,
       );
+      assert.equal(r.statusCode, 200, r.body);
+      assert.equal(r.json().module, 'FICO');
+      r = await req(
+        'PATCH',
+        url,
+        { rowVersion: r.json().rowVersion, changes: { module: 'MM' } },
+        cookies.dev,
+      );
+      assert.equal(r.statusCode, 403, 'another module cannot pull an item in');
+      r = await req('POST', list + '/batch', { action: 'copy', ids: [items.FICO] }, cookies.dev);
+      assert.equal(r.statusCode, 403, 'copies stay within the creator’s modules');
       // The subcontractor may use the development agent only on items assigned to them.
       const agent = (module) =>
         `/api/projects/${project}/development-items/${items[module]}/abap-dev-agent/sessions`;
@@ -285,6 +298,9 @@ test('roles, assignments and project data scope decide what each person can do',
         await req('GET', `/api/projects/${project}/access`, undefined, cookies.dev)
       ).json();
       assert.deepEqual(access.limits['delivery.item:edit'], [{ modules: ['MM'], ownOnly: false }]);
+      assert.deepEqual(access.limits['delivery.item:create'], [
+        { modules: ['MM'], ownOnly: false },
+      ]);
       // Removing a member takes their roles away at once.
       const row = members.find((m) => m.id === ids.director);
       assert.equal(

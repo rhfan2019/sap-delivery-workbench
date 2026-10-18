@@ -48,10 +48,11 @@ export function itemRoutes(app, c) {
     return loadItem(c.pool, c.organizationId, project.id, req.params.id);
   });
   app.post(base, { bodyLimit: 1000000 }, async (req, reply) =>
-    c.write(req, 'delivery.item:create', async (db, current) => {
+    c.write(req, 'delivery.item:create', async (db, current, project) => {
       const ctx = scopeOf(c, req, current);
       const fields = await customFields(db, ctx.org, ctx.project);
       const normalized = normalizeChanges(req.body, fields);
+      c.allowCreate(project, normalized.item.module);
       for (const f of fields.filter((f) => f.required && !f.archivedAt))
         if (normalized.custom[f.id] == null) throw failure(400, `${f.label}为必填项。`);
       await validateReferences(db, ctx.org, ctx.project, normalized, fields);
@@ -76,15 +77,9 @@ export function itemRoutes(app, c) {
       const normalized = normalizeChanges(req.body?.changes, fields);
       if (before.rowVersion !== expected)
         throw failure(409, '此开发项已被他人更新。你的输入已保留，请读取最新内容后重试。');
+      // The right to edit the item in its current module is enough to move it to another one,
+      // so whoever owns a mis-filed item can hand it over (backlog BUG-004).
       await c.allow(db, project, before, 'delivery.item:edit');
-      // Moving an item into another module needs the right to edit items of that module.
-      if (normalized.item.module && normalized.item.module !== before.module)
-        await c.allow(
-          db,
-          project,
-          { ...before, module: normalized.item.module },
-          'delivery.item:edit',
-        );
       await validateReferences(db, ctx.org, ctx.project, normalized, fields);
       const history = await applyChanges(db, ctx, before, normalized);
       await addEvent(db, ctx, before.id, 'updated', history);

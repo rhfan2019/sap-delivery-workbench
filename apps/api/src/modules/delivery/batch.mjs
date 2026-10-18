@@ -63,7 +63,8 @@ export function batchRoutes(app, c) {
       }[action];
       if (!permission) throw failure(400, '不支持的批量操作。');
       if (!project.grant.has(permission)) throw deniedError(permission);
-      if (action !== 'copy') for (const item of items) await c.allow(db, project, item, permission);
+      if (action === 'copy') for (const item of items) c.allowCreate(project, item.module);
+      else for (const item of items) await c.allow(db, project, item, permission);
       if (action === 'delete') {
         await db.query(
           'UPDATE app.development_item SET deleted_at=now(),updated_by=$2,row_version=row_version+1,updated_at=now() WHERE id=ANY($1::uuid[])',

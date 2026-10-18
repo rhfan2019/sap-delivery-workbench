@@ -85,6 +85,7 @@ test('development list: page/batch/row actions, inline edit, grouped drawer, col
     let data = {};
     if (path === '/api/session')
       data = {
+        authenticated: true,
         user: { id: 'u', displayName: '测试用户' },
         organization: { id: 'org', name: 'Inspire' },
         permissions: [],
@@ -230,6 +231,29 @@ test('development list: page/batch/row actions, inline edit, grouped drawer, col
   assert.equal(await page.getByLabel('显示业务功能点', { exact: true }).isChecked(), true);
   await page.getByRole('button', { name: '恢复默认', exact: true }).click();
   await page.getByRole('button', { name: '完成', exact: true }).click();
+
+  // The name column takes the spare room, and a drag widens it from what is drawn (backlog
+  // BUG-005); the width survives a reload.
+  await page.setViewportSize({ width: 2200, height: 900 });
+  const nameHeader = page.locator('thead th').filter({ hasText: '开发名称' });
+  await page.waitForFunction(
+    () =>
+      [...document.querySelectorAll('thead th')]
+        .find((th) => th.textContent.includes('开发名称'))
+        .getBoundingClientRect().width > 300,
+  );
+  const drawn = (await nameHeader.boundingBox()).width;
+  const handle = await nameHeader.getByRole('separator').boundingBox();
+  await page.mouse.move(handle.x + 3, handle.y + handle.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(handle.x + 63, handle.y + handle.height / 2, { steps: 4 });
+  await page.mouse.up();
+  const widened = (await nameHeader.boundingBox()).width;
+  assert.ok(Math.abs(widened - drawn - 60) <= 2, `name column ${drawn} → ${widened}`);
+  await page.reload();
+  await nameHeader.waitFor();
+  assert.ok(Math.abs((await nameHeader.boundingBox()).width - widened) <= 2);
+  await page.setViewportSize({ width: 1440, height: 900 });
 
   // Batch delete names the affected items and runs once for the whole selection.
   await page.getByRole('checkbox', { name: '选择 00001', exact: true }).check();

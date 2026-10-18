@@ -209,6 +209,7 @@ test('settings: menu by permission, customers, models, project SAP login and lis
     let data = {};
     if (path === '/api/session')
       data = {
+        authenticated: true,
         user: { id: 'u', displayName: '测试用户' },
         organization: org,
         mustChangePassword: false,
@@ -280,6 +281,22 @@ test('settings: menu by permission, customers, models, project SAP login and lis
     await menu.getByRole('button', { name: '项目', exact: true, expanded: true }).waitFor();
     await menu.getByRole('button', { name: '智能体', exact: true, expanded: false }).waitFor();
     await page.getByRole('navigation', { name: '当前位置' }).getByText('设置').waitFor();
+    // A module icon on the rail opens a folded menu again (backlog BUG-006).
+    await page.getByRole('button', { name: '收起菜单', exact: true }).click();
+    await page.locator('.menu-hidden').waitFor();
+    await page
+      .getByRole('complementary', { name: '模块' })
+      .getByRole('link', { name: '设置' })
+      .click();
+    await page.locator('.menu-hidden').waitFor({ state: 'detached' });
+    assert.equal(await menu.isVisible(), true);
+    // Notifications sit at the foot of the rail (backlog UI-001).
+    await page.getByRole('button', { name: '通知', exact: true }).click();
+    await page
+      .getByRole('region', { name: '通知' })
+      .getByText(/暂无通知/)
+      .waitFor();
+    await page.keyboard.press('Escape');
     assert.equal(await menu.getByRole('link', { name: '用户', exact: true }).count(), 0);
     assert.equal(await menu.getByRole('link', { name: '角色与权限', exact: true }).count(), 0);
     assert.equal(await menu.getByRole('link', { name: '规模与商务', exact: true }).count(), 0);

@@ -80,6 +80,55 @@ test('organization administration, project master data and accounts follow the p
         403,
       );
     });
+    await t.test('the organization code can change (backlog FEAT-001)', async () => {
+      const before = (await req('GET', '/api/admin/organization', undefined, a)).json();
+      const denied = await req(
+        'PATCH',
+        '/api/admin/organization',
+        { name: before.name, code: 'NOPE', rowVersion: before.rowVersion },
+        m,
+      );
+      assert.equal(denied.statusCode, 403);
+      assert.equal(denied.json().details.permission, 'org.profile:edit');
+      const invalid = await req(
+        'PATCH',
+        '/api/admin/organization',
+        { name: before.name, code: 'Bad code', rowVersion: before.rowVersion },
+        a,
+      );
+      assert.equal(invalid.statusCode, 400);
+      const taken = await req(
+        'PATCH',
+        '/api/admin/organization',
+        { name: before.name, code: 'O' + suffix, rowVersion: before.rowVersion },
+        a,
+      );
+      assert.equal(taken.statusCode, 409);
+      let r = await req(
+        'PATCH',
+        '/api/admin/organization',
+        { name: before.name, code: 'r' + suffix, rowVersion: before.rowVersion },
+        a,
+      );
+      assert.equal(r.statusCode, 200);
+      assert.equal(r.json().code, 'R' + suffix.toUpperCase());
+      assert.equal(r.json().id, before.id);
+      // Left out, the code stays; then it goes back for the tests that follow.
+      r = await req(
+        'PATCH',
+        '/api/admin/organization',
+        { name: before.name, rowVersion: r.json().rowVersion },
+        a,
+      );
+      assert.equal(r.json().code, 'R' + suffix.toUpperCase());
+      r = await req(
+        'PATCH',
+        '/api/admin/organization',
+        { name: before.name, code: before.code, rowVersion: r.json().rowVersion },
+        a,
+      );
+      assert.equal(r.json().code, before.code);
+    });
     let customer;
     await t.test('customer create, duplicate and stale updates', async () => {
       let r = await req(
@@ -422,7 +471,10 @@ test('organization administration, project master data and accounts follow the p
         a,
       );
       assert.equal(reset.statusCode, 200);
-      assert.equal((await req('GET', '/api/session', undefined, cookie)).statusCode, 401);
+      assert.equal(
+        (await req('GET', '/api/session', undefined, cookie)).json().authenticated,
+        false,
+      );
       const all = (await req('GET', '/api/admin/users', undefined, a)).json();
       assert.equal(JSON.stringify(all).includes('password_hash'), false);
       const self = all.find((u) => u.id === admin);
@@ -443,7 +495,7 @@ test('organization administration, project master data and accounts follow the p
         ).statusCode,
         200,
       );
-      assert.equal((await req('GET', '/api/session', undefined, m)).statusCode, 401);
+      assert.equal((await req('GET', '/api/session', undefined, m)).json().authenticated, false);
       const me = (await req('GET', '/api/me', undefined, p)).json();
       assert.equal(
         (

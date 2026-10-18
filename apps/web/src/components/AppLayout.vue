@@ -6,6 +6,7 @@ import { ChevronDown, ChevronRight, Menu, PanelLeft, Search } from '@lucide/vue'
 import AppIcon from './AppIcon.vue';
 import ConfirmDialog from './ConfirmDialog.vue';
 import CommandPalette from './CommandPalette.vue';
+import NotificationButton from './NotificationButton.vue';
 import ProjectSwitcher from './ProjectSwitcher.vue';
 import UserMenu from './UserMenu.vue';
 import BaseDialog from './base/BaseDialog.vue';
@@ -139,6 +140,10 @@ function showMenu() {
   menuHidden.value = false;
   shownAnyway.value = true;
 }
+// Choosing a module on the rail while its menu is folded away opens the menu (backlog BUG-006).
+function openModule() {
+  if (!narrow.value && hidden.value) showMenu();
+}
 function toggleMenu() {
   if (hidden.value) showMenu();
   else menuHidden.value = true;
@@ -216,9 +221,11 @@ const keys = [
         :to="m.path"
         :pressed="module.id === m.id"
         side="right"
+        @click="openModule"
         ><AppIcon :name="m.icon" :size="18"
       /></BaseIconButton>
       <span class="rail-space"></span>
+      <NotificationButton />
       <BaseIconButton label="搜索与跳转" kbd="Ctrl+K" side="right" @click="palette = true"
         ><Search
       /></BaseIconButton>

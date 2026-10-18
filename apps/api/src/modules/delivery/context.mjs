@@ -70,6 +70,10 @@ export function deliveryContext(pool, organizationId, requireSession) {
     const context = { module: item.module, owners: await owners(db, item.id) };
     if (!p.grant.has(permission, context)) throw deniedError(permission);
   }
+  // New items (created, copied) may only land in a module the grant to create covers.
+  function allowCreate(p, module) {
+    if (!p.grant.has('delivery.item:create', { module })) throw deniedError('delivery.item:create');
+  }
   async function item(db, req, lock = false) {
     uuid(req.params.id);
     const { rows } = await db.query(
@@ -121,6 +125,7 @@ export function deliveryContext(pool, organizationId, requireSession) {
     write,
     owners,
     allow,
+    allowCreate,
     item,
     event,
     objects,

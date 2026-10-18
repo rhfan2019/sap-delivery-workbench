@@ -121,6 +121,24 @@ const mayOn = (code: string, item: Item) =>
     { module: item.module, owners: ownersOf(item) },
     identity.value?.user.id,
   );
+// A new item may only be filed under a module the person may create in (backlog BUG-004);
+// an existing one can move to any module.
+const drawerFields = computed(() =>
+  drawerItem.value
+    ? fields.value
+    : fields.value.map((f) =>
+        f.key === 'module'
+          ? {
+              ...f,
+              options: Object.fromEntries(
+                Object.entries((f.options ?? {}) as Record<string, string>).filter(([module]) =>
+                  allows(access.value, 'delivery.item:create', { module }),
+                ),
+              ),
+            }
+          : f,
+      ),
+);
 const checkedItems = computed(() => items.value.filter((i) => checked.value.includes(i.id)));
 // The code freeze milestone (docs/specs/project-access-admin.md 1.3): a countdown in the header,
 // and how many items plan their development after it.
@@ -998,7 +1016,7 @@ const summary = (item: Item) =>
         :key="drawerId === '' ? 'new' : 'item'"
         ref="drawer"
         :item="drawerItem"
-        :fields="fields"
+        :fields="drawerFields"
         :ctx="ctx"
         :base="base"
         :project-id="currentProject"

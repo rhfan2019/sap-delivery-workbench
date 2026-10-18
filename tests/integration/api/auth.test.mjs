@@ -59,6 +59,10 @@ test('real HTTP authentication, forced password change, session revocation and p
     const signIn = (password = original) =>
       request('POST', '/api/login', { loginName: '  ' + login.toUpperCase() + '  ', password });
     assert.equal((await request('GET', '/api/projects')).statusCode, 401);
+    // Signed out is an ordinary answer for the session probe (backlog BUG-002).
+    const signedOut = await request('GET', '/api/session');
+    assert.equal(signedOut.statusCode, 200);
+    assert.deepEqual(signedOut.json(), { authenticated: false });
     assert.equal(
       (
         await request(
@@ -91,7 +95,10 @@ test('real HTTP authentication, forced password change, session revocation and p
       ).statusCode,
       200,
     );
-    assert.equal((await request('GET', '/api/session', undefined, cookie)).statusCode, 401);
+    assert.equal(
+      (await request('GET', '/api/session', undefined, cookie)).json().authenticated,
+      false,
+    );
     assert.equal((await signIn()).statusCode, 401);
     response = await signIn(next);
     const current = response.headers['set-cookie'].split(';')[0];
@@ -119,18 +126,27 @@ test('real HTTP authentication, forced password change, session revocation and p
     await db.query("UPDATE app.project_member SET status='removed' WHERE user_id=$1", [id]);
     assert.deepEqual((await request('GET', '/api/projects', undefined, current)).json(), []);
     await request('POST', '/api/logout', {}, current);
-    assert.equal((await request('GET', '/api/session', undefined, current)).statusCode, 401);
+    assert.equal(
+      (await request('GET', '/api/session', undefined, current)).json().authenticated,
+      false,
+    );
     response = await signIn(next);
     const expired = response.headers['set-cookie'].split(';')[0];
     await db.query(
       "UPDATE app.auth_session SET issued_at=now()-interval '2 hours',last_seen_at=now()-interval '1 hour',idle_expires_at=now()-interval '30 minutes' WHERE user_id=$1",
       [id],
     );
-    assert.equal((await request('GET', '/api/session', undefined, expired)).statusCode, 401);
+    assert.equal(
+      (await request('GET', '/api/session', undefined, expired)).json().authenticated,
+      false,
+    );
     response = await signIn(next);
     const disabled = response.headers['set-cookie'].split(';')[0];
     await db.query("UPDATE app.organization_member SET status='disabled' WHERE user_id=$1", [id]);
-    assert.equal((await request('GET', '/api/session', undefined, disabled)).statusCode, 401);
+    assert.equal(
+      (await request('GET', '/api/session', undefined, disabled)).json().authenticated,
+      false,
+    );
     assert.equal((await signIn(next)).statusCode, 401);
     const burst = await Promise.all(Array.from({ length: 6 }, () => signIn('wrong password')));
     assert.ok(burst.some((r) => r.statusCode === 429));

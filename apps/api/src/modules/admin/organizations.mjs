@@ -18,7 +18,10 @@ export function organizationRoutes(app, ctx) {
     );
   });
   app.patch('/api/admin/organization', async (req) => {
+    // The code is an ordinary unique attribute (every table refers to the id), so it may change;
+    // left out, it stays as it is.
     const name = v.text(req.body?.name, '企业名称', 200),
+      code = req.body?.code === undefined ? null : v.code(req.body.code),
       revision = v.version(req.body?.rowVersion);
     return write(
       req,
@@ -29,8 +32,8 @@ export function organizationRoutes(app, ctx) {
         subjectId: org,
         data: changed(
           await db.query(
-            `UPDATE app.organization SET name=$2,row_version=row_version+1,updated_at=now() WHERE id=$1 AND row_version=$3 RETURNING ${organizationColumns}`,
-            [org, name, revision],
+            `UPDATE app.organization SET name=$2,code=COALESCE($4,code),row_version=row_version+1,updated_at=now() WHERE id=$1 AND row_version=$3 RETURNING ${organizationColumns}`,
+            [org, name, revision, code],
           ),
         ),
       }),

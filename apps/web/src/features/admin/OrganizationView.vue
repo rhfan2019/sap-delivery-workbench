@@ -13,12 +13,20 @@ import '../settings/settings.css';
 // 企业 → 企业资料 (Plain's General).
 const { data: org, loading, error, reload } = useLoad(adminApi.organization);
 const name = ref('');
-watch(org, (o) => (name.value = o?.name ?? ''));
+const code = ref('');
+watch(org, (o) => {
+  name.value = o?.name ?? '';
+  code.value = o?.code ?? '';
+});
 onMounted(reload);
 const save = useSave();
 async function submit() {
   const saved = await save.run(() =>
-    adminApi.saveOrganization({ name: name.value, rowVersion: org.value!.rowVersion }),
+    adminApi.saveOrganization({
+      name: name.value,
+      code: code.value,
+      rowVersion: org.value!.rowVersion,
+    }),
   );
   if (saved) {
     org.value = saved;
@@ -39,7 +47,7 @@ const editable = computed(() => can('org.profile:edit'));
       v-if="org"
       title="企业"
       :editable="editable"
-      :dirty="name !== org.name"
+      :dirty="name !== org.name || code !== org.code"
       :saving="save.busy.value"
       :error="save.error.value"
       @save="submit"
@@ -47,8 +55,18 @@ const editable = computed(() => can('org.profile:edit'));
       <SettingsField label="企业名称" for="org-name" help="显示在菜单顶部与导出文件中。">
         <input id="org-name" v-model="name" class="s-input" maxlength="200" :disabled="!editable" />
       </SettingsField>
-      <SettingsField label="企业编码" help="部署时确定，不能修改。">
-        <input class="s-input mono" :value="org.code" disabled />
+      <SettingsField
+        label="企业编码"
+        for="org-code"
+        help="英文字母、数字、下划线或连字符，保存时转为大写。"
+      >
+        <input
+          id="org-code"
+          v-model="code"
+          class="s-input mono"
+          maxlength="32"
+          :disabled="!editable"
+        />
       </SettingsField>
     </SettingsCard>
   </SettingsPage>

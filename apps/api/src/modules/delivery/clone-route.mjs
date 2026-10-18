@@ -6,9 +6,10 @@ import { loadItem, customFields, reserveNumbers, insertItem, addEvent } from './
 // Test copies for batch assistant testing: same requirement, new number, prefixed name.
 export function registerCloneRoute(app, c, base) {
   app.post(base + '/:id/test-copy', async (req, reply) =>
-    c.write(req, 'delivery.item:create', async (db, current) => {
+    c.write(req, 'delivery.item:create', async (db, current, project) => {
       const ctx = { org: c.organizationId, project: req.params.projectId, actor: current.user.id };
       const source = await c.item(db, req);
+      c.allowCreate(project, source.module);
       const { prefix, requestId } = req.body ?? {};
       if (!/^\d{6}-\d{6}-$/.test(prefix ?? '') || !/^[a-f0-9-]{36}$/i.test(requestId ?? ''))
         throw failure(400, '测试前缀或请求编号无效');

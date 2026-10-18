@@ -37,7 +37,9 @@ export function tableColumns(fields: FieldDef[]): WorkbenchColumn[] {
     {
       key: 'name',
       label: '开发名称',
-      minWidth: 220,
+      // Starts at 220 and takes the spare room; a person may drag it down to 140.
+      width: 220,
+      minWidth: 140,
       flex: true,
       required: true,
       fixed: 'left',

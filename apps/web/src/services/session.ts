@@ -73,7 +73,10 @@ export async function api<T>(
 }
 export async function restoreSession() {
   try {
-    identity.value = await api<Identity>('/session');
+    const session = await api<(Identity & { authenticated?: true }) | { authenticated: false }>(
+      '/session',
+    );
+    identity.value = session.authenticated === false ? null : session;
   } catch (error) {
     identity.value = null;
     if (!(error instanceof ApiError && error.status === 401)) throw error;

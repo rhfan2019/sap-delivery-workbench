@@ -2,10 +2,13 @@
 import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui';
 // A floating panel for filters, pickers and small forms.
 const open = defineModel<boolean>('open', { default: false });
-withDefaults(defineProps<{ align?: 'start' | 'center' | 'end'; side?: 'top' | 'bottom' }>(), {
-  align: 'start',
-  side: 'bottom',
-});
+withDefaults(
+  defineProps<{ align?: 'start' | 'center' | 'end'; side?: 'top' | 'bottom' | 'right' }>(),
+  {
+    align: 'start',
+    side: 'bottom',
+  },
+);
 </script>
 <template>
   <PopoverRoot v-model:open="open">

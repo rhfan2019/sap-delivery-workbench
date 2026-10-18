@@ -7,7 +7,6 @@ import {
   type ColumnDef,
   type ColumnSizingState,
   type Header,
-  type Updater,
 } from '@tanstack/vue-table';
 import { ArrowDown, ArrowUp, ChevronsUpDown } from '@lucide/vue';
 import BaseButton from '../base/BaseButton.vue';
@@ -60,6 +59,9 @@ const mobile = computed(
   () => !props.compact && availableWidth.value > 0 && availableWidth.value < 600,
 );
 
+// The flexible column may be dragged as wide as a large screen allows.
+const maxWidth = (column: WorkbenchColumn) => (column.flex ? 1200 : 640);
+
 // --- saved layout --------------------------------------------------------------------------
 const configuration = ref<WorkbenchColumn[]>([]);
 watch(
@@ -87,7 +89,7 @@ watch(
               ? preference.visible
               : column.visible !== false,
           width: Number.isFinite(preference?.width)
-            ? Math.max(64, Math.min(640, preference!.width!))
+            ? Math.max(64, Math.min(maxWidth(column), preference!.width!))
             : column.width,
         },
       ];
@@ -129,18 +131,13 @@ const definitions = computed<ColumnDef<T>[]>(() => [
     header: c.label,
     size: c.width ?? c.minWidth ?? 120,
     minSize: c.minWidth ?? 64,
-    maxSize: 640,
+    maxSize: maxWidth(c),
     enableResizing: c.key !== 'actions',
   })),
 ]);
 const sizing = computed<ColumnSizingState>(() =>
   Object.fromEntries(configuration.value.map((c) => [c.key, c.width ?? c.minWidth ?? 120])),
 );
-function setSizing(updater: Updater<ColumnSizingState>) {
-  const next = typeof updater === 'function' ? updater(sizing.value) : updater;
-  for (const c of configuration.value)
-    if (next[c.key] && next[c.key] !== c.width) c.width = Math.round(next[c.key]);
-}
 const table = useVueTable<T>({
   get data() {
     return props.rows;
@@ -150,7 +147,6 @@ const table = useVueTable<T>({
   },
   getRowId: (row) => row.id,
   getCoreRowModel: getCoreRowModel(),
-  columnResizeMode: 'onChange',
   state: {
     get columnSizing() {
       return sizing.value;
@@ -169,7 +165,6 @@ const table = useVueTable<T>({
       return { left: [SELECT, ...left], right };
     },
   },
-  onColumnSizingChange: setSizing,
 });
 
 // Rendered widths: the requested widths, with spare room given to the flexible column.
@@ -252,9 +247,32 @@ function rowClick(row: T, event: MouseEvent) {
   if (target.closest('a,button,input,select,textarea,label,.field-display,[data-no-open]')) return;
   emit('open', row);
 }
+// Column resizing. The drag starts from the width as drawn: the flexible column is drawn wider
+// than its own size when there is spare room, and the first part of a drag would otherwise only
+// eat into that room. A click without a drag changes nothing.
+const resizing = ref('');
 function resize(header: Header<T, unknown>, event: MouseEvent | TouchEvent) {
   event.stopPropagation();
-  header.getResizeHandler()(event);
+  event.preventDefault();
+  const column = byKey.value.get(header.column.id);
+  if (!column) return;
+  const x = (e: MouseEvent | TouchEvent) => ('touches' in e ? e.touches[0]?.clientX : e.clientX);
+  const startX = x(event) ?? 0;
+  const startWidth = widths.value.get(column.key) ?? header.getSize();
+  const touch = event.type === 'touchstart';
+  const move = (e: MouseEvent | TouchEvent) => {
+    const at = x(e);
+    if (at === undefined) return;
+    const width = Math.round(startWidth + at - startX);
+    column.width = Math.max(column.minWidth ?? 64, Math.min(maxWidth(column), width));
+  };
+  const end = () => {
+    resizing.value = '';
+    document.removeEventListener(touch ? 'touchmove' : 'mousemove', move);
+  };
+  resizing.value = column.key;
+  document.addEventListener(touch ? 'touchmove' : 'mousemove', move);
+  document.addEventListener(touch ? 'touchend' : 'mouseup', end, { once: true });
 }
 
 // --- scroll memory --------------------------------------------------------------------------
@@ -399,7 +417,7 @@ defineExpose({ openColumns: () => (settingsOpen.value = true) });
               <span
                 v-if="header.column.getCanResize()"
                 class="resizer"
-                :class="{ active: header.column.getIsResizing() }"
+                :class="{ active: resizing === header.column.id }"
                 role="separator"
                 aria-orientation="vertical"
                 :aria-label="`调整${label(header.column.id)}列宽`"

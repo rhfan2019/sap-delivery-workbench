@@ -74,7 +74,7 @@ export const PERMISSIONS = [
   p('sap.test_data:create', 'sap', 'action', '创建测试数据', '经逐次授权在测试系统创建测试单据。'),
 
   p('org.profile:view', 'org', 'menu', '查看企业资料', '查看企业名称与编码。'),
-  p('org.profile:edit', 'org', 'action', '修改企业资料', '修改企业名称。'),
+  p('org.profile:edit', 'org', 'action', '修改企业资料', '修改企业名称与编码。'),
   p('org.security:manage', 'org', 'action', '管理安全策略', 'SAP 凭据保存策略与强制清除凭据。'),
 
   p('customer:view', 'customer', 'menu', '查看客户', '查看客户档案。'),
@@ -130,6 +130,7 @@ export const SENSITIVE_PERMISSIONS = [
 ];
 // Permissions narrowed by an assignment's module scope and "own items only" (section 2.4).
 export const SCOPED_PERMISSIONS = [
+  'delivery.item:create',
   'delivery.item:edit',
   'delivery.item:delete',
   'agent.fsd:run',

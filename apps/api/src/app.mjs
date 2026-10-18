@@ -105,10 +105,22 @@ export async function createApp({
       permissions: await access.organization(pool, result.identity.user.id),
     };
   });
-  // The identity plus the organization-level permissions the web uses for menus.
+  // The identity plus the organization-level permissions the web uses for menus. Signed out is
+  // an ordinary answer here (the web asks on every start), not an error.
   app.get('/api/session', async (req) => {
-    const { sessionId, ...identity } = await requireSession(req);
-    return { ...identity, permissions: await access.organization(pool, identity.user.id) };
+    let current;
+    try {
+      current = await requireSession(req);
+    } catch (error) {
+      if (error.statusCode === 401) return { authenticated: false };
+      throw error;
+    }
+    const { sessionId, ...identity } = current;
+    return {
+      authenticated: true,
+      ...identity,
+      permissions: await access.organization(pool, identity.user.id),
+    };
   });
   app.post('/api/logout', async (req, reply) => {
     await auth.logout(getToken(req));
