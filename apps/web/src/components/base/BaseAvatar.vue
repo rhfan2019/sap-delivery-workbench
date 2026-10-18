@@ -1,32 +1,29 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-// Avatar (DESIGN.md 5): a rounded square with the first letter; the hue follows the name, so the
-// same person always has the same colour.
+import { hueOfName, type Hue } from './identity';
+// Avatar (DESIGN.md 5, 2.2.1): a rounded square with the first letter; the hue follows the name,
+// so the same person always has the same colour. Without a name it is a dashed empty square.
+// A default slot replaces the letter (the assistant's icon).
 const props = withDefaults(
   defineProps<{
     name: string;
     size?: 20 | 24 | 32;
-    hue?: 'blue' | 'green' | 'purple' | 'red' | 'yellow' | 'neutral';
+    hue?: Hue;
   }>(),
   { size: 24 },
 );
-const hues = ['blue', 'green', 'purple', 'red', 'yellow'] as const;
-const tone = computed(() => {
-  if (props.hue) return props.hue;
-  let sum = 0;
-  for (const ch of props.name) sum = (sum * 31 + ch.charCodeAt(0)) >>> 0;
-  return hues[sum % hues.length];
-});
+const tone = computed(() => props.hue ?? hueOfName(props.name));
+const empty = computed(() => !props.name.trim());
 const initial = computed(() => (props.name.trim()[0] ?? '?').toUpperCase());
 </script>
 <template>
   <span
     class="base-avatar"
-    :class="'s' + size"
-    :style="{ background: `var(--${tone}-solid-1)` }"
-    :title="name"
+    :class="['s' + size, { empty }]"
+    :style="empty ? undefined : { background: `var(--${tone}-solid-1)` }"
+    :title="name || undefined"
     aria-hidden="true"
-    >{{ initial }}</span
+    ><slot>{{ empty ? '' : initial }}</slot></span
   >
 </template>
 <style scoped>
@@ -39,6 +36,13 @@ const initial = computed(() => (props.name.trim()[0] ?? '?').toUpperCase());
   font-weight: var(--weight-550);
   line-height: 1;
   user-select: none;
+}
+.empty {
+  border: 1px dashed var(--border-emphasis);
+}
+.base-avatar :deep(svg) {
+  width: 60%;
+  height: 60%;
 }
 .s20 {
   width: 20px;

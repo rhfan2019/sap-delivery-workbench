@@ -78,13 +78,28 @@
   padding: var(--space-6) var(--space-6) var(--space-4);
   gap: var(--space-6);
 }
-.assistant-elements .elements-message {
-  max-width: 100%;
-  flex-direction: column;
-  gap: var(--space-1-5);
-}
+/* Every message starts at the left with its avatar in a gutter (DESIGN.md 2.2.1). */
+.assistant-elements .elements-message,
 .assistant-elements .elements-message.is-user {
-  max-width: 80%;
+  display: grid;
+  grid-template-columns: var(--space-6) minmax(0, 1fr);
+  column-gap: var(--space-3);
+  row-gap: var(--space-1-5);
+  align-items: start;
+  max-width: 100%;
+  margin-left: 0;
+}
+.assistant-elements .elements-message > * {
+  grid-column: 2;
+}
+.assistant-elements .elements-message > .msg-avatar {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+.assistant-elements .elements-message.is-user > .user-bubble {
+  justify-self: start;
+  margin-left: 0;
+  max-width: 88%;
 }
 .assistant-elements .user-bubble {
   border-radius: var(--radius-8);
@@ -93,15 +108,6 @@
   padding: var(--space-2-5) var(--space-3);
   font-size: var(--font-14);
   line-height: var(--leading-24);
-}
-/* Who sent it and when: on hover, like the actions under a reply. */
-.assistant-elements .user-message-meta {
-  opacity: 0;
-  transition: opacity var(--motion-base);
-}
-.assistant-elements .elements-message:hover .user-message-meta,
-.assistant-elements .elements-message:focus-within .user-message-meta {
-  opacity: 1;
 }
 .assistant-elements .elements-markdown {
   min-width: 0;
@@ -158,15 +164,6 @@
     0 0 0 1px var(--focus),
     var(--shadow-floating);
 }
-.assistant-elements .user-message-meta {
-  width: 100%;
-  justify-content: flex-end;
-  text-align: right;
-  overflow-wrap: anywhere;
-}
-.assistant-elements .user-message-meta time {
-  flex-shrink: 0;
-}
 .assistant-elements .elements-attachment-remove {
   opacity: 1;
   min-width: 32px;
@@ -179,8 +176,8 @@
   .assistant-elements .elements-content {
     padding: var(--space-4) var(--space-3);
   }
-  .assistant-elements .elements-message.is-user {
-    max-width: 94%;
+  .assistant-elements .elements-message.is-user > .user-bubble {
+    max-width: 100%;
   }
 }
 @media (prefers-reduced-motion: reduce) {

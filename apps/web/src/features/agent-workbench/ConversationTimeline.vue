@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Copy, RotateCcw, FileText } from '@lucide/vue';
+import { computed, ref } from 'vue';
+import { Copy, RotateCcw, FileText, Sparkles } from '@lucide/vue';
+import BaseAvatar from '../../components/base/BaseAvatar.vue';
 import {
   Conversation,
   ConversationContent,
@@ -18,7 +19,7 @@ import type {
   AgentMessage,
   AgentArtifactRef,
 } from '@sap-delivery-workbench/contracts/agent-core/types';
-defineProps<{
+const props = defineProps<{
   messages: AgentMessage[];
   busy: boolean;
   canRetry?: boolean;
@@ -34,6 +35,18 @@ const emit = defineEmits<{
   openArtifact: [artifact: AgentArtifactRef];
 }>();
 const copyNotice = ref('');
+// Follow-up prompts offered under the latest reply; a click puts the text in the composer.
+const followUps = computed(() =>
+  props.development
+    ? [
+        ['说明这一版的改动', '请说明这一版开发方案与代码相对上一版的主要改动和原因。'],
+        ['检查性能与权限', '请检查当前代码的性能风险和权限检查是否完整，并列出需要修改的地方。'],
+      ]
+    : [
+        ['列出待确认问题', '请列出当前 FSD 中仍需要客户确认的问题，并说明各自影响的章节。'],
+        ['检查文档完整性', '请检查当前 FSD 是否有缺失或前后矛盾的地方，并给出修改建议。'],
+      ],
+);
 // Sections or parts the agent changed without saying why (FSD: list; development: plan and code).
 function undeclared(artifact: AgentArtifactRef) {
   const c = artifact.comparison ?? {};
@@ -102,14 +115,23 @@ async function copy(text: string) {
         class="elements-message"
         :data-message-id="message.id"
       >
-        <div
+        <!-- Who said it (DESIGN.md 2.2.1): the person's avatar, or the assistant's green one. -->
+        <BaseAvatar
           v-if="message.role === 'user'"
-          class="user-message-meta flex flex-wrap items-center justify-end gap-2 text-right text-xs text-muted-foreground"
-          aria-label="发送信息"
-        >
-          <span>{{ message.authorName || '用户（历史姓名未记录）' }}</span>
+          class="msg-avatar"
+          :name="message.authorName || '用户'"
+        />
+        <BaseAvatar v-else class="msg-avatar" name="助手" hue="green"><Sparkles /></BaseAvatar>
+        <div class="message-meta" aria-label="发送信息">
+          <strong>{{
+            message.role === 'user'
+              ? message.authorName || '用户（历史姓名未记录）'
+              : development
+                ? '开发助手'
+                : '设计助手'
+          }}</strong>
           <time v-if="message.createdAt" :datetime="message.createdAt">{{
-            new Date(message.createdAt).toLocaleString('zh-CN', { hour12: false })
+            shortTime(message.createdAt)
           }}</time>
         </div>
         <template v-if="message.role === 'assistant' && message.runId">
@@ -192,7 +214,7 @@ async function copy(text: string) {
             </button>
             <p
               v-if="message.artifact && undeclared(message.artifact).length"
-              class="text-xs text-warning"
+              class="timeline-band is-yellow"
             >
               注意：以下部分有改动但助手没有说明原因，请重点核对：{{
                 undeclared(message.artifact).join('、')
@@ -225,6 +247,29 @@ async function copy(text: string) {
         >
           已停止本轮运行。可补充需求后重新发送。
         </p>
+        <!-- What to do next (DESIGN.md 2.2.1): green suggestions under the latest reply. -->
+        <div
+          v-if="
+            message.role === 'assistant' &&
+            !busy &&
+            !readonly &&
+            index === messages.length - 1 &&
+            message.status !== 'waiting_user' &&
+            (message.content || message.artifact)
+          "
+          class="next-steps"
+          aria-label="建议的下一步"
+        >
+          <button
+            v-for="[label, text] in followUps"
+            :key="label"
+            type="button"
+            class="next-step"
+            @click="emit('suggestion', text)"
+          >
+            <Sparkles />{{ label }}
+          </button>
+        </div>
         <MessageActions
           v-if="
             message.role === 'assistant' &&
@@ -258,6 +303,57 @@ async function copy(text: string) {
   </Conversation>
 </template>
 <style scoped>
+/* Identity and next steps (DESIGN.md 2.2.1). */
+.message-meta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--font-12);
+  color: var(--text-muted);
+}
+.message-meta strong {
+  font-size: var(--font-14);
+  font-weight: var(--weight-550);
+  color: var(--text);
+}
+.timeline-band {
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-8);
+  font-size: var(--font-12);
+  line-height: var(--leading-20);
+}
+.timeline-band.is-yellow {
+  background: var(--yellow-fill-1);
+  color: var(--yellow-text-1);
+}
+.next-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.next-step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  height: var(--control-tab);
+  padding: 0 var(--space-2-5);
+  border-radius: var(--radius-6);
+  background: var(--green-fill-1);
+  color: var(--green-text-1);
+  font-size: var(--font-12);
+  font-weight: var(--weight-475);
+  transition: background var(--motion-fast);
+}
+.next-step:hover {
+  background: var(--green-fill-2);
+}
+.next-step svg {
+  width: 1em;
+  height: 1em;
+  color: var(--green-icon-1);
+}
+
 .answered summary {
   cursor: pointer;
 }

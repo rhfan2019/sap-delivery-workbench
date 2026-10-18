@@ -404,6 +404,7 @@
 .mobile-meta {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-2);
   font-size: var(--font-12);
   color: var(--text-muted);
@@ -1297,4 +1298,42 @@ tr.checked .row-actions,
   .list-area {
     margin: 0 calc(-1 * var(--space-4)) calc(-1 * var(--space-4));
   }
+}
+
+/* Two-line rows and identity colours (DESIGN.md 2.2.1). */
+.list-area td {
+  height: var(--control-table-row-double);
+}
+.name-cell {
+  display: grid;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+.name-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-12);
+  line-height: var(--leading-16);
+  color: var(--text-muted);
+}
+.name-sub.empty {
+  color: var(--text-subtle);
+}
+.person-cell,
+.mark-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-width: 0;
+  max-width: 100%;
+}
+.person-cell .cell-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mark-cell svg {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
 }

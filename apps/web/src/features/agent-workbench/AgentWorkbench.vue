@@ -17,6 +17,9 @@ import type { useAgentSession } from './useAgentSession';
 import { api } from '../../services/session';
 import { restoreDraft } from './presentation.mjs';
 import { useShortcut } from '../../services/shortcuts';
+import { CircleHelp, FlaskConical, Sparkles } from '@lucide/vue';
+import BaseAvatar from '../../components/base/BaseAvatar.vue';
+import BaseBanner from '../../components/base/BaseBanner.vue';
 import { Button } from '@/components/ui/button';
 import type { ModelRecord } from '../models/types';
 import type { AgentArtifactRef } from '@sap-delivery-workbench/contracts/agent-core/types';
@@ -179,6 +182,9 @@ const suggestions = computed(() =>
       <Pane v-if="!compact || !previewOpen" :size="previewOpen ? 55 : 100" :min-size="30">
         <div class="assistant-chat" :class="{ 'is-start': empty }">
           <div v-if="empty" class="start-greeting">
+            <BaseAvatar class="start-avatar" name="助手" hue="green" :size="32"
+              ><Sparkles
+            /></BaseAvatar>
             <h1>{{ development ? '今天要开发什么？' : '今天要梳理哪个需求？' }}</h1>
             <p>
               {{
@@ -208,6 +214,17 @@ const suggestions = computed(() =>
                 :clock-offset-ms="message.clockOffsetMs"
               />
             </template>
+            <!-- Status bands (DESIGN.md 2.2): blue waits for a decision, yellow is test data. -->
+            <BaseBanner
+              v-if="run.decision.value && !sending"
+              tone="blue"
+              class="timeline-indent"
+              role="status"
+              ><template #icon><CircleHelp :size="14" /></template>需要你决定：{{
+                run.decision.value.questions.length
+              }}
+              个问题，回答后助手继续</BaseBanner
+            >
             <DecisionCard
               v-if="run.decision.value && !sending"
               :key="run.decision.value.id"
@@ -215,6 +232,14 @@ const suggestions = computed(() =>
               :busy="sending || blocked || !editable"
               @answer="answer"
             />
+            <BaseBanner
+              v-if="run.testData.value && !sending"
+              tone="yellow"
+              class="timeline-indent"
+              role="status"
+              ><template #icon><FlaskConical :size="14" /></template
+              >助手请求在测试系统中准备数据，需要你授权</BaseBanner
+            >
             <TestDataCard
               v-if="run.testData.value && !sending"
               :key="run.testData.value.id"

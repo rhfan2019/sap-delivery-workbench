@@ -156,7 +156,15 @@ layout:
   list-panel: 400px # 双面板中左侧的列表
   details: 384px # 右侧属性面板
   control:
-    { button: 34px, input: 32px, nav-item: 32px, menu-item: 30px, tab: 28px, table-row: 44px }
+    {
+      button: 34px,
+      input: 32px,
+      nav-item: 32px,
+      menu-item: 30px,
+      tab: 28px,
+      table-row: 44px,
+      table-row-double: 56px,
+    }
 ---
 
 # 设计规范
@@ -205,6 +213,22 @@ layout:
 | 自定义类别（标签、模板类别） | purple 及其他色相，由用户选择                                |
 
 阶段状态：未开始 neutral、进行中 blue、已完成 green、已延误 red、已取消 neutral（删除线）。
+
+### 2.2.1 身份色（2026-10-17 增补）
+
+Plain 不“素”，靠的不是装饰，而是每一行、每一条消息都带着几处**身份色**：人有自己颜色的头像，类别有图标，优先级有记号。身份色只标识“是谁 / 是哪一类”，固定不变，与第 2.2 节的状态语义互不挪用。实现集中在 `components/base/identity.ts`，页面不各自取色。
+
+| 对象     | 呈现                                                                                                                              |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| 人员     | 方形头像（首字、`solid-1` 底）+ 名字；色相由名字散列到 blue / green / purple / red / yellow，同一人永远同色；未分配显示虚线空头像 |
+| SAP 模块 | 标签（`fill-1` 底、`text-1` 字）：FI/CO 系 green、SD blue、MM purple、PP yellow，其余按名称散列；同一模块全站同色                 |
+| 开发类型 | 彩色小图标 + 文字：报表 blue、功能 purple、接口 green、增强 yellow                                                                |
+| 优先级   | 记号 + 文字：高为 red 圆形感叹号、中为 yellow 信号格、低为 neutral 信号格                                                         |
+| 助手     | green `solid-1` 方形头像加闪光图标；助手给出的可点建议是 green `fill-1` 小按钮（`text-1` 字）                                     |
+
+开发清单的行是两行：第一行开发名称（14px semibold），第二行业务功能点摘要（12px `text-2`，单行截断）；行高 `--control-table-row-double`（56）。
+
+助手页时间线：用户消息左侧是用户头像，助手回复左侧是助手头像；等待用户回答的问题上方是 blue 色带“需要你决定”；运行结束后，成果下面给出 green 建议按钮（打开成果、继续追问的常用说法）。
 
 ### 2.3 深色
 
@@ -321,7 +345,7 @@ layout:
 | 间距 / 圆角               | `--space-0-5` … `--space-16` / `--radius-2` … `--radius-12`、`--radius-full`                                                                                                                                                                                               |
 | 阴影                      | `--shadow-card`、`--shadow-popover`、`--shadow-dialog`、`--shadow-floating`、`--shadow-button`                                                                                                                                                                             |
 | 动效                      | `--motion-fast`、`--motion-base`、`--motion-slow`、`--motion-panel`（时长加曲线）；`--duration-fast`、`-base`、`-slow`、`-spin`、`-none`；`--tooltip-delay`                                                                                                                |
-| 布局与控件尺寸            | `--layout-rail`、`--layout-nav`、`--layout-gap`、`--layout-list-panel`、`--layout-details`、`--layout-record-bar`；`--control-button`、`-input`、`-icon`、`-nav-item`、`-menu-item`、`-tab`、`-table-row`、`-table-head`                                                   |
+| 布局与控件尺寸            | `--layout-rail`、`--layout-nav`、`--layout-gap`、`--layout-list-panel`、`--layout-details`、`--layout-record-bar`；`--control-button`、`-input`、`-icon`、`-nav-item`、`-menu-item`、`-tab`、`-table-row`、`-table-row-double`、`-table-head`                              |
 
 字号、圆角用带数值的名字，避免与 1.x 的同名变量（如 `--radius-md`）混淆。1.x 的变量名已在第 7 批全部删除；样式中的 `var(--…)` 只能引用本表的令牌或页面自己声明的属性，检查器会拒绝其他名字（契约 1.16）。另有两个正式令牌：开发项标签颜色 `--tag-<颜色>-bg / -text`（按名称存储），模型抽屉宽度 `--layout-drawer`。
 
@@ -332,7 +356,7 @@ layout:
 ## 10. 不要做
 
 - 不新增取值；不用渐变、发光、上浮动效；不给卡片同时加粗边框和阴影；不在卡片里再套卡片。
-- 不用状态色做装饰；色相按第 2.2 节的语义使用。
+- 不用状态色做装饰；色相按第 2.2 节的语义与第 2.2.1 节的身份色使用，页面不自行取色。
 - 不复制 Plain 的标志、品牌绿、商业字体与文案。
 
 ## 11. 迁移

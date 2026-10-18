@@ -10,6 +10,9 @@ import {
   type SapObject,
 } from './model';
 import { safeHtml } from './richText';
+import BaseAvatar from '../../components/base/BaseAvatar.vue';
+import BaseTag from '../../components/base/BaseTag.vue';
+import { kindIdentity, moduleHue, priorityIdentity } from '../../components/base/identity';
 
 // Read-only rendering of one field: compact in table cells, full in the drawer.
 const props = defineProps<{ item: Item; field: FieldDef; ctx: ListContext; compact?: boolean }>();
@@ -20,6 +23,15 @@ const late = computed(
     props.field.phase &&
     props.field.name === 'status' &&
     overdue(props.item.phases[props.field.phase]),
+);
+// Identity colours (DESIGN.md 2.2.1): people, modules, kinds and priorities.
+const member = computed(() => props.field.type === 'member' || props.field.customType === 'member');
+const mark = computed(() =>
+  props.field.key === 'kind'
+    ? kindIdentity[String(value.value)]
+    : props.field.key === 'priority'
+      ? priorityIdentity[String(value.value)]
+      : undefined,
 );
 const tags = computed(() =>
   ((value.value as string[]) ?? [])
@@ -32,6 +44,17 @@ const tags = computed(() =>
   <span v-if="field.type === 'select' && field.key.endsWith('.status')" class="status-cell"
     ><span class="status-pill" :data-status="value">{{ text }}</span
     ><span v-if="late" class="late-mark" title="计划完成日期已过，状态未更新">逾期</span></span
+  >
+  <span v-else-if="member" class="person-cell" :title="text || '未分配'"
+    ><BaseAvatar :name="text" :size="20" /><span :class="text ? 'cell-text' : 'empty-value'">{{
+      text || '未分配'
+    }}</span></span
+  >
+  <BaseTag v-else-if="field.key === 'module' && text" :tone="moduleHue(text)">{{ text }}</BaseTag>
+  <span v-else-if="mark && text" class="mark-cell"
+    ><component :is="mark.icon" :style="{ color: `var(--${mark.hue}-icon-1)` }" /><span>{{
+      text
+    }}</span></span
   >
   <span v-else-if="field.type === 'percent'" class="progress-cell" :aria-label="text"
     ><span class="progress-track"><span :style="{ width: (value ?? 0) + '%' }" /></span

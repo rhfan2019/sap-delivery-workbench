@@ -27,6 +27,8 @@ import BaseButton from '../../components/base/BaseButton.vue';
 import BaseIconButton from '../../components/base/BaseIconButton.vue';
 import BaseInput from '../../components/base/BaseInput.vue';
 import BaseMenu from '../../components/base/BaseMenu.vue';
+import BaseTag from '../../components/base/BaseTag.vue';
+import { moduleHue } from '../../components/base/identity';
 import BaseMenuItem from '../../components/base/BaseMenuItem.vue';
 import BaseMenuSeparator from '../../components/base/BaseMenuSeparator.vue';
 import BasePopover from '../../components/base/BasePopover.vue';
@@ -42,6 +44,7 @@ import {
   PHASES,
   catalog,
   overdue,
+  richText,
   sortValue,
   type CustomFieldDefinition,
   type Item,
@@ -547,6 +550,11 @@ useShortcut('V', () => table.value?.openColumns());
 useShortcut('J', () => step(1));
 useShortcut('K', () => step(-1));
 useShortcut('Escape', () => drawerId.value !== null && void closeDrawer());
+// The second line of a row (DESIGN.md 2.2.1): the business function, as one line of text.
+const summary = (item: Item) =>
+  richText(item.businessFunction ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
 </script>
 
 <template>
@@ -751,8 +759,11 @@ useShortcut('Escape', () => drawerId.value !== null && void closeDrawer());
               <button class="mobile-title" @click="open(item.id)">
                 {{ item.code }} {{ item.name }}
               </button>
+              <span v-if="summary(item)" class="name-sub">{{ summary(item) }}</span>
               <div class="mobile-meta">
-                <span>{{ item.module }}</span
+                <BaseTag v-if="item.module" :tone="moduleHue(item.module)">{{
+                  item.module
+                }}</BaseTag
                 ><span v-for="p in PHASES" :key="p.key"
                   >{{ p.label }} {{ OPTIONS.status[item.phases[p.key].status] }}</span
                 >
@@ -768,14 +779,14 @@ useShortcut('Escape', () => drawerId.value !== null && void closeDrawer());
             >
               {{ item.code }}
             </button>
-            <button
-              v-else-if="column.key === 'name'"
-              class="name-link"
-              :title="item.name"
-              @click.stop="open(item.id)"
-            >
-              {{ item.name }}
-            </button>
+            <span v-else-if="column.key === 'name'" class="name-cell">
+              <button class="name-link" :title="item.name" @click.stop="open(item.id)">
+                {{ item.name }}
+              </button>
+              <span class="name-sub" :class="{ empty: !summary(item) }">{{
+                summary(item) || '尚未填写业务功能点'
+              }}</span>
+            </span>
             <div v-else-if="column.key === 'actions'" class="row-actions" data-no-open>
               <RouterLink
                 class="row-icon"

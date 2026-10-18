@@ -104,6 +104,9 @@ select:focus-visible {
   padding: 0 var(--space-6);
   text-align: center;
 }
+.start-avatar {
+  margin-bottom: var(--space-3);
+}
 .start-greeting h1 {
   margin: 0;
   font-size: var(--font-24);
@@ -149,4 +152,10 @@ select:focus-visible {
   .assistant-test {
     height: calc(100dvh - 100px);
   }
+}
+/* Bands and cards after the messages line up with the message text, past the avatar gutter. */
+.assistant-chat :deep(.timeline-indent),
+.assistant-chat :deep(.decision-card),
+.assistant-chat :deep(.test-data-card) {
+  margin-left: calc(var(--space-6) + var(--space-3));
 }
