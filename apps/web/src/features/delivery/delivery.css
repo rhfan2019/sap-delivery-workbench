@@ -431,48 +431,47 @@
   display: flex;
   flex-direction: column;
 }
+/* One line (DESIGN.md 6.1): type tile, number, module, type and name, then the tools. */
 .drawer-head {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-5) var(--space-3);
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--layout-record-bar);
+  padding: var(--space-2) var(--space-4) var(--space-2) var(--space-5);
 }
 .drawer-ident {
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
+  align-items: center;
+  gap: var(--space-1-5);
   min-width: 0;
 }
 .kind-tile {
   display: grid;
   place-items: center;
-  width: var(--space-10);
-  height: var(--space-10);
+  width: var(--space-6);
+  height: var(--space-6);
   flex-shrink: 0;
-  border-radius: var(--radius-8);
+  border-radius: var(--radius-6);
 }
 .kind-tile svg {
-  width: var(--space-5);
-  height: var(--space-5);
+  width: 14px;
+  height: 14px;
 }
-.drawer-heading {
-  min-width: 0;
-}
-.drawer-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1-5);
-  font-size: var(--font-12);
+.drawer-kind {
+  flex-shrink: 0;
   color: var(--text-muted);
+  font-size: var(--font-12);
 }
-.drawer-heading h2 {
-  margin: var(--space-1) 0 0;
-  font-size: var(--font-20);
-  line-height: var(--leading-28);
+.drawer-ident h2 {
+  min-width: 0;
+  margin: 0 0 0 var(--space-1);
+  overflow: hidden;
+  font-size: var(--font-16);
   font-weight: var(--weight-550);
-  overflow-wrap: anywhere;
+  line-height: var(--leading-24);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .drawer-tools {
   display: flex;
@@ -482,50 +481,6 @@
 }
 .agent-icon {
   color: var(--green-icon-1);
-}
-/* The four phases side by side, each with a bar in its status hue. */
-.phase-track {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0 var(--space-5) var(--space-3);
-  list-style: none;
-}
-.phase-track li {
-  display: grid;
-  gap: var(--space-1);
-  align-content: start;
-  min-width: 0;
-  padding: var(--space-2) var(--space-2-5);
-  border: 1px solid var(--border);
-  border-top: 3px solid var(--phase-hue);
-  border-radius: var(--radius-8);
-  background: var(--panel);
-}
-.phase-name {
-  font-size: var(--font-12);
-  font-weight: var(--weight-550);
-  color: var(--text-muted);
-}
-.phase-track .status-pill {
-  justify-self: start;
-}
-.phase-person {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1-5);
-  min-width: 0;
-  font-size: var(--font-12);
-}
-.phase-person > span:last-child {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.phase-track small {
-  font-size: var(--font-11);
-  color: var(--text-subtle);
 }
 .drawer-anchors {
   display: flex;
@@ -537,6 +492,9 @@
   scrollbar-width: none;
 }
 .drawer-anchors button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
   height: var(--control-tab);
   border: 0;
   background: none;
@@ -553,6 +511,12 @@
 .drawer-anchors button:hover {
   background: var(--hover);
   color: var(--text);
+}
+.drawer-anchors .status-pill {
+  height: var(--space-4);
+  font-size: var(--font-11);
+  font-weight: var(--weight-475);
+  line-height: var(--space-4);
 }
 .drawer-anchors button[aria-current='true'] {
   background: var(--selected);
@@ -1110,53 +1074,29 @@
   height: 100%;
   min-height: 0;
 }
-.list-head {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-bottom: var(--space-4);
-}
-.list-icon {
-  width: 20px;
-  height: 20px;
-  color: var(--text-muted);
-}
-.list-head h1 {
-  margin: 0;
-  font-size: var(--font-24);
-  font-weight: var(--weight-400);
-  line-height: var(--leading-32);
-  white-space: nowrap;
-}
 .list-late {
   color: var(--yellow-text-2);
   font-size: var(--font-12);
 }
-.list-project {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--text-muted);
-  font-size: var(--font-14);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.head-actions {
-  display: inline-flex;
-  gap: var(--space-2);
-  margin-left: auto;
-}
+/* One row: view tabs, the search box, then filter / display / refresh; it wraps when narrow. */
 .list-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
   margin-bottom: var(--space-3);
+}
+.list-bar .list-search {
+  flex: 1 1 180px;
+  min-width: 180px;
+  max-width: 420px;
+  margin-left: auto;
 }
 .bar-end {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
   gap: var(--space-1);
-  margin-left: auto;
 }
 .refresh-status {
   color: var(--text-muted);
@@ -1207,9 +1147,6 @@
   padding-top: var(--space-2);
   border-top: 1px solid var(--border);
 }
-.list-search {
-  margin-bottom: var(--space-3);
-}
 .filter-chips {
   display: flex;
   flex-wrap: wrap;
@@ -1250,7 +1187,7 @@
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
   min-height: 0;
-  margin: 0 calc(-1 * var(--space-8)) calc(-1 * var(--space-6));
+  margin: 0 calc(-1 * var(--body-pad-x)) calc(-1 * var(--body-pad-y));
   border-top: 1px solid var(--border);
 }
 .split .list-area {
@@ -1371,17 +1308,11 @@ tr.checked .row-actions,
   }
 }
 @media (max-width: 760px) {
-  .list-head {
-    flex-wrap: wrap;
-  }
-  .head-actions {
-    width: 100%;
-  }
-  .list-bar {
-    flex-wrap: wrap;
+  .list-bar .list-search {
+    flex-basis: 100%;
+    max-width: none;
   }
   .list-area {
-    margin: 0 calc(-1 * var(--space-4)) calc(-1 * var(--space-4));
   }
 }
 
@@ -1429,5 +1360,21 @@ tr.checked .row-actions,
 @media (max-width: 1400px) {
   .phase-track {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Low screens (DESIGN.md 4.1): slimmer drawer chrome and list bar. */
+@media (max-height: 820px) {
+  .list-bar {
+    margin-bottom: var(--space-2);
+  }
+  .drawer-anchors {
+    padding-block: var(--space-1);
+  }
+  .drawer-section {
+    padding: var(--space-3) 0;
+  }
+  .item-drawer footer {
+    padding: var(--space-2) var(--space-4);
   }
 }

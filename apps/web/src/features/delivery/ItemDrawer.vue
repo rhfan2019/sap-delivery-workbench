@@ -11,13 +11,12 @@ import {
   ClipboardCheck,
   UserCheck,
 } from '@lucide/vue';
-import BaseAvatar from '../../components/base/BaseAvatar.vue';
 import BaseButton from '../../components/base/BaseButton.vue';
 import BaseIconButton from '../../components/base/BaseIconButton.vue';
 import BaseMenu from '../../components/base/BaseMenu.vue';
 import BaseMenuItem from '../../components/base/BaseMenuItem.vue';
 import BaseTag from '../../components/base/BaseTag.vue';
-import { kindIdentity, moduleHue, type Hue } from '../../components/base/identity';
+import { kindIdentity, moduleHue } from '../../components/base/identity';
 import { api } from '../../services/session';
 import FieldEditor from './FieldEditor.vue';
 import FieldValue from './FieldValue.vue';
@@ -30,7 +29,6 @@ import {
   cloneItem,
   emptyItem,
   fieldValue,
-  memberName,
   setFieldValue,
   type Changes,
   type FieldDef,
@@ -155,30 +153,15 @@ function spy() {
   active.value = current;
 }
 
-// Identity (DESIGN.md 2.2.1) and the four phases as a tracker.
+// Identity (DESIGN.md 2.2.1). Each phase's status rides on its section tab, unless it has not
+// started; the assignee and dates are the section's own fields, so the panel spends no height
+// repeating them.
 const kind = computed(() => (props.item ? kindIdentity[props.item.kind] : undefined));
-const statusHue: Record<string, Hue> = {
-  not_started: 'neutral',
-  in_progress: 'blue',
-  completed: 'green',
-  delayed: 'red',
-  cancelled: 'neutral',
+const phaseStatus = (key: string) => {
+  if (!props.item || !PHASES.some((p) => p.key === key)) return undefined;
+  const status = props.item.phases[key as keyof Item['phases']]?.status;
+  return status === 'not_started' ? undefined : status;
 };
-const phases = computed(() =>
-  props.item
-    ? PHASES.map((p) => {
-        const phase = props.item!.phases[p.key];
-        return {
-          key: p.key,
-          label: p.label,
-          status: phase.status,
-          hue: statusHue[phase.status] ?? 'neutral',
-          person: phase.assigneeId ? memberName(phase.assigneeId, props.ctx) : '',
-          due: phase.plannedEnd?.slice(5, 10).replace('-', '/') ?? '',
-        };
-      })
-    : [],
-);
 
 // The assistants open on another page: show the click at once, and fetch that page's code
 // while the panel is open so the switch does not wait for it.
@@ -228,17 +211,16 @@ defineExpose({ dirty, busy });
             v-if="kind"
             class="kind-tile"
             :style="{ background: `var(--${kind.hue}-fill-1)`, color: `var(--${kind.hue}-icon-1)` }"
+            :title="OPTIONS.kind[item!.kind] ?? item!.kind"
             aria-hidden="true"
             ><component :is="kind.icon"
           /></span>
-          <div class="drawer-heading">
-            <div v-if="item" class="drawer-meta">
-              <BaseTag variant="outline">{{ item.code }}</BaseTag>
-              <BaseTag v-if="item.module" :tone="moduleHue(item.module)">{{ item.module }}</BaseTag>
-              <span>{{ OPTIONS.kind[item.kind] ?? item.kind }}</span>
-            </div>
-            <h2 id="item-drawer-title">{{ title }}</h2>
-          </div>
+          <template v-if="item">
+            <BaseTag variant="outline">{{ item.code }}</BaseTag>
+            <BaseTag v-if="item.module" :tone="moduleHue(item.module)">{{ item.module }}</BaseTag>
+            <span class="drawer-kind">{{ OPTIONS.kind[item.kind] ?? item.kind }}</span>
+          </template>
+          <h2 id="item-drawer-title" :title="title">{{ title }}</h2>
         </div>
         <div class="drawer-tools">
           <template v-if="item">
@@ -277,23 +259,6 @@ defineExpose({ dirty, busy });
           /></BaseIconButton>
         </div>
       </header>
-      <ol v-if="item" class="phase-track" aria-label="阶段状态">
-        <li
-          v-for="p in phases"
-          :key="p.key"
-          :style="{
-            '--phase-hue':
-              p.hue === 'neutral' ? 'var(--border-emphasis)' : `var(--${p.hue}-solid-1)`,
-          }"
-        >
-          <span class="phase-name">{{ p.label }}</span>
-          <span class="status-pill" :data-status="p.status">{{ OPTIONS.status[p.status] }}</span>
-          <span class="phase-person" :title="p.person || '未分配'"
-            ><BaseAvatar :name="p.person" :size="20" /><span>{{ p.person || '未分配' }}</span></span
-          >
-          <small v-if="p.due">计划 {{ p.due }}</small>
-        </li>
-      </ol>
       <nav class="drawer-anchors" aria-label="跳转到分组">
         <button
           v-for="s in sections"
@@ -302,7 +267,10 @@ defineExpose({ dirty, busy });
           :aria-current="active === s.key ? 'true' : undefined"
           @click="jump(s.key)"
         >
-          {{ s.label }}
+          {{ s.label
+          }}<span v-if="phaseStatus(s.key)" class="status-pill" :data-status="phaseStatus(s.key)">{{
+            OPTIONS.status[phaseStatus(s.key)!]
+          }}</span>
         </button>
         <button
           v-if="item"

@@ -16,6 +16,7 @@ import BaseResizeHandle from './base/BaseResizeHandle.vue';
 import BaseToaster from './base/BaseToaster.vue';
 import { modules, moduleOf, entryOf, visibleSections } from '../features/navigation';
 import { api, identity } from '../services/session';
+import { detailOpen } from '../services/shell';
 import { useShortcut } from '../services/shortcuts';
 import {
   projectAccess,
@@ -123,6 +124,25 @@ function stored(key: string) {
   }
 }
 const menuHidden = ref(stored('shell-menu') === 'hidden');
+// With a record open beside a list, screens narrower than 1440px fold the menu by themselves;
+// opening it again holds until the record closes.
+const roomy = useMediaQuery('(min-width: 1440px)');
+const shownAnyway = ref(false);
+watch(detailOpen, (open) => {
+  if (!open) shownAnyway.value = false;
+});
+const autoHidden = computed(
+  () => detailOpen.value && !roomy.value && !narrow.value && !shownAnyway.value,
+);
+const hidden = computed(() => menuHidden.value || autoHidden.value);
+function showMenu() {
+  menuHidden.value = false;
+  shownAnyway.value = true;
+}
+function toggleMenu() {
+  if (hidden.value) showMenu();
+  else menuHidden.value = true;
+}
 const mobileMenu = ref(false);
 // The module menu's width is dragged on its right edge and remembered (DESIGN.md 4.1).
 const navWidth = ref(Number(stored('shell-nav-width')) || 248);
@@ -153,7 +173,7 @@ watch(
   { immediate: true },
 );
 useShortcut('Ctrl+K', () => (palette.value = true));
-useShortcut('[', () => (menuHidden.value = !menuHidden.value));
+useShortcut('[', toggleMenu);
 useShortcut('?', () => (shortcuts.value = true));
 async function logout() {
   if (leaveDelivery.value && !(await leaveDelivery.value())) return;
@@ -180,7 +200,7 @@ const keys = [
   <ConfirmDialog />
   <div
     class="shell"
-    :class="{ 'menu-hidden': menuHidden || record, 'menu-open': mobileMenu, record }"
+    :class="{ 'menu-hidden': hidden || record, 'menu-open': mobileMenu, record }"
     :style="{ '--nav-width': navWidth + 'px' }"
   >
     <a class="skip-link" href="#main-content">跳转到主要内容</a>
@@ -213,7 +233,7 @@ const keys = [
     ></button>
     <nav class="menu" :aria-label="module.label + '菜单'">
       <BaseResizeHandle
-        v-if="!narrow && !menuHidden && !record"
+        v-if="!narrow && !hidden && !record"
         v-model="navWidth"
         class="menu-resize"
         label="调整菜单宽度"
@@ -230,7 +250,7 @@ const keys = [
           label="收起菜单"
           kbd="["
           size="sm"
-          @click="narrow ? (mobileMenu = false) : (menuHidden = true)"
+          @click="narrow ? (mobileMenu = false) : toggleMenu()"
           ><PanelLeft
         /></BaseIconButton>
       </header>
@@ -285,11 +305,11 @@ const keys = [
     <main id="main-content" class="shell-content">
       <header v-if="!record" class="page-bar">
         <BaseIconButton
-          v-if="menuHidden && !narrow"
+          v-if="hidden && !narrow"
           label="展开菜单"
           kbd="["
           size="sm"
-          @click="menuHidden = false"
+          @click="showMenu"
           ><PanelLeft
         /></BaseIconButton>
         <nav class="crumbs" aria-label="当前位置">
@@ -309,6 +329,8 @@ const keys = [
           </template>
         </nav>
         <p v-if="projectError" class="page-bar-error" role="alert">{{ projectError }}</p>
+        <!-- A page puts its main actions here with <Teleport defer to="#page-actions">. -->
+        <div id="page-actions" class="page-actions"></div>
       </header>
       <div class="shell-body">
         <p v-if="logoutError" class="error-note" role="alert">{{ logoutError }}</p>
@@ -584,6 +606,15 @@ a.crumb:focus-visible {
   flex-shrink: 0;
   color: var(--text-subtle);
 }
+.page-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2);
+}
+.page-actions:empty {
+  display: none;
+}
 .page-bar-error {
   margin: 0;
   color: var(--red-text-2);
@@ -594,7 +625,10 @@ a.crumb:focus-visible {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: var(--space-6) var(--space-8);
+  /* Pages that run edge to edge (the list area) bleed by these. */
+  --body-pad-y: var(--space-6);
+  --body-pad-x: var(--space-8);
+  padding: var(--body-pad-y) var(--body-pad-x);
 }
 .record .shell-body {
   padding: 0;
@@ -613,6 +647,13 @@ a.crumb:focus-visible {
 }
 .scrim {
   display: none;
+}
+/* Low screens (DESIGN.md 4.1): less padding around the page. */
+@media (max-height: 820px) {
+  .shell-body {
+    --body-pad-y: var(--space-4);
+    --body-pad-x: var(--space-6);
+  }
 }
 @media (max-width: 760px) {
   .shell,
@@ -647,10 +688,15 @@ a.crumb:focus-visible {
     background: var(--scrim);
   }
   .shell-body {
-    padding: var(--space-4);
+    --body-pad-y: var(--space-4);
+    --body-pad-x: var(--space-4);
   }
   .page-bar {
-    padding: 0 var(--space-2);
+    flex-wrap: wrap;
+    padding: var(--space-1) var(--space-2);
+  }
+  .crumbs {
+    flex-basis: 100%;
   }
 }
 </style>

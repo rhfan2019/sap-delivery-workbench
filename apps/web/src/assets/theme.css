@@ -201,6 +201,16 @@
   --control-table-head: 36px;
 }
 
+/* Low screens (a 1920×1080 laptop at 125–150%, or 1366×768): a slimmer bar and denser rows,
+   so a list page and its open record keep room for content (DESIGN.md 4.1). */
+@media (max-height: 820px) {
+  :root {
+    --layout-record-bar: 40px;
+    --control-table-row: 36px;
+    --control-table-row-double: 48px;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --neutral-bg-1: #1a191b;

@@ -20,7 +20,6 @@ import {
   Code2,
   ClipboardCheck,
   UserCheck,
-  ListChecks,
 } from '@lucide/vue';
 import BaseActionBar from '../../components/base/BaseActionBar.vue';
 import BaseButton from '../../components/base/BaseButton.vue';
@@ -35,6 +34,7 @@ import BaseMenuSeparator from '../../components/base/BaseMenuSeparator.vue';
 import BasePopover from '../../components/base/BasePopover.vue';
 import BaseTabs from '../../components/base/BaseTabs.vue';
 import { toast as notify } from '../../components/base/toast';
+import { detailOpen } from '../../services/shell';
 import { useShortcut } from '../../services/shortcuts';
 import WorkbenchTable from '../../components/workbench-table/WorkbenchTable.vue';
 import { api, ApiError, identity, type ProjectAccess } from '../../services/session';
@@ -160,9 +160,6 @@ const lateItems = computed(() => {
       i.phases.development?.status !== 'cancelled',
   ).length;
 });
-const projectName = computed(
-  () => projects.value.find((p) => p.id === currentProject.value)?.name || '请在左上角选择项目',
-);
 const columnStorageKey = computed(
   () =>
     `delivery-columns:v2:${identity.value?.organization.id}:${identity.value?.user.id}:${currentProject.value}`,
@@ -442,7 +439,10 @@ function beforeUnload(event: BeforeUnloadEvent) {
   }
 }
 onMounted(() => window.addEventListener('beforeunload', beforeUnload));
+// A record open beside the list asks the shell for room (DESIGN.md 4.1).
+watch(drawerId, (id) => (detailOpen.value = id !== null), { immediate: true });
 onBeforeUnmount(() => {
+  detailOpen.value = false;
   generation++;
   window.removeEventListener('beforeunload', beforeUnload);
   if (leaveDelivery.value === safeLeave) leaveDelivery.value = null;
@@ -639,10 +639,9 @@ const summary = (item: Item) =>
 
 <template>
   <div class="delivery-page" :class="{ split: drawerId !== null }">
-    <header class="list-head">
-      <ListChecks class="list-icon" />
-      <h1>开发清单</h1>
-      <span class="list-project">{{ projectName }}</span>
+    <!-- The page header names the page; its actions sit on the right of it (DESIGN.md 6.1). -->
+    <h1 class="sr-only">开发清单</h1>
+    <Teleport defer to="#page-actions">
       <BaseTag v-if="freeze" :tone="freeze.tone" :title="'开发冻结计划日期 ' + freeze.date">{{
         freeze.text
       }}</BaseTag>
@@ -652,52 +651,50 @@ const summary = (item: Item) =>
         :title="'开发阶段计划完成日期晚于开发冻结（' + freeze?.date + '）'"
         >{{ lateItems }} 项开发计划晚于冻结</span
       >
-      <span class="head-actions">
-        <BaseMenu align="end">
-          <template #trigger>
-            <BaseButton :disabled="!loaded || busy"
-              ><template #icon><FileSpreadsheet /></template>导入 / 导出</BaseButton
-            >
-          </template>
-          <BaseMenuItem
-            tone="blue"
-            :disabled="readOnly || !may('delivery.item:import')"
-            @select="dialog = 'import'"
-            ><template #icon><FileUp /></template>从 Excel 导入</BaseMenuItem
+      <BaseMenu align="end">
+        <template #trigger>
+          <BaseButton :disabled="!loaded || busy"
+            ><template #icon><FileSpreadsheet /></template>导入 / 导出</BaseButton
           >
-          <BaseMenuItem
-            tone="blue"
-            :disabled="!may('delivery.item:import')"
-            @select="downloadTemplate"
-            ><template #icon><FileDown /></template>下载导入模板</BaseMenuItem
-          >
-          <BaseMenuItem
-            tone="green"
-            :disabled="!filtered.length || !may('delivery.item:export')"
-            :note="`${filtered.length} 项`"
-            @select="
-              exportExcel(
-                filtered.map((i) => i.id),
-                `筛选结果 ${filtered.length} 项`,
-              )
-            "
-            ><template #icon><FileDown /></template>导出筛选结果</BaseMenuItem
-          >
-          <BaseMenuSeparator />
-          <BaseMenuItem :disabled="!loaded" @select="dialog = 'settings'"
-            ><template #icon><Settings2 /></template>清单设置</BaseMenuItem
-          >
-        </BaseMenu>
-        <BaseButton
-          variant="primary"
-          kbd="N"
-          data-keep-drawer
-          :disabled="readOnly || !loaded || !may('delivery.item:create')"
-          @click="openCreate"
-          ><template #icon><Plus /></template>新建开发项</BaseButton
+        </template>
+        <BaseMenuItem
+          tone="blue"
+          :disabled="readOnly || !may('delivery.item:import')"
+          @select="dialog = 'import'"
+          ><template #icon><FileUp /></template>从 Excel 导入</BaseMenuItem
         >
-      </span>
-    </header>
+        <BaseMenuItem
+          tone="blue"
+          :disabled="!may('delivery.item:import')"
+          @select="downloadTemplate"
+          ><template #icon><FileDown /></template>下载导入模板</BaseMenuItem
+        >
+        <BaseMenuItem
+          tone="green"
+          :disabled="!filtered.length || !may('delivery.item:export')"
+          :note="`${filtered.length} 项`"
+          @select="
+            exportExcel(
+              filtered.map((i) => i.id),
+              `筛选结果 ${filtered.length} 项`,
+            )
+          "
+          ><template #icon><FileDown /></template>导出筛选结果</BaseMenuItem
+        >
+        <BaseMenuSeparator />
+        <BaseMenuItem :disabled="!loaded" @select="dialog = 'settings'"
+          ><template #icon><Settings2 /></template>清单设置</BaseMenuItem
+        >
+      </BaseMenu>
+      <BaseButton
+        variant="primary"
+        kbd="N"
+        data-keep-drawer
+        :disabled="readOnly || !loaded || !may('delivery.item:create')"
+        @click="openCreate"
+        ><template #icon><Plus /></template>新建开发项</BaseButton
+      >
+    </Teleport>
     <p v-if="error" class="error-note" role="alert">
       {{ error }}<button class="text-button" @click="load()">重新加载</button>
     </p>
@@ -709,6 +706,13 @@ const summary = (item: Item) =>
         label="清单范围"
         :tabs="scopes.map((s) => ({ id: s.id, label: s.name, count: s.count }))"
       />
+      <BaseInput
+        v-model="search"
+        class="list-search"
+        placeholder="搜索编号、名称、事务码或开发对象"
+        label="搜索开发清单"
+        ><template #icon><Search /></template
+      ></BaseInput>
       <span class="bar-end">
         <span v-if="loading && loaded" class="refresh-status" role="status">更新中…</span>
         <BasePopover v-model:open="filterOpen" align="end">
@@ -795,14 +799,6 @@ const summary = (item: Item) =>
           ><RefreshCw
         /></BaseIconButton>
       </span>
-    </div>
-    <div class="list-search">
-      <BaseInput
-        v-model="search"
-        placeholder="搜索编号、名称、事务码或开发对象"
-        label="搜索开发清单"
-        ><template #icon><Search /></template
-      ></BaseInput>
     </div>
     <div v-if="activeFilters.length" class="filter-chips" aria-label="已生效的筛选">
       <button
