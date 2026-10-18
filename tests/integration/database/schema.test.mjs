@@ -48,7 +48,6 @@ const expectedTables = [
   'sap_system_grant',
   'sap_test_data_run',
   'user_password',
-  'user_preference',
   'user_project_sap_config',
 ];
 
