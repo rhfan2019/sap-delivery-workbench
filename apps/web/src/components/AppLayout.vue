@@ -14,6 +14,7 @@ import BaseMenu from './base/BaseMenu.vue';
 import BaseMenuItem from './base/BaseMenuItem.vue';
 import BaseMenuSeparator from './base/BaseMenuSeparator.vue';
 import BaseNavItem from './base/BaseNavItem.vue';
+import BaseResizeHandle from './base/BaseResizeHandle.vue';
 import BaseToaster from './base/BaseToaster.vue';
 import { modules, moduleOf } from '../features/navigation';
 import { api, identity } from '../services/session';
@@ -45,6 +46,15 @@ function stored(key: string) {
 }
 const menuHidden = ref(stored('shell-menu') === 'hidden');
 const mobileMenu = ref(false);
+// The module menu's width is dragged on its right edge and remembered (DESIGN.md 4.1).
+const navWidth = ref(Number(stored('shell-nav-width')) || 248);
+function saveNavWidth(width: number) {
+  try {
+    localStorage.setItem('shell-nav-width', String(width));
+  } catch {
+    // Storage may be refused; the width then lasts for this page only.
+  }
+}
 const palette = ref(false);
 const shortcuts = ref(false);
 const logoutError = ref('');
@@ -96,6 +106,7 @@ const keys = [
   <div
     class="shell"
     :class="{ 'menu-hidden': menuHidden || record, 'menu-open': mobileMenu, record }"
+    :style="{ '--nav-width': navWidth + 'px' }"
   >
     <a class="skip-link" href="#main-content">跳转到主要内容</a>
     <aside class="rail" aria-label="模块">
@@ -126,6 +137,15 @@ const keys = [
       @click="mobileMenu = false"
     ></button>
     <nav class="menu" :aria-label="module.label + '菜单'">
+      <BaseResizeHandle
+        v-if="!narrow && !menuHidden && !record"
+        v-model="navWidth"
+        class="menu-resize"
+        label="调整菜单宽度"
+        :min="200"
+        :max="400"
+        @done="saveNavWidth"
+      />
       <header class="menu-head">
         <BaseMenu align="start">
           <template #trigger>
@@ -202,7 +222,7 @@ const keys = [
 <style scoped>
 .shell {
   display: grid;
-  grid-template-columns: var(--layout-rail) var(--layout-nav) minmax(0, 1fr);
+  grid-template-columns: var(--layout-rail) var(--nav-width, var(--layout-nav)) minmax(0, 1fr);
   height: 100dvh;
   background: var(--page);
   color: var(--text);
@@ -250,12 +270,16 @@ const keys = [
   flex: 1;
 }
 .menu {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
   overflow: hidden auto;
   padding: var(--space-2) var(--space-2) var(--space-4);
   transition: opacity var(--motion-base);
+}
+.menu-resize {
+  right: 0;
 }
 .menu-hidden .menu {
   visibility: hidden;

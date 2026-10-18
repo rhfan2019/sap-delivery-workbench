@@ -198,7 +198,7 @@ test('development list: page/batch/row actions, inline edit, grouped drawer, col
   // Clicking another row switches the drawer; clicking elsewhere on the page closes it.
   await page.getByRole('button', { name: '查看 00002', exact: true }).click();
   await drawer.getByRole('heading', { name: '供应商未清项批量清账' }).waitFor();
-  assert.doesNotMatch(await drawer.locator('.phase-strip').innerText(), /%/);
+  assert.doesNotMatch(await drawer.locator('.phase-track').innerText(), /%/);
   await page.keyboard.press('Escape');
   await drawer.waitFor({ state: 'detached' });
 

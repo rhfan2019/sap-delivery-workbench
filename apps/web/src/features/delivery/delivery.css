@@ -427,77 +427,145 @@
   display: flex;
   flex-direction: column;
 }
-.item-drawer > form > header {
+.drawer-head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--space-4);
-  padding: var(--space-5) var(--space-6) var(--space-4);
-  border-bottom: 1px solid var(--blue-fill-1);
+  padding: var(--space-4) var(--space-5) var(--space-3);
 }
-.drawer-heading small {
-  color: var(--text-muted);
-  font-size: var(--font-12);
+.drawer-ident {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
 }
-.drawer-heading h2 {
-  font-size: var(--font-20);
-  margin: var(--space-1-5) 0 var(--space-2-5);
-  line-height: 1.4;
+.kind-tile {
+  display: grid;
+  place-items: center;
+  width: var(--space-10);
+  height: var(--space-10);
+  flex-shrink: 0;
+  border-radius: var(--radius-8);
 }
-.phase-strip {
+.kind-tile svg {
+  width: var(--space-5);
+  height: var(--space-5);
+}
+.drawer-heading {
+  min-width: 0;
+}
+.drawer-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2-5);
-}
-.phase-chip {
-  display: inline-flex;
   align-items: center;
   gap: var(--space-1-5);
   font-size: var(--font-12);
   color: var(--text-muted);
 }
-.phase-chip small {
-  font-variant-numeric: tabular-nums;
+.drawer-heading h2 {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-20);
+  line-height: var(--leading-28);
+  font-weight: var(--weight-550);
+  overflow-wrap: anywhere;
 }
 .drawer-tools {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1-5);
   flex-shrink: 0;
 }
-.drawer-tools a {
-  text-decoration: none;
+.agent-icon {
+  color: var(--green-icon-1);
+}
+/* The four phases side by side, each with a bar in its status hue. */
+.phase-track {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0 var(--space-5) var(--space-3);
+  list-style: none;
+}
+.phase-track li {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  min-width: 0;
+  padding: var(--space-2) var(--space-2-5);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--phase-hue);
+  border-radius: var(--radius-8);
+  background: var(--panel);
+}
+.phase-name {
+  font-size: var(--font-12);
+  font-weight: var(--weight-550);
+  color: var(--text-muted);
+}
+.phase-track .status-pill {
+  justify-self: start;
+}
+.phase-person {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-width: 0;
+  font-size: var(--font-12);
+}
+.phase-person > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.phase-track small {
+  font-size: var(--font-11);
+  color: var(--text-subtle);
 }
 .drawer-anchors {
   display: flex;
   gap: var(--space-1);
-  padding: var(--space-2) var(--space-5);
-  border-bottom: 1px solid var(--blue-fill-1);
+  padding: var(--space-1-5) var(--space-5);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   overflow-x: auto;
+  scrollbar-width: none;
 }
 .drawer-anchors button {
+  height: var(--control-tab);
   border: 0;
   background: none;
-  padding: var(--space-1) var(--space-2);
+  padding: 0 var(--space-2-5);
   border-radius: var(--radius-6);
   color: var(--text-muted);
-  font-size: var(--font-12);
+  font-size: var(--font-14);
   cursor: pointer;
   white-space: nowrap;
+  transition:
+    background var(--motion-fast),
+    color var(--motion-fast);
 }
 .drawer-anchors button:hover {
   background: var(--hover);
   color: var(--text);
 }
+.drawer-anchors button[aria-current='true'] {
+  background: var(--selected);
+  color: var(--text);
+  font-weight: var(--weight-550);
+}
 .drawer-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 0 var(--space-6) var(--space-6);
-  scroll-padding-top: 8px;
+  padding: 0 var(--space-5) var(--space-6);
+  scroll-padding-top: var(--space-2);
+  scrollbar-gutter: stable;
 }
 .drawer-section {
-  padding: var(--space-5) 0;
-  border-bottom: 1px solid var(--blue-fill-1);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--border);
 }
 .drawer-section:last-child {
   border-bottom: 0;
@@ -515,13 +583,15 @@
 .field-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-3) var(--space-6);
+  gap: var(--space-0-5) var(--space-6);
 }
+/* Property rows (DESIGN.md 5): a muted label and the value, 32px high. */
 .field-row {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
+  grid-template-columns: 104px minmax(0, 1fr);
   gap: var(--space-2-5);
   align-items: start;
+  min-height: var(--control-icon);
   font-size: var(--font-14);
 }
 .field-row.wide {
@@ -530,8 +600,9 @@
 .item-drawer .field-row > label {
   display: block;
   color: var(--text-muted);
+  font-size: var(--font-12);
   padding-top: var(--space-1-5);
-  line-height: 1.4;
+  line-height: var(--leading-20);
 }
 .field-row b {
   color: var(--red-text-2);
@@ -585,7 +656,7 @@
 .item-drawer footer {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
   padding: var(--space-3) var(--space-6);
   border-top: 1px solid var(--border);
   background: var(--panel);
@@ -1169,14 +1240,20 @@
   display: grid;
   flex: 1;
   grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   min-height: 0;
   margin: 0 calc(-1 * var(--space-8)) calc(-1 * var(--space-6));
   border-top: 1px solid var(--border);
 }
 .split .list-area {
-  grid-template-columns: var(--layout-list-panel) minmax(0, 1fr);
+  grid-template-columns: var(--list-width, var(--layout-list-panel)) minmax(0, 1fr);
+}
+/* The list page fills the content panel; only the table and the detail panel scroll. */
+.shell-content:has(.delivery-page) {
+  overflow: clip;
 }
 .list-column {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -1336,4 +1413,13 @@ tr.checked .row-actions,
   width: 1em;
   height: 1em;
   flex-shrink: 0;
+}
+
+.item-drawer footer .drawer-delete {
+  color: var(--red-text-2);
+}
+@media (max-width: 1400px) {
+  .phase-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

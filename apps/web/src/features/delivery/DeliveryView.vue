@@ -28,6 +28,7 @@ import BaseIconButton from '../../components/base/BaseIconButton.vue';
 import BaseInput from '../../components/base/BaseInput.vue';
 import BaseMenu from '../../components/base/BaseMenu.vue';
 import BaseTag from '../../components/base/BaseTag.vue';
+import BaseResizeHandle from '../../components/base/BaseResizeHandle.vue';
 import { moduleHue } from '../../components/base/identity';
 import BaseMenuItem from '../../components/base/BaseMenuItem.vue';
 import BaseMenuSeparator from '../../components/base/BaseMenuSeparator.vue';
@@ -74,6 +75,23 @@ const checked = ref<string[]>([]);
 const table = ref<{ openColumns: () => void }>();
 const drawer = ref<InstanceType<typeof ItemDrawer> | null>(null);
 const drawerId = ref<string | null>(null); // '' = creating
+// The list beside an open item keeps the width the person dragged it to (DESIGN.md 4.1).
+const listWidth = ref(
+  (() => {
+    try {
+      return Number(localStorage.getItem('delivery-list-width')) || 400;
+    } catch {
+      return 400;
+    }
+  })(),
+);
+function saveListWidth(width: number) {
+  try {
+    localStorage.setItem('delivery-list-width', String(width));
+  } catch {
+    // Storage may be refused; the width then lasts for this page only.
+  }
+}
 const dialog = ref<'' | 'batch' | 'import' | 'settings'>('');
 const batchError = ref('');
 const menu = ref('');
@@ -722,8 +740,16 @@ const summary = (item: Item) =>
       <button type="button" class="clear-all" @click="clearFilters">清除全部</button>
     </div>
 
-    <section class="list-area">
+    <section class="list-area" :style="{ '--list-width': listWidth + 'px' }">
       <div class="list-column">
+        <BaseResizeHandle
+          v-if="drawerId !== null"
+          v-model="listWidth"
+          label="调整清单宽度"
+          :min="380"
+          :max="760"
+          @done="saveListWidth"
+        />
         <WorkbenchTable
           ref="table"
           v-model:checked="checked"
@@ -887,7 +913,7 @@ const summary = (item: Item) =>
       </div>
       <ItemDrawer
         v-if="drawerId !== null && currentProject"
-        :key="drawerId || 'new'"
+        :key="drawerId === '' ? 'new' : 'item'"
         ref="drawer"
         :item="drawerItem"
         :fields="fields"

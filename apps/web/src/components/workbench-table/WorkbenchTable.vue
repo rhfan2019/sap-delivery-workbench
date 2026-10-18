@@ -47,8 +47,10 @@ const root = ref<HTMLElement>();
 const scroller = ref<HTMLElement>();
 const availableWidth = ref(0);
 let resizeFrame = 0;
-useResizeObserver(root, (entries) => {
-  const width = entries[0]?.contentRect.width || 0;
+// Measure the scrolling area, not the frame: its content box leaves out the vertical scroll bar,
+// so the columns never overflow sideways just because the rows scroll.
+useResizeObserver([root, scroller], () => {
+  const width = scroller.value?.clientWidth || root.value?.clientWidth || 0;
   cancelAnimationFrame(resizeFrame);
   resizeFrame = requestAnimationFrame(() => (availableWidth.value = width));
 });
@@ -515,6 +517,7 @@ defineExpose({ openColumns: () => (settingsOpen.value = true) });
   flex: 1;
   min-height: 0;
   overflow: auto;
+  scrollbar-gutter: stable;
 }
 table {
   min-width: 100%;
