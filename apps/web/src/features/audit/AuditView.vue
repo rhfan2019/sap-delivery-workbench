@@ -115,13 +115,13 @@ function reload() {
   void load();
 }
 const exportUrl = (format: 'md' | 'json') => auditApi.exportUrl(current.value, format, true);
-const open = (row: RunRow) => router.push('/workspace/audit/runs/' + row.id);
+const open = (row: RunRow) => router.push('/settings/audit/runs/' + row.id);
 const when = (iso: string) => new Date(iso).toLocaleString('zh-CN', { hour12: false });
 
 watch(
   () => route.fullPath,
   () => {
-    if (route.path === '/workspace/audit') reload();
+    if (route.path === '/settings/audit') reload();
   },
 );
 onMounted(reload);
@@ -273,7 +273,7 @@ onMounted(reload);
               <td class="date-cell">
                 <RouterLink
                   class="text-link"
-                  :to="'/workspace/audit/runs/' + row.id"
+                  :to="'/settings/audit/runs/' + row.id"
                   :title="row.id"
                   @click.stop
                   >{{ when(row.started_at) }}</RouterLink

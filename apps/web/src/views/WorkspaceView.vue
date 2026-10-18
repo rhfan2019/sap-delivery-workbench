@@ -8,7 +8,9 @@ import BasePropertyRow from '../components/base/BasePropertyRow.vue';
 import BaseSection from '../components/base/BaseSection.vue';
 import BaseSkeleton from '../components/base/BaseSkeleton.vue';
 import { menus } from '../features/navigation';
+import { HEALTH, PROJECT_STATUSES } from '@sap-delivery-workbench/contracts/projects/options';
 import { api, identity, ApiError, type Project } from '../services/session';
+import { selectProject } from '../services/projectContext';
 const route = useRoute();
 const router = useRouter();
 const projects = ref<Project[]>([]);
@@ -26,20 +28,26 @@ const filtered = computed(() =>
   ),
 );
 const status = (p: Project) =>
-  p.isPaused
-    ? '已暂停'
-    : ({ preparing: '准备中', active: '进行中', completed: '已完成', archived: '已归档' }[
-        p.status
-      ] ?? p.status);
+  p.isPaused ? '已暂停' : (PROJECT_STATUSES[p.status as 'active'] ?? p.status);
 const tone = (p: Project) =>
   p.isPaused
     ? 'yellow'
-    : (({ preparing: 'purple', active: 'blue', completed: 'green' } as const)[
+    : (({ preparing: 'purple', active: 'blue', live: 'green', completed: 'neutral' } as const)[
         p.status as 'preparing'
       ] ?? 'neutral');
+// One line of project facts a project manager scans: phase, go-live, health.
+const facts = (p: Project) =>
+  [
+    p.customerName,
+    p.currentPhase ? '当前阶段 ' + p.currentPhase : '',
+    p.goLive ? '上线 ' + p.goLive : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
+const healthTone = { green: 'green', yellow: 'yellow', red: 'red' } as const;
 const pick = (ids: string[]) => ids.map((id) => menus.find((m) => m.id === id)!).filter(Boolean);
 // The home page (DESIGN.md 6.4): what people open most, then their projects and knowledge.
-const shortcuts = pick(['development-items', 'development-overview', 'organization', 'templates']);
+const shortcuts = pick(['development-items', 'project-plan', 'sap-credentials', 'templates']);
 const knowledge = pick(['qa', 'knowledge', 'assets']);
 const date = new Intl.DateTimeFormat('zh-CN', {
   timeZone: 'Asia/Shanghai',
@@ -47,6 +55,10 @@ const date = new Intl.DateTimeFormat('zh-CN', {
   day: 'numeric',
   weekday: 'long',
 }).format(new Date());
+async function openSettings(id: string) {
+  await selectProject(id);
+  await router.push('/settings/project/general');
+}
 async function load() {
   loading.value = true;
   error.value = '';
@@ -112,8 +124,11 @@ onMounted(load);
               <span class="icon-tile"><AppIcon name="folder" :size="16" /></span>
               <span class="project-text">
                 <strong>{{ p.name }}</strong>
-                <small>{{ p.customerName }} · {{ p.code }}</small>
+                <small>{{ facts(p) }}</small>
               </span>
+              <BaseTag v-if="p.health" :tone="healthTone[p.health.overall as 'green']">{{
+                HEALTH[p.health.overall as 'green']
+              }}</BaseTag>
               <BaseTag :tone="tone(p)">{{ status(p) }}</BaseTag>
             </RouterLink>
           </li>
@@ -180,8 +195,11 @@ onMounted(load);
           <span class="icon-tile"><AppIcon name="folder" :size="16" /></span>
           <span class="project-text">
             <strong>{{ p.name }}</strong>
-            <small>{{ p.customerName }} · {{ p.code }}</small>
+            <small>{{ facts(p) }} · {{ p.code }}</small>
           </span>
+          <BaseTag v-if="p.health" :tone="healthTone[p.health.overall as 'green']">{{
+            HEALTH[p.health.overall as 'green']
+          }}</BaseTag>
           <BaseTag :tone="tone(p)">{{ status(p) }}</BaseTag>
         </RouterLink>
       </li>
@@ -202,6 +220,7 @@ onMounted(load);
         <div class="project-tags">
           <BaseTag variant="outline">{{ project.code }}</BaseTag>
           <BaseTag :tone="tone(project)">{{ status(project) }}</BaseTag>
+          <button class="secondary-button" @click="openSettings(project.id)">项目设置</button>
         </div>
       </header>
       <section class="project-detail">
@@ -209,6 +228,9 @@ onMounted(load);
           <p class="project-description">{{ project.description || '尚未填写项目说明。' }}</p>
           <dl>
             <BasePropertyRow label="所属客户">{{ project.customerName }}</BasePropertyRow>
+            <BasePropertyRow label="当前阶段" :empty="!project.currentPhase">{{
+              project.currentPhase
+            }}</BasePropertyRow>
             <BasePropertyRow label="计划开始" :empty="!project.plannedStartDate">{{
               project.plannedStartDate?.slice(0, 10)
             }}</BasePropertyRow>

@@ -14,7 +14,7 @@ import {
   XCircle,
   MinusCircle,
 } from '@lucide/vue';
-import { api, identity } from '../../services/session';
+import { api, can } from '../../services/session';
 import { askConfirmation } from '../../services/confirmation';
 import { leaveDelivery } from '../../services/projectContext';
 import ModelDrawer from './ModelDrawer.vue';
@@ -232,7 +232,7 @@ onUnmounted(() => {
     </div>
     <p v-if="error" class="error-note" role="alert">{{ error }}</p>
     <p v-if="notice" class="success-note" role="status">{{ notice }}</p>
-    <template v-if="identity?.canManageOrganization">
+    <template v-if="can('model:view')">
       <p class="model-default-summary">
         当前默认：<strong>{{ data.defaultModel?.name ?? '尚未设置' }}</strong
         ><span

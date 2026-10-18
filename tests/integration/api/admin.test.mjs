@@ -5,18 +5,22 @@ import { connectDatabase } from '../../../apps/api/src/platform/database.mjs';
 import { hashPassword } from '../../../apps/api/src/platform/password.mjs';
 import { digest } from '../../../apps/api/src/platform/auth.mjs';
 import { createApp } from '../../../apps/api/src/app.mjs';
+import { grantRole, dropOrganizations } from '../../fixtures/access.mjs';
 
-test('organization administration respects scope, versions, account and membership boundaries', async (t) => {
+// Organization profile, customers, projects with their master data, and accounts
+// (docs/specs/project-access-admin.md sections 1 and 2.6).
+test('organization administration, project master data and accounts follow the permissions', async (t) => {
   const db = await connectDatabase();
   const org = randomUUID(),
     otherOrg = randomUUID(),
     admin = randomUUID(),
-    member = randomUUID();
+    member = randomUUID(),
+    pm = randomUUID();
   const suffix = org.slice(0, 8);
   const password = 'Admin test passphrase!';
   const testIp = 'admin-test-' + org;
-  const createdUsers = [admin, member];
-  const logins = ['adm-' + suffix, 'mem-' + suffix];
+  const users = [admin, member, pm];
+  const logins = ['adm-' + suffix, 'mem-' + suffix, 'pm-' + suffix];
   let app;
   try {
     await db.query(
@@ -24,21 +28,22 @@ test('organization administration respects scope, versions, account and membersh
       [org, 'T' + suffix.toUpperCase(), otherOrg, 'O' + suffix.toUpperCase()],
     );
     const hash = await hashPassword(password);
-    for (const [i, id] of createdUsers.entries()) {
+    for (const [i, id] of users.entries()) {
       await db.query('INSERT INTO app.app_user(id,login_name,display_name) VALUES($1,$2,$3)', [
         id,
         logins[i],
-        i ? 'Member' : 'Admin',
+        ['Admin', 'Member', 'Manager'][i],
       ]);
       await db.query(
         'INSERT INTO app.user_password(user_id,password_hash,must_change_password) VALUES($1,$2,false)',
         [id, hash],
       );
-      await db.query(
-        'INSERT INTO app.organization_member(organization_id,user_id,access_level) VALUES($1,$2,$3)',
-        [org, id, i ? 'member' : 'admin'],
-      );
+      await db.query('INSERT INTO app.organization_member(organization_id,user_id) VALUES($1,$2)', [
+        org,
+        id,
+      ]);
     }
+    await grantRole(db, org, admin, 'SYS_SUPER_ADMIN');
     app = await createApp({ organizationId: org });
     const req = (method, url, body, cookie) =>
       app.inject({
@@ -54,37 +59,28 @@ test('organization administration respects scope, versions, account and membersh
       return r.headers['set-cookie'].split(';')[0];
     };
     const a = await login(logins[0]),
-      m = await login(logins[1]);
-    await t.test(
-      'technical verification enforces session, administrator and input boundaries',
-      async () => {
-        const url = '/api/admin/technical-verification/table';
-        assert.equal((await req('POST', url, { tableName: 'T000' })).statusCode, 401);
-        assert.equal((await req('POST', url, { tableName: 'T000' }, m)).statusCode, 403);
-        const invalid = await req('POST', url, { tableName: "T000' OR 1=1" }, a);
-        assert.equal(invalid.statusCode, 400);
-        assert.equal(invalid.json().code, 'INVALID_TABLE');
-      },
-    );
-    await t.test('ordinary users cannot read or mutate admin data', async () => {
-      assert.equal((await req('GET', '/api/admin/organization', undefined, m)).statusCode, 403);
+      m = await login(logins[1]),
+      p = await login(logins[2]);
+
+    await t.test('the session carries the organization permissions', async () => {
+      const session = (await req('GET', '/api/session', undefined, a)).json();
+      assert.ok(session.permissions.includes('role:manage'));
+      assert.ok(session.permissions.includes('org.security:manage'));
+      assert.equal(session.canManageOrganization, undefined);
+      assert.deepEqual((await req('GET', '/api/session', undefined, m)).json().permissions, []);
+    });
+    await t.test('without a permission the answer names it', async () => {
+      const r = await req('GET', '/api/admin/organization', undefined, m);
+      assert.equal(r.statusCode, 403);
+      assert.equal(r.json().code, 'ACCESS_DENIED');
+      assert.equal(r.json().details.permission, 'org.profile:view');
+      assert.match(r.json().message, /查看企业资料/);
       assert.equal(
-        (
-          await req(
-            'POST',
-            '/api/admin/customers',
-            { name: 'No', code: 'NO', customerKind: 'external' },
-            m,
-          )
-        ).statusCode,
+        (await req('POST', '/api/admin/customers', { name: 'No', code: 'NO' }, m)).statusCode,
         403,
       );
-      assert.equal(
-        (await req('GET', '/api/session', undefined, a)).json().canManageOrganization,
-        true,
-      );
     });
-    let customer, project;
+    let customer;
     await t.test('customer create, duplicate and stale updates', async () => {
       let r = await req(
         'POST',
@@ -94,15 +90,9 @@ test('organization administration respects scope, versions, account and membersh
       );
       assert.equal(r.statusCode, 201);
       customer = r.json();
+      assert.equal(customer.projectCount, 0);
       assert.equal(
-        (
-          await req(
-            'POST',
-            '/api/admin/customers',
-            { name: 'Duplicate', code: 'CUST', customerKind: 'external' },
-            a,
-          )
-        ).statusCode,
+        (await req('POST', '/api/admin/customers', { name: 'Dup', code: 'CUST' }, a)).statusCode,
         409,
       );
       r = await req(
@@ -129,18 +119,13 @@ test('organization administration respects scope, versions, account and membersh
         404,
       );
       assert.equal(
-        (
-          await req(
-            'POST',
-            '/api/admin/customers',
-            { name: 'bad', code: 'bad space', customerKind: 'external' },
-            a,
-          )
-        ).statusCode,
+        (await req('POST', '/api/admin/customers', { name: 'bad', code: 'bad space' }, a))
+          .statusCode,
         400,
       );
     });
-    await t.test('project creation and scope', async () => {
+    let project;
+    await t.test('a new project starts with phases, milestones and its manager', async () => {
       const foreign = (
         await db.query(
           "INSERT INTO app.customer(organization_id,code,name) VALUES($1,'FOREIGN','Foreign') RETURNING id",
@@ -152,27 +137,12 @@ test('organization administration respects scope, versions, account and membersh
           await req(
             'POST',
             '/api/admin/projects',
-            { customerId: foreign.id, code: 'P', name: 'Project', projectType: 'implementation' },
+            { customerId: foreign.id, code: 'P', name: 'P' },
             a,
           )
         ).statusCode,
         404,
       );
-      const r = await req(
-        'POST',
-        '/api/admin/projects',
-        {
-          customerId: customer.id,
-          code: 'P',
-          name: 'Project',
-          projectType: 'implementation',
-          plannedStartDate: '2026-10-01',
-          plannedEndDate: '2026-12-31',
-        },
-        a,
-      );
-      assert.equal(r.statusCode, 201);
-      project = r.json();
       assert.equal(
         (
           await req(
@@ -190,123 +160,62 @@ test('organization administration respects scope, versions, account and membersh
         ).statusCode,
         400,
       );
-    });
-    await t.test('project member assignment/revocation changes real access', async () => {
-      assert.equal(
-        (await req('POST', `/api/admin/projects/${project.id}/members`, { userId: member }, a))
-          .statusCode,
-        200,
-      );
-      assert.equal((await req('GET', '/api/projects', undefined, m)).json().length, 1);
-      const rows = (
-        await req('GET', `/api/admin/projects/${project.id}/members`, undefined, a)
-      ).json();
-      assert.equal(
-        (
-          await req(
-            'DELETE',
-            `/api/admin/projects/${project.id}/members/${member}`,
-            { rowVersion: rows[0].rowVersion },
-            a,
-          )
-        ).statusCode,
-        200,
-      );
-      assert.equal((await req('GET', '/api/projects', undefined, m)).json().length, 0);
-      assert.equal(
-        (
-          await req(
-            'POST',
-            `/api/admin/projects/${project.id}/members`,
-            { userId: randomUUID() },
-            a,
-          )
-        ).statusCode,
-        404,
-      );
-    });
-    await t.test('self protection and member disabling invalidates sessions', async () => {
-      const users = (await req('GET', '/api/admin/users', undefined, a)).json();
-      const self = users.find((u) => u.id === admin),
-        target = users.find((u) => u.id === member);
-      assert.equal(
-        (
-          await req(
-            'PATCH',
-            `/api/admin/users/${admin}`,
-            { displayName: 'Admin', email: '', status: 'disabled', rowVersion: self.rowVersion },
-            a,
-          )
-        ).statusCode,
-        400,
-      );
-      assert.equal(
-        (
-          await req(
-            'PATCH',
-            `/api/admin/members/${admin}`,
-            { status: 'active', accessLevel: 'member', rowVersion: self.memberVersion },
-            a,
-          )
-        ).statusCode,
-        400,
-      );
-      assert.equal(
-        (
-          await req(
-            'PATCH',
-            `/api/admin/members/${member}`,
-            { status: 'disabled', accessLevel: 'member', rowVersion: target.memberVersion },
-            a,
-          )
-        ).statusCode,
-        200,
-      );
-      assert.equal((await req('GET', '/api/session', undefined, m)).statusCode, 401);
-    });
-    await t.test('new user has one-time password, forced change and can be reset', async () => {
-      const name = 'new-' + suffix;
-      logins.push(name);
       const r = await req(
         'POST',
-        '/api/admin/users',
-        { loginName: name, displayName: 'New user', email: '' },
+        '/api/admin/projects',
+        {
+          customerId: customer.id,
+          code: 'P',
+          name: 'Project',
+          shortName: 'P1',
+          projectType: 'conversion',
+          plannedStartDate: '2026-10-01',
+          plannedEndDate: '2027-06-30',
+          managerId: pm,
+        },
         a,
       );
       assert.equal(r.statusCode, 201);
-      createdUsers.push(r.json().user.id);
-      assert.ok(r.json().temporaryPassword.length >= 12);
-      const signed = await req('POST', '/api/login', {
-        loginName: name,
-        password: r.json().temporaryPassword,
-      });
-      assert.equal(signed.statusCode, 200);
-      assert.equal(signed.json().mustChangePassword, true);
-      const cookie = signed.headers['set-cookie'].split(';')[0];
-      assert.equal((await req('GET', '/api/admin/users', undefined, cookie)).statusCode, 403);
-      const reset = await req(
-        'POST',
-        `/api/admin/users/${r.json().user.id}/reset-password`,
-        { rowVersion: r.json().user.rowVersion },
-        a,
-      );
-      assert.equal(reset.statusCode, 200);
-      assert.equal((await req('GET', '/api/session', undefined, cookie)).statusCode, 401);
-      assert.equal(
-        (await req('GET', '/api/admin/users', undefined, a)).body.includes('password_hash'),
-        false,
-      );
+      project = (await req('GET', '/api/projects/' + r.json().id, undefined, p)).json();
+      assert.equal(project.projectType, 'conversion');
+      assert.equal(project.phases.length, 6);
+      assert.equal(project.milestones.length, 9);
+      assert.ok(project.milestones.some((x) => x.key === 'go_live'));
+      assert.equal(project.keyRoles.manager.displayName, 'Manager');
+      assert.ok(project.access.permissions.includes('project.member:manage'));
+      const list = (await req('GET', '/api/admin/projects', undefined, a)).json();
+      assert.equal(list[0].managerName, 'Manager');
+      assert.equal(list[0].memberCount, 1);
+      assert.equal((await req('GET', '/api/projects', undefined, m)).json().length, 0);
+      assert.equal((await req('GET', '/api/projects/' + project.id, undefined, m)).statusCode, 404);
     });
-    await t.test('archived projects reject edits and membership additions', async () => {
-      const r = await req(
+    await t.test('the project manager maintains the master data', async () => {
+      let r = await req(
         'PATCH',
-        '/api/admin/projects/' + project.id,
-        { ...project, status: 'archived' },
-        a,
+        '/api/projects/' + project.id,
+        {
+          ...project,
+          status: 'active',
+          methodology: 'activate',
+          contractRole: 'subcontract',
+          primeContractor: 'Prime Ltd',
+          sapProduct: 's4_onpremise',
+          sapRelease: 'S/4HANA 2023 FPS02',
+          deployment: 'private_cloud',
+          modules: ['MM', 'FICO', 'SD'],
+          language: 'zh',
+          namespace: '/abc/',
+          defaultPackage: 'zfi_report',
+        },
+        p,
       );
-      assert.equal(r.statusCode, 200);
+      assert.equal(r.statusCode, 200, r.body);
+      project = r.json();
+      assert.deepEqual(project.modules, ['FICO', 'MM', 'SD']);
+      assert.equal(project.namespace, '/ABC/');
+      assert.equal(project.defaultPackage, 'ZFI_REPORT');
       assert.equal(
-        (await req('POST', `/api/admin/projects/${project.id}/members`, { userId: admin }, a))
+        (await req('PATCH', '/api/projects/' + project.id, { ...project, rowVersion: '1' }, p))
           .statusCode,
         409,
       );
@@ -314,9 +223,267 @@ test('organization administration respects scope, versions, account and membersh
         (
           await req(
             'PATCH',
-            '/api/admin/projects/' + project.id,
-            { ...r.json(), name: 'Changed' },
+            '/api/projects/' + project.id,
+            { ...project, contractRole: 'subcontract', primeContractor: '' },
+            p,
+          )
+        ).statusCode,
+        400,
+      );
+      r = await req(
+        'PATCH',
+        `/api/projects/${project.id}/commercial`,
+        {
+          contractNo: 'C-1',
+          contractModel: 'fixed',
+          contractDays: 820.5,
+          devBudgetDays: 120,
+          teamSize: 14,
+          rowVersion: project.rowVersion,
+        },
+        p,
+      );
+      assert.equal(r.statusCode, 200);
+      project = r.json();
+      assert.equal(project.contractDays, 820.5);
+      assert.equal(project.plannedDays, 0);
+      assert.equal(
+        (
+          await req(
+            'PATCH',
+            `/api/projects/${project.id}/commercial`,
+            { contractDays: 1.25, rowVersion: project.rowVersion },
+            p,
+          )
+        ).statusCode,
+        400,
+      );
+      // Key positions and module leads must be project members.
+      assert.equal(
+        (
+          await req(
+            'PUT',
+            `/api/projects/${project.id}/team`,
+            { keyRoles: { architect: member }, rowVersion: project.rowVersion },
+            p,
+          )
+        ).statusCode,
+        400,
+      );
+      r = await req(
+        'PUT',
+        `/api/projects/${project.id}/team`,
+        {
+          keyRoles: { manager: pm },
+          moduleLeads: [{ module: 'MM', userId: pm }],
+          rowVersion: project.rowVersion,
+        },
+        p,
+      );
+      assert.equal(r.statusCode, 200);
+      project = r.json();
+      assert.equal(project.moduleLeads[0].module, 'MM');
+      r = await req(
+        'POST',
+        `/api/projects/${project.id}/contacts`,
+        {
+          name: '张经理',
+          contactRole: 'customer_pm',
+          phone: '13800000000',
+          email: 'zhang@example.com',
+          modules: ['MM'],
+        },
+        p,
+      );
+      assert.equal(r.statusCode, 200);
+      project = r.json();
+      assert.equal(project.contacts[0].phone, '13800000000');
+      const phases = project.phases.map((ph) =>
+        ph.key === 'prepare'
+          ? { ...ph, status: 'in_progress', plannedStart: '2026-10-01', plannedEnd: '2026-10-31' }
+          : ph,
+      );
+      r = await req('PUT', `/api/projects/${project.id}/phases`, { phases }, p);
+      assert.equal(r.statusCode, 200);
+      assert.equal(r.json().currentPhase, '准备');
+      assert.equal(
+        (await req('PUT', `/api/projects/${project.id}/phases`, { phases }, p)).statusCode,
+        409,
+        'stale phase versions are refused',
+      );
+      const freeze = r.json().milestones.find((x) => x.key === 'code_freeze');
+      assert.equal(
+        (
+          await req(
+            'DELETE',
+            `/api/projects/${project.id}/milestones/${freeze.id}`,
+            { rowVersion: freeze.rowVersion },
+            p,
+          )
+        ).statusCode,
+        409,
+      );
+      r = await req(
+        'PATCH',
+        `/api/projects/${project.id}/milestones/${freeze.id}`,
+        { ...freeze, plannedOn: '2027-01-15' },
+        p,
+      );
+      assert.equal(r.statusCode, 200);
+      r = await req(
+        'POST',
+        `/api/projects/${project.id}/milestones`,
+        { name: '数据迁移彩排', phaseKey: 'deploy', plannedOn: '2027-03-01' },
+        p,
+      );
+      const extra = r.json().milestones.find((x) => x.name === '数据迁移彩排');
+      assert.equal(
+        (
+          await req(
+            'DELETE',
+            `/api/projects/${project.id}/milestones/${extra.id}`,
+            { rowVersion: extra.rowVersion },
+            p,
+          )
+        ).statusCode,
+        200,
+      );
+      r = await req(
+        'POST',
+        `/api/projects/${project.id}/health`,
+        {
+          overall: 'yellow',
+          schedule: 'yellow',
+          scope: 'green',
+          cost: 'green',
+          quality: 'green',
+          note: '蓝图延期一周',
+        },
+        p,
+      );
+      assert.equal(r.statusCode, 200);
+      project = r.json();
+      assert.equal(project.health[0].overall, 'yellow');
+      assert.equal(project.healthStale, false);
+    });
+    await t.test(
+      'observers see the project without commercial fields or contact details',
+      async () => {
+        await grantRole(db, org, member, 'C_OBSERVER', { projectId: project.id });
+        const seen = (await req('GET', '/api/projects/' + project.id, undefined, m)).json();
+        assert.equal(seen.contractDays, undefined);
+        assert.equal(seen.plannedDays, undefined);
+        assert.equal(seen.contacts[0].phone, '');
+        assert.equal(seen.contacts[0].hidden, true);
+        assert.equal(
+          (await req('GET', '/api/projects', undefined, m)).json()[0].contractNo,
+          undefined,
+        );
+        const denied = await req('PATCH', '/api/projects/' + project.id, { ...project }, m);
+        assert.equal(denied.statusCode, 403);
+        assert.equal(denied.json().details.permission, 'project:edit');
+      },
+    );
+    await t.test('accounts: positions, one-time passwords and self protection', async () => {
+      const positions = (await req('GET', '/api/admin/positions', undefined, a)).json();
+      const pmo = positions.find((x) => x.code === 'PMO');
+      const name = 'new-' + suffix;
+      logins.push(name);
+      const r = await req(
+        'POST',
+        '/api/admin/users',
+        {
+          loginName: name,
+          displayName: 'New user',
+          email: '',
+          positionId: pmo.id,
+          grantPositionRoles: true,
+          skillModules: ['MM'],
+        },
+        a,
+      );
+      assert.equal(r.statusCode, 201);
+      const created = r.json();
+      users.push(created.user.id);
+      assert.deepEqual(created.granted, ['C_PMO']);
+      assert.equal(created.user.position.name, 'PMO');
+      assert.ok(created.temporaryPassword.length >= 12);
+      const signed = await req('POST', '/api/login', {
+        loginName: name,
+        password: created.temporaryPassword,
+      });
+      assert.equal(signed.json().mustChangePassword, true);
+      const cookie = signed.headers['set-cookie'].split(';')[0];
+      assert.equal((await req('GET', '/api/admin/users', undefined, cookie)).statusCode, 403);
+      const reset = await req(
+        'POST',
+        `/api/admin/users/${created.user.id}/reset-password`,
+        { rowVersion: created.user.rowVersion },
+        a,
+      );
+      assert.equal(reset.statusCode, 200);
+      assert.equal((await req('GET', '/api/session', undefined, cookie)).statusCode, 401);
+      const all = (await req('GET', '/api/admin/users', undefined, a)).json();
+      assert.equal(JSON.stringify(all).includes('password_hash'), false);
+      const self = all.find((u) => u.id === admin);
+      assert.equal(
+        (await req('PATCH', `/api/admin/users/${admin}`, { ...self, status: 'disabled' }, a))
+          .statusCode,
+        400,
+      );
+      const target = all.find((u) => u.id === member);
+      assert.equal(
+        (
+          await req(
+            'PATCH',
+            `/api/admin/users/${member}`,
+            { ...target, positionId: target.position?.id, status: 'disabled' },
             a,
+          )
+        ).statusCode,
+        200,
+      );
+      assert.equal((await req('GET', '/api/session', undefined, m)).statusCode, 401);
+      const me = (await req('GET', '/api/me', undefined, p)).json();
+      assert.equal(
+        (
+          await req(
+            'PATCH',
+            '/api/me',
+            { displayName: '项目经理', email: 'pm@example.com', rowVersion: me.rowVersion },
+            p,
+          )
+        ).json().displayName,
+        '项目经理',
+      );
+    });
+    await t.test('archiving makes the project read-only', async () => {
+      const r = await req('POST', `/api/projects/${project.id}/archive`, { rowVersion: '1' }, p);
+      assert.equal(r.statusCode, 409, 'stale version');
+      const fresh = (await req('GET', '/api/projects/' + project.id, undefined, p)).json();
+      assert.equal(
+        (
+          await req(
+            'POST',
+            `/api/projects/${project.id}/archive`,
+            { rowVersion: fresh.rowVersion },
+            p,
+          )
+        ).statusCode,
+        200,
+      );
+      assert.equal(
+        (await req('PATCH', '/api/projects/' + project.id, { ...fresh, name: 'Changed' }, p))
+          .statusCode,
+        409,
+      );
+      assert.equal(
+        (
+          await req(
+            'POST',
+            `/api/projects/${project.id}/health`,
+            { overall: 'red', schedule: 'red', scope: 'red', cost: 'red', quality: 'red' },
+            p,
           )
         ).statusCode,
         409,
@@ -325,26 +492,14 @@ test('organization administration respects scope, versions, account and membersh
     assert.ok(
       (
         await db.query(
-          "SELECT count(*) FROM app.audit_event WHERE organization_id=$1 AND action LIKE 'admin.%'",
+          "SELECT count(*) FROM app.audit_event WHERE organization_id=$1 AND action IN ('admin.project.create','project.update','project.health.report')",
           [org],
         )
-      ).rows[0].count > 0,
+      ).rows[0].count >= 3,
     );
   } finally {
     await app?.close();
-    await db.query('DELETE FROM app.auth_session WHERE organization_id=$1', [org]);
-    await db.query('DELETE FROM app.project_member WHERE organization_id=$1', [org]);
-    await db.query('DELETE FROM app.project WHERE organization_id=ANY($1::uuid[])', [
-      [org, otherOrg],
-    ]);
-    await db.query('DELETE FROM app.customer WHERE organization_id=ANY($1::uuid[])', [
-      [org, otherOrg],
-    ]);
-    await db.query('DELETE FROM app.organization_member WHERE organization_id=$1', [org]);
-    await db.query('DELETE FROM app.user_password WHERE user_id=ANY($1::uuid[])', [createdUsers]);
-    await db.query('DELETE FROM app.app_user WHERE id=ANY($1::uuid[])', [createdUsers]);
-    await db.query('DELETE FROM app.audit_event WHERE organization_id=$1', [org]);
-    await db.query('DELETE FROM app.organization WHERE id=ANY($1::uuid[])', [[org, otherOrg]]);
+    await dropOrganizations(db, [org, otherOrg], users);
     for (const key of [testIp, ...logins])
       await db.query('DELETE FROM app.login_throttle WHERE key_hash=$1', [digest(key)]);
     await db.end();

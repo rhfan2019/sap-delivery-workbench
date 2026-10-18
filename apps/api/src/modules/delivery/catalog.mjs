@@ -18,7 +18,7 @@ export function catalogRoutes(app, c) {
     return tags(c.pool, c.organizationId, project.id);
   });
   app.post(tagBase, async (req, reply) =>
-    c.write(req, async (db, current) => {
+    c.write(req, 'delivery.item:edit', async (db, current) => {
       const input = tagInput(req.body ?? {}, { creating: true });
       const { rows } = await db
         .query(
@@ -32,7 +32,7 @@ export function catalogRoutes(app, c) {
     }),
   );
   app.patch(tagBase + '/:tagId', async (req) =>
-    c.write(req, async (db) => {
+    c.write(req, 'delivery.config:manage', async (db) => {
       uuid(req.params.tagId);
       const input = tagInput(req.body ?? {}, { creating: false });
       const keys = Object.keys(input);
@@ -49,7 +49,7 @@ export function catalogRoutes(app, c) {
     }),
   );
   app.delete(tagBase + '/:tagId', async (req) =>
-    c.write(req, async (db) => {
+    c.write(req, 'delivery.config:manage', async (db) => {
       uuid(req.params.tagId);
       const { rowCount } = await db.query(
         'DELETE FROM app.development_tag WHERE organization_id=$1 AND project_id=$2 AND id=$3',
@@ -64,13 +64,10 @@ export function catalogRoutes(app, c) {
     const { project } = await c.read(req);
     return customFields(c.pool, c.organizationId, project.id);
   });
-  const adminWrite = (req, operation) =>
-    c.write(req, async (db, current, project) => {
-      if (project.access_level !== 'admin') throw failure(403, '只有项目管理员可以维护自定义列。');
-      return operation(db, current);
-    });
+  const configWrite = (req, operation) =>
+    c.write(req, 'delivery.config:manage', (db, current) => operation(db, current));
   app.post(fieldBase, async (req, reply) =>
-    adminWrite(req, async (db, current) => {
+    configWrite(req, async (db, current) => {
       const input = customFieldInput(req.body ?? {}, { creating: true });
       const { rows } = await db.query(
         'SELECT count(*)::int AS n, coalesce(max(sort_order),0)::int AS last FROM app.development_field WHERE organization_id=$1 AND project_id=$2 AND archived_at IS NULL',
@@ -104,7 +101,7 @@ export function catalogRoutes(app, c) {
     }),
   );
   app.patch(fieldBase + '/:fieldId', async (req) =>
-    adminWrite(req, async (db) => {
+    configWrite(req, async (db) => {
       uuid(req.params.fieldId);
       const expected = version(req.body?.rowVersion);
       const old = (await customFields(db, c.organizationId, req.params.projectId)).find(

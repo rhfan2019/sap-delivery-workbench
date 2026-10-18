@@ -10,6 +10,7 @@
 - 提交前运行 npm run check:architecture，并完成契约规定的相关验证；失败必须如实报告。
 - 需要改变规则时，先修改契约及对应检查规则，再迁移消费者。不得临时绕过检查器。
 - 平台定位为实施方内部的交付生产工具，按[平台定位方向决策](docs/architecture/2026-10-17-platform-positioning-decision.md)执行：不做客户的项目管理系统，不做客户内网部署，不连 PRD；项目数据无限期保留、人工归档。
+- 权限按[项目主数据、权限与设置菜单设计](docs/specs/project-access-admin.md)：每个接口都经 `access` 模块按权限点校验，不得再按“是否管理员 / 是否成员”判断；新增功能先在 `packages/contracts/access/catalog.mjs` 登记权限点，并为缺权限（403）与范围外项目（404）写集成测试。
 - FSD 设计助手按[方向决策](docs/architecture/2026-10-11-fsd-assistant-direction-decision.md)完全重构：只保留一个版本，历史设计助手各代（含 410 边界、旧表与数据）按契约 3.1 清除，不恢复旧设计引擎。其他模块的目录整理仍不授权删除历史数据或改变公开 API。
 - ABAP 开发助手按[方向决策](docs/architecture/2026-10-13-abap-dev-agent-direction-decision.md)与[实施计划](docs/plans/2026-10-14-abap-dev-agent-implementation.md)实施；智能体共用能力归 agent-core，提示词与运行资源按契约 3.1 放置和命名。
 - 界面风格以 [设计规范](docs/specs/DESIGN.md) 为准：只用其中的令牌（`theme.css` 变量），不新增颜色值；页面按其第 9 节分批迁移。

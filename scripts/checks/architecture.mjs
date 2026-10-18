@@ -12,6 +12,8 @@ const browserContracts = new Set([
   'agent-core/sse',
   'agent-core/types',
   'delivery/fields',
+  'access/catalog',
+  'projects/options',
 ]);
 // Contract 1.3/1.7: one assistant version; earlier generations stay deleted.
 const agentModules = ['agent-core', 'abap-fsd-agent', 'abap-dev-agent'];
@@ -43,6 +45,17 @@ const legacyIdentifiers = [
 const sapWriteTools =
   /['"`](createObject|lock|unLock|setObjectSource|activateByName|runClass|deleteObject)['"`]/;
 const sapWriter = 'apps/api/src/modules/sap/test-data.mjs';
+// Contract 1.18: authorization goes through the access module; the administrator flag and the
+// organization-level SAP tables are gone.
+const retiredIdentifiers = [
+  [/\baccess_level\b/, 'access_level'],
+  [/\bcanManageOrganization\b/, 'canManageOrganization'],
+  [/\bapp\.sap_system\b/, 'app.sap_system'],
+  [/\bapp\.sap_system_grant\b/, 'app.sap_system_grant'],
+  [/\bapp\.project_sap_config\b/, 'app.project_sap_config'],
+  [/\bapp\.user_project_sap_config\b/, 'app.user_project_sap_config'],
+];
+const accessModule = 'apps/api/src/modules/access/';
 export function checkLegacy(file, content = '') {
   const errors = [];
   if (agentRoots.some((root) => file.startsWith(root)) && /\/v\d+\//.test(file))
@@ -63,6 +76,18 @@ export function checkLegacy(file, content = '') {
   )
     for (const id of legacyIdentifiers)
       if (content.includes(id)) errors.push(`${file}: Legacy assistant identifier ${id}`);
+  if (
+    /^(apps|packages|scripts|tools|infra)\//.test(file) &&
+    file !== 'scripts/checks/architecture.mjs'
+  )
+    for (const [pattern, id] of retiredIdentifiers)
+      if (pattern.test(content)) errors.push(`${file}: Retired identifier ${id}`);
+  if (
+    file.startsWith('apps/api/') &&
+    !file.startsWith(accessModule) &&
+    /\bapp\.access_/.test(content)
+  )
+    errors.push(`${file}: Access table outside the access module`);
   const write = file.startsWith('apps/api/') && file !== sapWriter && content.match(sapWriteTools);
   if (write) errors.push(`${file}: SAP write tool ${write[1]} outside ${sapWriter}`);
   return errors;

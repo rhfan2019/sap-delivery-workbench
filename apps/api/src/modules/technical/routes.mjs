@@ -1,11 +1,11 @@
-import { adminContext } from '../admin/context.mjs';
+import { accessContext } from '../access/public.mjs';
 import { queryTable, mcpError } from './sap-mcp.mjs';
 
 export function registerTechnicalRoutes(app, pool, organizationId, requireSession) {
-  const context = adminContext(pool, organizationId, requireSession);
+  const context = accessContext(pool, organizationId, requireSession);
   let busy = false;
   app.post('/api/admin/technical-verification/table', async (req, reply) => {
-    await context.authorize(req);
+    await context.authorize(req, 'ops.diagnostics:run');
     if (busy)
       return reply.code(429).send({ code: 'MCP_BUSY', message: mcpError('MCP_BUSY').message });
     busy = true;

@@ -1,7 +1,25 @@
-import { ref } from 'vue';
-import { api, identity, type Project } from './session';
+import { ref, watch } from 'vue';
+import { api, identity, type Project, type ProjectAccess } from './session';
 export const projects = ref<Project[]>([]);
 export const currentProject = ref('');
+// The user's permissions in the current project, for menus and buttons (contract 3.5).
+export const projectAccess = ref<ProjectAccess | null>(null);
+let accessRequest = 0;
+export async function loadProjectAccess() {
+  const id = currentProject.value;
+  const request = ++accessRequest;
+  if (!id) {
+    projectAccess.value = null;
+    return;
+  }
+  try {
+    const access = await api<ProjectAccess>(`/projects/${id}/access`);
+    if (request === accessRequest) projectAccess.value = access;
+  } catch {
+    if (request === accessRequest) projectAccess.value = null;
+  }
+}
+watch(currentProject, () => void loadProjectAccess());
 export const defaultProject = ref<string | null>(null);
 export const projectError = ref('');
 export const leaveDelivery = ref<null | (() => Promise<boolean>)>(null);

@@ -67,6 +67,8 @@ export interface Tag {
 export interface ListContext {
   members: Member[];
   tags: Tag[];
+  // The code freeze date of the project (docs/specs/project-access-admin.md 1.3), if planned.
+  codeFreeze?: string | null;
 }
 export type Changes = Record<string, unknown>;
 

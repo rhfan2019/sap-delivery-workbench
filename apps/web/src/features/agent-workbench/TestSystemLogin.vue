@@ -1,128 +1,70 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { Button } from '@/components/ui/button';
-import { api } from '../../services/session';
+import SapLoginDialog from '../sap/SapLoginDialog.vue';
+import { credentialLabel, sapApi } from '../sap/api';
+import { useProjectSap } from '../sap/useProjectSap';
 
-// Contract 3.4: the user's own QAS user for this login, entered in a form the browser can
-// remember. The server keeps it in memory only.
+// Contract 3.4: the project's default test system and the user's own login to it, for test data.
+// Logging in uses the shared SAP login (this login only, or saved under the policy).
 const props = withDefaults(defineProps<{ base: string; compact?: boolean }>(), {
   compact: false,
 });
-const emit = defineEmits<{ status: [system: TestSystem] }>();
-interface TestSystem {
-  configured: boolean;
-  systemCode?: string;
-  client?: string | null;
-  username?: string;
-  ready: boolean;
-  profileAvailable?: boolean;
-}
-const projectId = computed(() => props.base.split('/')[2]);
-const system = ref<TestSystem | null>(null),
-  username = ref(''),
-  password = ref(''),
-  open = ref(!props.compact),
-  busy = ref(false),
-  error = ref('');
-const path = () => `/projects/${projectId.value}/sap/test-system`;
-function adopt(value: TestSystem) {
-  system.value = value;
-  username.value = value.username ?? username.value;
-  emit('status', value);
-}
-onMounted(async () => {
-  try {
-    adopt(await api<TestSystem>(path()));
-  } catch (e) {
-    error.value = (e as Error).message;
-  }
-});
-// `fromProfile`: local development only, the server reads the machine's credentials file.
-async function login(fromProfile = false) {
-  busy.value = true;
-  error.value = '';
-  try {
-    adopt(
-      await api<TestSystem>(
-        path(),
-        fromProfile ? { useProfile: true } : { username: username.value, password: password.value },
-        'POST',
-      ),
-    );
-    open.value = !props.compact;
-  } catch (e) {
-    error.value = (e as Error).message;
-  } finally {
-    password.value = '';
-    busy.value = false;
-  }
-}
+const emit = defineEmits<{ status: [system: { ready: boolean }] }>();
+const projectId = computed(() => props.base.split('/')[2] ?? '');
+const sap = useProjectSap(() => projectId.value);
+onMounted(() => sap.reload());
+const system = computed(() => sap.defaultOf('test'));
+const ready = computed(() => !!system.value && system.value.credential?.state !== 'none');
+watch(ready, (value) => emit('status', { ready: value }), { immediate: true });
+const loginOpen = ref(false);
+const error = ref('');
 async function logout() {
+  if (!system.value) return;
   try {
-    adopt(await api<TestSystem>(path(), undefined, 'DELETE'));
+    sap.adopt(await sapApi.logout(projectId.value, system.value.id));
   } catch (e) {
     error.value = (e as Error).message;
   }
 }
 </script>
 <template>
-  <div v-if="system?.configured" class="space-y-2 text-sm">
+  <div v-if="system" class="space-y-2 text-sm">
     <p class="text-xs text-muted-foreground">
-      测试系统 QAS（{{ system.systemCode }} client {{ system.client }}）：
-      <template v-if="system.ready"
-        >已登录 {{ system.username }}
-        <button type="button" class="underline" @click="logout">退出</button></template
-      >
-      <template v-else
-        >未登录<button
-          v-if="compact && !open"
+      测试系统 {{ system.sid }} client {{ system.client }}：
+      <template v-if="ready"
+        >{{ credentialLabel[system.credential!.state] }}
+        {{ system.credential?.username }}
+        <button
+          v-if="system.credential?.state !== 'profile'"
           type="button"
-          class="ml-1 underline"
-          @click="open = true"
+          class="underline"
+          @click="logout"
         >
-          登录
+          退出
         </button></template
       >
+      <template v-else>未登录</template>
     </p>
-    <form
-      v-if="!system.ready && open"
-      class="flex flex-wrap items-center gap-2"
-      autocomplete="on"
-      @submit.prevent="login()"
+    <Button v-if="!ready && !compact" type="button" size="sm" @click="loginOpen = true"
+      >用本人的 SAP 用户登录测试系统</Button
     >
-      <input
-        v-model="username"
-        name="username"
-        autocomplete="username"
-        required
-        placeholder="您本人的 QAS 用户"
-        class="rounded border px-2 py-1"
-      />
-      <input
-        v-model="password"
-        name="password"
-        type="password"
-        autocomplete="current-password"
-        required
-        placeholder="QAS 密码"
-        class="rounded border px-2 py-1"
-      />
-      <Button type="submit" size="sm" :disabled="busy">{{
-        busy ? '正在验证…' : '登录 QAS'
-      }}</Button>
-      <Button
-        v-if="system.profileAvailable"
-        type="button"
-        size="sm"
-        variant="outline"
-        :disabled="busy"
-        @click="login(true)"
-        >使用本机凭据文件登录</Button
-      >
-    </form>
+    <button v-else-if="!ready" type="button" class="text-xs underline" @click="loginOpen = true">
+      登录
+    </button>
     <p v-if="error" class="text-destructive" role="alert">{{ error }}</p>
+    <SapLoginDialog
+      v-if="sap.view.value"
+      v-model:open="loginOpen"
+      :project-id="projectId"
+      :system="system"
+      :can-save="sap.view.value.canSave"
+      :policy="sap.view.value.policy"
+      :profile-login="sap.view.value.profileLogin"
+      @saved="sap.adopt"
+    />
   </div>
-  <p v-else-if="system && !compact" class="text-sm text-destructive">
-    项目未配置 QAS 系统，请联系管理员在项目参数中配置。
+  <p v-else-if="sap.view.value && !compact" class="text-sm text-destructive">
+    项目还没有登记测试系统，请项目经理在“设置 → 项目 → SAP 系统”中登记。
   </p>
 </template>

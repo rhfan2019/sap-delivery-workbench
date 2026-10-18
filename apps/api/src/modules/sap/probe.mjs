@@ -1,4 +1,7 @@
 import { connectMcp, decodeResult } from '../technical/sap-mcp.mjs';
+// SAP refused the user or password (the credential must not be tried again).
+export const isAuthFailure = (error) =>
+  /\b401\b|unauthori[sz]ed|authentication|logon failed/i.test(String(error?.message ?? error));
 // Only fixed public messages leave this boundary; raw MCP errors may contain credentials.
 function classify(error) {
   const text = String(error?.message ?? error);

@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 import pg from 'pg';
 import { databaseConfig } from './platform/database.mjs';
-import { createAuth, failure } from './platform/auth.mjs';
+import { createAuth, failure, transaction } from './platform/auth.mjs';
 import { registerAdminRoutes } from './modules/admin/routes.mjs';
 import { registerAbapFsdAgent } from './modules/abap-fsd-agent/routes.mjs';
 import { registerAbapDevAgent } from './modules/abap-dev-agent/routes.mjs';
@@ -10,6 +10,7 @@ import { registerDeliveryRoutes } from './modules/delivery/routes.mjs';
 import { registerTechnicalRoutes } from './modules/technical/routes.mjs';
 import { registerSapRoutes } from './modules/sap/routes.mjs';
 import { registerModelRoutes } from './modules/models/routes.mjs';
+import { accessContext, registerAccessRoutes, syncBuiltInRoles } from './modules/access/public.mjs';
 
 export async function createApp({
   organizationId = process.env.DEFAULT_ORGANIZATION_ID,
@@ -22,6 +23,8 @@ export async function createApp({
   if (!organizationId) throw new Error('Run npm run bootstrap before starting the app.');
   const pool = new pg.Pool({ ...databaseConfig({ runtime: true }), max: 8 });
   const auth = await createAuth(pool, organizationId);
+  // Contract 3.5: built-in roles follow the permission catalog of this release.
+  await transaction(pool, (db) => syncBuiltInRoles(db, organizationId));
   const app = Fastify({
     logger: false,
     bodyLimit: 8192,
@@ -70,9 +73,16 @@ export async function createApp({
     if (['23503', '23514', '22007', '22008'].includes(error.code))
       return reply.code(400).send({ message: '数据关系、状态或日期无效，请检查输入。' });
     const status = error.statusCode ?? 503;
-    reply
-      .code(status)
-      .send({ message: status >= 500 ? '服务暂不可用，请稍后重试。' : error.message });
+    if (status >= 500) {
+      // Local diagnosis only; production keeps error details out of logs.
+      if (process.env.API_DEBUG_ERRORS === '1') console.error(error);
+      return reply.code(status).send({ message: '服务暂不可用，请稍后重试。' });
+    }
+    // Machine-readable reasons (ACCESS_DENIED with the missing permission, SAP_LOGIN_REQUIRED…).
+    const body = { message: error.message };
+    if (typeof error.code === 'string' && /^[A-Z][A-Z_]+$/.test(error.code)) body.code = error.code;
+    if (error.details) body.details = error.details;
+    reply.code(status).send(body);
   });
   async function requireSession(req, business = false) {
     const current = await auth.session(getToken(req));
@@ -85,15 +95,20 @@ export async function createApp({
     await pool.query('SELECT 1');
     return { status: 'ready' };
   });
+  const access = accessContext(pool, organizationId, requireSession);
   app.post('/api/login', async (req, reply) => {
     const { loginName, password } = req.body ?? {};
     const result = await auth.login(loginName, password, req.ip);
     reply.header('Set-Cookie', cookie(result.token, 8 * 60 * 60));
-    return result.identity;
+    return {
+      ...result.identity,
+      permissions: await access.organization(pool, result.identity.user.id),
+    };
   });
+  // The identity plus the organization-level permissions the web uses for menus.
   app.get('/api/session', async (req) => {
     const { sessionId, ...identity } = await requireSession(req);
-    return identity;
+    return { ...identity, permissions: await access.organization(pool, identity.user.id) };
   });
   app.post('/api/logout', async (req, reply) => {
     await auth.logout(getToken(req));
@@ -106,32 +121,8 @@ export async function createApp({
     reply.header('Set-Cookie', cookie('', 0));
     return { ok: true };
   });
-  const projectSql = `SELECT p.id,p.code,p.name,p.status,p.is_paused AS "isPaused",p.description,
-    p.planned_start_date AS "plannedStartDate",p.planned_end_date AS "plannedEndDate",c.name AS "customerName"
-    FROM app.project p JOIN app.project_member m ON m.project_id=p.id AND m.organization_id=p.organization_id
-    JOIN app.customer c ON c.id=p.customer_id AND c.organization_id=p.organization_id
-    WHERE p.organization_id=$1 AND m.user_id=$2 AND m.status='active'`;
-  app.get('/api/projects', async (req) => {
-    const current = await requireSession(req, true);
-    return (
-      await pool.query(projectSql + ' ORDER BY p.updated_at DESC,p.id DESC', [
-        organizationId,
-        current.user.id,
-      ])
-    ).rows;
-  });
-  app.get('/api/projects/:id', async (req) => {
-    const current = await requireSession(req, true);
-    if (!/^[0-9a-f-]{36}$/i.test(req.params.id)) throw failure(404, '项目不存在或无权访问。');
-    const { rows } = await pool.query(projectSql + ' AND p.id=$3', [
-      organizationId,
-      current.user.id,
-      req.params.id,
-    ]);
-    if (!rows[0]) throw failure(404, '项目不存在或无权访问。');
-    return rows[0];
-  });
   registerAdminRoutes(app, pool, organizationId, requireSession);
+  registerAccessRoutes(app, access);
   registerDeliveryRoutes(app, pool, organizationId, requireSession);
   registerAbapFsdAgent(app, pool, organizationId, requireSession, abapFsdAgent);
   registerAbapDevAgent(app, pool, organizationId, requireSession, abapDevAgent);

@@ -7,13 +7,7 @@ import {
   executeTestData,
   CLASS_PREFIX,
 } from '../../../apps/api/src/modules/sap/test-data.mjs';
-import {
-  rememberCredentials,
-  recalledCredentials,
-  forgetCredentials,
-  profileCredentials,
-} from '../../../apps/api/src/modules/sap/session-credentials.mjs';
-import { binding } from '../../../apps/api/src/modules/sap/resolve.mjs';
+import { profileCredentials } from '../../../apps/api/src/modules/sap/credentials.mjs';
 
 const body = [
   'DATA: ls_header TYPE bapisdhd1, lt_return TYPE STANDARD TABLE OF bapiret2, lv_vbeln TYPE vbeln_va.',
@@ -126,6 +120,7 @@ function fakes({
     close: async () => {},
   };
   const deps = {
+    allowed: async () => {},
     connect: async () => connection,
     resolve: async () => ({
       target: {
@@ -190,10 +185,18 @@ test('a failed activation or run is recorded and the class is still deleted', as
   assert.equal((await executeTestData(g.db, g.scope, g.request, g.deps)).status, 'failed');
 });
 
-test('execution refuses PRD-like targets and code failing the review before touching SAP', async () => {
+test('execution refuses non-test targets, people without the permission and code failing the review', async () => {
   const f = fakes();
-  f.deps.resolve = async () => ({ target: { environment: 'PRD' }, env: {} });
-  await assert.rejects(executeTestData(f.db, f.scope, f.request, f.deps), /只能建在 QAS/);
+  f.deps.resolve = async () => ({ target: { environment: 'DEV' }, env: {} });
+  await assert.rejects(executeTestData(f.db, f.scope, f.request, f.deps), /只能建在项目的测试系统/);
+  const h = fakes();
+  h.deps.allowed = async () => {
+    throw Object.assign(new Error('您没有在测试系统创建测试数据的权限。'), {
+      code: 'ACCESS_DENIED',
+    });
+  };
+  await assert.rejects(executeTestData(h.db, h.scope, h.request, h.deps), /权限/);
+  assert.equal(h.calls.length, 0);
   const g = fakes();
   await assert.rejects(
     executeTestData(g.db, g.scope, { ...g.request, body: 'SUBMIT zx.' }, g.deps),
@@ -202,19 +205,7 @@ test('execution refuses PRD-like targets and code failing the review before touc
   assert.equal(f.calls.length + g.calls.length, 0);
 });
 
-test('session credentials live per login and project, expire, and can be forgotten', () => {
-  const effective = { systemId: 's', sapUrl: 'https://q', client: '100', username: 'TESTER' };
-  rememberCredentials('login-1', 'p', effective, 'secret', 1000);
-  const entry = recalledCredentials('login-1', 'p', 2000);
-  assert.equal(entry.password, 'secret');
-  assert.equal(entry.binding, binding(effective));
-  assert.equal(recalledCredentials('login-2', 'p', 2000), null);
-  assert.equal(recalledCredentials('login-1', 'p', 1000 + 13 * 3600 * 1000), null);
-  forgetCredentials('login-1', 'p');
-  assert.equal(recalledCredentials('login-1', 'p', 2000), null);
-});
-
-test('the local credentials file logs in only outside production and for the same QAS', async () => {
+test('the local credentials file logs in only outside production and for the same system', async () => {
   const { mkdtemp, writeFile } = await import('node:fs/promises');
   const { tmpdir } = await import('node:os');
   const { join } = await import('node:path');

@@ -21,8 +21,8 @@ export function fileRoutes(app, c) {
     const id = randomUUID();
     let written = false;
     try {
-      return await c.write(req, async (db, current) => {
-        await c.item(db, req);
+      return await c.write(req, 'delivery.item:edit', async (db, current, project) => {
+        await c.allow(db, project, await c.item(db, req), 'delivery.item:edit');
         const name = text(req.body?.name, '文件名', 200);
         if (/[\\/\x00-\x1f\x7f]/.test(name)) throw failure(400, '文件名含无效字符。');
         const content = req.body?.content;

@@ -16,12 +16,13 @@ import BaseMenuSeparator from './base/BaseMenuSeparator.vue';
 import BaseNavItem from './base/BaseNavItem.vue';
 import BaseResizeHandle from './base/BaseResizeHandle.vue';
 import BaseToaster from './base/BaseToaster.vue';
-import { modules, moduleOf } from '../features/navigation';
+import { modules, moduleOf, entryOf, visibleSections } from '../features/navigation';
 import { api, identity } from '../services/session';
 import { useShortcut } from '../services/shortcuts';
 import {
   projects,
   currentProject,
+  projectAccess,
   defaultProject,
   projectError,
   loadProjects,
@@ -35,6 +36,45 @@ import {
 const route = useRoute();
 const router = useRouter();
 const module = computed(() => moduleOf(route.path));
+// Only what the user may open is listed (docs/specs/project-access-admin.md 4.3); the settings
+// project group is titled with the current project.
+const sections = computed(() =>
+  visibleSections(module.value.sections, {
+    organization: identity.value?.permissions ?? [],
+    project: projectAccess.value,
+  }).map((s) => {
+    if (s.id !== 'project') return s;
+    const p = projects.value.find((x) => x.id === currentProject.value);
+    return { ...s, label: '项目 · ' + (p?.shortName || p?.name || '未选择') };
+  }),
+);
+const activeEntry = computed(() => entryOf(route.path));
+// Archived projects stay out of the switcher (they open from 企业 → 项目), unless current.
+const switchable = computed(() =>
+  projects.value.filter((p) => p.status !== 'archived' || p.id === currentProject.value),
+);
+// The settings menu filters itself as you type (Plain's “Search settings”).
+const filter = ref('');
+watch(module, () => (filter.value = ''));
+const shownSections = computed(() => {
+  const q = filter.value.trim().toLowerCase();
+  if (!q) return sections.value;
+  return sections.value
+    .map((s) => ({
+      ...s,
+      items: s.items.filter((i) => (i.label + i.description).toLowerCase().includes(q)),
+    }))
+    .filter((s) => s.items.length);
+});
+// Enter opens the best match: the exact name, then names that contain the words, then the rest.
+function openFirst() {
+  const q = filter.value.trim().toLowerCase();
+  const items = shownSections.value.flatMap((s) => s.items);
+  const rank = (label: string) =>
+    label.toLowerCase() === q ? 0 : label.toLowerCase().includes(q) ? 1 : 2;
+  const best = [...items].sort((a, b) => rank(a.label) - rank(b.label))[0];
+  if (best) void router.push(best.path);
+}
 const record = computed(() => route.path.includes('/development-items/'));
 const narrow = useMediaQuery('(max-width: 760px)');
 function stored(key: string) {
@@ -59,9 +99,10 @@ const palette = ref(false);
 const shortcuts = ref(false);
 const logoutError = ref('');
 const loggingOut = ref(false);
-const projectName = computed(
-  () => projects.value.find((p) => p.id === currentProject.value)?.name ?? '选择项目',
-);
+const projectName = computed(() => {
+  const p = projects.value.find((x) => x.id === currentProject.value);
+  return p ? p.shortName || p.name : '选择项目';
+});
 watch(menuHidden, (hidden) => {
   try {
     localStorage.setItem('shell-menu', hidden ? 'hidden' : 'shown');
@@ -157,7 +198,7 @@ const keys = [
             </button>
           </template>
           <BaseMenuItem
-            v-for="p in projects"
+            v-for="p in switchable"
             :key="p.id"
             :note="p.id === defaultProject ? '默认' : undefined"
             @select="selectProject(p.id)"
@@ -166,7 +207,7 @@ const keys = [
             /></template>
             {{ p.name }}</BaseMenuItem
           >
-          <BaseMenuSeparator v-if="projects.length" />
+          <BaseMenuSeparator v-if="switchable.length" />
           <BaseMenuItem
             tone="yellow"
             :disabled="!currentProject || currentProject === defaultProject"
@@ -187,17 +228,29 @@ const keys = [
       </header>
       <p v-if="projectError" class="menu-error" role="alert">{{ projectError }}</p>
       <h2 class="menu-title">{{ module.label }}</h2>
-      <section v-for="(section, i) in module.sections" :key="i" class="menu-section">
+      <label v-if="module.id === 'settings'" class="menu-search">
+        <Search />
+        <input
+          v-model="filter"
+          type="search"
+          placeholder="搜索设置…"
+          aria-label="搜索设置"
+          @keydown.enter.prevent="openFirst"
+        />
+      </label>
+      <section v-for="section in shownSections" :key="section.id" class="menu-section">
         <h3 v-if="section.label">{{ section.label }}</h3>
         <BaseNavItem
           v-for="item in section.items"
           :key="item.id"
           :to="item.path"
           :label="item.label"
-          :active="route.path === item.path"
+          :planned="item.planned"
+          :active="activeEntry?.id === item.id"
           ><template #icon><AppIcon :name="item.icon" :size="16" /></template
         ></BaseNavItem>
       </section>
+      <p v-if="filter && !shownSections.length" class="menu-empty">没有匹配的设置。</p>
     </nav>
     <main id="main-content" class="shell-content">
       <span v-if="menuHidden && !record && !narrow" class="show-menu"
@@ -355,6 +408,41 @@ const keys = [
 .menu-section {
   display: grid;
   gap: var(--space-0-5);
+}
+.menu-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-input);
+  margin: var(--space-1) 0 var(--space-2);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-6);
+  background: var(--panel);
+  color: var(--neutral-icon-1);
+  transition: box-shadow var(--motion-fast);
+}
+.menu-search:focus-within {
+  box-shadow: 0 0 0 2px var(--focus);
+}
+.menu-search svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+.menu-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+.menu-empty {
+  padding: var(--space-3) var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--font-12);
 }
 .menu-section h3 {
   margin: var(--space-4) 0 var(--space-1);

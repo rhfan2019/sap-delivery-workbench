@@ -1,0 +1,194 @@
+/* Native form controls of the settings pages, drawn like BaseInput (DESIGN.md 5): 32px fields,
+   6px corners, a blue focus ring. Native elements keep forms usable with keyboard and on phones. */
+.s-input,
+.s-select,
+.s-textarea {
+  width: 100%;
+  min-width: 0;
+  height: var(--control-input);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-6);
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--font-14);
+  transition:
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast);
+}
+.s-textarea {
+  height: auto;
+  min-height: calc(var(--control-input) * 2.5);
+  padding: var(--space-1-5) var(--space-2);
+  line-height: var(--leading-20);
+  resize: vertical;
+}
+.s-input:hover,
+.s-select:hover,
+.s-textarea:hover {
+  border-color: var(--border-emphasis);
+}
+.s-input:focus,
+.s-select:focus,
+.s-textarea:focus {
+  outline: none;
+  border-color: var(--focus);
+  box-shadow: 0 0 0 1px var(--focus);
+}
+.s-input:disabled,
+.s-select:disabled,
+.s-textarea:disabled {
+  background: var(--neutral-bg-2);
+  color: var(--text-muted);
+}
+.s-input::placeholder,
+.s-textarea::placeholder {
+  color: var(--text-subtle);
+}
+.s-input.mono {
+  font-family: var(--font-mono);
+}
+.s-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.s-row > .s-input,
+.s-row > .s-select {
+  flex: 1;
+  min-width: 120px;
+}
+.s-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+.s-check input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--primary);
+}
+.s-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-12);
+  line-height: var(--leading-16);
+}
+.s-error {
+  margin: 0;
+  color: var(--red-text-2);
+  font-size: var(--font-12);
+}
+/* Lists inside cards: rows of 44px separated by hairlines, like Plain's member list. */
+.s-list {
+  display: grid;
+}
+.s-list-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-table-row);
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--border);
+  color: inherit;
+  text-decoration: none;
+}
+.s-list-row:first-child {
+  border-top: 0;
+}
+a.s-list-row,
+button.s-list-row {
+  width: 100%;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--motion-fast);
+}
+a.s-list-row:hover,
+button.s-list-row:hover {
+  background: var(--hover);
+}
+.s-list-main {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: var(--space-0-5);
+}
+.s-list-main strong {
+  overflow: hidden;
+  font-weight: var(--weight-550);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.s-list-main small {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--font-12);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.s-list-side {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1-5);
+  color: var(--text-muted);
+  font-size: var(--font-12);
+}
+.s-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.s-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 200px;
+  max-width: 420px;
+  height: var(--control-input);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-6);
+  background: var(--panel);
+  color: var(--neutral-icon-1);
+}
+.s-search:focus-within {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 1px var(--focus);
+}
+.s-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+.s-mono {
+  font-family: var(--font-mono);
+  font-size: var(--font-12);
+}
+.s-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+@media (max-width: 760px) {
+  .s-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}

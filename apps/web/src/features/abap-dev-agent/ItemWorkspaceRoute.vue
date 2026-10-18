@@ -7,10 +7,11 @@ const route = useRoute();
 const config: StageConfig = {
   agent: 'abap-dev-agent',
   assistantName: '开发助手',
-  readonlyNote: '当前为只读，仅开发负责人或项目管理员可以修改。',
+  readonlyNote:
+    '当前为只读：你没有在本开发项使用开发助手的权限（需要“使用开发助手”，并在你的模块范围内）。',
   sessionsHeading: '本开发项的开发对话',
   development: true,
-  sapEnvironment: 'DEV',
+  sapPurpose: 'development',
   artifactPanel: DevArtifactPanel,
   latestRevision: (detail) => detail?.version?.version,
   sessionVersion: (s) => (s.version ? ` · 第 ${s.version} 版` : ''),

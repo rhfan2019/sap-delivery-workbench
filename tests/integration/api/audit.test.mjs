@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { apiFixture } from '../../fixtures/api.mjs';
+import { grantRole } from '../../fixtures/access.mjs';
 import { publishProposal } from '../../../apps/api/src/modules/audit/export.mjs';
 
 const reply = (content, toolCalls = []) => ({
@@ -57,10 +58,8 @@ test('admins review assistant runs, comment on them and read proposals', async (
   const { f, queue, agent, call, turn } = await setup();
   try {
     assert.equal((await call('GET', '/api/audit/runs')).status, 403);
-    await f.db.query(
-      "UPDATE app.organization_member SET access_level='admin' WHERE organization_id=$1 AND user_id=$2",
-      [f.scope.organizationId, f.scope.actorId],
-    );
+    // Contract 3.2: the audit page needs audit:view (comments audit:comment).
+    await grantRole(f.db, f.scope.organizationId, f.scope.actorId, 'SYS_AUDITOR');
     const sid = (await call('POST', `${agent}/sessions`, {})).json().id;
     queue.push(
       () =>

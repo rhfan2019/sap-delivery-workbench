@@ -10,7 +10,8 @@
     "./platform/auth": "./src/platform/auth.mjs",
     "./platform/password": "./src/platform/password.mjs",
     "./sap-mcp": "./src/modules/technical/sap-mcp.mjs",
-    "./audit-analysis": "./src/modules/audit/export.mjs"
+    "./audit-analysis": "./src/modules/audit/export.mjs",
+    "./access": "./src/modules/access/public.mjs"
   },
   "scripts": {
     "start": "node src/server.mjs"

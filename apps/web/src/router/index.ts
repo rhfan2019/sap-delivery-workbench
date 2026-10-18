@@ -4,6 +4,36 @@ import LoginView from '../views/LoginView.vue';
 import PasswordView from '../views/PasswordView.vue';
 import AppLayout from '../components/AppLayout.vue';
 import WorkspaceView from '../views/WorkspaceView.vue';
+const page = <T>(path: string, component: () => Promise<T>) => ({ path, component });
+const settingsRoutes = [
+  page('settings', () => import('../features/settings/SettingsOverview.vue')),
+  page('settings/profile', () => import('../features/settings/ProfileView.vue')),
+  page('settings/sap-credentials', () => import('../features/sap/MySapCredentialsView.vue')),
+  page('settings/project/general', () => import('../features/projects/ProjectGeneralView.vue')),
+  page('settings/project/plan', () => import('../features/projects/ProjectPlanView.vue')),
+  page('settings/project/team', () => import('../features/projects/ProjectTeamView.vue')),
+  page('settings/project/members', () => import('../features/access/ProjectMembersView.vue')),
+  page('settings/project/sap', () => import('../features/sap/ProjectSapView.vue')),
+  page(
+    'settings/project/commercial',
+    () => import('../features/projects/ProjectCommercialView.vue'),
+  ),
+  page('settings/organization', () => import('../features/admin/OrganizationView.vue')),
+  page('settings/customers', () => import('../features/admin/CustomersView.vue')),
+  page('settings/projects', () => import('../features/admin/ProjectsView.vue')),
+  page('settings/users', () => import('../features/admin/UsersView.vue')),
+  page('settings/users/:id', () => import('../features/admin/UserDetailView.vue')),
+  page('settings/positions', () => import('../features/access/PositionsView.vue')),
+  page('settings/roles', () => import('../features/access/RolesView.vue')),
+  page('settings/roles/:id', () => import('../features/access/RoleDetailView.vue')),
+  page('settings/security', () => import('../features/sap/SecurityPolicyView.vue')),
+  page('settings/models', () => import('../features/models/ModelsView.vue')),
+  page('settings/audit', () => import('../features/audit/AuditView.vue')),
+  page('settings/audit/runs/:id', () => import('../features/audit/AuditRunView.vue')),
+  page('settings/audit/sessions/:id', () => import('../features/audit/AuditSessionView.vue')),
+  page('settings/sap-directory', () => import('../features/sap/SapDirectoryView.vue')),
+  page('settings/diagnostics', () => import('../features/admin/TechnicalVerificationView.vue')),
+];
 export const router = createRouter({
   history: createWebHistory(),
   scrollBehavior: () => ({ top: 0, left: 0 }),
@@ -40,45 +70,13 @@ export const router = createRouter({
           meta: { keepOnQuery: true },
         },
         {
-          path: 'workspace/admin',
-          component: () => import('../features/admin/AdminOverviewView.vue'),
-        },
-        {
-          path: 'workspace/organization',
-          component: () => import('../features/admin/OrganizationView.vue'),
-        },
-        {
-          path: 'workspace/organization-profile',
-          component: () => import('../features/admin/OrganizationProfileView.vue'),
-        },
-        { path: 'workspace/members', component: () => import('../features/admin/MembersView.vue') },
-        { path: 'workspace/models', component: () => import('../features/models/ModelsView.vue') },
-        {
-          path: 'workspace/connections',
-          component: () => import('../features/sap/SapSystemsView.vue'),
-        },
-        {
-          path: 'workspace/technical-verification',
-          component: () => import('../features/admin/TechnicalVerificationView.vue'),
-        },
-        {
           path: 'workspace/development-items',
           component: () => import('../features/delivery/DeliveryView.vue'),
         },
-        {
-          path: 'workspace/audit',
-          component: () => import('../features/audit/AuditView.vue'),
-        },
-        {
-          path: 'workspace/audit/runs/:id',
-          component: () => import('../features/audit/AuditRunView.vue'),
-        },
-        {
-          path: 'workspace/audit/sessions/:id',
-          component: () => import('../features/audit/AuditSessionView.vue'),
-        },
         { path: 'workspace/:module', component: WorkspaceView },
-        { path: 'settings', component: () => import('../views/SettingsView.vue') },
+        // Settings (docs/specs/project-access-admin.md 4.3). Planned entries have no route here:
+        // they fall through to WorkspaceView, which shows the shared “规划中” page.
+        ...settingsRoutes,
         { path: ':pathMatch(.*)*', component: WorkspaceView },
       ],
     },

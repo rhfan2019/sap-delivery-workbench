@@ -5,6 +5,7 @@ import ExcelJS from 'exceljs';
 import { connectDatabase } from '../../../apps/api/src/platform/database.mjs';
 import { digest } from '../../../apps/api/src/platform/auth.mjs';
 import { createApp } from '../../../apps/api/src/app.mjs';
+import { grantRole, dropOrganizations } from '../../fixtures/access.mjs';
 
 test('development list: numbering, phases, objects, tags, custom columns, batch, Excel, archive', async () => {
   const db = await connectDatabase();
@@ -49,10 +50,8 @@ test('development list: numbering, phases, objects, tags, custom columns, batch,
         'INSERT INTO app.project(id,organization_id,customer_id,code,name) VALUES($1,$2,$3,$4,$5)',
         [id, org, customer, id.slice(0, 8).toUpperCase(), '测试项目'],
       );
-    await db.query(
-      'INSERT INTO app.project_member(organization_id,project_id,user_id) VALUES($1,$2,$3)',
-      [org, project, user],
-    );
+    // Contract 3.5: a functional consultant maintains the list but not its settings.
+    await grantRole(db, org, user, 'C_FUNC', { projectId: project });
     await db.query(
       "INSERT INTO app.auth_session(organization_id,user_id,token_hash,idle_expires_at,expires_at) VALUES($1,$2,$3,now()+interval '30 minutes',now()+interval '8 hours')",
       [org, user, digest(token)],
@@ -226,13 +225,10 @@ test('development list: numbering, phases, objects, tags, custom columns, batch,
       400,
     );
 
-    // Custom columns: admins only; values validated against the definition.
+    // Custom columns need delivery.config:manage; values validated against the definition.
     const fieldBase = '/api/projects/' + project + '/development-fields';
     await expect('POST', fieldBase, { label: '上线批次', fieldType: 'select' }, 403);
-    await db.query(
-      "UPDATE app.organization_member SET access_level='admin' WHERE organization_id=$1 AND user_id=$2",
-      [org, user],
-    );
+    await grantRole(db, org, user, 'DL_ADMIN', { projectId: project });
     await expect('POST', fieldBase, { label: '状态', fieldType: 'text' }, 400);
     await expect('POST', fieldBase, { label: '上线批次', fieldType: 'select' }, 400);
     let batch = await expect(
@@ -447,20 +443,9 @@ test('development list: numbering, phases, objects, tags, custom columns, batch,
       'development_item_phase',
       'development_item',
       'development_field',
-      'project_preference',
-      'audit_event',
-      'auth_session',
-      'project_member',
-      'project',
-      'customer',
-      'organization_member',
     ])
       await db.query('DELETE FROM app.' + table + ' WHERE organization_id=$1', [org]);
-    await db.query('DELETE FROM app.user_password WHERE user_id=ANY($1::uuid[])', [
-      [user, outsider],
-    ]);
-    await db.query('DELETE FROM app.app_user WHERE id=ANY($1::uuid[])', [[user, outsider]]);
-    await db.query('DELETE FROM app.organization WHERE id=$1', [org]);
+    await dropOrganizations(db, [org], [user, outsider]);
     await db.end();
   }
 });

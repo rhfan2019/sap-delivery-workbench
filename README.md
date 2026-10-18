@@ -30,7 +30,8 @@ apps/
     src/server.mjs           生产服务入口
     src/platform/            认证、密码、数据库和运行配置
     src/modules/             业务模块及自有资源（提示词、模板等只供本模块使用的资源也放这里）
-      admin/                 组织、用户、项目管理
+      admin/                 企业资料、客户、账号、项目与项目主数据
+      access/                权限内核：权限点检查、角色、复合角色、职位、企业级与项目内分配
       delivery/              开发清单：开发项、四个阶段、开发对象、标签、自定义列、Excel
       item-workspace/        开发项工作区的访问上下文
       agent-core/            智能体公共运行层：循环、事件推送、附件解析、SAP 只读工具
@@ -38,11 +39,13 @@ apps/
       abap-dev-agent/        ABAP 开发助手：开发方案与代码、框架加载、代码校验；prompts/ 与 frameworks/
       audit/                 后台审计日志与助手运行评论
       models/                模型配置与调用
-      sap/                   SAP 连接与 MCP
+      sap/                   项目 SAP 系统、个人 SAP 凭据与保存策略、测试数据
       technical/             技术验证
 packages/
   contracts/                 前后端共享的数据结构、校验和协议
     abap-fsd-agent/          FSD 设计助手的共享协议与类型
+    access/                  权限点目录、预置角色与职位（前后端共用）
+    projects/                项目主数据的选项（类型、状态、SAP 产品、模块、里程碑等）
 database/migrations/         版本化数据库变更
 scripts/                     开发、数据库、测试、维护和检查命令
 tests/
@@ -60,11 +63,16 @@ docs/                        架构、规格、计划、使用指南和历史报
 
 ## 功能边界
 
-保留登录与权限、企业/客户/项目管理、开发清单、模型配置和 SAP 连接。
+平台定位为实施方内部的交付生产工具（[平台定位方向决策](docs/architecture/2026-10-17-platform-positioning-decision.md)）。保留登录、企业/客户/项目管理、开发清单、模型配置；权限、项目主数据、项目 SAP 系统与设置菜单按[项目主数据、权限与设置菜单设计](docs/specs/project-access-admin.md)实现：
+
+- **权限**：基于角色的访问控制。权限点（`资源:动作`）→ 单一角色 → 复合角色，职位带出默认角色；企业级分配带项目范围，项目内分配带模块范围、“仅本人负责”与有效期。所有接口经 `access` 模块校验，被拒绝时返回缺少的权限点。
+- **项目主数据**：基本信息与 SAP 系统形态、SAP Activate 阶段与里程碑、团队与干系人、规模与商务、每周健康度；开发清单页头显示开发冻结倒计时。
+- **项目 SAP 系统**：每个项目登记自己的开发与测试系统（不含生产、不存账号）；每个人用本人的 SAP 用户登录，可“本次登录有效”或按企业策略加密保存。
+- **设置**：图标栏“设置”按个人、项目、企业、智能体、审计与运维分组，全量列出菜单（未实现的标“规划中”），按权限显示。
 
 开发清单按[重构设计](docs/specs/development-list.md)组织：基本信息与 FSD、开发、顾问测试、IT/用户测试四个阶段，开发对象（TADIR 主键）、标签、项目级自定义列、批量修改 / 复制 / 删除、Excel 导入导出；行内的“设计”进入 FSD 设计助手，“开发”进入 ABAP 开发助手（报表、功能类），顾问测试、IT/用户测试 Agent 尚未开放。旧的手工 FS 台账已删除。
 
-FSD 设计助手已按[方向决策](docs/architecture/2026-10-11-fsd-assistant-direction-decision.md)重构为模型主导的智能体 `abap-fsd-agent`（开发项工作区“设计”阶段），目前处于批量测试与优化阶段：进度见[重构实施计划](docs/plans/2026-10-11-abap-fsd-agent-refactor.md)，端到端测试结论与待处理问题见[测试记录](docs/plans/2026-10-12-abap-fsd-agent-e2e-test.md)，接手说明见[交接文档](docs/plans/2026-10-12-abap-fsd-agent-handover.md)。助手运行可在“后台管理 → 审计日志”复核。历史各代助手（LangGraph 版设计助手、FS 智能工作区、旧开发助手、FS助手测试）及其数据已删除。
+FSD 设计助手已按[方向决策](docs/architecture/2026-10-11-fsd-assistant-direction-decision.md)重构为模型主导的智能体 `abap-fsd-agent`（开发项工作区“设计”阶段），目前处于批量测试与优化阶段：进度见[重构实施计划](docs/plans/2026-10-11-abap-fsd-agent-refactor.md)，端到端测试结论与待处理问题见[测试记录](docs/plans/2026-10-12-abap-fsd-agent-e2e-test.md)，接手说明见[交接文档](docs/plans/2026-10-12-abap-fsd-agent-handover.md)。助手运行可在“设置 → 审计日志”复核。历史各代助手（LangGraph 版设计助手、FS 智能工作区、旧开发助手、FS助手测试）及其数据已删除。
 
 ABAP 开发助手 `abap-dev-agent`（开发项工作区“开发”阶段）首版已实现：按[方向决策](docs/architecture/2026-10-13-abap-dev-agent-direction-decision.md)，它与设计助手同构，输入可以是设计助手的 FSD、上传的资料，也可以只是自然语言需求，产出开发方案和一份继承 `YCL_FRH_REPORT` 的完整可执行程序，支持批注修订、版本差异、上传或从 SAP 同步交回代码；首版只做报表与功能类，开发清单中其他类型的“开发”按钮仍提示即将开放。后端在 `apps/api/src/modules/abap-dev-agent/`（系统指令在 `prompts/`，框架类内置副本在 `frameworks/`），两个助手共用的循环、事件、附件解析和 SAP 只读工具在 `agent-core`，共用的前端工作台在 `features/agent-workbench`。进度见[实施计划](docs/plans/2026-10-14-abap-dev-agent-implementation.md)，测试结论与问题见[端到端测试](docs/plans/2026-10-14-abap-dev-agent-e2e-test.md)。
 

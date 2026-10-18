@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID, createHash } from 'node:crypto';
 import { connectDatabase } from '../../../apps/api/src/platform/database.mjs';
+import { grantRole, dropOrganizations } from '../../fixtures/access.mjs';
 
 test('real HTTP authentication, forced password change, session revocation and project isolation', async () => {
   const { createApp } = await import('../../../apps/api/src/app.mjs');
@@ -44,10 +45,8 @@ test('real HTTP authentication, forced password change, session revocation and p
       "INSERT INTO app.project(id,organization_id,customer_id,code,name) VALUES($1,$3,$4,'VISIBLE','可见项目'),($2,$3,$4,'HIDDEN','不可见项目')",
       [project, hidden, org, customer],
     );
-    await db.query(
-      'INSERT INTO app.project_member(organization_id,project_id,user_id) VALUES($1,$2,$3)',
-      [org, project, id],
-    );
+    // Contract 3.5: a member sees a project through a project role.
+    await grantRole(db, org, id, 'C_OBSERVER', { projectId: project });
     app = await createApp({ organizationId: org });
     const request = (method, url, payload, cookie, origin = 'http://127.0.0.1:5173') =>
       app.inject({
@@ -101,6 +100,10 @@ test('real HTTP authentication, forced password change, session revocation and p
       (await request('GET', '/api/session', undefined, current)).json().user.displayName,
       '测试用户',
     );
+    // npm stop / npm start: sessions live in the database, so a new API process keeps them.
+    await app.close();
+    app = await createApp({ organizationId: org });
+    assert.equal((await request('GET', '/api/session', undefined, current)).statusCode, 200);
     assert.deepEqual(
       (await request('GET', '/api/projects', undefined, current)).json().map((p) => p.id),
       [project],
@@ -141,14 +144,7 @@ test('real HTTP authentication, forced password change, session revocation and p
       org,
       id,
     ]);
-    await db.query('DELETE FROM app.auth_session WHERE organization_id=$1', [org]);
-    await db.query('DELETE FROM app.project_member WHERE organization_id=$1', [org]);
-    await db.query('DELETE FROM app.project WHERE organization_id=$1', [org]);
-    await db.query('DELETE FROM app.customer WHERE organization_id=$1', [org]);
-    await db.query('DELETE FROM app.organization_member WHERE organization_id=$1', [org]);
-    await db.query('DELETE FROM app.user_password WHERE user_id=$1', [id]);
-    await db.query('DELETE FROM app.app_user WHERE id=ANY($1::uuid[])', [[id, other]]);
-    await db.query('DELETE FROM app.organization WHERE id=$1', [org]);
+    await dropOrganizations(db, [org], [id, other]);
     await db.end();
   }
 });

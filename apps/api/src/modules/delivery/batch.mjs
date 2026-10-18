@@ -1,4 +1,5 @@
 import { failure } from '../../platform/auth.mjs';
+import { deniedError } from '../access/public.mjs';
 import { uuid } from '../admin/validation.mjs';
 import { normalizeChanges } from './validation.mjs';
 import {
@@ -47,13 +48,22 @@ export function copyChanges(item) {
 // All-or-nothing operations on the selected items; one transaction each.
 export function batchRoutes(app, c) {
   app.post(base + '/batch', { bodyLimit: 1000000 }, async (req) =>
-    c.write(req, async (db, current) => {
+    c.write(req, 'delivery.item:view', async (db, current, project) => {
       const ctx = { org: c.organizationId, project: req.params.projectId, actor: current.user.id };
       const action = req.body?.action;
       const ids = idList(req.body?.ids);
       const items = await loadItems(db, ctx.org, ctx.project, ids, { lock: true });
       if (items.length !== ids.length) throw failure(409, '部分开发项已被删除，请刷新后重试。');
       items.sort((a, b) => a.itemNo - b.itemNo);
+      // Each action needs its own permission, for every selected item.
+      const permission = {
+        delete: 'delivery.item:delete',
+        copy: 'delivery.item:create',
+        update: 'delivery.item:edit',
+      }[action];
+      if (!permission) throw failure(400, '不支持的批量操作。');
+      if (!project.grant.has(permission)) throw deniedError(permission);
+      if (action !== 'copy') for (const item of items) await c.allow(db, project, item, permission);
       if (action === 'delete') {
         await db.query(
           'UPDATE app.development_item SET deleted_at=now(),updated_by=$2,row_version=row_version+1,updated_at=now() WHERE id=ANY($1::uuid[])',

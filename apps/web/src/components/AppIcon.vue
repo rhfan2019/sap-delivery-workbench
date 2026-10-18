@@ -43,6 +43,19 @@ import {
   Check,
   ArrowLeft,
   Plus,
+  UserRound,
+  KeyRound,
+  Bell,
+  CalendarRange,
+  Contact,
+  Server,
+  Coins,
+  ListChecks,
+  FolderKanban,
+  SlidersHorizontal,
+  IdCard,
+  Database,
+  Briefcase,
 } from '@lucide/vue';
 const props = defineProps<{ name: string; size?: number }>();
 const icons: Record<string, unknown> = {
@@ -88,6 +101,19 @@ const icons: Record<string, unknown> = {
   tick: Check,
   back: ArrowLeft,
   plus: Plus,
+  user: UserRound,
+  key: KeyRound,
+  bell: Bell,
+  calendar: CalendarRange,
+  contact: Contact,
+  server: Server,
+  coins: Coins,
+  list: ListChecks,
+  folders: FolderKanban,
+  sliders: SlidersHorizontal,
+  id: IdCard,
+  database: Database,
+  briefcase: Briefcase,
 };
 const icon = computed(() => icons[props.name] ?? FileText);
 </script>

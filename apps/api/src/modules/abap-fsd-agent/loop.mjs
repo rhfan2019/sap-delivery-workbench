@@ -13,8 +13,9 @@ const env = () => ({
 });
 
 // Runs one turn to its natural end (answer, questions, document written) or a limit.
-// `environment` is the SAP system the user chose for this message (contract 1.12: QAS by
-// default, where business data shows how the logic behaves). Never throws: failures end
+// `environment` selects the SAP system for this message: the user's pick, else the project's
+// default test system, where business data shows how the logic behaves (contract 3.4).
+// Never throws: failures end
 // the turn with a status the user can see.
 export async function runTurn({
   pool,
@@ -24,7 +25,7 @@ export async function runTurn({
   model,
   emit,
   signal,
-  environment = 'QAS',
+  environment = { systemId: null, purpose: 'test' },
   deps = {},
 }) {
   const sap = await (deps.openSap ?? openSap)(pool, scope, {

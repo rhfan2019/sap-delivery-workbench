@@ -5,8 +5,9 @@ import { DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTitle } f
 import { CornerDownLeft, FolderOpen, Search } from '@lucide/vue';
 import AppIcon from './AppIcon.vue';
 import BaseKbd from './base/BaseKbd.vue';
-import { menus } from '../features/navigation';
-import { currentProject, projects, selectProject } from '../services/projectContext';
+import { menus, visible } from '../features/navigation';
+import { identity } from '../services/session';
+import { currentProject, projectAccess, projects, selectProject } from '../services/projectContext';
 
 // Command palette (Ctrl K): go to any page or switch project by typing.
 const open = defineModel<boolean>('open', { default: false });
@@ -17,13 +18,16 @@ const input = ref<HTMLInputElement | null>(null);
 type Entry = { id: string; label: string; note: string; icon?: string; run: () => void };
 const entries = computed<Entry[]>(() => {
   const q = query.value.trim().toLowerCase();
-  const pages: Entry[] = menus.map((m) => ({
-    id: 'page:' + m.id,
-    label: m.label,
-    note: '页面',
-    icon: m.icon,
-    run: () => void router.push(m.path),
-  }));
+  const allowed = { organization: identity.value?.permissions ?? [], project: projectAccess.value };
+  const pages: Entry[] = menus
+    .filter((m) => visible(m, allowed))
+    .map((m) => ({
+      id: 'page:' + m.id,
+      label: m.label,
+      note: m.planned ? '规划中' : m.path.startsWith('/settings') ? '设置' : '页面',
+      icon: m.icon,
+      run: () => void router.push(m.path),
+    }));
   const switches: Entry[] = projects.value
     .filter((p) => p.id !== currentProject.value)
     .map((p) => ({

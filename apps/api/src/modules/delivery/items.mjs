@@ -38,7 +38,7 @@ export function itemRoutes(app, c) {
       tags: tagList,
       fields,
       readOnly: project.status === 'archived',
-      isAdmin: project.access_level === 'admin',
+      access: project.grant.toJSON(),
       userId: current.user.id,
     };
   });
@@ -48,7 +48,7 @@ export function itemRoutes(app, c) {
     return loadItem(c.pool, c.organizationId, project.id, req.params.id);
   });
   app.post(base, { bodyLimit: 1000000 }, async (req, reply) =>
-    c.write(req, async (db, current) => {
+    c.write(req, 'delivery.item:create', async (db, current) => {
       const ctx = scopeOf(c, req, current);
       const fields = await customFields(db, ctx.org, ctx.project);
       const normalized = normalizeChanges(req.body, fields);
@@ -67,7 +67,7 @@ export function itemRoutes(app, c) {
     }),
   );
   app.patch(base + '/:id', { bodyLimit: 1000000 }, async (req) =>
-    c.write(req, async (db, current) => {
+    c.write(req, 'delivery.item:edit', async (db, current, project) => {
       const ctx = scopeOf(c, req, current);
       uuid(req.params.id);
       const expected = version(req.body?.rowVersion);
@@ -76,6 +76,15 @@ export function itemRoutes(app, c) {
       const normalized = normalizeChanges(req.body?.changes, fields);
       if (before.rowVersion !== expected)
         throw failure(409, '此开发项已被他人更新。你的输入已保留，请读取最新内容后重试。');
+      await c.allow(db, project, before, 'delivery.item:edit');
+      // Moving an item into another module needs the right to edit items of that module.
+      if (normalized.item.module && normalized.item.module !== before.module)
+        await c.allow(
+          db,
+          project,
+          { ...before, module: normalized.item.module },
+          'delivery.item:edit',
+        );
       await validateReferences(db, ctx.org, ctx.project, normalized, fields);
       const history = await applyChanges(db, ctx, before, normalized);
       await addEvent(db, ctx, before.id, 'updated', history);
@@ -83,9 +92,10 @@ export function itemRoutes(app, c) {
     }),
   );
   app.delete(base + '/:id', async (req) =>
-    c.write(req, async (db, current) => {
+    c.write(req, 'delivery.item:delete', async (db, current, project) => {
       const ctx = scopeOf(c, req, current);
       const old = await c.item(db, req, true);
+      await c.allow(db, project, old, 'delivery.item:delete');
       if (String(old.row_version) !== version(req.body?.rowVersion))
         throw failure(409, '此开发项已更新，请刷新后重试。');
       await db.query(

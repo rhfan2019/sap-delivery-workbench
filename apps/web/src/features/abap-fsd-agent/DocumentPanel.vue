@@ -171,7 +171,8 @@ async function handleComments() {
             <button
               v-if="shown && !live"
               class="document-final"
-              :disabled="!canEdit || saving"
+              :disabled="!run.canFinalize.value || saving"
+              :title="run.canFinalize.value ? undefined : '需要“定稿功能说明书”权限'"
               :aria-pressed="isFinal"
               @click="toggleFinal"
             >

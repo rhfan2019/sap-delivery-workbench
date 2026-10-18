@@ -47,7 +47,7 @@ const props = defineProps<{ projectId: string; itemId: string; config: StageConf
 const route = useRoute(),
   router = useRouter();
 const agentBase = `/projects/${props.projectId}/development-items/${props.itemId}/${props.config.agent}`;
-const run = useAgentSession(agentBase, props.config.sapEnvironment);
+const run = useAgentSession(agentBase);
 const state = ref<{
   project: { name: string };
   item: {

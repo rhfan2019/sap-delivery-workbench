@@ -291,7 +291,8 @@ test('a busy provider is retried before the turn fails', async () => {
   }
 });
 
-test('each message reads the SAP system the user chose: QAS by default, DEV on request', async () => {
+// Contract 3.4: the project's default test system unless the user picked a system.
+test('each message reads the SAP system the user chose: the default test system unless picked', async () => {
   const opened = [];
   const { f, model, call, send } = await setup({
     openSap: async (_db, _scope, options) => {
@@ -305,17 +306,21 @@ test('each message reads the SAP system the user chose: QAS by default, DEV on r
       async () => reply('好的。'),
       async () => reply('好的。'),
     );
+    const picked = '7d6f2c3e-0a5b-4b1c-9d2e-3f4a5b6c7d8e';
     await send(sid, { content: '你好' });
-    await send(sid, { content: '再看一下开发系统', sapEnvironment: 'DEV' });
-    assert.deepEqual(opened, ['QAS', 'DEV']);
+    await send(sid, { content: '再看一下开发系统', sapSystemId: picked });
+    assert.deepEqual(opened, [
+      { systemId: null, purpose: 'test' },
+      { systemId: picked, purpose: 'test' },
+    ]);
     const turns = (await call('GET', `/sessions/${sid}`)).json().turns;
     assert.deepEqual(
       turns.map((t) => t.model.sap),
-      ['QAS', 'DEV'],
+      ['test', picked],
     );
     const prd = await call('POST', `/sessions/${sid}/messages`, {
       content: '用生产系统',
-      sapEnvironment: 'PRD',
+      sapSystemId: 'PRD',
     });
     assert.equal(prd.status, 400);
   } finally {

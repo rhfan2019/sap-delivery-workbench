@@ -1,104 +1,117 @@
-import { effectiveConfig } from './store.mjs';
-import { open } from './crypto.mjs';
-import { binding } from './resolve.mjs';
-import {
-  TEST_ENVIRONMENT,
-  recalledCredentials,
-  forgetCredentials,
-  loginRequired,
-} from './session-credentials.mjs';
+import { createAccess } from '../access/public.mjs';
+import { credentialFor, credentialStatus, policyOf } from './credentials.mjs';
+import { selectSystem, environmentOf, purposeLabel } from './systems.mjs';
 
-async function projectOf(db, scope) {
-  const project = (
-    await db.query('SELECT * FROM app.project WHERE id=$1 AND organization_id=$2', [
-      scope.projectId,
-      scope.organizationId,
-    ])
-  ).rows[0];
-  if (!project) throw Object.assign(new Error('SAP_TARGET_DENIED'), { code: 'SAP_TARGET_DENIED' });
-  return project;
+// Contract 3.4: the project SAP system an agent turn uses, with the actor's own credential.
+// A selector is { systemId } (the user's pick for this message) or { purpose } ('development'
+// or 'test'); the labels 'DEV' and 'QAS' are accepted for the purposes.
+
+const coded = (code, message, details) => Object.assign(new Error(message), { code, details });
+function selectorOf(value) {
+  if (value === 'DEV') return { purpose: 'development' };
+  if (value === 'QAS') return { purpose: 'test' };
+  return { systemId: value?.systemId ?? null, purpose: value?.purpose ?? 'development' };
 }
-
-async function targetOf(db, scope, c, environment) {
-  const system = (
-    await db.query(
-      'SELECT code,name,backend_version AS "backendVersion" FROM app.sap_system WHERE organization_id=$1 AND id=$2',
-      [scope.organizationId, c.systemId],
-    )
-  ).rows[0];
-  return {
-    environment,
-    systemId: c.systemId,
-    systemCode: system?.code ?? '',
-    systemName: system?.name ?? '',
-    backendVersion: system?.backendVersion ?? '',
-    client: c.client,
-    username: c.username,
-  };
-}
-
-const mcpEnv = (c, password) => ({
-  SAP_URL: c.sapUrl,
-  SAP_CLIENT: c.client,
-  SAP_USER: c.username,
-  SAP_PASSWORD: password,
-  SAP_LANGUAGE: c.language ?? 'EN',
+const targetOf = (system, username) => ({
+  environment: environmentOf(system),
+  purpose: system.purpose,
+  systemId: system.id,
+  systemCode: system.sid,
+  systemName: system.name,
+  backendVersion: system.backendVersion ?? '',
+  client: system.client,
+  username,
+});
+const mcpEnv = (system, credential) => ({
+  SAP_URL: system.sapUrl,
+  SAP_CLIENT: system.client,
+  SAP_USER: credential.username,
+  SAP_PASSWORD: credential.password,
+  SAP_LANGUAGE: system.language ?? 'EN',
   SAP_REQUEST_TIMEOUT_MS: '45000',
   ...(process.env.SAP_MCP_ENTRY ? { SAP_MCP_ENTRY: process.env.SAP_MCP_ENTRY } : {}),
 });
+const loginMessage = (system) =>
+  `请先登录 ${system.name}（${system.sid} client ${system.client}）：在输入框的系统选择中登录，或在“设置 → 我的 SAP 凭据”中登录。`;
 
-// Read-only SAP environment of a project's effective configuration (DEV by default),
-// plus the facts an agent may show to the model. Never returns secrets to callers
-// other than the MCP environment.
-export async function resolveProjectSap(db, scope, environment = 'DEV') {
-  const project = await projectOf(db, scope);
-  const c = await effectiveConfig(db, scope.organizationId, project, scope.actorId, environment);
+async function system(db, scope, selector) {
+  const sel = selectorOf(selector);
+  const found = await selectSystem(db, scope.organizationId, scope.projectId, {
+    ...sel,
+    itemId: scope.itemId,
+  });
+  return { found, purpose: found?.purpose ?? sel.purpose };
+}
+async function permitted(db, scope, code) {
+  const grant = await createAccess(null, scope.organizationId).project(
+    db,
+    scope.actorId,
+    scope.projectId,
+  );
+  return !!grant?.has(code);
+}
+
+// Read-only SAP environment for an agent turn. Throws SAP_NOT_CONFIGURED, ACCESS_DENIED or
+// SAP_LOGIN_REQUIRED. `rejected()` discards the credential when SAP refuses it.
+export async function resolveProjectSap(db, scope, selector = 'DEV') {
+  const { found, purpose } = await system(db, scope, selector);
+  if (!found)
+    throw coded(
+      'SAP_NOT_CONFIGURED',
+      `项目没有可用的${purposeLabel(purpose)}，请项目经理在“设置 → 项目 → SAP 系统”中登记。`,
+    );
+  if (!(await permitted(db, scope, `sap.${found.purpose}:read`)))
+    throw coded('ACCESS_DENIED', `您没有读取${purposeLabel(found.purpose)}的权限。`);
+  const credential = await credentialFor(
+    db,
+    scope.organizationId,
+    { userId: scope.actorId, sessionId: scope.sessionId },
+    found,
+    await policyOf(db, scope.organizationId),
+  );
+  if (!credential) throw coded('SAP_LOGIN_REQUIRED', loginMessage(found), { systemId: found.id });
   return {
-    target: await targetOf(db, scope, c, environment),
-    env: mcpEnv(c, c.password ?? open(c.passwordCipher, c.credentialContext)),
+    target: targetOf(found, credential.username),
+    env: mcpEnv(found, credential),
+    rejected: credential.rejected,
   };
 }
 
-const notConfigured = () =>
-  Object.assign(new Error('项目未配置可用的 QAS 系统。'), { code: 'TEST_SYSTEM_NOT_CONFIGURED' });
+const testNotConfigured = () =>
+  coded(
+    'TEST_SYSTEM_NOT_CONFIGURED',
+    '项目没有可用的测试系统，请项目经理在“设置 → 项目 → SAP 系统”中登记。',
+  );
 
-// Contract 3.4: the project's test system (QAS) and whether the user entered their own
-// credentials in this login. Throws TEST_SYSTEM_NOT_CONFIGURED.
+// The project's test system and whether the actor can log in to it now (for the agent's
+// background facts). Throws TEST_SYSTEM_NOT_CONFIGURED.
 export async function testSystemTarget(db, scope) {
-  const project = await projectOf(db, scope);
-  let c;
-  try {
-    c = await effectiveConfig(db, scope.organizationId, project, scope.actorId, TEST_ENVIRONMENT);
-  } catch {
-    throw notConfigured();
-  }
-  if (!c.sapUrl) throw notConfigured();
-  return {
-    ...(await targetOf(db, scope, c, TEST_ENVIRONMENT)),
-    ready: !!recalledCredentials(scope.sessionId, project.id),
-  };
+  const { found } = await system(db, scope, { purpose: 'test' });
+  if (!found) throw testNotConfigured();
+  const status = await credentialStatus(
+    db,
+    scope.organizationId,
+    { user: { id: scope.actorId }, sessionId: scope.sessionId },
+    found,
+    await policyOf(db, scope.organizationId),
+  );
+  return { ...targetOf(found, status.username), ready: status.state !== 'none' };
 }
 
-// The test system with the user's own credentials of this login. Throws
+// The test system with the actor's credential, for test data. Throws
 // TEST_SYSTEM_NOT_CONFIGURED or TEST_SYSTEM_LOGIN_REQUIRED.
 export async function resolveTestSystem(db, scope) {
-  const project = await projectOf(db, scope);
-  const entry = recalledCredentials(scope.sessionId, project.id);
-  let c;
   try {
-    c = await effectiveConfig(db, scope.organizationId, project, scope.actorId, TEST_ENVIRONMENT, {
-      username: entry?.username ?? '',
-      passwordAction: entry ? 'replace' : 'keep',
-      password: entry?.password,
-    });
-  } catch {
-    throw notConfigured();
+    return await resolveProjectSap(db, scope, { purpose: 'test' });
+  } catch (error) {
+    if (error.code === 'SAP_NOT_CONFIGURED') throw testNotConfigured();
+    if (error.code === 'SAP_LOGIN_REQUIRED')
+      throw coded('TEST_SYSTEM_LOGIN_REQUIRED', error.message, error.details);
+    throw error;
   }
-  if (!c.sapUrl) throw notConfigured();
-  if (!entry) throw loginRequired();
-  if (binding(c) !== entry.binding) {
-    forgetCredentials(scope.sessionId, project.id);
-    throw loginRequired('QAS 配置已变化，请重新输入您的用户和密码。');
-  }
-  return { target: await targetOf(db, scope, c, TEST_ENVIRONMENT), env: mcpEnv(c, entry.password) };
+}
+// Test data is the one write to SAP (platform decision 5.6): it needs sap.test_data:create.
+export async function assertTestDataAllowed(db, scope) {
+  if (!(await permitted(db, scope, 'sap.test_data:create')))
+    throw coded('ACCESS_DENIED', '您没有在测试系统创建测试数据的权限。');
 }

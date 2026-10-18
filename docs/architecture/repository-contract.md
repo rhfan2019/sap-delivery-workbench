@@ -1,6 +1,15 @@
 # 仓库目录与依赖契约
 
-版本：1.17。日期：2026-10-17。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.18。日期：2026-10-17。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.18 变更：依据[平台定位方向决策](2026-10-17-platform-positioning-decision.md)与[项目主数据、权限与设置菜单设计](../specs/project-access-admin.md)（用户 2026-10-17 确认）：
+
+- **权限内核**：新增后端模块 `access`（见 3.5），负责权限点检查、角色、复合角色、职位与分配；表用 `app.access_` 前缀。所有模块的授权一律经 `access/public.mjs`，不再判断“是否企业管理员”或“是否项目成员”；`app.organization_member.access_level` 删除（原管理员迁移为超级管理员分配，原项目成员迁移为该项目的 `C_ARCHITECT`）。权限点目录、预置角色与职位是前后端共用的纯数据，放 `packages/contracts/access/catalog.mjs`（浏览器可用）。
+- **项目主数据**：admin 模块新增项目字段与子表 `app.project_phase`、`app.project_milestone`、`app.project_module_lead`、`app.project_contact`、`app.project_health`。
+- **项目 SAP 系统**：SAP 系统改为按项目登记（`app.project_sap_system`），个人凭据 `app.sap_user_credential`、保存策略 `app.sap_credential_policy`，均归 sap 模块；原 `app.sap_system`、`app.sap_system_grant`、`app.project_sap_config`、`app.user_project_sap_config` 连同数据删除（用户授权“不再使用的数据表请删除”），`app.sap_test_data_run.system_id` 的外键删除、历史值保留。开发项增加目标开发系统 `development_item.sap_system_id`。3.4 节同步修改。
+- **设置区**：前端图标栏“后台管理”改为“设置”，菜单按个人、项目、企业、智能体、审计与运维分组并全量列出（未实现的页面打开统一的“规划中”页面）；页面地址统一为 `/settings/...`，原 `/workspace/admin`、`/workspace/organization`、`/workspace/organization-profile`、`/workspace/members`、`/workspace/models`、`/workspace/connections`、`/workspace/technical-verification`、`/workspace/audit…` 与旧个人设置 `/settings` 页删除，不保留跳转。前端新增 feature：`settings`（概览、个人资料与公共排版）、`access`（角色、职位、成员与权限）、`projects`（项目设置页）；规划中的页面沿用 `WorkspaceView` 的“规划中”页面。
+- **新增检查**（第 9 节）：`apps`、`packages`、`scripts`、`tools`、`infra` 中不得再出现 `access_level`、`canManageOrganization` 与已删除的 SAP 表名；`apps/api` 中只有 `access` 模块可以引用 `app.access_` 表。
+- **实施补充**（同日完成实施时登记）：项目主数据的选项是前后端共用的纯数据，放 `packages/contracts/projects/options.mjs`（浏览器可用，附 `.d.mts`）；`packages/contracts/access/catalog.mjs` 同样附 `.d.mts`。`app.project_member` 由 access 维护（成员身份是授权的一部分）。部署脚本（bootstrap、configure-organization）经 `@sap-delivery-workbench/api/access` 导出调用 `grantSuperAdmin`。各业务模块与智能体模块（含 item-workspace）都依赖 access，登记见 module-dependencies.json。接口错误响应在 `message` 之外可带机器可读的 `code` 与 `details`（如 `ACCESS_DENIED` 附缺少的权限点、`SAP_LOGIN_REQUIRED` 附系统）。前端设置区的公共排版（页面、卡片、字段、统计格、原生控件样式）归 `features/settings/`，`features/admin/` 只放企业资料、客户、项目一览与用户页面，`features/sap/` 放项目 SAP 系统、个人凭据、安全策略、系统一览与登录对话框。
 
 1.17 变更：用户 2026-10-17 确认删除 1.14 的主题偏好：`GET/PUT /api/preferences` 与 `apps/api/src/platform/preferences.mjs` 删除，迁移 `1792500000000_drop-user-preference` 删除 `app.user_preference` 表及其数据（向下迁移只重建空表）。1.14 中关于该表与接口的规定废止。
 
@@ -84,7 +93,7 @@ apps/
       modules/<business>/    # 业务模块与其自有运行资源
 ```
 
-后端现有模块：admin（组织/用户/项目管理）、delivery（交付台账）、item-workspace（开发项工作区）、models（模型配置与调用）、sap（SAP 连接）、technical（技术验证）、abap-fsd-agent（FSD 设计助手，见 3.1）、abap-dev-agent（ABAP 开发助手，见 3.1）、agent-core（智能体公共运行层，见 3.1）、audit（平台审计与日志分析，见 3.2）。各模块在第一次放入真实文件时创建，不创建空目录。
+后端现有模块：admin（组织/用户/客户/项目与项目主数据）、access（权限内核，见 3.5）、delivery（交付台账）、item-workspace（开发项工作区）、models（模型配置与调用）、sap（SAP 连接）、technical（技术验证）、abap-fsd-agent（FSD 设计助手，见 3.1）、abap-dev-agent（ABAP 开发助手，见 3.1）、agent-core（智能体公共运行层，见 3.1）、audit（平台审计与日志分析，见 3.2）。各模块在第一次放入真实文件时创建，不创建空目录。
 
 fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3.1 授权的设计助手重构外，URL、数据库表名和历史协议字段不因内部目录改名而改变。
 
@@ -105,27 +114,36 @@ fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3
 
 ### 3.2 平台审计与日志分析（audit）
 
-- **职责**：后台“审计日志”页面：助手运行日志（统计、筛选、单轮下钻）、操作审计（`app.audit_event`）、对助手运行的评论、优化建议的展示。仅企业管理员可用。
+- **职责**：设置区“审计日志”页面：助手运行日志（统计、筛选、单轮下钻）、操作审计（`app.audit_event`）、对助手运行的评论、优化建议的展示。需要 `audit:view`（评论需要 `audit:comment`）。
 - **数据归属**：评论与优化建议表归 audit（`app.audit_` 前缀）。助手运行的轮次、消息、工具调用仍归 abap-fsd-agent，audit 只通过 `abap-fsd-agent/public.mjs` 读取，不直接查询其表。
 - **优化建议**：由 Claude Code 在用户要求时，用 `scripts/maintenance/export-assistant-logs.mjs` 导出日志与评论、分析后，用 `scripts/maintenance/publish-proposal.mjs` 发布到页面。平台不调用模型生成建议，也不设定时任务。
-- **跨模块调用**：audit → abap-fsd-agent（`public.mjs`）、audit → admin（管理员授权），登记见 module-dependencies.json。
+- **跨模块调用**：audit → abap-fsd-agent（`public.mjs`）、audit → admin（授权写入上下文），登记见 module-dependencies.json。
 
 ### 3.3 开发清单（delivery）
 
 - **职责**：项目开发清单：开发项（基本信息与四个阶段）、开发对象、标签、项目级自定义列、批量操作、Excel 导入导出、附件与变更历史。表结构以[开发清单重构设计](../specs/development-list.md)为准。
 - **数据归属**：`app.development_item`、`app.development_item_phase`、`app.development_item_object`、`app.development_tag`、`app.development_item_tag`、`app.development_field`、`app.development_event`、`app.development_file` 归 delivery。其他模块只读开发项，经 delivery 的 `context.mjs`（登记于 module-dependencies.json）取得。
-- **阶段负责人**：设计助手的编辑权限取 `fsd` 阶段负责人，开发助手取 `development` 阶段负责人；未指定时为创建人。
+- **阶段负责人**：助手与开发项的修改权限由 access 判断（`agent.fsd:run`、`agent.dev:run`、`delivery.item:edit` 等）；分配限定“仅本人负责”时，设计助手看 `fsd` 阶段负责人，开发助手看 `development` 阶段负责人，开发项修改看任一阶段负责人或创建人。
+- **目标开发系统**：`development_item.sap_system_id` 引用项目 SAP 系统（开发用途），为空时取项目默认开发系统。
 - **共享契约**：`packages/contracts/delivery` 只放字段目录、选项和纯函数（浏览器可用），不放校验副作用、数据库查询或权限决策。
 - **不保留**：手工 FS 章节编辑（由设计助手替代）、开发项“阶段 / 验收条件 / 阻塞原因”等旧字段及其兼容接口。
 
-### 3.4 测试数据创建（sap）
+### 3.4 项目 SAP 系统、个人凭据与测试数据（sap）
 
-- **使用的系统**：设计助手默认连接 QAS，开发助手默认连接 DEV，测试助手使用 QAS；用户可在对话界面为每条消息选择 DEV 或 QAS（不提供 PRD）。只读访问使用项目或个人参数中的凭据。设计助手的附录 D 只写测试场景和数据需求，不查找、不建立测试单据。
-- **边界**：智能体对 SAP 默认只读。唯一的写操作是为测试案例创建业务单据：只在项目配置的 **QAS** 环境执行，PRD 及未配置 QAS 时拒绝；每次执行前由用户在界面逐次授权，授权只对该次请求有效。
-- **职责归属**：sap 模块负责会话级个人凭据、建单代码的静态审查与执行、运行记录。agent-core 负责模型工具定义（查询测试系统、申请建单）与在轮次中编排执行，供 abap-test-agent 使用；各智能体只决定是否启用这些工具及如何写入自己的产物。
+- **项目 SAP 系统**：每个项目登记自己的开发系统与测试系统（`app.project_sap_system`：名称、用途、SID、ADT 地址、Client、语言、默认、状态），不保存用户名和密码；不存在生产系统。设计助手默认使用项目默认测试系统，开发助手默认使用开发项的目标系统或项目默认开发系统，测试助手（预留）使用测试系统；用户可在对话界面为每条消息选择项目已启用的任一系统（1.12 的“DEV / QAS”改为具体系统）。设计助手的附录 D 只写测试场景和数据需求，不查找、不建立测试单据。
+- **个人凭据**：SAP 用户和密码必须是用户本人的，经一次登录验证后保存：“本次登录有效”只存 API 进程内存（按登录会话与系统），“加密保存”存 `app.sap_user_credential`（AES-256-GCM，附加认证数据绑定用户、系统、地址、Client 与 SAP 用户，有效期与闲置期按 `app.sap_credential_policy`）。凭据只用于本人的请求，接口与日志不返回、不记录密码；登录被拒时立即作废，不自动重试。本机开发环境（`NODE_ENV` 不是 production）另可用 `SAP_MCP_PROFILE_FILE` 指定的本机凭据文件登录，仅当文件中的地址与 client 与所选项目系统一致。
+- **边界**：智能体对 SAP 默认只读。唯一的写操作是为测试案例创建业务单据：只在项目登记的**测试系统**执行；需要 `sap.test_data:create`，每次执行前由用户在界面逐次授权，授权只对该次请求有效。
+- **职责归属**：sap 模块负责项目 SAP 系统、个人凭据与保存策略、建单代码的静态审查与执行、运行记录。agent-core 负责模型工具定义（查询测试系统、申请建单）与在轮次中编排执行；各智能体只决定是否启用这些工具及如何写入自己的产物。
 - **执行方式**：程序生成固定前缀的临时类（`$TMP`，实现 `IF_OO_ADT_CLASSRUN`），类定义由程序生成，模型只提供主方法正文；正文可以调用任何 BAPI、函数模块和类（不设白名单；黑名单暂不实施），但禁止直接数据库写、动态调用、`SUBMIT`、`CALL TRANSACTION`、文件与内核调用等。依次建对象、写源码、语法检查、激活、运行，运行后删除临时类。MCP 的写入类工具（`createObject`、`lock`、`unLock`、`setObjectSource`、`activateByName`、`runClass`、`deleteObject`）只允许在 `sap/test-data.mjs` 中出现。
-- **个人凭据**：QAS 的系统与 client 取项目配置；用户名和密码必须是用户本人的，在一次登录内输入一次，只保存在 API 进程内存（按登录会话），不落库、不写日志；退出、过期或 API 重启后需重新输入。界面使用浏览器可保存的密码表单。本机开发环境（`NODE_ENV` 不是 production）另可选择用 `SAP_MCP_PROFILE_FILE` 指定的本机凭据文件登录，密码由服务端读取，不经过浏览器；文件中的地址或 client 与项目 QAS 配置不一致时不可用。
-- **数据归属**：`app.sap_test_data_run`（授权人、目标系统、类名与正文、调用的函数、输出、结果）归 sap；同时写一条 `app.audit_event`。
+- **数据归属**：`app.project_sap_system`、`app.sap_user_credential`、`app.sap_credential_policy`、`app.sap_test_data_run`（授权人、目标系统、类名与正文、调用的函数、输出、结果）归 sap；凭据的保存、作废、删除与建单同时写 `app.audit_event`。
+
+### 3.5 权限内核（access）
+
+- **职责**：权限点检查（企业级与项目级，含项目范围、模块范围、仅本人负责与有效期）、角色与复合角色、职位、企业级分配与项目内分配、权限报表，以及启动时同步预置角色与职位（`syncBuiltInRoles`）。设计见[项目主数据、权限与设置菜单设计](../specs/project-access-admin.md)第 2 节。
+- **数据归属**：`app.access_role`、`app.access_role_permission`、`app.access_role_composition`、`app.access_position`、`app.access_position_role`、`app.access_assignment`、`app.access_project_role` 归 access；`app.app_user` 的 `position_id`、`person_type`、`skill_modules` 列由 access 维护。其他模块不得直接查询这些表。
+- **公开入口**：`access/public.mjs`。其他模块用它取得企业级权限、项目权限与可见项目，或在不满足时抛出 403（附缺少的权限点）/ 404（范围外项目）。
+- **共享契约**：`packages/contracts/access/catalog.mjs` 只放权限点目录、预置角色、预置职位与选项（纯数据与纯函数，浏览器可用），不放权限决策。
+- **跨模块调用**：admin、delivery、sap、models、audit、technical、item-workspace、abap-fsd-agent、abap-dev-agent → access，登记见 module-dependencies.json；access 不导入其他业务模块。
 
 认证和连接配置属于 platform；只供一个业务使用的提示词、模板和资源放该业务模块内。禁止为单一消费者新增 packages/agents。
 
@@ -189,6 +207,8 @@ docs/architecture 放唯一架构契约与审计；docs/specs 放版本化设计
 ## 9. 可执行验收
 
 npm run check:architecture 必须检查：受控根目录、workspace 清单、跨应用违规依赖、应用反向导入 scripts、contracts 反向依赖、跨包物理路径、缺失本地导入、前端 Node 校验入口，以及测试文件是否被发现。检查器自身必须有违规反例测试。
+
+1.18 新增检查：`apps`、`packages`、`scripts`、`tools`、`infra` 中不得出现 `access_level`、`canManageOrganization`、`app.sap_system`（整词）、`app.sap_system_grant`、`app.project_sap_config`、`app.user_project_sap_config`；`apps/api` 中除 `apps/api/src/modules/access/` 外不得引用 `app.access_` 表。
 
 1.13 新增检查：`apps/web/src` 下除 `assets/theme.css` 与 `components/ai-elements`、`components/ui` 外，样式中不得出现颜色字面值（十六进制、`rgb()`/`hsl()` 等函数、颜色名称，含自定义属性的值）、字体族名称、`px`/`rem` 字号、数字或 `bold` 字重、`padding`/`margin`/`gap` 的 `px`/`rem` 值与 `border-radius` 的字面值；`.vue` 模板不得使用 Tailwind 调色板颜色类或在内联样式中写颜色；前端代码不得以字符串写十六进制颜色。取值一律引用 theme.css 的变量（允许 `calc()`、`color-mix()` 组合令牌，允许 `em` 相对字号）。
 

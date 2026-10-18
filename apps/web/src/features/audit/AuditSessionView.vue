@@ -51,7 +51,7 @@ const change = (c: number | null) =>
 </script>
 <template>
   <div class="admin-page audit-page">
-    <RouterLink class="back-link" to="/workspace/audit"
+    <RouterLink class="back-link" to="/settings/audit"
       ><AppIcon name="back" :size="16" />返回审计日志</RouterLink
     >
     <p v-if="error" class="error-note" role="alert">{{ error }}</p>
@@ -111,7 +111,7 @@ const change = (c: number | null) =>
             <tbody>
               <tr v-for="(r, i) in rounds" :key="r.id" :class="{ 'audit-flagged': r.flagged }">
                 <td>
-                  <RouterLink class="text-link" :to="'/workspace/audit/runs/' + r.id">{{
+                  <RouterLink class="text-link" :to="'/settings/audit/runs/' + r.id">{{
                     i + 1
                   }}</RouterLink>
                 </td>

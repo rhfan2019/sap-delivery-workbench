@@ -3,6 +3,7 @@ import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { connectDatabase } from '@sap-delivery-workbench/api/platform/database';
 import { hashPassword } from '@sap-delivery-workbench/api/platform/password';
 import { audit } from '@sap-delivery-workbench/api/platform/auth';
+import { grantSuperAdmin } from '@sap-delivery-workbench/api/access';
 import { join, isAbsolute } from 'node:path';
 
 const production = process.env.NODE_ENV === 'production';
@@ -63,10 +64,12 @@ try {
       user.id,
       await hashPassword(password),
     ]);
-    await db.query(
-      "INSERT INTO app.organization_member(organization_id,user_id,access_level) VALUES($1,$2,'admin')",
-      [org.id, user.id],
-    );
+    await db.query('INSERT INTO app.organization_member(organization_id,user_id) VALUES($1,$2)', [
+      org.id,
+      user.id,
+    ]);
+    // Contract 3.5: the first account is the super administrator of all projects.
+    await grantSuperAdmin(db, org.id, user.id);
     await audit(db, 'deployment.bootstrap', 'success', org.id, user.id);
   }
   // Persist the recovery handoff before commit; do not print credentials in logs.

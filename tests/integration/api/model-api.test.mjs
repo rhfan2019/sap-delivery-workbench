@@ -6,6 +6,7 @@ import { createApp } from '../../../apps/api/src/app.mjs';
 import { hashPassword } from '../../../apps/api/src/platform/password.mjs';
 import { resolveDefaultModel } from '../../../apps/api/src/modules/models/store.mjs';
 import { digest } from '../../../apps/api/src/platform/auth.mjs';
+import { grantRole, dropOrganizations } from '../../fixtures/access.mjs';
 
 test('model registry: permissions, immutable versions, defaults, tests and deletion', async () => {
   const db = await connectDatabase(),
@@ -35,11 +36,13 @@ test('model registry: permissions, immutable versions, defaults, tests and delet
         'INSERT INTO app.user_password(user_id,password_hash,must_change_password) VALUES($1,$2,false)',
         [id, hash],
       );
-      await db.query(
-        'INSERT INTO app.organization_member(organization_id,user_id,access_level) VALUES($1,$2,$3)',
-        [org, id, i ? 'member' : 'admin'],
-      );
+      await db.query('INSERT INTO app.organization_member(organization_id,user_id) VALUES($1,$2)', [
+        org,
+        id,
+      ]);
     }
+    // Contract 3.5: the platform configurator manages models; the second user holds nothing.
+    await grantRole(db, org, users[0], 'SYS_PLATFORM');
     app = await createApp({
       organizationId: org,
       modelProbe: async (config, key) => {
@@ -280,12 +283,7 @@ test('model registry: permissions, immutable versions, defaults, tests and delet
         await db.query('DELETE FROM app.' + table + ' WHERE organization_id=$1', [org]);
       }
     }
-    await db.query('DELETE FROM app.audit_event WHERE organization_id=$1', [org]);
-    await db.query('DELETE FROM app.auth_session WHERE organization_id=$1', [org]);
-    await db.query('DELETE FROM app.organization_member WHERE organization_id=$1', [org]);
-    await db.query('DELETE FROM app.user_password WHERE user_id=ANY($1::uuid[])', [users]);
-    await db.query('DELETE FROM app.app_user WHERE id=ANY($1::uuid[])', [users]);
-    await db.query('DELETE FROM app.organization WHERE id=ANY($1::uuid[])', [[org, other]]);
+    await dropOrganizations(db, [org, other], users);
     await db.query('DELETE FROM app.login_throttle WHERE key_hash=ANY($1::bytea[])', [
       [digest('model-' + suffix), digest('model0-' + suffix), digest('model1-' + suffix)],
     ]);

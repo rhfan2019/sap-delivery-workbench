@@ -177,7 +177,8 @@ const label = (v: { version: number; source: string; labels: string[] }) =>
         >
         <button
           v-if="shown && !live"
-          :disabled="!canEdit || saving"
+          :disabled="!run.canFinalize.value || saving"
+          :title="run.canFinalize.value ? undefined : '需要“定稿代码”权限'"
           :aria-pressed="isFinal"
           @click="toggleFinal"
         >

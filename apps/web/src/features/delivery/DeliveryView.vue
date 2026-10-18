@@ -37,7 +37,8 @@ import BaseTabs from '../../components/base/BaseTabs.vue';
 import { toast as notify } from '../../components/base/toast';
 import { useShortcut } from '../../services/shortcuts';
 import WorkbenchTable from '../../components/workbench-table/WorkbenchTable.vue';
-import { api, ApiError, identity } from '../../services/session';
+import { api, ApiError, identity, type ProjectAccess } from '../../services/session';
+import { allows } from '../access/permissions';
 import { currentProject, projects, leaveDelivery } from '../../services/projectContext';
 import { askConfirmation } from '../../services/confirmation';
 import {
@@ -66,7 +67,7 @@ const items = ref<Item[]>([]),
   tags = ref<Tag[]>([]),
   customFields = ref<CustomFieldDefinition[]>([]);
 const readOnly = ref(true),
-  isAdmin = ref(false),
+  access = ref<ProjectAccess | null>(null),
   loading = ref(false),
   loaded = ref(false),
   busy = ref(false);
@@ -98,10 +99,67 @@ const menu = ref('');
 const columnKeys = ref<string[]>([]);
 
 const fields = computed(() => catalog(customFields.value));
-const ctx = computed<ListContext>(() => ({ members: members.value, tags: tags.value }));
+const ctx = computed<ListContext>(() => ({
+  members: members.value,
+  tags: tags.value,
+  codeFreeze: freeze.value && !codeFreeze.value?.achievedOn ? freeze.value.date : null,
+}));
 const columns = computed(() => tableColumns(fields.value));
 const base = computed(() => '/projects/' + currentProject.value + '/development-items');
 const drawerItem = computed(() => items.value.find((i) => i.id === drawerId.value) ?? null);
+// Contract 3.5: buttons follow the user's permissions in this project; edits and deletes also
+// follow the module scope and "own items only" of their assignment. The API checks again.
+const may = (code: string) => allows(access.value, code);
+const ownersOf = (item: Item) =>
+  [item.createdBy, ...Object.values(item.phases).map((p) => p.assigneeId)].filter(
+    Boolean,
+  ) as string[];
+const mayOn = (code: string, item: Item) =>
+  allows(
+    access.value,
+    code,
+    { module: item.module, owners: ownersOf(item) },
+    identity.value?.user.id,
+  );
+const checkedItems = computed(() => items.value.filter((i) => checked.value.includes(i.id)));
+// The code freeze milestone (docs/specs/project-access-admin.md 1.3): a countdown in the header,
+// and how many items plan their development after it.
+const codeFreeze = ref<{ plannedOn: string | null; achievedOn: string | null } | null>(null);
+async function loadFreeze(projectId: string) {
+  try {
+    const p = await api<{
+      milestones: { key: string | null; plannedOn: string | null; achievedOn: string | null }[];
+    }>('/projects/' + projectId);
+    if (projectId === currentProject.value)
+      codeFreeze.value = p.milestones.find((m) => m.key === 'code_freeze') ?? null;
+  } catch {
+    codeFreeze.value = null;
+  }
+}
+const freeze = computed(() => {
+  const m = codeFreeze.value;
+  if (!m || (!m.plannedOn && !m.achievedOn)) return null;
+  if (m.achievedOn) return { text: '开发已冻结', tone: 'neutral' as const, date: m.achievedOn };
+  const today = new Date().toISOString().slice(0, 10);
+  const days = Math.round((Date.parse(m.plannedOn!) - Date.parse(today)) / 86400000);
+  return days < 0
+    ? { text: '开发冻结已过 ' + -days + ' 天', tone: 'red' as const, date: m.plannedOn! }
+    : {
+        text: '距开发冻结 ' + days + ' 天',
+        tone: days <= 14 ? ('yellow' as const) : ('blue' as const),
+        date: m.plannedOn!,
+      };
+});
+const lateItems = computed(() => {
+  const date = freeze.value?.date;
+  if (!date) return 0;
+  return items.value.filter(
+    (i) =>
+      (i.phases.development?.plannedEnd ?? '') > date &&
+      i.phases.development?.status !== 'completed' &&
+      i.phases.development?.status !== 'cancelled',
+  ).length;
+});
 const projectName = computed(
   () => projects.value.find((p) => p.id === currentProject.value)?.name || '请在左上角选择项目',
 );
@@ -320,7 +378,7 @@ async function load(reset = false) {
       tags: Tag[];
       fields: CustomFieldDefinition[];
       readOnly: boolean;
-      isAdmin: boolean;
+      access: ProjectAccess;
     }>(base.value);
     if (request !== generation) return;
     items.value = result.items;
@@ -328,8 +386,9 @@ async function load(reset = false) {
     tags.value = result.tags;
     customFields.value = result.fields;
     readOnly.value = result.readOnly;
-    isAdmin.value = result.isAdmin;
+    access.value = result.access;
     loaded.value = true;
+    void loadFreeze(currentProject.value);
     checked.value = checked.value.filter((id) => result.items.some((i) => i.id === id));
     if (drawerId.value && !result.items.some((i) => i.id === drawerId.value)) drawerId.value = null;
   } catch (e) {
@@ -562,7 +621,10 @@ function step(direction: number) {
   const next = rows.value[index + direction];
   if (next) void open(next.id);
 }
-useShortcut('N', () => !readOnly.value && loaded.value && void openCreate());
+useShortcut(
+  'N',
+  () => !readOnly.value && loaded.value && may('delivery.item:create') && void openCreate(),
+);
 useShortcut('F', () => (filterOpen.value = true));
 useShortcut('V', () => table.value?.openColumns());
 useShortcut('J', () => step(1));
@@ -581,6 +643,15 @@ const summary = (item: Item) =>
       <ListChecks class="list-icon" />
       <h1>开发清单</h1>
       <span class="list-project">{{ projectName }}</span>
+      <BaseTag v-if="freeze" :tone="freeze.tone" :title="'开发冻结计划日期 ' + freeze.date">{{
+        freeze.text
+      }}</BaseTag>
+      <span
+        v-if="lateItems"
+        class="list-late"
+        :title="'开发阶段计划完成日期晚于开发冻结（' + freeze?.date + '）'"
+        >{{ lateItems }} 项开发计划晚于冻结</span
+      >
       <span class="head-actions">
         <BaseMenu align="end">
           <template #trigger>
@@ -588,15 +659,21 @@ const summary = (item: Item) =>
               ><template #icon><FileSpreadsheet /></template>导入 / 导出</BaseButton
             >
           </template>
-          <BaseMenuItem tone="blue" :disabled="readOnly" @select="dialog = 'import'"
+          <BaseMenuItem
+            tone="blue"
+            :disabled="readOnly || !may('delivery.item:import')"
+            @select="dialog = 'import'"
             ><template #icon><FileUp /></template>从 Excel 导入</BaseMenuItem
           >
-          <BaseMenuItem tone="blue" @select="downloadTemplate"
+          <BaseMenuItem
+            tone="blue"
+            :disabled="!may('delivery.item:import')"
+            @select="downloadTemplate"
             ><template #icon><FileDown /></template>下载导入模板</BaseMenuItem
           >
           <BaseMenuItem
             tone="green"
-            :disabled="!filtered.length"
+            :disabled="!filtered.length || !may('delivery.item:export')"
             :note="`${filtered.length} 项`"
             @select="
               exportExcel(
@@ -615,7 +692,7 @@ const summary = (item: Item) =>
           variant="primary"
           kbd="N"
           data-keep-drawer
-          :disabled="readOnly || !loaded"
+          :disabled="readOnly || !loaded || !may('delivery.item:create')"
           @click="openCreate"
           ><template #icon><Plus /></template>新建开发项</BaseButton
         >
@@ -856,11 +933,14 @@ const summary = (item: Item) =>
                   ><template #icon><PenSquare /></template>查看 / 编辑</BaseMenuItem
                 >
                 <BaseMenuItem
-                  :disabled="readOnly || busy"
+                  :disabled="readOnly || busy || !may('delivery.item:create')"
                   @select="((checked = [item.id]), batchCopy())"
                   ><template #icon><Copy /></template>复制</BaseMenuItem
                 >
-                <BaseMenuItem danger :disabled="readOnly || busy" @select="removeOne(item)"
+                <BaseMenuItem
+                  danger
+                  :disabled="readOnly || busy || !mayOn('delivery.item:delete', item)"
+                  @select="removeOne(item)"
                   ><template #icon><Trash2 /></template>删除</BaseMenuItem
                 >
               </BaseMenu>
@@ -870,7 +950,7 @@ const summary = (item: Item) =>
               :item="item"
               :field="fields.find((f) => f.key === column.key)!"
               :ctx="ctx"
-              :read-only="readOnly || busy"
+              :read-only="readOnly || busy || !mayOn('delivery.item:edit', item)"
               :save="saveCell"
             />
           </template>
@@ -879,7 +959,13 @@ const summary = (item: Item) =>
               >清除所有筛选</BaseButton
             >
             <BaseButton
-              v-else-if="currentProject && !items.length && !readOnly && loaded"
+              v-else-if="
+                currentProject &&
+                !items.length &&
+                !readOnly &&
+                loaded &&
+                may('delivery.item:create')
+              "
               size="sm"
               data-keep-drawer
               @click="openCreate"
@@ -920,7 +1006,10 @@ const summary = (item: Item) =>
         :ctx="ctx"
         :base="base"
         :project-id="currentProject"
-        :read-only="readOnly"
+        :read-only="
+          readOnly ||
+          (drawerItem ? !mayOn('delivery.item:edit', drawerItem) : !may('delivery.item:create'))
+        "
         :create-tag="createTag"
         @close="closeDrawer"
         @saved="saved"
@@ -935,20 +1024,30 @@ const summary = (item: Item) =>
           <span class="batch-count" role="status">已选 {{ checked.length }} 项</span>
           <BaseButton
             variant="ghost"
-            :disabled="readOnly || busy"
+            :disabled="
+              readOnly || busy || !checkedItems.every((i) => mayOn('delivery.item:edit', i))
+            "
             @click="((batchError = ''), (dialog = 'batch'))"
             ><template #icon><PenSquare /></template>批量修改</BaseButton
           >
-          <BaseButton variant="ghost" :disabled="readOnly || busy" @click="batchCopy"
+          <BaseButton
+            variant="ghost"
+            :disabled="readOnly || busy || !may('delivery.item:create')"
+            @click="batchCopy"
             ><template #icon><Copy /></template>复制</BaseButton
           >
           <BaseButton
             variant="ghost"
-            :disabled="busy"
+            :disabled="busy || !may('delivery.item:export')"
             @click="exportExcel(checked, `选中的 ${checked.length} 项`)"
             ><template #icon><FileDown /></template>导出</BaseButton
           >
-          <BaseButton variant="danger" :disabled="readOnly || busy" @click="batchDelete"
+          <BaseButton
+            variant="danger"
+            :disabled="
+              readOnly || busy || !checkedItems.every((i) => mayOn('delivery.item:delete', i))
+            "
+            @click="batchDelete"
             ><template #icon><Trash2 /></template>删除</BaseButton
           >
         </div>
@@ -982,7 +1081,7 @@ const summary = (item: Item) =>
       :project-id="currentProject"
       :fields="customFields"
       :tags="tags"
-      :is-admin="isAdmin"
+      :can-configure="may('delivery.config:manage')"
       :read-only="readOnly"
       @close="dialog = ''"
       @changed="load()"

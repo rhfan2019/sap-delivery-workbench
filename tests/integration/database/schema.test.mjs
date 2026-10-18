@@ -18,6 +18,13 @@ const expectedTables = [
   'abap_fsd_agent_session',
   'abap_fsd_agent_tool_call',
   'abap_fsd_agent_turn',
+  'access_assignment',
+  'access_position',
+  'access_position_role',
+  'access_project_role',
+  'access_role',
+  'access_role_composition',
+  'access_role_permission',
   'app_user',
   'audit_comment',
   'audit_event',
@@ -41,14 +48,18 @@ const expectedTables = [
   'organization',
   'organization_member',
   'project',
+  'project_contact',
+  'project_health',
   'project_member',
+  'project_milestone',
+  'project_module_lead',
+  'project_phase',
   'project_preference',
-  'project_sap_config',
-  'sap_system',
-  'sap_system_grant',
+  'project_sap_system',
+  'sap_credential_policy',
   'sap_test_data_run',
+  'sap_user_credential',
   'user_password',
-  'user_project_sap_config',
 ];
 
 async function transaction(run, options) {
@@ -309,4 +320,138 @@ test('development items: per-project numbers, phase rules and normalized SAP obj
       [f.org, f.project, item, 'PROG', 'ZPROG', f.user],
       '23505',
     );
+  }));
+
+// Contract 1.18: roles nest one level, role scope matches the assignment, and project SAP
+// systems keep one default per purpose and drop saved credentials when access ends.
+test('access roles, assignments and project SAP credentials keep their rules', () =>
+  transaction(async (client) => {
+    const { org, user, project } = await fixture(client);
+    const role = async (code, kind, scope) =>
+      (
+        await client.query(
+          'INSERT INTO app.access_role(organization_id,code,name,kind,scope) VALUES($1,$2,$2,$3,$4) RETURNING id',
+          [org, code, kind, scope],
+        )
+      ).rows[0].id;
+    const single = await role('T_SINGLE', 'single', 'project'),
+      orgSingle = await role('T_ORG', 'single', 'organization'),
+      composite = await role('T_COMPOSITE', 'composite', 'project'),
+      outer = await role('T_OUTER', 'composite', 'organization');
+    await client.query(
+      'INSERT INTO app.access_role_composition(organization_id,composite_id,member_id) VALUES($1,$2,$3)',
+      [org, composite, single],
+    );
+    // A composite inside a composite, and an organization role inside a project composite.
+    await expectViolation(
+      client,
+      'INSERT INTO app.access_role_composition(organization_id,composite_id,member_id) VALUES($1,$2,$3)',
+      [org, outer, composite],
+      '23514',
+    );
+    await expectViolation(
+      client,
+      'INSERT INTO app.access_role_composition(organization_id,composite_id,member_id) VALUES($1,$2,$3)',
+      [org, composite, orgSingle],
+      '23514',
+    );
+    await expectViolation(
+      client,
+      "INSERT INTO app.access_role_permission(organization_id,role_id,permission) VALUES($1,$2,'Not A Code')",
+      [org, single],
+      '23514',
+    );
+    // Project roles are assigned in a project, organization roles organization-wide.
+    await expectViolation(
+      client,
+      "INSERT INTO app.access_assignment(organization_id,user_id,role_id,project_scope) VALUES($1,$2,$3,'all')",
+      [org, user, single],
+      '23514',
+    );
+    await expectViolation(
+      client,
+      "INSERT INTO app.access_assignment(organization_id,user_id,role_id,project_scope) VALUES($1,$2,$3,'projects')",
+      [org, user, orgSingle],
+      '23514',
+    );
+    await client.query(
+      'INSERT INTO app.project_member(organization_id,project_id,user_id) VALUES($1,$2,$3)',
+      [org, project, user],
+    );
+    await expectViolation(
+      client,
+      'INSERT INTO app.access_project_role(organization_id,project_id,user_id,role_id) VALUES($1,$2,$3,$4)',
+      [org, project, user, orgSingle],
+      '23514',
+    );
+    await client.query(
+      'INSERT INTO app.access_project_role(organization_id,project_id,user_id,role_id) VALUES($1,$2,$3,$4)',
+      [org, project, user, composite],
+    );
+
+    const system = async (client_, isDefault) =>
+      (
+        await client.query(
+          `INSERT INTO app.project_sap_system(organization_id,project_id,name,purpose,sid,sap_url,client,is_default)
+          VALUES($1,$2,'S4D','development','S4D','https://sap.example',$3,$4) RETURNING id`,
+          [org, project, client_, isDefault],
+        )
+      ).rows[0].id;
+    const dev = await system('100', true);
+    await expectViolation(
+      client,
+      `INSERT INTO app.project_sap_system(organization_id,project_id,name,purpose,sid,sap_url,client,is_default)
+      VALUES($1,$2,'S4D','development','S4D','https://sap.example','200',true)`,
+      [org, project],
+      '23505',
+    );
+    // The same purpose, address and client twice; and no production systems at all.
+    await expectViolation(
+      client,
+      `INSERT INTO app.project_sap_system(organization_id,project_id,name,purpose,sid,sap_url,client)
+      VALUES($1,$2,'Again','development','S4D','https://sap.example','100')`,
+      [org, project],
+      '23505',
+    );
+    await expectViolation(
+      client,
+      `INSERT INTO app.project_sap_system(organization_id,project_id,name,purpose,sid,sap_url,client)
+      VALUES($1,$2,'Production','production','PRD','https://sap.example','100')`,
+      [org, project],
+      '23514',
+    );
+    const saved = () =>
+      client.query(
+        `INSERT INTO app.sap_user_credential(organization_id,project_id,system_id,user_id,sap_username,password_cipher,expires_at)
+        VALUES($1,$2,$3,$4,'DEVUSER','v1.x.y.z',now()+interval '1 day')`,
+        [org, project, dev, user],
+      );
+    const count = async () =>
+      Number(
+        (
+          await client.query('SELECT count(*) FROM app.sap_user_credential WHERE system_id=$1', [
+            dev,
+          ])
+        ).rows[0].count,
+      );
+    await saved();
+    await client.query("UPDATE app.project_sap_system SET client='300' WHERE id=$1", [dev]);
+    assert.equal(await count(), 0, 'a changed client drops saved credentials');
+    await saved();
+    await client.query(
+      "UPDATE app.project_member SET status='removed' WHERE organization_id=$1 AND project_id=$2 AND user_id=$3",
+      [org, project, user],
+    );
+    assert.equal(await count(), 0, 'leaving the project drops saved credentials');
+    await client.query(
+      "UPDATE app.project_member SET status='active' WHERE organization_id=$1 AND project_id=$2 AND user_id=$3",
+      [org, project, user],
+    );
+    await saved();
+    await client.query("UPDATE app.app_user SET status='disabled' WHERE id=$1", [user]);
+    assert.equal(await count(), 0, 'a disabled account drops saved credentials');
+    const columns = await client.query(
+      "SELECT 1 FROM information_schema.columns WHERE table_schema='app' AND table_name='organization_member' AND column_name='access_level'",
+    );
+    assert.equal(columns.rowCount, 0);
   }));

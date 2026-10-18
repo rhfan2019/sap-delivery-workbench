@@ -1,5 +1,5 @@
 import { failure } from '../../platform/auth.mjs';
-import { adminContext } from '../admin/context.mjs';
+import { accessContext } from '../access/public.mjs';
 import {
   listRuns,
   runDetail,
@@ -38,23 +38,23 @@ function runFilters(q = {}) {
 }
 const offset = (q) => Math.max(0, Number(q.offset) | 0);
 
-// Admin-only review of assistant runs and platform audit events; read-only except comments.
+// Review (audit:view; comments audit:comment) of assistant runs and platform audit events; read-only except comments.
 export function registerAuditRoutes(app, pool, organizationId, requireSession) {
-  const { authorize } = adminContext(pool, organizationId, requireSession);
+  const { authorize } = accessContext(pool, organizationId, requireSession);
   const org = organizationId;
 
   app.get(base + '/glossary', async (req) => {
-    await authorize(req);
+    await authorize(req, 'audit:view');
     return { stop_reasons: STOP_REASONS, tools: TOOL_LABELS };
   });
 
   app.get(base + '/runs/facets', async (req) => {
-    await authorize(req);
+    await authorize(req, 'audit:view');
     return runFacets(pool, org);
   });
 
   app.get(base + '/runs', async (req) => {
-    await authorize(req);
+    await authorize(req, 'audit:view');
     const page = await listRuns(pool, org, runFilters(req.query), {
       limit: PAGE,
       offset: offset(req.query),
@@ -73,7 +73,7 @@ export function registerAuditRoutes(app, pool, organizationId, requireSession) {
   });
 
   app.get(base + '/runs/:id', async (req) => {
-    const current = await authorize(req);
+    const current = await authorize(req, 'audit:view');
     if (!UUID.test(req.params.id)) throw failure(404, '运行不存在。');
     const detail = await runDetail(pool, org, req.params.id);
     if (!detail) throw failure(404, '运行不存在或不属于当前企业。');
@@ -93,7 +93,7 @@ export function registerAuditRoutes(app, pool, organizationId, requireSession) {
   });
 
   app.post(base + '/runs/:id/comments', async (req, reply) => {
-    const current = await authorize(req);
+    const current = await authorize(req, 'audit:comment');
     if (!UUID.test(req.params.id) || !(await runDetail(pool, org, req.params.id)))
       throw failure(404, '运行不存在。');
     const body = text(req.body?.body, 5000);
@@ -107,7 +107,7 @@ export function registerAuditRoutes(app, pool, organizationId, requireSession) {
   });
 
   app.delete(base + '/comments/:id', async (req) => {
-    const current = await authorize(req);
+    const current = await authorize(req, 'audit:comment');
     if (
       !UUID.test(req.params.id) ||
       !(await repo.deleteComment(pool, org, req.params.id, current.user.id))
@@ -117,7 +117,7 @@ export function registerAuditRoutes(app, pool, organizationId, requireSession) {
   });
 
   app.get(base + '/sessions/:id/trend', async (req) => {
-    await authorize(req);
+    await authorize(req, 'audit:view');
     if (!UUID.test(req.params.id)) throw failure(404, '会话不存在。');
     const trend = await sessionTrend(pool, org, req.params.id);
     if (!trend) throw failure(404, '会话不存在或不属于当前企业。');
@@ -133,7 +133,7 @@ export function registerAuditRoutes(app, pool, organizationId, requireSession) {
   });
 
   app.get(base + '/stats', async (req) => {
-    await authorize(req);
+    await authorize(req, 'audit:view');
     const filters = runFilters(req.query);
     const stats = await runStats(pool, org, filters);
     const t = stats.totals;
@@ -150,7 +150,7 @@ export function registerAuditRoutes(app, pool, organizationId, requireSession) {
   });
 
   app.get(base + '/export', async (req, reply) => {
-    await authorize(req);
+    await authorize(req, 'audit:view');
     const material = await buildAnalysis(pool, org, runFilters(req.query), {
       detail: req.query?.detail === '1',
     });
@@ -166,7 +166,7 @@ export function registerAuditRoutes(app, pool, organizationId, requireSession) {
   });
 
   app.get(base + '/events', async (req) => {
-    await authorize(req);
+    await authorize(req, 'audit:view');
     const q = req.query ?? {};
     return repo
       .listEvents(
@@ -185,12 +185,12 @@ export function registerAuditRoutes(app, pool, organizationId, requireSession) {
   });
 
   app.get(base + '/proposals', async (req) => {
-    await authorize(req);
+    await authorize(req, 'audit:view');
     return repo.listProposals(pool, org);
   });
 
   app.get(base + '/proposals/:id', async (req) => {
-    await authorize(req);
+    await authorize(req, 'audit:view');
     const found = UUID.test(req.params.id) && (await repo.getProposal(pool, org, req.params.id));
     if (!found) throw failure(404, '建议不存在。');
     return found;

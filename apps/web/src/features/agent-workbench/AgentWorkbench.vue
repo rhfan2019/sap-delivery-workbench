@@ -32,7 +32,7 @@ const props = withDefaults(
     editable?: boolean;
     blocked?: boolean;
     development?: boolean;
-    // Show the user's QAS login (contract 3.4) for agents that find or create test data.
+    // Show the user's test system login (contract 3.4) for agents that find or create test data.
     testSystem?: boolean;
   }>(),
   { editable: true, blocked: false, modelName: null, development: false, testSystem: false },
@@ -253,7 +253,7 @@ const suggestions = computed(() =>
             <TestSystemLogin v-if="testSystem && editable" compact :base="base" />
             <p v-if="notice" class="assistant-notice" role="alert">{{ notice }}</p>
             <p v-if="!models.length" class="assistant-notice">
-              尚未配置组织默认模型。<RouterLink to="/workspace/models">前往大模型配置</RouterLink>
+              尚未配置组织默认模型。<RouterLink to="/settings/models">前往大模型配置</RouterLink>
             </p>
             <div ref="composer">
               <p v-if="preparing" class="text-xs text-muted-foreground" role="status">
@@ -276,8 +276,9 @@ const suggestions = computed(() =>
               >
                 <template #tools>
                   <SapSystemSelect
-                    v-model="run.sapEnvironment.value"
+                    v-model="run.sapSystemId.value"
                     :base="base"
+                    :purpose="development ? 'development' : 'test'"
                     :disabled="sending || !editable || blocked"
                   />
                 </template>

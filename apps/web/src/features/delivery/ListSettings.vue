@@ -11,7 +11,7 @@ const props = defineProps<{
   projectId: string;
   fields: CustomFieldDefinition[];
   tags: Tag[];
-  isAdmin: boolean;
+  canConfigure: boolean;
   readOnly: boolean;
 }>();
 const emit = defineEmits<{ close: []; changed: [] }>();
@@ -21,7 +21,7 @@ const error = ref('');
 const notice = ref('');
 const fieldBase = computed(() => `/projects/${props.projectId}/development-fields`);
 const tagBase = computed(() => `/projects/${props.projectId}/development-tags`);
-const canEditFields = computed(() => props.isAdmin && !props.readOnly);
+const canEditFields = computed(() => props.canConfigure && !props.readOnly);
 type Draft = {
   id?: string;
   label: string;
@@ -150,7 +150,7 @@ onMounted(() => dialog.value?.showModal());
             <Plus :size="14" />新增列
           </button>
         </header>
-        <p v-if="!isAdmin" class="help-note">只有项目管理员可以新增或修改自定义列。</p>
+        <p v-if="!canConfigure" class="help-note">需要“维护清单设置”权限才能新增或修改自定义列。</p>
         <form v-if="draft" class="field-form" @submit.prevent="saveField">
           <label
             >列名称<input v-model="draft.label" maxlength="50" required :disabled="busy"

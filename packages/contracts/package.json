@@ -6,8 +6,10 @@
   "exports": {
     "./abap-dev-agent/types": "./abap-dev-agent/types.ts",
     "./abap-fsd-agent/types": "./abap-fsd-agent/types.ts",
+    "./access/catalog": "./access/catalog.mjs",
     "./agent-core/sse": "./agent-core/sse.mjs",
     "./agent-core/types": "./agent-core/types.ts",
-    "./delivery/fields": "./delivery/fields.mjs"
+    "./delivery/fields": "./delivery/fields.mjs",
+    "./projects/options": "./projects/options.mjs"
   }
 }

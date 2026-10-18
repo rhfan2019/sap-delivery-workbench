@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { adminContext } from '../admin/context.mjs';
+import { accessContext } from '../access/public.mjs';
 import { version } from '../admin/validation.mjs';
 import { failure } from '../../platform/auth.mjs';
 import { saveModel, getModel, listModels, ADAPTER_VERSION } from './store.mjs';
@@ -9,21 +9,21 @@ import { probeStructured } from './capabilities.mjs';
 import { STRUCTURED_ADAPTER_VERSION } from './inference.mjs';
 import { registerTextRoute } from './text-route.mjs';
 export function registerModelRoutes(app, pool, org, requireSession, probe = probeModel) {
-  const c = adminContext(pool, org, requireSession),
+  const c = accessContext(pool, org, requireSession),
     base = '/api/admin/models';
   app.get(base, async (req) => {
-    await c.authorize(req);
+    await c.authorize(req, 'model:view');
     return listModels(pool, org);
   });
   app.post(base, async (req, reply) =>
-    c.write(req, 'model.create', 'llm_model', async (db, user) => {
+    c.write(req, 'model:manage', 'model.create', 'llm_model', async (db, user) => {
       const data = await saveModel(db, org, user.user.id, req.body);
       reply.code(201);
       return { subjectId: data.id, data };
     }),
   );
   app.patch(base + '/:id', async (req) =>
-    c.write(req, 'model.save', 'llm_model', async (db, user) => {
+    c.write(req, 'model:manage', 'model.save', 'llm_model', async (db, user) => {
       const data = await saveModel(db, org, user.user.id, req.body, req.params.id);
       return { subjectId: data.id, data };
     }),
@@ -36,7 +36,7 @@ export function registerModelRoutes(app, pool, org, requireSession, probe = prob
   };
   registerTextRoute(app, c, check);
   app.delete(base + '/:id', async (req) =>
-    c.write(req, 'model.delete', 'llm_model', async (db) => {
+    c.write(req, 'model:manage', 'model.delete', 'llm_model', async (db) => {
       const m = await check(db, req);
       if (
         (
@@ -55,7 +55,7 @@ export function registerModelRoutes(app, pool, org, requireSession, probe = prob
     }),
   );
   app.post(base + '/:id/default', async (req) =>
-    c.write(req, 'model.default', 'llm_model', async (db) => {
+    c.write(req, 'model:manage', 'model.default', 'llm_model', async (db) => {
       const m = await check(db, req);
       const d = (
         await db.query('SELECT revision FROM app.llm_default WHERE organization_id=$1', [org])
@@ -87,35 +87,41 @@ export function registerModelRoutes(app, pool, org, requireSession, probe = prob
       throw failure(400, '不支持的模型能力测试。');
     const adapter = capability === 'text' ? ADAPTER_VERSION : STRUCTURED_ADAPTER_VERSION;
     // Short transaction reserves a version; never hold organization lock during network I/O.
-    const test = await c.write(req, 'model.test.start', 'llm_model', async (db, user) => {
-      const m = await check(db, req);
-      await db.query(
-        "UPDATE app.llm_test_run SET status='timeout',code='INTERRUPTED',safe_message='先前测试已超时或服务中断。',finished_at=clock_timestamp() WHERE organization_id=$1 AND version_id=$2 AND status='running' AND started_at<clock_timestamp()-($3::int * interval '1 millisecond')",
-        [org, m.versionId, MODEL_REQUEST_TIMEOUT_MS + 60000],
-      );
-      if (
-        (
-          await db.query(
-            "SELECT 1 FROM app.llm_test_run WHERE version_id=$1 AND status='running'",
-            [m.versionId],
-          )
-        ).rowCount
-      )
-        throw failure(409, '此版本正在测试，请稍后刷新。');
-      const id = randomUUID();
-      const credential = (
+    const test = await c.write(
+      req,
+      'model:manage',
+      'model.test.start',
+      'llm_model',
+      async (db, user) => {
+        const m = await check(db, req);
         await db.query(
-          'SELECT secret_cipher FROM app.llm_credential WHERE organization_id=$1 AND id=$2',
-          [org, m.credentialId],
+          "UPDATE app.llm_test_run SET status='timeout',code='INTERRUPTED',safe_message='先前测试已超时或服务中断。',finished_at=clock_timestamp() WHERE organization_id=$1 AND version_id=$2 AND status='running' AND started_at<clock_timestamp()-($3::int * interval '1 millisecond')",
+          [org, m.versionId, MODEL_REQUEST_TIMEOUT_MS + 60000],
+        );
+        if (
+          (
+            await db.query(
+              "SELECT 1 FROM app.llm_test_run WHERE version_id=$1 AND status='running'",
+              [m.versionId],
+            )
+          ).rowCount
         )
-      ).rows[0];
-      const secret = openKey(credential.secret_cipher, org, m.credentialId);
-      await db.query(
-        "INSERT INTO app.llm_test_run(id,organization_id,model_id,version_id,status,adapter_version,created_by) VALUES($1,$2,$3,$4,'running',$5,$6)",
-        [id, org, m.id, m.versionId, adapter, user.user.id],
-      );
-      return { subjectId: m.id, data: { id, model: m, secret } };
-    });
+          throw failure(409, '此版本正在测试，请稍后刷新。');
+        const id = randomUUID();
+        const credential = (
+          await db.query(
+            'SELECT secret_cipher FROM app.llm_credential WHERE organization_id=$1 AND id=$2',
+            [org, m.credentialId],
+          )
+        ).rows[0];
+        const secret = openKey(credential.secret_cipher, org, m.credentialId);
+        await db.query(
+          "INSERT INTO app.llm_test_run(id,organization_id,model_id,version_id,status,adapter_version,created_by) VALUES($1,$2,$3,$4,'running',$5,$6)",
+          [id, org, m.id, m.versionId, adapter, user.user.id],
+        );
+        return { subjectId: m.id, data: { id, model: m, secret } };
+      },
+    );
     let result;
     try {
       result = await (capability === 'text' ? probe : probeStructured)(

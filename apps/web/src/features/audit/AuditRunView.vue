@@ -44,7 +44,7 @@ async function load() {
 watch(
   () => route.fullPath,
   () => {
-    if (route.path.startsWith('/workspace/audit/runs/')) void load();
+    if (route.path.startsWith('/settings/audit/runs/')) void load();
   },
   { immediate: true },
 );
@@ -106,7 +106,7 @@ async function copy(text: string) {
 </script>
 <template>
   <div class="admin-page audit-page">
-    <RouterLink class="back-link" to="/workspace/audit"
+    <RouterLink class="back-link" to="/settings/audit"
       ><AppIcon name="back" :size="16" />返回审计日志</RouterLink
     >
     <p v-if="error" class="error-note" role="alert">{{ error }}</p>
@@ -134,7 +134,7 @@ async function copy(text: string) {
         <div class="toolbar-actions">
           <RouterLink
             class="secondary-button"
-            :to="'/workspace/audit/sessions/' + data.run.session_id"
+            :to="'/settings/audit/sessions/' + data.run.session_id"
             >会话逐轮趋势</RouterLink
           >
           <button class="secondary-button" :disabled="loading" @click="load">

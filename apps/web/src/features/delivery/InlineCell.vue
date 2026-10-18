@@ -27,6 +27,17 @@ const error = ref('');
 const draft = ref<unknown>(null);
 const root = ref<HTMLElement>();
 const canEdit = computed(() => !props.readOnly && editableInline(props.field));
+// A development plan that ends after the code freeze is marked (docs/specs/project-access-admin.md 1.3).
+const late = computed(() => {
+  if (props.field.key !== 'development.plannedEnd' || !props.ctx.codeFreeze) return false;
+  const value = fieldValue(props.item, props.field.key);
+  const status = props.item.phases.development?.status;
+  return (
+    typeof value === 'string' &&
+    value > props.ctx.codeFreeze &&
+    !['completed', 'cancelled'].includes(status)
+  );
+});
 const immediate = computed(
   () =>
     ['select', 'member'].includes(props.field.type) ||
@@ -73,7 +84,8 @@ function focusOut(event: FocusEvent) {
   <div
     ref="root"
     class="inline-cell"
-    :class="{ editable: canEdit, editing, saving, failed: !!error }"
+    :class="{ editable: canEdit, editing, saving, failed: !!error, late }"
+    :title="late ? '计划完成晚于开发冻结（' + ctx.codeFreeze + '）' : undefined"
     :tabindex="canEdit && !editing ? 0 : undefined"
     @click.stop="start"
     @keydown.enter.self.prevent="start"

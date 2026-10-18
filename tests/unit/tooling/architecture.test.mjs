@@ -161,6 +161,48 @@ test('contract 1.3 rejects assistant version directories, removed modules and le
   assert.deepEqual(checkLegacy('database/migrations/2.sql', 'DROP TABLE app.fs_version;'), []);
 });
 
+test('contract 1.18 retires the administrator flag and keeps access tables in the access module', () => {
+  assert.match(
+    checkLegacy(
+      'apps/api/src/modules/delivery/items.mjs',
+      "if (project.access_level === 'admin')",
+    ).join(),
+    /Retired identifier access_level/,
+  );
+  assert.match(
+    checkLegacy('apps/web/src/services/session.ts', 'canManageOrganization: boolean').join(),
+    /Retired identifier canManageOrganization/,
+  );
+  assert.match(
+    checkLegacy('scripts/database/provision.mjs', 'GRANT SELECT ON app.sap_system TO x').join(),
+    /Retired identifier app.sap_system/,
+  );
+  assert.match(
+    checkLegacy(
+      'apps/api/src/modules/sap/store.mjs',
+      'SELECT 1 FROM app.project_sap_config',
+    ).join(),
+    /Retired identifier app.project_sap_config/,
+  );
+  // The project systems table shares the prefix but is not retired.
+  assert.deepEqual(
+    checkLegacy('apps/api/src/modules/sap/systems.mjs', 'SELECT 1 FROM app.project_sap_system'),
+    [],
+  );
+  assert.match(
+    checkLegacy('apps/api/src/modules/admin/members.mjs', 'SELECT 1 FROM app.access_role').join(),
+    /Access table outside the access module/,
+  );
+  assert.deepEqual(
+    checkLegacy('apps/api/src/modules/access/kernel.mjs', 'SELECT 1 FROM app.access_role'),
+    [],
+  );
+  assert.deepEqual(
+    checkLegacy('database/migrations/9.sql', 'ALTER TABLE x DROP COLUMN access_level;'),
+    [],
+  );
+});
+
 test('contract 1.7 makes every agent module import other modules through public facades', () => {
   const opts = {
     files: new Set([

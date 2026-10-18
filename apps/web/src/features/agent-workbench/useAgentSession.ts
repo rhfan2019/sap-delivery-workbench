@@ -33,17 +33,16 @@ type Status =
   | 'cancelled';
 // One agent conversation: history, the live turn, its files and comments. What the agent
 // produces (an FSD, a plan and code) stays in `detail` and `drafts` for the agent's panel.
-export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV') {
-  // The SAP system the next message reads (contract 1.12), remembered per assistant and item.
-  const sapKey = 'sap-environment:' + base;
+export function useAgentSession(base: string) {
+  // The project SAP system the next message reads (contract 3.4); empty means the agent's
+  // default. Remembered per assistant and item.
+  const sapKey = 'sap-system:' + base;
   let remembered: string | null = null;
   try {
     remembered = localStorage.getItem(sapKey);
   } catch {}
-  const sapEnvironment = ref<'DEV' | 'QAS'>(
-    remembered === 'DEV' || remembered === 'QAS' ? remembered : defaultSap,
-  );
-  watch(sapEnvironment, (value) => {
+  const sapSystemId = ref(remembered ?? '');
+  watch(sapSystemId, (value) => {
     try {
       localStorage.setItem(sapKey, value);
     } catch {}
@@ -83,6 +82,8 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
   }
   const attachments = ref<AgentAttachment[]>([]);
   const canEdit = ref(false);
+  // Marking a version final needs agent.<stage>:finalize (contract 3.5).
+  const canFinalize = ref(false);
   const busy = computed(() => ['waiting', 'streaming', 'stopping'].includes(status.value));
   let questions: AskedQuestion[] = [];
   let reader: AbortController | null = null;
@@ -91,6 +92,7 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
   function adopt(data: any) {
     detail.value = data;
     canEdit.value = !!data.canEdit;
+    canFinalize.value = !!data.canFinalize;
     messages.value = buildTimeline(data);
     const pending = pendingQuestions(data);
     questions = pending?.questions ?? [];
@@ -267,7 +269,7 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
     testData.value = null;
     const started = await api<{ turnId: string }>(
       `${base}/sessions/${sessionId.value}/messages`,
-      { content, sapEnvironment: sapEnvironment.value, ...(answers ? { answers } : {}) },
+      { content, sapSystemId: sapSystemId.value || undefined, ...(answers ? { answers } : {}) },
       'POST',
     );
     messages.value.push({
@@ -296,7 +298,7 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
       `${base}/sessions/${sessionId.value}/messages`,
       {
         authorization: { requestId: request.id, decision, note },
-        sapEnvironment: sapEnvironment.value,
+        sapSystemId: sapSystemId.value || undefined,
       },
       'POST',
     );
@@ -343,7 +345,7 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
     steps,
     decision,
     testData,
-    sapEnvironment,
+    sapSystemId,
     status,
     busy,
     error,
@@ -355,6 +357,7 @@ export function useAgentSession(base: string, defaultSap: 'DEV' | 'QAS' = 'DEV')
     quote,
     attachments,
     canEdit,
+    canFinalize,
     load,
     refresh,
     create,

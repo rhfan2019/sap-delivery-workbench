@@ -1,405 +1,481 @@
-import { probeSystem } from './probe.mjs';
 import { randomUUID } from 'node:crypto';
 import { failure } from '../../platform/auth.mjs';
-import { adminContext, found, changed } from '../admin/context.mjs';
-import { deliveryContext } from '../delivery/context.mjs';
-import * as v from '../admin/validation.mjs';
-import { sapUrl, revision } from './validation.mjs';
-import { systemColumns, configView, saveRows, effectiveConfig } from './store.mjs';
-import { publicConfig } from './resolve.mjs';
-import { open } from './crypto.mjs';
-import { connectMcp, queryTable } from '../technical/sap-mcp.mjs';
+import { accessContext, createAccess, deniedError } from '../access/public.mjs';
+import { uuid, version } from '../admin/validation.mjs';
+import { probeSystem } from './probe.mjs';
+import { systemInput, credentialInput, policyInput } from './validation.mjs';
+import { projectSystems, systemById, systemColumns } from './systems.mjs';
 import {
-  TEST_ENVIRONMENT,
-  rememberCredentials,
-  recalledCredentials,
-  forgetCredentials,
+  credentialFor,
+  credentialStatus,
+  deleteCredential,
+  forgetForSession,
+  forgetUser,
+  maySave,
+  policyOf,
   profileCredentials,
-} from './session-credentials.mjs';
+  rememberForSession,
+  saveCredential,
+} from './credentials.mjs';
 
+// Contract 3.4: project SAP systems, personal credentials and the credential policy
+// (docs/specs/project-access-admin.md section 3).
 export function registerSapRoutes(app, pool, org, requireSession) {
-  const admin = adminContext(pool, org, requireSession),
-    delivery = deliveryContext(pool, org, requireSession);
-  app.get('/api/admin/sap-systems', async (req) => {
-    await admin.authorize(req);
-    return (
-      await pool.query(
-        `SELECT ${systemColumns},c.name AS "ownerName" FROM app.sap_system s LEFT JOIN app.customer c ON c.organization_id=s.organization_id AND c.id=s.owner_customer_id WHERE s.organization_id=$1 ORDER BY s.name,s.id`,
-        [org],
-      )
-    ).rows;
+  const ctx = accessContext(pool, org, requireSession);
+  const { readProject, writeProject, authorize, write } = ctx;
+  const access = createAccess(pool, org);
+  const base = '/api/projects/:projectId/sap-systems';
+
+  const personTypeOf = async (db, userId) =>
+    (await db.query('SELECT person_type FROM app.app_user WHERE id=$1', [userId])).rows[0]
+      ?.person_type ?? 'employee';
+  // Systems of a project with the signed-in user's own credential state for each.
+  async function view(db, current, grant) {
+    const policy = await policyOf(db, org);
+    const systems = await projectSystems(db, org, grant.project.id);
+    for (const s of systems) {
+      s.credential = await credentialStatus(db, org, current, s, policy);
+      s.canRead = grant.has(`sap.${s.purpose}:read`);
+    }
+    return {
+      projectId: grant.project.id,
+      readOnly: grant.project.status === 'archived',
+      canManage: grant.has('project.sap:manage'),
+      canSave: maySave(policy, await personTypeOf(db, current.user.id)),
+      policy: { maxDays: policy.maxDays, idleDays: policy.idleDays },
+      profileLogin: process.env.NODE_ENV !== 'production' && !!process.env.SAP_MCP_PROFILE_FILE,
+      systems,
+    };
+  }
+  app.get(base, async (req) => {
+    const { current, grant } = await readProject(req, 'project.sap:view');
+    return view(pool, current, grant);
   });
-  const testingSystems = new Set();
-  app.post('/api/admin/sap-systems/:id/test', async (req) => {
-    await admin.authorize(req);
-    const id = v.uuid(req.params.id),
-      b = req.body ?? {};
-    const expected = v.version(b.rowVersion);
-    if (typeof b.client !== 'string' || !/^\d{3}$/.test(b.client))
-      throw failure(400, 'Client 必须是三位数字。');
-    const username = v.text(b.username, 'SAP 用户', 100);
-    if (typeof b.password !== 'string' || !b.password || b.password.length > 4096)
-      throw failure(400, '请输入 SAP 密码。');
-    const system = found(
-      await pool.query('SELECT * FROM app.sap_system WHERE organization_id=$1 AND id=$2', [
-        org,
-        id,
-      ]),
+
+  // The first active system of a purpose becomes its default; a switched-off default steps down.
+  async function settleDefaults(db, projectId) {
+    await db.query(
+      `UPDATE app.project_sap_system SET is_default=false,row_version=row_version+1,updated_at=now()
+      WHERE organization_id=$1 AND project_id=$2 AND is_default AND status<>'active'`,
+      [org, projectId],
     );
-    if (system.status !== 'active') throw failure(409, '系统已停用。');
-    if (String(system.row_version) !== expected) throw failure(409, '系统已更新，请刷新后测试。');
-    if (testingSystems.has(id) || testingSystems.size >= 2)
-      throw failure(429, 'SAP 测试正在进行，请稍后重试。');
-    testingSystems.add(id);
+    for (const purpose of ['development', 'test'])
+      await db.query(
+        `UPDATE app.project_sap_system SET is_default=true,row_version=row_version+1,updated_at=now()
+        WHERE id=(SELECT id FROM app.project_sap_system WHERE organization_id=$1 AND project_id=$2 AND purpose=$3 AND status='active'
+          ORDER BY created_at LIMIT 1)
+        AND NOT EXISTS(SELECT 1 FROM app.project_sap_system WHERE organization_id=$1 AND project_id=$2 AND purpose=$3 AND is_default)`,
+        [org, projectId, purpose],
+      );
+  }
+  const duplicate = (error) => {
+    if (error?.code === '23505')
+      throw failure(409, '本项目已登记相同用途、ADT 地址与 Client 的系统。');
+    throw error;
+  };
+  app.post(base, async (req, reply) => {
+    const input = systemInput(req.body);
+    const result = await writeProject(
+      req,
+      'project.sap:manage',
+      'sap.system.create',
+      'sap_system',
+      async (db, current, grant) => {
+        const { rows } = await db
+          .query(
+            `INSERT INTO app.project_sap_system(organization_id,project_id,name,purpose,sid,sap_url,client,language,description,status,created_by)
+          VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
+            [
+              org,
+              grant.project.id,
+              input.name,
+              input.purpose,
+              input.sid,
+              input.sapUrl,
+              input.client,
+              input.language,
+              input.description,
+              input.status,
+              current.user.id,
+            ],
+          )
+          .catch(duplicate);
+        await settleDefaults(db, grant.project.id);
+        return {
+          subjectId: rows[0].id,
+          data: await view(db, current, grant),
+          details: { sid: input.sid, client: input.client },
+        };
+      },
+    );
+    reply.code(201);
+    return result;
+  });
+  app.patch(base + '/:systemId', async (req) => {
+    const id = uuid(req.params.systemId),
+      input = systemInput(req.body),
+      revision = version(req.body?.rowVersion);
+    return writeProject(
+      req,
+      'project.sap:manage',
+      'sap.system.update',
+      'sap_system',
+      async (db, current, grant) => {
+        const before = await systemById(db, org, grant.project.id, id);
+        if (before.purpose !== input.purpose)
+          throw failure(400, '系统用途登记后不能更改；如需更改，请新建系统并停用此系统。');
+        const { rowCount } = await db
+          .query(
+            `UPDATE app.project_sap_system SET name=$4,sid=$5,sap_url=$6::varchar,client=$7::varchar,language=$8,description=$9,status=$10::varchar,
+            last_test_status=CASE WHEN sap_url<>$6::varchar OR client<>$7::varchar THEN NULL ELSE last_test_status END,
+            last_test_message=CASE WHEN sap_url<>$6::varchar OR client<>$7::varchar THEN NULL ELSE last_test_message END,
+            last_test_at=CASE WHEN sap_url<>$6::varchar OR client<>$7::varchar THEN NULL ELSE last_test_at END,
+            backend_version=CASE WHEN sap_url<>$6::varchar THEN NULL ELSE backend_version END,
+            is_default=is_default AND $10::varchar='active',row_version=row_version+1,updated_at=now()
+          WHERE organization_id=$1 AND project_id=$2 AND id=$3 AND row_version=$11`,
+            [
+              org,
+              grant.project.id,
+              id,
+              input.name,
+              input.sid,
+              input.sapUrl,
+              input.client,
+              input.language,
+              input.description,
+              input.status,
+              revision,
+            ],
+          )
+          .catch(duplicate);
+        if (!rowCount) throw failure(409, 'SAP 系统已被其他操作更新，请刷新后重试。');
+        await settleDefaults(db, grant.project.id);
+        return {
+          subjectId: id,
+          data: await view(db, current, grant),
+          details: { sid: input.sid, client: input.client, status: input.status },
+        };
+      },
+    );
+  });
+  app.post(base + '/:systemId/default', async (req) => {
+    const id = uuid(req.params.systemId);
+    return writeProject(
+      req,
+      'project.sap:manage',
+      'sap.system.default',
+      'sap_system',
+      async (db, current, grant) => {
+        const system = await systemById(db, org, grant.project.id, id);
+        if (system.status !== 'active') throw failure(409, '停用的系统不能设为默认。');
+        await db.query(
+          `UPDATE app.project_sap_system SET is_default=false,row_version=row_version+1,updated_at=now()
+        WHERE organization_id=$1 AND project_id=$2 AND purpose=$3 AND is_default AND id<>$4`,
+          [org, grant.project.id, system.purpose, id],
+        );
+        await db.query(
+          'UPDATE app.project_sap_system SET is_default=true,row_version=row_version+1,updated_at=now() WHERE id=$1 AND NOT is_default',
+          [id],
+        );
+        return { subjectId: id, data: await view(db, current, grant) };
+      },
+    );
+  });
+  app.delete(base + '/:systemId', async (req) => {
+    const id = uuid(req.params.systemId),
+      revision = version(req.body?.rowVersion);
+    return writeProject(
+      req,
+      'project.sap:manage',
+      'sap.system.delete',
+      'sap_system',
+      async (db, current, grant) => {
+        const system = await systemById(db, org, grant.project.id, id);
+        const { rowCount } = await db.query(
+          'DELETE FROM app.project_sap_system WHERE organization_id=$1 AND project_id=$2 AND id=$3 AND row_version=$4',
+          [org, grant.project.id, id, revision],
+        );
+        if (!rowCount) throw failure(409, 'SAP 系统已被其他操作更新，请刷新后重试。');
+        await settleDefaults(db, grant.project.id);
+        return {
+          subjectId: id,
+          data: await view(db, current, grant),
+          details: { sid: system.sid, client: system.client },
+        };
+      },
+    );
+  });
+  // Copies the systems of another project of the same customer (section 3.2).
+  app.post(base + '/copy', async (req) => {
+    const source = uuid(req.body?.sourceProjectId);
+    return writeProject(
+      req,
+      'project.sap:manage',
+      'sap.system.copy',
+      'project',
+      async (db, current, grant) => {
+        const from = await access.project(db, current.user.id, source);
+        if (!from?.has('project.sap:view')) throw failure(404, '来源项目不存在或无权访问。');
+        if (from.project.customer_id !== grant.project.customer_id)
+          throw failure(400, '只能从同一客户的其他项目复制。');
+        const { rowCount } = await db.query(
+          `INSERT INTO app.project_sap_system(organization_id,project_id,name,purpose,sid,sap_url,client,language,description,status,created_by)
+        SELECT organization_id,$3,name,purpose,sid,sap_url,client,language,description,status,$4
+        FROM app.project_sap_system s WHERE s.organization_id=$1 AND s.project_id=$2
+        AND NOT EXISTS(SELECT 1 FROM app.project_sap_system t WHERE t.project_id=$3 AND t.purpose=s.purpose AND t.sap_url=s.sap_url AND t.client=s.client)`,
+          [org, source, grant.project.id, current.user.id],
+        );
+        await settleDefaults(db, grant.project.id);
+        return {
+          subjectId: grant.project.id,
+          data: { ...(await view(db, current, grant)), copied: rowCount },
+          details: { source, copied: rowCount },
+        };
+      },
+    );
+  });
+
+  // Logs in with the person's own SAP user once; only a successful login is kept (section 3.3).
+  const probing = new Set();
+  async function login(system, username, password) {
+    const key = system.id + ':' + username;
+    if (probing.has(key) || probing.size >= 4)
+      throw failure(429, 'SAP 登录验证正在进行，请稍后重试。');
+    probing.add(key);
     try {
-      const result = await probeSystem({
+      return await probeSystem({
         SAP_MCP_ENTRY: process.env.SAP_MCP_ENTRY,
         SAP_ALLOW_HTTP: process.env.SAP_ALLOW_HTTP,
         NODE_EXTRA_CA_CERTS: process.env.NODE_EXTRA_CA_CERTS,
         SAP_REQUEST_TIMEOUT_MS: process.env.SAP_REQUEST_TIMEOUT_MS ?? '15000',
-        SAP_URL: system.sap_url,
+        SAP_URL: system.sapUrl,
         SAP_LANGUAGE: system.language,
-        SAP_CLIENT: b.client,
+        SAP_CLIENT: system.client,
         SAP_USER: username,
-        SAP_PASSWORD: b.password,
-      });
-      return await admin.write(req, 'admin.sap.system.test', 'sap_system', async (db) => {
-        changed(
-          await db.query(
-            `UPDATE app.sap_system SET last_test_status=$4,last_test_message=$5,last_test_at=now(),backend_version=COALESCE($6,backend_version),row_version=row_version+1,updated_at=now() WHERE organization_id=$1 AND id=$2 AND row_version=$3 RETURNING id`,
-            [org, id, expected, result.status, result.message, result.version],
-          ),
-        );
-        return {
-          subjectId: id,
-          data: {
-            ...result,
-            system: found(
-              await db.query(
-                `SELECT ${systemColumns} FROM app.sap_system s WHERE s.organization_id=$1 AND s.id=$2`,
-                [org, id],
-              ),
-            ),
-          },
-        };
+        SAP_PASSWORD: password,
       });
     } finally {
-      testingSystems.delete(id);
+      probing.delete(key);
     }
-  });
-  for (const method of ['post', 'patch'])
-    app[method]('/api/admin/sap-systems' + (method === 'patch' ? '/:id' : ''), async (req) => {
-      const b = req.body ?? {},
-        id = method === 'patch' ? v.uuid(req.params.id) : randomUUID();
-      const input = [
-        v.code(b.code),
-        v.text(b.name, '系统名称', 200),
-        sapUrl(b.sapUrl),
-        v.choice(b.status, ['active', 'inactive'], '系统状态', 'active'),
-      ];
-      const language = v.text(b.language ?? 'EN', '语言', 2).toUpperCase();
-      if (!/^[A-Z]{2}$/.test(language)) throw failure(400, '语言使用两位字母。');
-      return admin.write(req, 'admin.sap.system.save', 'sap_system', async (db) => {
-        const owner = b.ownerCustomerId ? v.uuid(b.ownerCustomerId) : null;
-        if (owner && method === 'post')
-          found(
-            await db.query(
-              "SELECT id FROM app.customer WHERE organization_id=$1 AND id=$2 AND status='active'",
-              [org, owner],
-            ),
-            '客户',
-          );
-        if (method === 'patch') {
-          const existing = found(
-            await db.query(
-              'SELECT owner_customer_id FROM app.sap_system WHERE organization_id=$1 AND id=$2',
-              [org, id],
-            ),
-          );
-          if (existing.owner_customer_id !== owner)
-            throw failure(400, '系统归属创建后不可更改；请通过临时授权开放使用。');
-          changed(
-            await db.query(
-              `UPDATE app.sap_system SET code=$3,name=$4,last_test_status=CASE WHEN sap_url<>$5 OR language<>$7 THEN NULL ELSE last_test_status END,last_test_message=CASE WHEN sap_url<>$5 OR language<>$7 THEN NULL ELSE last_test_message END,last_test_at=CASE WHEN sap_url<>$5 OR language<>$7 THEN NULL ELSE last_test_at END,backend_version=CASE WHEN sap_url<>$5 THEN NULL ELSE backend_version END,sap_url=$5,status=$6,language=$7,row_version=row_version+1,updated_at=now() WHERE organization_id=$1 AND id=$2 AND row_version=$8 RETURNING id`,
-              [org, id, ...input, language, v.version(b.rowVersion)],
-            ),
-          );
-        } else
-          await db.query(
-            `INSERT INTO app.sap_system(organization_id,id,code,name,sap_url,status,language,owner_customer_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`,
-            [org, id, ...input, language, owner],
-          );
-        return {
-          subjectId: id,
-          data: found(
-            await db.query(
-              `SELECT ${systemColumns} FROM app.sap_system s WHERE s.organization_id=$1 AND s.id=$2`,
-              [org, id],
-            ),
-          ),
-        };
-      });
-    });
-  app.get('/api/admin/sap-systems/:id/grants', async (req) => {
-    await admin.authorize(req);
-    const id = v.uuid(req.params.id);
-    return (
-      await pool.query(
-        `SELECT g.customer_id AS "customerId",c.name AS "customerName",g.expires_at AS "expiresAt",g.active,g.row_version AS "rowVersion" FROM app.sap_system_grant g JOIN app.customer c ON c.organization_id=g.organization_id AND c.id=g.customer_id WHERE g.organization_id=$1 AND g.system_id=$2 ORDER BY c.name`,
-        [org, id],
-      )
-    ).rows;
-  });
-  app.post('/api/admin/sap-systems/:id/grants', async (req) => {
-    const id = v.uuid(req.params.id),
-      b = req.body ?? {},
-      customer = v.uuid(b.customerId),
-      version = revision(b.rowVersion);
-    if (typeof b.active !== 'boolean') throw failure(400, '授权状态无效。');
-    const expiry = new Date(b.expiresAt);
-    if (!Number.isFinite(expiry.getTime()) || (b.active && expiry <= new Date()))
-      throw failure(400, '有效授权的截至时间必须在未来。');
-    return admin.write(req, 'admin.sap.grant.save', 'sap_system', async (db) => {
-      const system = found(
-        await db.query(
-          'SELECT owner_customer_id FROM app.sap_system WHERE organization_id=$1 AND id=$2',
-          [org, id],
-        ),
-      );
-      if (!system.owner_customer_id || system.owner_customer_id === customer)
-        throw failure(400, '企业自有或归属客户系统无需临时授权。');
-      found(
-        await db.query(
-          "SELECT id FROM app.customer WHERE organization_id=$1 AND id=$2 AND (NOT $3::boolean OR status='active')",
-          [org, customer, b.active],
-        ),
-      );
-      const old = (
-        await db.query(
-          'SELECT row_version FROM app.sap_system_grant WHERE organization_id=$1 AND system_id=$2 AND customer_id=$3',
-          [org, id, customer],
-        )
-      ).rows[0];
-      if (String(old?.row_version ?? 0) !== version) throw failure(409, '授权已变化，请刷新。');
-      await db.query(
-        `INSERT INTO app.sap_system_grant(organization_id,system_id,customer_id,expires_at,active) VALUES($1,$2,$3,$4,$5) ON CONFLICT(organization_id,system_id,customer_id) DO UPDATE SET expires_at=EXCLUDED.expires_at,active=EXCLUDED.active,row_version=sap_system_grant.row_version+1,updated_at=now()`,
-        [org, id, customer, expiry, b.active],
-      );
-      return { subjectId: id, data: { ok: true } };
-    });
-  });
-  const project = async (db, id) =>
-    found(
-      await db.query('SELECT * FROM app.project WHERE organization_id=$1 AND id=$2', [
-        org,
-        v.uuid(id),
-      ]),
-      '项目',
+  }
+  const recordTest = (db, system, result) =>
+    db.query(
+      `UPDATE app.project_sap_system SET last_test_status=$2,last_test_message=$3,last_test_at=now(),
+      backend_version=COALESCE($4,backend_version) WHERE id=$1`,
+      [system.id, result.status, result.message, result.version],
     );
-  app.get('/api/admin/projects/:id/sap', async (req) => {
-    await admin.authorize(req);
-    return configView(pool, org, await project(pool, req.params.id));
-  });
-  app.post('/api/admin/projects/:id/sap', async (req) =>
-    admin.write(req, 'admin.sap.defaults.save', 'project', async (db) => {
-      const p = await project(db, req.params.id);
-      if (p.status === 'archived') throw failure(409, '归档项目只读。');
-      return { subjectId: p.id, data: await saveRows(db, org, p, null, req.body) };
-    }),
-  );
-  app.get('/api/projects/:projectId/sap', async (req) => {
-    const { current, project } = await delivery.read(req);
-    return configView(pool, org, project, current.user.id);
-  });
-  app.post('/api/projects/:projectId/sap', async (req) =>
-    delivery.write(req, async (db, current, p) => {
-      // Serialize same-user saves before reading revisions; administrator changes use the exclusive org lock.
-      await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,1))', [
-        org + ':' + p.id + ':' + current.user.id,
-      ]);
-      const result = await saveRows(db, org, p, current.user.id, req.body);
-      await db.query(
-        `INSERT INTO app.audit_event(organization_id,actor_user_id,action,outcome,subject_type,subject_id,request_id) VALUES($1,$2,'sap.personal.save','success','project',$3,$4)`,
-        [org, current.user.id, p.id, randomUUID()],
-      );
-      return result;
-    }),
-  );
-  app.post('/api/projects/:projectId/sap/resolve', async (req) => {
-    const { current, project } = await delivery.read(req);
-    return publicConfig(
-      await effectiveConfig(
-        pool,
-        org,
-        project,
-        current.user.id,
-        req.body?.environment,
-        req.body?.temporary,
-      ),
-    );
-  });
-  // Contract 3.4: the user's own QAS credentials for this login (memory only).
-  const testSystemView = async (current, p) => {
-    const entry = recalledCredentials(current.sessionId, p.id);
-    let c;
-    try {
-      c = await effectiveConfig(pool, org, p, current.user.id, TEST_ENVIRONMENT);
-    } catch {
-      return { environment: TEST_ENVIRONMENT, configured: false, ready: false };
-    }
-    const system = c.systemId
-      ? (
-          await pool.query(
-            'SELECT code,name FROM app.sap_system WHERE organization_id=$1 AND id=$2',
-            [org, c.systemId],
-          )
-        ).rows[0]
-      : null;
-    return {
-      environment: TEST_ENVIRONMENT,
-      configured: !!c.sapUrl,
-      systemCode: system?.code ?? '',
-      systemName: system?.name ?? '',
-      client: c.client,
-      username: entry?.username ?? c.username ?? '',
-      ready: !!entry,
-      // Local development only: a credentials file for this QAS can log in without typing.
-      profileAvailable: !!(await profileCredentials(c)),
-    };
-  };
-  app.get('/api/projects/:projectId/sap/test-system', async (req) => {
-    const { current, project } = await delivery.read(req);
-    return testSystemView(current, project);
-  });
-  app.post('/api/projects/:projectId/sap/test-system', async (req) => {
-    const { current, project } = await delivery.read(req);
-    const notConfigured = () =>
-      failure(409, '项目未配置可用的 QAS 系统，请联系管理员在项目参数中配置。');
-    const fromProfile = req.body?.useProfile === true;
-    let username, password;
-    if (fromProfile) {
-      let base;
-      try {
-        base = await effectiveConfig(pool, org, project, current.user.id, TEST_ENVIRONMENT);
-      } catch {
-        throw notConfigured();
-      }
-      const profile = await profileCredentials(base);
-      if (!profile) throw failure(409, '本机凭据文件不可用，或与项目 QAS 的地址、client 不一致。');
-      ({ username, password } = profile);
-    } else {
-      username = v.text(req.body?.username, 'QAS 用户', 128);
-      password = req.body?.password;
-      if (typeof password !== 'string' || !password || password.length > 256)
-        throw failure(400, '请输入 QAS 密码。');
-    }
-    let c;
-    try {
-      c = await effectiveConfig(pool, org, project, current.user.id, TEST_ENVIRONMENT, {
-        username,
-        password,
-        passwordAction: 'replace',
-      });
-    } catch {
-      throw notConfigured();
-    }
-    if (!c.sapUrl) throw notConfigured();
-    const result = await probeSystem({
-      SAP_MCP_ENTRY: process.env.SAP_MCP_ENTRY,
-      SAP_ALLOW_HTTP: process.env.SAP_ALLOW_HTTP,
-      NODE_EXTRA_CA_CERTS: process.env.NODE_EXTRA_CA_CERTS,
-      SAP_REQUEST_TIMEOUT_MS: process.env.SAP_REQUEST_TIMEOUT_MS ?? '15000',
-      SAP_URL: c.sapUrl,
-      SAP_LANGUAGE: c.language,
-      SAP_CLIENT: c.client ?? '',
-      SAP_USER: username,
-      SAP_PASSWORD: password,
-    });
-    await pool.query(
-      `INSERT INTO app.audit_event(organization_id,actor_user_id,action,outcome,subject_type,subject_id,request_id,details) VALUES($1,$2,'sap.test_system.login',$3,'project',$4,$5,$6)`,
+  const loginAudit = (db, current, system, result, source) =>
+    db.query(
+      `INSERT INTO app.audit_event(organization_id,actor_user_id,action,outcome,subject_type,subject_id,request_id,details)
+      VALUES($1,$2,'sap.credential.login',$3,'sap_system',$4,$5,$6)`,
       [
         org,
         current.user.id,
         result.status === 'passed' ? 'success' : 'failure',
-        project.id,
+        system.id,
         randomUUID(),
-        JSON.stringify({
-          environment: TEST_ENVIRONMENT,
-          systemId: c.systemId,
-          username,
-          source: fromProfile ? 'profile' : 'form',
-        }),
+        JSON.stringify({ projectId: system.projectId, code: result.code, source }),
       ],
     );
-    if (result.status !== 'passed') throw failure(400, result.message);
-    rememberCredentials(current.sessionId, project.id, c, password);
-    return testSystemView(current, project);
+  async function readable(req) {
+    const { current, grant } = await readProject(req, 'project:view');
+    const system = await systemById(pool, org, grant.project.id, uuid(req.params.systemId));
+    if (!grant.has(`sap.${system.purpose}:read`)) throw deniedError(`sap.${system.purpose}:read`);
+    if (system.status !== 'active') throw failure(409, '系统已停用。');
+    return { current, grant, system };
+  }
+  app.put(base + '/:systemId/credential', async (req) => {
+    const { current, grant, system } = await readable(req);
+    const input = credentialInput(req.body);
+    const policy = await policyOf(pool, org);
+    if (input.mode === 'saved' && !maySave(policy, await personTypeOf(pool, current.user.id)))
+      throw failure(403, '企业安全策略不允许您保存 SAP 密码，请选择“本次登录有效”。');
+    const result = await login(system, input.username, input.password);
+    await loginAudit(pool, current, system, result, 'form');
+    await recordTest(pool, system, result);
+    if (result.status !== 'passed')
+      throw Object.assign(failure(400, `SAP 登录失败：${result.message}`), {
+        code: 'SAP_LOGIN_FAILED',
+      });
+    forgetForSession(current.sessionId, system.id);
+    if (input.mode === 'saved')
+      await saveCredential(pool, org, current.user.id, system, input, policy);
+    else {
+      await deleteCredential(pool, org, current.user.id, system);
+      rememberForSession(
+        current.sessionId,
+        current.user.id,
+        system,
+        input.username,
+        input.password,
+      );
+    }
+    return view(pool, current, grant);
   });
-  app.delete('/api/projects/:projectId/sap/test-system', async (req) => {
-    const { current, project } = await delivery.read(req);
-    forgetCredentials(current.sessionId, project.id);
-    return testSystemView(current, project);
+  // Local development only (contract 3.4): log in with the credentials file for this login.
+  app.post(base + '/:systemId/credential/profile', async (req) => {
+    const { current, grant, system } = await readable(req);
+    const profile = await profileCredentials(system);
+    if (!profile) throw failure(409, '本机凭据文件不可用，或与该系统的地址、Client 不一致。');
+    const result = await login(system, profile.username, profile.password);
+    await loginAudit(pool, current, system, result, 'profile');
+    await recordTest(pool, system, result);
+    if (result.status !== 'passed') throw failure(400, `SAP 登录失败：${result.message}`);
+    rememberForSession(
+      current.sessionId,
+      current.user.id,
+      system,
+      profile.username,
+      profile.password,
+    );
+    return view(pool, current, grant);
   });
-  let activeQueries = 0;
-  app.post('/api/projects/:projectId/sap/table', async (req, reply) => {
-    const current = await requireSession(req, true);
-    if (activeQueries >= 2) throw failure(429, 'SAP 查询繁忙，请稍后再试。');
-    activeQueries++;
-    try {
-      // The authorization snapshot is checked immediately before launching the isolated worker.
-      const p = await delivery.access(pool, current, req.params.projectId, true);
-      const c = await effectiveConfig(
+  app.delete(base + '/:systemId/credential', async (req) => {
+    const { current, grant } = await readProject(req, 'project:view');
+    const system = await systemById(pool, org, grant.project.id, uuid(req.params.systemId));
+    forgetForSession(current.sessionId, system.id);
+    await deleteCredential(pool, org, current.user.id, system);
+    return view(pool, current, grant);
+  });
+  // Tests the connection with the person's own credential (any saved or this-login one), or
+  // with a user and password given only for this test.
+  app.post(base + '/:systemId/test', async (req) => {
+    const { current, grant, system } = await readable(req);
+    let username = req.body?.username,
+      password = req.body?.password;
+    if (!username) {
+      const credential = await credentialFor(
         pool,
         org,
-        p,
-        current.user.id,
-        req.body?.environment,
-        req.body?.temporary,
+        { userId: current.user.id, sessionId: current.sessionId },
+        system,
+        await policyOf(pool, org),
       );
-      if (!publicConfig(c).credentialReady)
-        throw failure(400, 'SAP 用户或匹配密码未配置，请补充本次参数或个人项目参数。');
-      const password = c.password ?? open(c.passwordCipher, c.credentialContext);
-      const env = {
-        SAP_MCP_ENTRY: process.env.SAP_MCP_ENTRY,
-        NODE_EXTRA_CA_CERTS: process.env.NODE_EXTRA_CA_CERTS,
-        SAP_ALLOW_HTTP: process.env.SAP_ALLOW_HTTP,
-        SAP_REQUEST_TIMEOUT_MS: process.env.SAP_REQUEST_TIMEOUT_MS,
-        SAP_URL: c.sapUrl,
-        SAP_CLIENT: c.client ?? '',
-        SAP_LANGUAGE: c.language,
-        SAP_USER: c.username,
-        SAP_PASSWORD: password,
-      };
-      const result = await queryTable(req.body?.tableName, { connect: () => connectMcp(env) });
-      await pool.query(
-        `INSERT INTO app.audit_event(organization_id,actor_user_id,action,outcome,subject_type,subject_id,request_id,details) VALUES($1,$2,'sap.table.read','success','project',$3,$4,$5)`,
-        [
-          org,
-          current.user.id,
-          p.id,
-          result.requestId,
-          JSON.stringify({
-            environment: req.body.environment,
-            systemId: c.systemId,
-            tableName: result.tableName,
-          }),
-        ],
-      );
-      return { ...result, configuration: publicConfig(c) };
-    } catch (error) {
-      if (error.statusCode) throw error;
-      return reply
-        .code(error.code === 'INVALID_TABLE' ? 400 : error.code === 'TABLE_NOT_FOUND' ? 404 : 502)
-        .send({
-          message: /^(MCP_|TABLE_|INVALID_TABLE$)/.test(error.code ?? '')
-            ? error.message
-            : 'SAP 查询失败。',
-          code: /^(MCP_|TABLE_|INVALID_TABLE$)/.test(error.code ?? '')
-            ? error.code
-            : 'SAP_QUERY_FAILED',
+      if (!credential)
+        throw Object.assign(failure(409, `请先登录 ${system.name}。`), {
+          code: 'SAP_LOGIN_REQUIRED',
         });
-    } finally {
-      activeQueries--;
+      ({ username, password } = credential);
+      const result = await login(system, username, password);
+      if (result.status !== 'passed' && result.code === 'AUTH_FAILED') await credential.rejected();
+      await recordTest(pool, system, result);
+      return { ...result, system: await systemById(pool, org, grant.project.id, system.id) };
     }
+    const input = credentialInput({ username, password, mode: 'session' });
+    const result = await login(system, input.username, input.password);
+    await loginAudit(pool, current, system, result, 'test');
+    await recordTest(pool, system, result);
+    return { ...result, system: await systemById(pool, org, grant.project.id, system.id) };
+  });
+
+  // The signed-in user's credentials in every project they can enter (the personal page).
+  app.get('/api/sap-credentials', async (req) => {
+    const current = await requireSession(req, true);
+    const policy = await policyOf(pool, org);
+    const grants = await access.projects(pool, current.user.id);
+    const result = [];
+    for (const grant of grants) {
+      const systems = (await projectSystems(pool, org, grant.project.id)).filter(
+        (s) => s.status === 'active' && grant.has(`sap.${s.purpose}:read`),
+      );
+      for (const s of systems)
+        result.push({
+          projectId: grant.project.id,
+          projectCode: grant.project.code,
+          projectName: grant.project.name,
+          system: s,
+          credential: await credentialStatus(pool, org, current, s, policy),
+        });
+    }
+    return {
+      canSave: maySave(policy, await personTypeOf(pool, current.user.id)),
+      policy: { maxDays: policy.maxDays, idleDays: policy.idleDays },
+      items: result,
+    };
+  });
+
+  // Organization security policy and forced removal (section 3.4).
+  app.get('/api/admin/sap-credential-policy', async (req) => {
+    await authorize(req, 'org.security:manage');
+    return policyOf(pool, org);
+  });
+  app.put('/api/admin/sap-credential-policy', async (req) => {
+    const input = policyInput(req.body);
+    const revision = String(req.body?.rowVersion ?? '0');
+    return write(
+      req,
+      'org.security:manage',
+      'sap.credential_policy.update',
+      'organization',
+      async (db, current) => {
+        const prior = await policyOf(db, org);
+        if (String(prior.rowVersion) !== revision)
+          throw failure(409, '策略已被其他操作更新，请刷新后重试。');
+        await db.query(
+          `INSERT INTO app.sap_credential_policy(organization_id,allow_save,max_days,idle_days,subcontractor_save,updated_by)
+        VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(organization_id) DO UPDATE SET allow_save=$2,max_days=$3,idle_days=$4,
+        subcontractor_save=$5,updated_by=$6,updated_at=now(),row_version=app.sap_credential_policy.row_version+1`,
+          [
+            org,
+            input.allowSave,
+            input.maxDays,
+            input.idleDays,
+            input.subcontractorSave,
+            current.user.id,
+          ],
+        );
+        // Saved credentials follow a stricter policy at once.
+        if (!input.allowSave)
+          await db.query('DELETE FROM app.sap_user_credential WHERE organization_id=$1', [org]);
+        else {
+          await db.query(
+            `UPDATE app.sap_user_credential SET expires_at=LEAST(expires_at,saved_at+make_interval(days=>$2)) WHERE organization_id=$1`,
+            [org, input.maxDays],
+          );
+          if (!input.subcontractorSave)
+            await db.query(
+              `DELETE FROM app.sap_user_credential c USING app.app_user u WHERE c.organization_id=$1 AND u.id=c.user_id AND u.person_type<>'employee'`,
+              [org],
+            );
+        }
+        return { subjectId: org, data: await policyOf(db, org), details: input };
+      },
+    );
+  });
+  app.get('/api/admin/sap-credentials', async (req) => {
+    await authorize(req, 'org.security:manage');
+    return (
+      await pool.query(
+        `SELECT c.user_id AS "userId",u.display_name AS "displayName",u.login_name AS "loginName",
+          p.code AS "projectCode",p.name AS "projectName",s.name AS "systemName",s.sid,s.client,c.sap_username AS "sapUsername",
+          c.saved_at AS "savedAt",c.expires_at AS "expiresAt",c.last_used_at AS "lastUsedAt"
+        FROM app.sap_user_credential c JOIN app.app_user u ON u.id=c.user_id JOIN app.project p ON p.id=c.project_id
+        JOIN app.project_sap_system s ON s.id=c.system_id WHERE c.organization_id=$1 ORDER BY u.display_name,p.name,s.name`,
+        [org],
+      )
+    ).rows;
+  });
+  app.delete('/api/admin/users/:id/sap-credentials', async (req) => {
+    const id = uuid(req.params.id);
+    return write(req, 'org.security:manage', 'sap.credential.purge', 'user', async (db) => {
+      const { rowCount } = await db.query(
+        'DELETE FROM app.sap_user_credential WHERE organization_id=$1 AND user_id=$2',
+        [org, id],
+      );
+      forgetUser(id);
+      return { subjectId: id, data: { removed: rowCount }, details: { removed: rowCount } };
+    });
+  });
+  // Every system registered in any project, read-only (section 3.2).
+  app.get('/api/admin/sap-systems', async (req) => {
+    await authorize(req, 'sap.directory:view');
+    return (
+      await pool.query(
+        `SELECT ${systemColumns},p.code AS "projectCode",p.name AS "projectName",p.status AS "projectStatus",c.name AS "customerName"
+        FROM app.project_sap_system s JOIN app.project p ON p.id=s.project_id JOIN app.customer c ON c.id=p.customer_id
+        WHERE s.organization_id=$1 ORDER BY c.name,p.name,s.purpose,s.name`,
+        [org],
+      )
+    ).rows;
   });
 }

@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url';
 import { join, isAbsolute } from 'node:path';
 import { failure, transaction } from '../../platform/auth.mjs';
 import { uuid } from '../admin/validation.mjs';
+import { createAccess, deniedError } from '../access/public.mjs';
 
 // Where uploaded item files are stored; the file id is the file name.
 export function deliveryFilesFolder() {
@@ -17,30 +18,30 @@ export function deliveryFilesFolder() {
 }
 
 export function deliveryContext(pool, organizationId, requireSession) {
-  async function access(db, current, projectId, write = false) {
+  const access = createAccess(pool, organizationId);
+  // The project with the user's grant in it (`project.grant`). Contract 3.5: 404 outside the
+  // user's projects, 403 without `permission`; writes also need a live session.
+  async function project(db, current, projectId, { write = false, permission } = {}) {
     uuid(projectId);
     const { rows } = await db.query(
-      `SELECT p.*,om.access_level FROM app.project p
-      JOIN app.project_member pm ON pm.organization_id=p.organization_id AND pm.project_id=p.id AND pm.user_id=$2
-      JOIN app.organization_member om ON om.organization_id=p.organization_id AND om.user_id=pm.user_id
-      JOIN app.app_user u ON u.id=pm.user_id JOIN app.organization o ON o.id=p.organization_id
-      JOIN app.auth_session s ON s.id=$4 AND s.user_id=u.id AND s.organization_id=p.organization_id
+      `SELECT 1 FROM app.app_user u JOIN app.organization_member om ON om.user_id=u.id AND om.organization_id=$1
+      JOIN app.organization o ON o.id=om.organization_id
+      JOIN app.auth_session s ON s.id=$3 AND s.user_id=u.id AND s.organization_id=om.organization_id
       JOIN app.user_password pw ON pw.user_id=u.id
-      WHERE p.organization_id=$1 AND p.id=$3 AND pm.status='active' AND om.status='active'
-      AND u.status='active' AND o.status='active' AND NOT pw.must_change_password
+      WHERE u.id=$2 AND om.status='active' AND u.status='active' AND o.status='active' AND NOT pw.must_change_password
       AND s.revoked_at IS NULL AND s.expires_at>clock_timestamp() AND s.idle_expires_at>clock_timestamp()`,
-      [organizationId, current.user.id, projectId, current.sessionId],
+      [organizationId, current.user.id, current.sessionId],
     );
-    if (!rows[0]) throw failure(404, '项目不存在或无权访问。');
-    if (write && rows[0].status === 'archived') throw failure(409, '项目已归档，只能查看。');
-    return rows[0];
+    if (!rows[0]) throw failure(401, '登录已失效，请重新登录。');
+    const grant = await access.requireProject(db, current, projectId, permission);
+    if (write && grant.project.status === 'archived') throw failure(409, '项目已归档，只能查看。');
+    return { ...grant.project, grant };
   }
-  async function read(req) {
+  async function read(req, permission = 'delivery.item:view') {
     const current = await requireSession(req, true);
-    const project = await access(pool, current, req.params.projectId);
-    return { current, project };
+    return { current, project: await project(pool, current, req.params.projectId, { permission }) };
   }
-  async function write(req, operation, transactionOptions) {
+  async function write(req, permission, operation, transactionOptions) {
     const current = await requireSession(req, true);
     return transaction(
       pool,
@@ -49,11 +50,25 @@ export function deliveryContext(pool, organizationId, requireSession) {
         await db.query('SELECT pg_advisory_xact_lock_shared(hashtextextended($1,0))', [
           organizationId,
         ]);
-        const project = await access(db, current, req.params.projectId, true);
-        return operation(db, current, project);
+        const p = await project(db, current, req.params.projectId, { write: true, permission });
+        return operation(db, current, p);
       },
       transactionOptions,
     );
+  }
+  // The people responsible for an item (creator and phase assignees), for "own items only".
+  async function owners(db, itemId) {
+    const { rows } = await db.query(
+      `SELECT created_by AS id FROM app.development_item WHERE id=$1
+      UNION SELECT assignee_id FROM app.development_item_phase WHERE item_id=$1 AND assignee_id IS NOT NULL`,
+      [itemId],
+    );
+    return rows.map((r) => r.id);
+  }
+  // 403 unless the grant allows `permission` on this item (module scope, own items).
+  async function allow(db, p, item, permission) {
+    const context = { module: item.module, owners: await owners(db, item.id) };
+    if (!p.grant.has(permission, context)) throw deniedError(permission);
   }
   async function item(db, req, lock = false) {
     uuid(req.params.id);
@@ -97,5 +112,18 @@ export function deliveryContext(pool, organizationId, requireSession) {
       )
     ).rows.map((f) => ({ ...f, path: join(folder, f.id) }));
   }
-  return { pool, organizationId, requireSession, access, read, write, item, event, objects, files };
+  return {
+    pool,
+    organizationId,
+    requireSession,
+    access: project,
+    read,
+    write,
+    owners,
+    allow,
+    item,
+    event,
+    objects,
+    files,
+  };
 }

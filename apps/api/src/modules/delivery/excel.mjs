@@ -370,7 +370,7 @@ async function parseWorkbook(content, { db, org, project }) {
 
 export function excelRoutes(app, c) {
   app.post(base + '/export', { bodyLimit: 1000000 }, async (req, reply) => {
-    const { project } = await c.read(req);
+    const { project } = await c.read(req, 'delivery.item:export');
     const [items, fields, people, tagList] = await Promise.all([
       loadItems(c.pool, c.organizationId, project.id),
       customFields(c.pool, c.organizationId, project.id),
@@ -403,7 +403,7 @@ export function excelRoutes(app, c) {
     return reply.send(Buffer.from(buffer));
   });
   app.get(base + '/import-template', async (req, reply) => {
-    const { project } = await c.read(req);
+    const { project } = await c.read(req, 'delivery.item:import');
     const [fields, people] = await Promise.all([
       customFields(c.pool, c.organizationId, project.id),
       members(c.pool, c.organizationId, project.id),
@@ -454,7 +454,7 @@ export function excelRoutes(app, c) {
     return reply.send(Buffer.from(buffer));
   });
   app.post(base + '/import/preview', { bodyLimit: 7100000 }, async (req) => {
-    const { project } = await c.read(req);
+    const { project } = await c.read(req, 'delivery.item:import');
     const parsed = await parseWorkbook(req.body?.content, {
       db: c.pool,
       org: c.organizationId,
@@ -475,7 +475,7 @@ export function excelRoutes(app, c) {
     };
   });
   app.post(base + '/import', { bodyLimit: 7100000 }, async (req) =>
-    c.write(req, async (db, current) => {
+    c.write(req, 'delivery.item:import', async (db, current) => {
       const ctx = { org: c.organizationId, project: req.params.projectId, actor: current.user.id };
       const parsed = await parseWorkbook(req.body?.content, { db, ...ctx });
       const failed = parsed.rows.filter((r) => r.errors.length);

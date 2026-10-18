@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router';
 // A row of the secondary menu (DESIGN.md 4.1): icon, label, count; the current page is grey.
-defineProps<{ to: string; label: string; count?: number; active?: boolean }>();
+// A planned page carries a quiet “规划中” note instead of a count.
+defineProps<{ to: string; label: string; count?: number; active?: boolean; planned?: boolean }>();
 </script>
 <template>
   <RouterLink
@@ -12,7 +13,8 @@ defineProps<{ to: string; label: string; count?: number; active?: boolean }>();
   >
     <span v-if="$slots.icon" class="icon"><slot name="icon" /></span>
     <span class="label">{{ label }}</span>
-    <span v-if="count !== undefined" class="count">{{ count }}</span>
+    <span v-if="planned" class="planned">规划中</span>
+    <span v-else-if="count !== undefined" class="count">{{ count }}</span>
   </RouterLink>
 </template>
 <style scoped>
@@ -60,6 +62,10 @@ defineProps<{ to: string; label: string; count?: number; active?: boolean }>();
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.planned {
+  color: var(--text-subtle);
+  font-size: var(--font-11);
 }
 .count {
   color: var(--text-muted);

@@ -27,10 +27,10 @@ export async function runTurn({
   model,
   emit,
   signal,
-  environment = 'DEV',
+  environment = { systemId: null, purpose: 'development' },
   deps = {},
 }) {
-  // Contract 1.12: DEV by default; the user may choose QAS for a message.
+  // Contract 3.4: the item's target or default development system unless the user picked one.
   const sap = await (deps.openSap ?? openSap)(pool, scope, {
     budgetMs: LIMITS.sapBudgetMs,
     environment,

@@ -208,6 +208,10 @@
   padding: 0 var(--space-1-5);
   border-radius: var(--radius-6);
 }
+.inline-cell.late {
+  background: var(--yellow-bg-2);
+  color: var(--yellow-text-1);
+}
 .inline-cell.editable {
   cursor: text;
 }
@@ -1123,6 +1127,10 @@
   font-weight: var(--weight-400);
   line-height: var(--leading-32);
   white-space: nowrap;
+}
+.list-late {
+  color: var(--yellow-text-2);
+  font-size: var(--font-12);
 }
 .list-project {
   min-width: 0;

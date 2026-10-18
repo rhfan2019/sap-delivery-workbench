@@ -63,6 +63,21 @@ test('development list: page/batch/row actions, inline edit, grouped drawer, col
     tags: n === 0 ? ['t1'] : [],
     custom: {},
   }));
+  // Contract 3.5: a member who maintains and manages the list in project p1.
+  const access = {
+    projectId: 'p1',
+    permissions: [
+      'project:view',
+      'delivery.item:view',
+      'delivery.item:create',
+      'delivery.item:edit',
+      'delivery.item:delete',
+      'delivery.item:import',
+      'delivery.item:export',
+      'delivery.config:manage',
+    ],
+    limits: {},
+  };
   await page.route('**/api/**', async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
@@ -72,8 +87,10 @@ test('development list: page/batch/row actions, inline edit, grouped drawer, col
       data = {
         user: { id: 'u', displayName: '测试用户' },
         organization: { id: 'org', name: 'Inspire' },
-        canManageOrganization: true,
+        permissions: [],
       };
+    else if (path === '/api/projects/p1/access') data = access;
+    else if (path === '/api/projects/p1') data = { id: 'p1', milestones: [] };
     else if (path === '/api/projects')
       data = [{ id: 'p1', code: 'P1', name: '虚拟测试项目', status: 'active' }];
     else if (path === '/api/project-preference') data = { projectId: 'p1' };
@@ -84,7 +101,7 @@ test('development list: page/batch/row actions, inline edit, grouped drawer, col
         tags: [{ id: 't1', name: '紧急', color: 'red', usage: 1 }],
         fields: [],
         readOnly: false,
-        isAdmin: true,
+        access,
       };
     else if (path === '/api/projects/p1/development-items/batch') {
       const body = request.postDataJSON();

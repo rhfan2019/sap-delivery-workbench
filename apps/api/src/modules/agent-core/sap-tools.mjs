@@ -1,4 +1,4 @@
-import { connectMcp, decodeResult, resolveProjectSap } from '../sap/public.mjs';
+import { connectMcp, decodeResult, isAuthFailure, resolveProjectSap } from '../sap/public.mjs';
 import { failure } from '../../platform/auth.mjs';
 
 // Read-only abap-adt tools the model may use (system prompt part 4). Everything else the
@@ -91,12 +91,14 @@ export function truncate(text, limit = MAX_RESULT_CHARS) {
     : text.slice(0, limit) + `\n…（结果已截断，共 ${text.length} 字符；请缩小查询范围）`;
 }
 
-// Contract 1.12: the user picks the SAP system per message; agents never read PRD.
-export const SAP_ENVIRONMENTS = ['DEV', 'QAS'];
-export function sapEnvironment(value, fallback) {
-  if (value === undefined || value === null || value === '') return fallback;
-  if (!SAP_ENVIRONMENTS.includes(value)) throw failure(400, 'SAP 系统只能选择 DEV 或 QAS。');
-  return value;
+// Contract 3.4 (1.18): the user may pick any project SAP system for a message; without a pick
+// the agent's default purpose applies ('test' for design, 'development' for development).
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export function sapSelector(systemId, purpose) {
+  if (systemId === undefined || systemId === null || systemId === '')
+    return { systemId: null, purpose };
+  if (typeof systemId !== 'string' || !UUID.test(systemId)) throw failure(400, 'SAP 系统无效。');
+  return { systemId, purpose };
 }
 
 // Opens one MCP connection for a turn. Never throws: when SAP is not usable the agent
@@ -110,15 +112,22 @@ export async function openSap(
   try {
     resolved = await resolve(db, scope, environment);
   } catch (error) {
-    return {
-      available: false,
-      reason: `项目未配置可用的 ${environment} SAP 系统：` + error.message,
-    };
+    return { available: false, code: error.code, reason: error.message };
   }
   let connection;
   try {
     connection = await connect(resolved.env, { deadlineMs: budgetMs });
   } catch (error) {
+    // SAP refused the person's password: discard it so it is never tried again.
+    if (isAuthFailure(error)) {
+      await resolved.rejected?.().catch(() => {});
+      return {
+        available: false,
+        code: 'SAP_LOGIN_REQUIRED',
+        target: resolved.target,
+        reason: 'SAP 拒绝了已保存的用户或密码（可能已修改或被锁定），请重新登录该系统。',
+      };
+    }
     return { available: false, target: resolved.target, reason: 'SAP 连接失败：' + error.message };
   }
   const offered = new Map(connection.tools.map((t) => [t.name, t]));

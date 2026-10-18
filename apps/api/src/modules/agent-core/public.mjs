@@ -4,8 +4,7 @@ export { historyMessages } from './history.mjs';
 export { parseFile } from './attachments/parser.mjs';
 export {
   openSap,
-  sapEnvironment,
-  SAP_ENVIRONMENTS,
+  sapSelector,
   SAP_TOOLS,
   guardSapCall,
   truncate,

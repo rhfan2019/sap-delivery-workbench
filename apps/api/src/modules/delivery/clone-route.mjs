@@ -6,7 +6,7 @@ import { loadItem, customFields, reserveNumbers, insertItem, addEvent } from './
 // Test copies for batch assistant testing: same requirement, new number, prefixed name.
 export function registerCloneRoute(app, c, base) {
   app.post(base + '/:id/test-copy', async (req, reply) =>
-    c.write(req, async (db, current) => {
+    c.write(req, 'delivery.item:create', async (db, current) => {
       const ctx = { org: c.organizationId, project: req.params.projectId, actor: current.user.id };
       const source = await c.item(db, req);
       const { prefix, requestId } = req.body ?? {};

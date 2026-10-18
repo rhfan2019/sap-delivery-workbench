@@ -3,6 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { failure } from '../../platform/auth.mjs';
+import { deniedError } from '../access/public.mjs';
 import { createWorkContext } from '../item-workspace/public.mjs';
 import { resolveAgentModel } from '../models/public.mjs';
 import {
@@ -10,7 +11,7 @@ import {
   openTurn,
   streamTurnEvents,
   answersText,
-  sapEnvironment,
+  sapSelector,
 } from '../agent-core/public.mjs';
 import { diffLines } from './artifacts.mjs';
 import { SUPPORTED_KINDS } from './context.mjs';
@@ -81,6 +82,7 @@ export function registerAbapDevAgent(app, pool, organizationId, requireSession, 
       },
       supported: !!SUPPORTED_KINDS[item.kind],
       canEdit: req.work.canEdit,
+      canFinalize: req.work.canFinalize,
       model,
       sessions: await repo.listSessions(pool, scope),
     };
@@ -104,6 +106,7 @@ export function registerAbapDevAgent(app, pool, organizationId, requireSession, 
     return {
       session: s,
       canEdit: req.work.canEdit,
+      canFinalize: req.work.canFinalize,
       messages: await repo.listMessages(pool, s.id),
       turns: await repo.listTurns(pool, s.id),
       toolCalls: await repo.listToolCalls(pool, s.id),
@@ -120,14 +123,14 @@ export function registerAbapDevAgent(app, pool, organizationId, requireSession, 
     const content = answers?.length
       ? answersText(answers) + (req.body?.content?.trim() ? '\n\n' + req.body.content.trim() : '')
       : text(req.body?.content, '消息', 100000);
-    const environment = sapEnvironment(req.body?.sapEnvironment, 'DEV');
+    const environment = sapSelector(req.body?.sapSystemId, 'development');
     const model = await (deps.resolveModel ?? resolveAgentModel)(pool, organizationId);
     const turnId = randomUUID();
     const claimed = await repo.claimTurn(pool, s.id, turnId, req.work.scope.actorId, {
       versionId: model.versionId,
       name: model.config.name,
       modelId: model.config.modelId,
-      sap: environment,
+      sap: environment.systemId ?? environment.purpose,
     });
     if (!claimed) throw failure(409, '上一轮还在进行中，请等待完成或先停止。');
     await repo.appendMessage(pool, s.id, {
@@ -246,6 +249,8 @@ export function registerAbapDevAgent(app, pool, organizationId, requireSession, 
 
   app.post(base + '/sessions/:sessionId/versions/:version/labels', async (req) => {
     const s = await session(req, true);
+    // Labels mark a version final (定稿): contract 3.5, agent.dev:finalize.
+    if (!req.work.canFinalize) throw deniedError('agent.dev:finalize');
     const labels = Array.isArray(req.body?.labels)
       ? [...new Set(req.body.labels.map((l) => String(l).trim()).filter(Boolean))].slice(0, 10)
       : null;

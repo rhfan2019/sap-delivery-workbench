@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { connectMcp } from '../technical/sap-mcp.mjs';
-import { resolveTestSystem } from './targets.mjs';
+import { resolveTestSystem, assertTestDataAllowed } from './targets.mjs';
 
-// Contract 3.4: the only place that writes to SAP. Generated test data code runs in QAS as
+// Contract 3.4: the only place that writes to SAP. Generated test data code runs in the
+// project's test system as
 // a temporary $TMP class after the user authorized this very request; the class definition
 // is fixed here, the model supplies only the body of the main method.
 export const CLASS_PREFIX = 'ZCL_SDWB_TD_';
@@ -153,10 +154,11 @@ export async function executeTestData(
   db,
   scope,
   { agent, agentSessionId, requestId, purpose, body },
-  { connect = connectMcp, resolve = resolveTestSystem } = {},
+  { connect = connectMcp, resolve = resolveTestSystem, allowed = assertTestDataAllowed } = {},
 ) {
+  await allowed(db, scope);
   const { target, env } = await resolve(db, scope);
-  if (target.environment !== 'QAS') throw new Error('测试数据只能建在 QAS。');
+  if (target.environment !== 'QAS') throw new Error('测试数据只能建在项目的测试系统。');
   const review = reviewSource(body);
   if (review.problems.length) throw new Error('代码审查未通过：' + review.problems.join(' '));
   const id = randomUUID();

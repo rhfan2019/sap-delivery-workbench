@@ -13,12 +13,12 @@ const ATTACHMENT_CHARS = 40000;
 // Facts the model needs every turn: work item, SAP target, materials, document, open comments.
 export function sessionFacts({ scope, sap, document, comments, attachments, today }) {
   const parts = [
-    `# 本次会话的事实\n\n- 日期：${today}\n- 开发项：${scope.itemCode} ${scope.itemName}（项目：${scope.projectName}）`,
+    `# 本次会话的事实\n\n- 日期：${today}\n- 开发项：${scope.itemCode} ${scope.itemName}（项目：${scope.projectName}）${scope.landscape ? `\n- 项目 SAP 形态：${scope.landscape}` : ''}`,
   ];
   if (sap.available) {
     const t = sap.target;
     parts.push(
-      `- 目标 SAP 系统：${t.systemCode} ${t.systemName}，${t.environment}，client ${t.client}${t.backendVersion ? `，版本 ${t.backendVersion}` : '，版本未登记（需要时查询版本特有对象判断）'}\n- SAP 只读工具可用。`,
+      `- 目标 SAP 系统：${t.systemCode} ${t.systemName}，${t.purpose === 'test' ? '测试系统' : '开发系统'}，client ${t.client}${t.backendVersion ? `，版本 ${t.backendVersion}` : '，版本未登记（需要时查询版本特有对象判断）'}\n- SAP 只读工具可用。`,
     );
   } else
     parts.push(

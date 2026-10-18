@@ -5,56 +5,79 @@ import { connectDatabase } from '../../../apps/api/src/platform/database.mjs';
 import { createApp } from '../../../apps/api/src/app.mjs';
 import { hashPassword } from '../../../apps/api/src/platform/password.mjs';
 import { digest } from '../../../apps/api/src/platform/auth.mjs';
+import { resolveProjectSap } from '../../../apps/api/src/modules/sap/targets.mjs';
+import { grantRole, dropOrganizations } from '../../fixtures/access.mjs';
 
-test('SAP configuration HTTP and database boundaries', async (t) => {
+const probeServer = new URL(
+  '../../fixtures/sap-probe-server.mjs',
+  import.meta.url,
+).pathname.replace(/^\/(?=[A-Za-z]:)/, '');
+async function withEnv(values, run) {
+  const saved = Object.fromEntries(Object.keys(values).map((k) => [k, process.env[k]]));
+  Object.assign(process.env, values);
+  try {
+    return await run();
+  } finally {
+    for (const [k, v] of Object.entries(saved))
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+  }
+}
+
+// Contract 3.4 / docs/specs/project-access-admin.md section 3: project SAP systems without
+// passwords, personal credentials, the saving policy and what the agents receive.
+test('project SAP systems, personal credentials and the saving policy', async (t) => {
   const db = await connectDatabase(),
     org = randomUUID(),
-    other = randomUUID(),
-    admin = randomUUID(),
-    member = randomUUID(),
-    outsider = randomUUID(),
     customer = randomUUID(),
-    borrower = randomUUID(),
-    project = randomUUID();
+    project = randomUUID(),
+    sibling = randomUUID();
+  const names = ['admin', 'pm', 'consultant', 'observer', 'sub'];
+  const ids = Object.fromEntries(names.map((n) => [n, randomUUID()]));
   const suffix = org.slice(0, 8),
     password = 'SAP test login passphrase!',
     secret = 'Private SAP password ' + suffix;
   const originalKey = process.env.SAP_CREDENTIAL_KEY;
   process.env.SAP_CREDENTIAL_KEY = 'c'.repeat(64);
+  const login = (n) => 'sap-' + n + '-' + suffix;
   let app;
   try {
-    await db.query(
-      "INSERT INTO app.organization(id,code,name) VALUES($1,$2,'SAP Test'),($3,$4,'Other')",
-      [org, 'S' + suffix.toUpperCase(), other, 'O' + suffix.toUpperCase()],
-    );
+    await db.query("INSERT INTO app.organization(id,code,name) VALUES($1,$2,'SAP Test')", [
+      org,
+      'S' + suffix.toUpperCase(),
+    ]);
     const hash = await hashPassword(password);
-    for (const [index, user] of [admin, member, outsider].entries()) {
-      await db.query('INSERT INTO app.app_user(id,login_name,display_name) VALUES($1,$2,$3)', [
-        user,
-        'sap' + index + '-' + suffix,
-        'SAP Test',
-      ]);
+    for (const n of names) {
+      await db.query(
+        'INSERT INTO app.app_user(id,login_name,display_name,person_type) VALUES($1,$2,$3,$4)',
+        [ids[n], login(n), n, n === 'sub' ? 'subcontractor' : 'employee'],
+      );
       await db.query(
         'INSERT INTO app.user_password(user_id,password_hash,must_change_password) VALUES($1,$2,false)',
-        [user, hash],
+        [ids[n], hash],
       );
-      await db.query(
-        'INSERT INTO app.organization_member(organization_id,user_id,access_level) VALUES($1,$2,$3)',
-        [org, user, index === 0 ? 'admin' : 'member'],
-      );
+      await db.query('INSERT INTO app.organization_member(organization_id,user_id) VALUES($1,$2)', [
+        org,
+        ids[n],
+      ]);
     }
+    await db.query("INSERT INTO app.customer(id,organization_id,code,name) VALUES($1,$2,'C','C')", [
+      customer,
+      org,
+    ]);
     await db.query(
-      "INSERT INTO app.customer(id,organization_id,code,name) VALUES($1,$2,'OWNER','Owner'),($3,$2,'BORROW','Borrower')",
-      [customer, org, borrower],
+      "INSERT INTO app.project(id,organization_id,customer_id,code,name) VALUES($1,$3,$4,'P1','Project'),($2,$3,$4,'P2','Sibling')",
+      [project, sibling, org, customer],
     );
-    await db.query(
-      "INSERT INTO app.project(id,organization_id,customer_id,code,name) VALUES($1,$2,$3,'TEST','SAP Project')",
-      [project, org, borrower],
-    );
-    await db.query(
-      'INSERT INTO app.project_member(organization_id,project_id,user_id) VALUES($1,$2,$3),($1,$2,$4)',
-      [org, project, admin, member],
-    );
+    await grantRole(db, org, ids.admin, 'SYS_SUPER_ADMIN');
+    await grantRole(db, org, ids.pm, 'C_PM', { projectId: project });
+    await grantRole(db, org, ids.pm, 'C_PM', { projectId: sibling });
+    await grantRole(db, org, ids.consultant, 'C_FUNC', { projectId: project });
+    await grantRole(db, org, ids.observer, 'C_OBSERVER', { projectId: project });
+    await grantRole(db, org, ids.sub, 'C_SUBCON_DEV', {
+      projectId: project,
+      validTo: '2099-12-31',
+    });
     app = await createApp({ organizationId: org });
     const req = (method, url, body, cookie) =>
       app.inject({
@@ -64,349 +87,336 @@ test('SAP configuration HTTP and database boundaries', async (t) => {
         remoteAddress: 'sap-test-' + suffix,
         headers: { origin: 'http://127.0.0.1:5173', ...(cookie ? { cookie } : {}) },
       });
-    const cookies = [];
-    for (let i = 0; i < 3; i++) {
-      const login = await req('POST', '/api/login', {
-        loginName: 'sap' + i + '-' + suffix,
-        password,
-      });
-      assert.equal(login.statusCode, 200);
-      cookies.push(login.headers['set-cookie'].split(';')[0]);
+    const c = {};
+    for (const n of names) {
+      const r = await req('POST', '/api/login', { loginName: login(n), password });
+      assert.equal(r.statusCode, 200);
+      c[n] = r.headers['set-cookie'].split(';')[0];
     }
-    const [a, m, o] = cookies;
-    const adminUrl = '/api/admin/projects/' + project + '/sap',
-      personalUrl = '/api/projects/' + project + '/sap';
-    let system,
-      grantRevision = '1',
-      defaults,
-      personal;
-    await t.test('only admin creates systems; URL rejects credentials and ADT paths', async () => {
-      assert.equal((await req('GET', '/api/admin/sap-systems', undefined, m)).statusCode, 403);
-      for (const sapUrl of ['https://user:secret@host.invalid', 'https://host.invalid/sap/bc/adt'])
+    const base = `/api/projects/${project}/sap-systems`;
+    const input = {
+      name: 'S/4 开发 100',
+      purpose: 'development',
+      sid: 's4d',
+      sapUrl: 'https://sap.invalid',
+      client: '100',
+      language: 'zh',
+    };
+    let dev, qas;
+
+    await t.test(
+      'the project manager registers systems; never with credentials or paths',
+      async () => {
+        assert.equal((await req('POST', base, input, c.observer)).statusCode, 403);
+        for (const sapUrl of [
+          'https://user:pw@sap.invalid',
+          'https://sap.invalid/sap/bc/adt',
+          'ftp://sap.invalid',
+        ])
+          assert.equal((await req('POST', base, { ...input, sapUrl }, c.pm)).statusCode, 400);
         assert.equal(
-          (await req('POST', '/api/admin/sap-systems', { code: 'S', name: 'System', sapUrl }, a))
-            .statusCode,
+          (await req('POST', base, { ...input, purpose: 'production' }, c.pm)).statusCode,
           400,
         );
-      const r = await req(
-        'POST',
-        '/api/admin/sap-systems',
-        { code: 'S', name: 'Owner SAP', sapUrl: 'https://sap.invalid', ownerCustomerId: customer },
-        a,
-      );
-      assert.equal(r.statusCode, 200, r.body);
-      system = r.json();
-      assert.equal((await req('GET', personalUrl, undefined, o)).statusCode, 404);
-    });
-    await t.test(
-      'MCP connection tests persist versions and failures, enforce scope and never return passwords',
-      async () => {
-        const originalEntry = process.env.SAP_MCP_ENTRY;
-        process.env.SAP_MCP_ENTRY = new URL(
-          '../../fixtures/sap-probe-server.mjs',
-          import.meta.url,
-        ).pathname.replace(/^\/(?=[A-Za-z]:)/, '');
-        try {
-          const url = '/api/admin/sap-systems/' + system.id + '/test';
-          const body = () => ({
-            rowVersion: system.rowVersion,
-            client: '100',
-            username: 'ok',
-            password: secret,
-          });
-          assert.equal((await req('POST', url, body(), m)).statusCode, 403);
-          assert.equal((await req('POST', url, { ...body(), client: '1' }, a)).statusCode, 400);
-          assert.equal(
-            (await req('POST', '/api/admin/sap-systems/' + randomUUID() + '/test', body(), a))
-              .statusCode,
-            404,
-          );
-          for (const [username, status] of [
-            ['ok', 'passed'],
-            ['bad-auth', 'failed'],
-            ['bad-network', 'failed'],
-          ]) {
-            const response = await req('POST', url, { ...body(), username }, a);
-            assert.equal(response.statusCode, 200, response.body);
-            const result = response.json();
-            assert.equal(result.status, status);
-            assert.ok(!response.body.includes(secret));
-            system = result.system;
-            assert.match(system.backendVersion, /SAP_BASIS 758/);
-            const saved = (await req('GET', '/api/admin/sap-systems', undefined, a))
-              .json()
-              .find((s) => s.id === system.id);
-            assert.equal(saved.testStatus, status);
-            assert.equal(saved.backendVersion, system.backendVersion);
-          }
-          assert.equal((await req('POST', url, { ...body(), rowVersion: '1' }, a)).statusCode, 409);
-        } finally {
-          if (originalEntry === undefined) delete process.env.SAP_MCP_ENTRY;
-          else process.env.SAP_MCP_ENTRY = originalEntry;
-        }
-      },
-    );
-    await t.test(
-      'customer borrowing must be granted; cross-organization FK rejects corruption',
-      async () => {
-        defaults = (await req('GET', adminUrl, undefined, a)).json();
-        assert.equal(defaults.systems.length, 0);
-        const body = { rows: defaults.rows.map((r) => ({ ...r, systemId: system.id })) };
-        assert.equal((await req('POST', adminUrl, body, a)).statusCode, 403);
-        await assert.rejects(
-          db.query(
-            "INSERT INTO app.project_sap_config(organization_id,project_id,environment,system_id) VALUES($1,$2,'DEV',$3)",
-            [other, project, system.id],
-          ),
-          { code: '23503' },
-        );
-        const r = await req(
+        let r = await req('POST', base, input, c.pm);
+        assert.equal(r.statusCode, 201, r.body);
+        dev = r.json().systems.find((s) => s.purpose === 'development');
+        assert.deepEqual([dev.sid, dev.language, dev.isDefault], ['S4D', 'ZH', true]);
+        assert.equal((await req('POST', base, input, c.pm)).statusCode, 409);
+        r = await req(
           'POST',
-          '/api/admin/sap-systems/' + system.id + '/grants',
+          base,
+          { ...input, name: 'S/4 测试 200', purpose: 'test', sid: 'S4Q', client: '200' },
+          c.pm,
+        );
+        qas = r.json().systems.find((s) => s.purpose === 'test');
+        assert.equal(qas.isDefault, true);
+        r = await req('POST', base, { ...input, name: 'BW 开发', sid: 'BWD', client: '300' }, c.pm);
+        const bw = r.json().systems.find((s) => s.sid === 'BWD');
+        assert.equal(bw.isDefault, false);
+        r = await req('POST', `${base}/${bw.id}/default`, {}, c.pm);
+        assert.deepEqual(
+          r
+            .json()
+            .systems.filter((s) => s.purpose === 'development' && s.isDefault)
+            .map((s) => s.sid),
+          ['BWD'],
+        );
+        // Switching the default off hands the default back to another active system.
+        r = await req(
+          'PATCH',
+          `${base}/${bw.id}`,
           {
-            customerId: borrower,
-            expiresAt: '2099-01-01T00:00:00Z',
-            active: true,
-            rowVersion: '0',
+            ...input,
+            name: 'BW 开发',
+            sid: 'BWD',
+            client: '300',
+            status: 'inactive',
+            rowVersion: r.json().systems.find((s) => s.sid === 'BWD').rowVersion,
           },
-          a,
+          c.pm,
         );
         assert.equal(r.statusCode, 200, r.body);
+        assert.deepEqual(
+          r
+            .json()
+            .systems.filter((s) => s.purpose === 'development' && s.isDefault)
+            .map((s) => s.sid),
+          ['S4D'],
+        );
+        dev = r.json().systems.find((s) => s.sid === 'S4D');
+        assert.equal(JSON.stringify(r.json()).includes('password'), false);
+        const seen = (await req('GET', base, undefined, c.observer)).json();
+        assert.equal(seen.canManage, false);
+        assert.equal(seen.systems.find((s) => s.sid === 'S4D').canRead, false);
       },
     );
-    await t.test(
-      'three defaults save atomically, encrypted and never echoed; stale version rejects',
-      async () => {
-        defaults = (await req('GET', adminUrl, undefined, a)).json();
-        const rows = defaults.rows.map((r) => ({
-          ...r,
-          systemId: system.id,
-          client: '000',
-          username: 'DEVUSER',
-          passwordAction: 'replace',
-          password: secret,
-        }));
-        const saved = await req('POST', adminUrl, { rows }, a);
-        assert.equal(saved.statusCode, 200, saved.body);
-        assert.ok(!saved.body.includes(secret));
-        defaults = saved.json();
-        assert.equal(defaults.effective[0].credentialReady, true);
-        assert.equal((await req('POST', adminUrl, { rows }, a)).statusCode, 409);
-        const raw = (
-          await db.query('SELECT password_cipher FROM app.project_sap_config WHERE project_id=$1', [
-            project,
-          ])
-        ).rows;
-        assert.equal(raw.length, 3);
-        assert.ok(
-          raw.every(
-            (r) => r.password_cipher.startsWith('v1.') && !r.password_cipher.includes(secret),
-          ),
-        );
-        const bad = defaults.rows.map((r) => ({
-          ...r,
-          language: r.environment === 'PRD' ? 'INVALID' : 'ZH',
-        }));
-        assert.equal((await req('POST', adminUrl, { rows: bad }, a)).statusCode, 400);
-        assert.equal(
-          (await req('GET', adminUrl, undefined, a)).json().rows[0].rowVersion,
-          defaults.rows[0].rowVersion,
-        );
-      },
-    );
-    await t.test(
-      'own parameters inherit and username changes invalidate default password',
-      async () => {
-        personal = (await req('GET', personalUrl, undefined, m)).json();
-        assert.equal(personal.effective[0].credentialReady, true);
-        const rows = personal.rows.map((r) => ({
-          ...r,
-          username: r.environment === 'DEV' ? 'PERSONAL' : null,
-        }));
-        const saved = await req('POST', personalUrl, { rows }, m);
-        assert.equal(saved.statusCode, 200, saved.body);
-        personal = saved.json();
-        assert.equal(personal.effective[0].hasPassword, false);
-        assert.equal(personal.effective[1].hasPassword, true);
-        assert.equal((await req('GET', personalUrl, undefined, a)).json().rows[0].username, null);
-        assert.equal((await req('POST', personalUrl, { rows }, m)).statusCode, 409);
-      },
-    );
-    await t.test(
-      'temporary password resolves without persistence and rejects arbitrary system',
-      async () => {
-        const before = (await req('GET', personalUrl, undefined, m)).body;
-        const resolved = await req(
-          'POST',
-          personalUrl + '/resolve',
-          {
-            environment: 'DEV',
-            temporary: { passwordAction: 'replace', password: secret, client: '100' },
-          },
-          m,
-        );
-        assert.equal(resolved.statusCode, 200, resolved.body);
-        assert.equal(resolved.json().credentialReady, true);
-        assert.ok(!resolved.body.includes(secret));
-        assert.equal((await req('GET', personalUrl, undefined, m)).body, before);
-        assert.equal(
-          (
-            await req(
-              'POST',
-              personalUrl + '/resolve',
-              { environment: 'DEV', temporary: { systemId: randomUUID() } },
-              m,
-            )
-          ).statusCode,
-          403,
-        );
-      },
-    );
-    await t.test(
-      'no allowlist endpoint remains; QAS login is per login session and memory only',
-      async () => {
-        // Contract 1.9: test data code may call any BAPI, function module or class.
-        const allowUrl = '/api/admin/sap-systems/' + system.id + '/allowlist';
-        assert.equal((await req('GET', allowUrl, undefined, a)).statusCode, 404);
 
-        const qasUrl = personalUrl.replace(/\/sap$/, '/sap/test-system');
-        const status = (await req('GET', qasUrl, undefined, m)).json();
-        assert.deepEqual([status.configured, status.ready, status.client], [true, false, '000']);
-        const originalEntry = process.env.SAP_MCP_ENTRY;
-        process.env.SAP_MCP_ENTRY = new URL(
-          '../../fixtures/sap-probe-server.mjs',
-          import.meta.url,
-        ).pathname.replace(/^\/(?=[A-Za-z]:)/, '');
-        try {
-          const refused = await req('POST', qasUrl, { username: 'bad-auth', password: secret }, m);
+    await t.test(
+      'a credential is kept only after SAP accepts it, and only for its owner',
+      async () => {
+        const credential = `${base}/${dev.id}/credential`;
+        await withEnv({ SAP_MCP_ENTRY: probeServer }, async () => {
+          assert.equal(
+            (await req('PUT', credential, { username: 'ok', password: secret }, c.observer))
+              .statusCode,
+            403,
+            'reading the development system needs sap.development:read',
+          );
+          const refused = await req(
+            'PUT',
+            credential,
+            { username: 'bad-auth', password: secret, mode: 'saved' },
+            c.consultant,
+          );
           assert.equal(refused.statusCode, 400);
-          const login = await req('POST', qasUrl, { username: 'ok', password: secret }, m);
-          assert.equal(login.statusCode, 200, login.body);
-          assert.ok(!login.body.includes(secret));
-          assert.deepEqual([login.json().ready, login.json().username], [true, 'ok']);
-        } finally {
-          if (originalEntry === undefined) delete process.env.SAP_MCP_ENTRY;
-          else process.env.SAP_MCP_ENTRY = originalEntry;
-        }
-        assert.equal((await req('GET', qasUrl, undefined, a)).json().ready, false);
-        const stored = await db.query(
-          'SELECT count(*)::int AS n FROM app.user_project_sap_config WHERE project_id=$1 AND username=$2',
-          [project, 'ok'],
+          assert.equal(refused.json().code, 'SAP_LOGIN_FAILED');
+          assert.ok(!refused.body.includes(secret));
+          const ok = await req(
+            'PUT',
+            credential,
+            { username: 'ok', password: secret, mode: 'saved' },
+            c.consultant,
+          );
+          assert.equal(ok.statusCode, 200, ok.body);
+          assert.ok(!ok.body.includes(secret));
+          const state = ok.json().systems.find((s) => s.id === dev.id).credential;
+          assert.deepEqual([state.state, state.username], ['saved', 'ok']);
+          assert.ok(Date.parse(state.expiresAt) - Date.now() <= 30 * 86400000 + 60000);
+        });
+        const row = (
+          await db.query(
+            'SELECT password_cipher FROM app.sap_user_credential WHERE system_id=$1 AND user_id=$2',
+            [dev.id, ids.consultant],
+          )
+        ).rows[0];
+        assert.ok(row && !row.password_cipher.includes(secret));
+        // Someone else sees no credential; the agents of the owner get it.
+        assert.equal(
+          (await req('GET', base, undefined, c.pm)).json().systems.find((s) => s.id === dev.id)
+            .credential.state,
+          'none',
         );
-        assert.equal(stored.rows[0].n, 0);
-        assert.equal((await req('DELETE', qasUrl, undefined, m)).json().ready, false);
-
-        // Contract 1.10: locally, the machine's credentials file can log in without typing.
-        assert.equal((await req('POST', qasUrl, { useProfile: true }, m)).statusCode, 409);
-        const { mkdtemp, writeFile } = await import('node:fs/promises');
-        const { tmpdir } = await import('node:os');
-        const { join } = await import('node:path');
-        const profile = join(await mkdtemp(join(tmpdir(), 'sap-profile-')), 'profile.json');
-        await writeFile(
-          profile,
-          JSON.stringify({
-            SAP_URL: 'https://sap.invalid',
-            SAP_CLIENT: '000',
-            SAP_USER: 'ok',
-            SAP_PASSWORD: secret,
-          }),
-        );
-        const saved = {
-          entry: process.env.SAP_MCP_ENTRY,
-          profile: process.env.SAP_MCP_PROFILE_FILE,
+        const scope = {
+          organizationId: org,
+          projectId: project,
+          actorId: ids.consultant,
+          sessionId: randomUUID(),
         };
-        process.env.SAP_MCP_ENTRY = new URL(
-          '../../fixtures/sap-probe-server.mjs',
-          import.meta.url,
-        ).pathname.replace(/^\/(?=[A-Za-z]:)/, '');
-        process.env.SAP_MCP_PROFILE_FILE = profile;
-        try {
-          assert.equal((await req('GET', qasUrl, undefined, m)).json().profileAvailable, true);
-          const fromFile = await req('POST', qasUrl, { useProfile: true }, m);
-          assert.equal(fromFile.statusCode, 200, fromFile.body);
-          assert.ok(!fromFile.body.includes(secret));
-          assert.deepEqual([fromFile.json().ready, fromFile.json().username], [true, 'ok']);
-        } finally {
-          for (const [key, value] of [
-            ['SAP_MCP_ENTRY', saved.entry],
-            ['SAP_MCP_PROFILE_FILE', saved.profile],
-          ])
-            if (value === undefined) delete process.env[key];
-            else process.env[key] = value;
-        }
+        const resolved = await resolveProjectSap(db, scope, { purpose: 'development' });
+        assert.deepEqual(
+          [resolved.env.SAP_USER, resolved.env.SAP_PASSWORD, resolved.env.SAP_CLIENT],
+          ['ok', secret, '100'],
+        );
+        assert.equal(resolved.target.systemCode, 'S4D');
+        await assert.rejects(
+          resolveProjectSap(db, { ...scope, actorId: ids.sub }, { purpose: 'development' }),
+          (e) => e.code === 'SAP_LOGIN_REQUIRED' && e.details.systemId === dev.id,
+        );
+        await assert.rejects(
+          resolveProjectSap(db, { ...scope, actorId: ids.observer }, { purpose: 'development' }),
+          (e) => e.code === 'ACCESS_DENIED',
+        );
+        // SAP refusing the saved password discards it (no second try that could lock the user).
+        await resolved.rejected();
+        assert.equal(
+          (await req('GET', base, undefined, c.consultant))
+            .json()
+            .systems.find((s) => s.id === dev.id).credential.state,
+          'none',
+        );
       },
     );
-    await t.test('expired grant blocks execution and archived project blocks changes', async () => {
-      await db.query(
-        "UPDATE app.sap_system_grant SET expires_at=now()-interval '1 second' WHERE organization_id=$1",
-        [org],
-      );
+
+    await t.test(
+      'this-login credentials stay in memory; changed systems forget saved ones',
+      async () => {
+        const credential = `${base}/${qas.id}/credential`;
+        await withEnv({ SAP_MCP_ENTRY: probeServer }, async () => {
+          const r = await req(
+            'PUT',
+            credential,
+            { username: 'ok', password: secret, mode: 'session' },
+            c.consultant,
+          );
+          assert.equal(r.json().systems.find((s) => s.id === qas.id).credential.state, 'session');
+          const stored = await db.query(
+            'SELECT count(*)::int AS n FROM app.sap_user_credential WHERE system_id=$1',
+            [qas.id],
+          );
+          assert.equal(stored.rows[0].n, 0);
+          await req(
+            'PUT',
+            `${base}/${dev.id}/credential`,
+            { username: 'ok', password: secret, mode: 'saved' },
+            c.consultant,
+          );
+        });
+        const current = (await req('GET', base, undefined, c.pm))
+          .json()
+          .systems.find((s) => s.id === dev.id);
+        await req(
+          'PATCH',
+          `${base}/${dev.id}`,
+          { ...input, client: '110', rowVersion: current.rowVersion },
+          c.pm,
+        );
+        const after = (await req('GET', base, undefined, c.consultant)).json().systems;
+        assert.equal(
+          after.find((s) => s.id === dev.id).credential.state,
+          'none',
+          'the client changed',
+        );
+        assert.equal(after.find((s) => s.id === qas.id).credential.state, 'session');
+        assert.equal(
+          (await req('DELETE', `${base}/${qas.id}/credential`, undefined, c.consultant))
+            .json()
+            .systems.find((s) => s.id === qas.id).credential.state,
+          'none',
+        );
+        const mine = (await req('GET', '/api/sap-credentials', undefined, c.consultant)).json();
+        assert.deepEqual(mine.items.map((i) => i.system.sid).sort(), ['S4D', 'S4Q']);
+      },
+    );
+
+    await t.test('the organization policy decides who may save passwords', async () => {
+      await withEnv({ SAP_MCP_ENTRY: probeServer }, async () => {
+        const r = await req(
+          'PUT',
+          `${base}/${dev.id}/credential`,
+          { username: 'ok', password: secret, mode: 'saved' },
+          c.sub,
+        );
+        assert.equal(r.statusCode, 403, 'subcontractors may not save by default');
+        await req(
+          'PUT',
+          `${base}/${dev.id}/credential`,
+          { username: 'ok', password: secret, mode: 'saved' },
+          c.consultant,
+        );
+      });
       assert.equal(
-        (await req('POST', personalUrl + '/resolve', { environment: 'QAS' }, m)).statusCode,
+        (await req('GET', '/api/admin/sap-credential-policy', undefined, c.pm)).statusCode,
         403,
       );
+      const policy = (
+        await req('GET', '/api/admin/sap-credential-policy', undefined, c.admin)
+      ).json();
+      assert.deepEqual([policy.allowSave, policy.maxDays, policy.idleDays], [true, 30, 14]);
       assert.equal(
-        (await req('POST', personalUrl + '/table', { environment: 'QAS', tableName: 'T000' }, m))
-          .statusCode,
-        403,
+        (await req('GET', '/api/admin/sap-credentials', undefined, c.admin)).json().length,
+        1,
+      );
+      const off = await req(
+        'PUT',
+        '/api/admin/sap-credential-policy',
+        { ...policy, allowSave: false },
+        c.admin,
+      );
+      assert.equal(off.statusCode, 200);
+      assert.equal(
+        (await req('GET', '/api/admin/sap-credentials', undefined, c.admin)).json().length,
+        0,
+      );
+      assert.equal((await req('GET', base, undefined, c.consultant)).json().canSave, false);
+      await req(
+        'PUT',
+        '/api/admin/sap-credential-policy',
+        { ...off.json(), allowSave: true },
+        c.admin,
+      );
+      const purge = await req(
+        'DELETE',
+        `/api/admin/users/${ids.consultant}/sap-credentials`,
+        {},
+        c.admin,
+      );
+      assert.equal(purge.statusCode, 200);
+    });
+
+    await t.test('local development may log in with the credentials file', async () => {
+      const { mkdtemp, writeFile } = await import('node:fs/promises');
+      const { tmpdir } = await import('node:os');
+      const { join } = await import('node:path');
+      const profile = join(await mkdtemp(join(tmpdir(), 'sap-profile-')), 'profile.json');
+      await writeFile(
+        profile,
+        JSON.stringify({
+          SAP_URL: 'https://sap.invalid',
+          SAP_CLIENT: '200',
+          SAP_USER: 'ok',
+          SAP_PASSWORD: secret,
+        }),
+      );
+      await withEnv({ SAP_MCP_ENTRY: probeServer, SAP_MCP_PROFILE_FILE: profile }, async () => {
+        const view = (await req('GET', base, undefined, c.consultant)).json();
+        assert.equal(view.systems.find((s) => s.id === qas.id).credential.state, 'profile');
+        const r = await req('POST', `${base}/${qas.id}/credential/profile`, {}, c.consultant);
+        assert.equal(r.statusCode, 200, r.body);
+        assert.ok(!r.body.includes(secret));
+        assert.equal(r.json().systems.find((s) => s.id === qas.id).credential.state, 'session');
+        assert.equal(
+          (await req('POST', `${base}/${dev.id}/credential/profile`, {}, c.consultant)).statusCode,
+          409,
+        );
+      });
+    });
+
+    await t.test('copying, the directory and archived projects', async () => {
+      const r = await req(
+        'POST',
+        `/api/projects/${sibling}/sap-systems/copy`,
+        { sourceProjectId: project },
+        c.pm,
+      );
+      assert.equal(r.statusCode, 200, r.body);
+      assert.equal(r.json().copied, 3);
+      assert.equal((await req('GET', '/api/admin/sap-systems', undefined, c.pm)).statusCode, 403);
+      assert.equal(
+        (await req('GET', '/api/admin/sap-systems', undefined, c.admin)).json().length,
+        6,
       );
       await db.query("UPDATE app.project SET status='archived',archived_at=now() WHERE id=$1", [
         project,
       ]);
-      assert.equal((await req('POST', personalUrl, { rows: personal.rows }, m)).statusCode, 409);
-      assert.equal((await req('POST', adminUrl, { rows: defaults.rows }, a)).statusCode, 409);
+      assert.equal((await req('POST', base, { ...input, client: '900' }, c.pm)).statusCode, 409);
+      assert.equal((await req('GET', base, undefined, c.pm)).json().readOnly, true);
     });
-    await t.test(
-      'inactive customers still allow system shutdown and grant revocation',
-      async () => {
-        await db.query("UPDATE app.customer SET status='inactive' WHERE organization_id=$1", [org]);
-        const shutdown = await req(
-          'PATCH',
-          '/api/admin/sap-systems/' + system.id,
-          { ...system, status: 'inactive' },
-          a,
-        );
-        assert.equal(shutdown.statusCode, 200, shutdown.body);
-        const revoke = await req(
-          'POST',
-          '/api/admin/sap-systems/' + system.id + '/grants',
-          {
-            customerId: borrower,
-            expiresAt: '2099-01-01T00:00:00Z',
-            active: false,
-            rowVersion: grantRevision,
-          },
-          a,
-        );
-        assert.equal(revoke.statusCode, 200, revoke.body);
-      },
+    assert.ok(
+      (
+        await db.query(
+          "SELECT count(*)::int AS n FROM app.audit_event WHERE organization_id=$1 AND action IN ('sap.credential.save','sap.credential.login','sap.system.create')",
+          [org],
+        )
+      ).rows[0].n >= 3,
     );
   } finally {
-    if (originalKey === undefined) delete process.env.SAP_CREDENTIAL_KEY;
-    else process.env.SAP_CREDENTIAL_KEY = originalKey;
     await app?.close();
-    for (const table of [
-      'user_project_sap_config',
-      'project_sap_config',
-      'sap_system_grant',
-      'sap_system',
-      'auth_session',
-      'project_member',
-      'project',
-      'customer',
-      'organization_member',
-      'audit_event',
-    ])
-      await db.query('DELETE FROM app.' + table + ' WHERE organization_id=$1', [org]);
-    await db.query('DELETE FROM app.user_password WHERE user_id=ANY($1::uuid[])', [
-      [admin, member, outsider],
-    ]);
-    await db.query('DELETE FROM app.app_user WHERE id=ANY($1::uuid[])', [
-      [admin, member, outsider],
-    ]);
-    await db.query('DELETE FROM app.organization WHERE id=ANY($1::uuid[])', [[org, other]]);
-    for (const value of ['sap-test-' + suffix, ...[0, 1, 2].map((i) => 'sap' + i + '-' + suffix)])
+    await dropOrganizations(db, [org], Object.values(ids));
+    for (const value of ['sap-test-' + suffix, ...names.map(login)])
       await db.query('DELETE FROM app.login_throttle WHERE key_hash=$1', [digest(value)]);
     await db.end();
+    if (originalKey === undefined) delete process.env.SAP_CREDENTIAL_KEY;
+    else process.env.SAP_CREDENTIAL_KEY = originalKey;
   }
 });

@@ -48,9 +48,14 @@ try {
     );
   }
   await client.query('REVOKE ALL ON public.pgmigrations FROM sap_workbench_app');
-  if ((await client.query("SELECT to_regclass('app.sap_system') AS name")).rows[0].name) {
+  // Contract 1.18: project SAP systems and personal credentials (credentials are deleted on logout
+  // of saved state, policy changes and when access ends).
+  if ((await client.query("SELECT to_regclass('app.project_sap_system') AS name")).rows[0].name) {
     await client.query(
-      'GRANT SELECT,INSERT,UPDATE ON app.sap_system,app.sap_system_grant,app.project_sap_config,app.user_project_sap_config TO sap_workbench_app',
+      'GRANT SELECT,INSERT,UPDATE,DELETE ON app.project_sap_system,app.sap_user_credential TO sap_workbench_app',
+    );
+    await client.query(
+      'GRANT SELECT,INSERT,UPDATE ON app.sap_credential_policy TO sap_workbench_app',
     );
   }
   if ((await client.query("SELECT to_regclass('app.llm_model') AS name")).rows[0].name) {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { identity } from '../../services/session';
+import { can } from '../../services/session';
 const table = ref('T000');
 const busy = ref(false);
 const output = ref('');
@@ -34,11 +34,11 @@ async function query() {
   <section class="admin-page technical-page">
     <header class="page-heading">
       <div>
-        <h1>技术验证（临时）</h1>
-        <p>SAP 表结构查询 · ABAP ADT MCP</p>
+        <h1>连接诊断</h1>
+        <p>用部署配置的 SAP 凭据，经 ABAP ADT MCP 验证表结构读取。</p>
       </div>
     </header>
-    <p v-if="!identity?.canManageOrganization" role="alert">此功能仅限企业管理员使用。</p>
+    <p v-if="!can('ops.diagnostics:run')" role="alert">需要“连接诊断”权限。</p>
     <template v-else>
       <form class="technical-panel" @submit.prevent="query">
         <h2>读取表结构</h2>

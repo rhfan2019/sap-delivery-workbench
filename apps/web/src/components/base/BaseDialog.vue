@@ -11,13 +11,14 @@ import {
 import { X } from '@lucide/vue';
 // Dialog (DESIGN.md 5): the scrim fades, the panel rises 16px and grows from 0.96.
 const open = defineModel<boolean>('open', { default: false });
-defineProps<{ title: string; description?: string }>();
+// `wide` gives forms with several columns or long lists more room.
+defineProps<{ title: string; description?: string; wide?: boolean }>();
 </script>
 <template>
   <DialogRoot v-model:open="open">
     <DialogPortal>
       <DialogOverlay class="base-scrim" />
-      <DialogContent class="base-dialog">
+      <DialogContent class="base-dialog" :class="{ wide }">
         <header>
           <DialogTitle class="title">{{ title }}</DialogTitle>
           <DialogClose class="close" aria-label="关闭"><X /></DialogClose>
@@ -54,6 +55,9 @@ defineProps<{ title: string; description?: string }>();
   box-shadow: var(--shadow-dialog);
   transform: translate(-50%, -50%);
   animation: base-dialog-in var(--motion-slow);
+}
+.base-dialog.wide {
+  width: min(680px, calc(100vw - 32px));
 }
 .base-dialog header {
   display: flex;

@@ -50,12 +50,12 @@ export function sessionFacts({ scope, sap, objects, materials, version, comments
       ? '\n- 本开发项没有 FSD；开发方案已有版本，按用户的意见同时修改方案和代码。'
       : '\n- **本开发项没有 FSD，也还没有开发方案**：按第三部分第 4 条，本轮只写开发方案（必要时用 ask_user 提问），不写代码，然后停下请用户审阅。用户明确要求直接写代码的除外。';
   const parts = [
-    `# 本次会话的事实\n\n- 日期：${today}\n- 开发项：${scope.itemCode} ${scope.itemName}（项目：${scope.projectName}）\n- 程序对象：${programs.join('、') || '开发清单尚未登记；需要时按命名规范提议，请开发顾问到开发清单填写'}${fsdNote}${kindNote}${changeNote}`,
+    `# 本次会话的事实\n\n- 日期：${today}\n- 开发项：${scope.itemCode} ${scope.itemName}（项目：${scope.projectName}）${scope.landscape ? `\n- 项目 SAP 形态：${scope.landscape}` : ''}\n- 程序对象：${programs.join('、') || '开发清单尚未登记；需要时按命名规范提议，请开发顾问到开发清单填写'}${fsdNote}${kindNote}${changeNote}`,
   ];
   if (sap.available) {
     const t = sap.target;
     parts.push(
-      `- 目标 SAP 系统：${t.systemCode} ${t.systemName}，${t.environment}，client ${t.client}${t.backendVersion ? `，版本 ${t.backendVersion}` : ''}\n- SAP 只读工具可用。`,
+      `- 目标 SAP 系统：${t.systemCode} ${t.systemName}，${t.purpose === 'test' ? '测试系统' : '开发系统'}，client ${t.client}${t.backendVersion ? `，版本 ${t.backendVersion}` : ''}\n- SAP 只读工具可用。`,
     );
   } else
     parts.push(

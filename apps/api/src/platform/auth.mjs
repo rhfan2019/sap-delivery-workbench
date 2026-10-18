@@ -71,7 +71,7 @@ export async function createAuth(pool, organizationId) {
     if (!candidate || !verified) return rejected();
     const result = await transaction(pool, async (db) => {
       const { rows: accounts } = await db.query(
-        `SELECT u.id,u.display_name,u.login_name,p.must_change_password,p.row_version,p.password_hash,o.name AS organization_name,m.access_level
+        `SELECT u.id,u.display_name,u.login_name,p.must_change_password,p.row_version,p.password_hash,o.name AS organization_name
         FROM app.app_user u JOIN app.user_password p ON p.user_id=u.id
         JOIN app.organization_member m ON m.user_id=u.id JOIN app.organization o ON o.id=m.organization_id
         WHERE u.id=$1 AND o.id=$2 AND u.status='active' AND m.status='active' AND o.status='active'
@@ -102,7 +102,6 @@ export async function createAuth(pool, organizationId) {
       user: { id: row.id, loginName: row.login_name, displayName: row.display_name },
       organization: { id: organizationId, name: row.organization_name },
       mustChangePassword: row.must_change_password,
-      canManageOrganization: row.access_level === 'admin',
     };
   }
   async function session(token) {
@@ -116,7 +115,7 @@ export async function createAuth(pool, organizationId) {
       AND u.id=s.user_id AND u.status='active' AND p.user_id=u.id
       AND m.user_id=u.id AND m.organization_id=s.organization_id AND m.status='active'
       AND o.id=s.organization_id AND o.status='active'
-      RETURNING s.id AS session_id,u.id,u.login_name,u.display_name,p.must_change_password,o.name AS organization_name,m.access_level`,
+      RETURNING s.id AS session_id,u.id,u.login_name,u.display_name,p.must_change_password,o.name AS organization_name`,
       [digest(token), organizationId],
     );
     if (!rows[0]) throw failure(401, '登录已失效，请重新登录。');

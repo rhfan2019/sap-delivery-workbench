@@ -26,7 +26,7 @@ const router = useRouter();
       </div>
     </div>
     <BaseMenuSeparator />
-    <BaseMenuItem @select="router.push('/settings')"
+    <BaseMenuItem @select="router.push('/settings/profile')"
       ><template #icon><Settings /></template>个人设置</BaseMenuItem
     >
     <BaseMenuItem kbd="?" @select="emit('shortcuts')"

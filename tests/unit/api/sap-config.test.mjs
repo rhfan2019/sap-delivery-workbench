@@ -1,59 +1,93 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { seal, open } from '../../../apps/api/src/modules/sap/crypto.mjs';
-import { resolveLayers, binding, publicConfig } from '../../../apps/api/src/modules/sap/resolve.mjs';
+import {
+  binding,
+  credentialFor,
+  forgetForSession,
+  maySave,
+  rememberForSession,
+  DEFAULT_POLICY,
+} from '../../../apps/api/src/modules/sap/credentials.mjs';
+import { systemInput, credentialInput } from '../../../apps/api/src/modules/sap/validation.mjs';
+
 const key = 'a'.repeat(64);
-const systems = [
-  { id: 's1', sapUrl: 'https://one.invalid', language: 'EN' },
-  { id: 's2', sapUrl: 'https://two.invalid', language: 'ZH' },
-];
-const base = {
-  systemId: 's1',
-  client: '000',
-  username: 'DEVELOPER',
-  language: null,
-  passwordMode: 'override',
-  passwordCipher: 'cipher',
-  credentialContext: 'context',
-};
-base.credentialBinding = binding({ ...base, sapUrl: systems[0].sapUrl });
+const system = { id: 's1', projectId: 'p', sapUrl: 'https://one.invalid', client: '100' };
+// A database with no saved credentials.
+const empty = { query: async () => ({ rows: [], rowCount: 0 }) };
+
 test('AES-GCM hides secrets and rejects altered ciphertext, context and key', () => {
-  const encrypted = seal('secret-password', 'org/project/DEV', key);
+  const encrypted = seal('secret-password', 'user/system/DEV', key);
   assert.ok(!encrypted.includes('secret-password'));
-  assert.equal(open(encrypted, 'org/project/DEV', key), 'secret-password');
-  assert.throws(() => open(encrypted, 'other/project/DEV', key));
-  assert.throws(() => open(encrypted, 'org/project/DEV', 'b'.repeat(64)));
+  assert.equal(open(encrypted, 'user/system/DEV', key), 'secret-password');
+  assert.throws(() => open(encrypted, 'other/system/DEV', key));
+  assert.throws(() => open(encrypted, 'user/system/DEV', 'b'.repeat(64)));
 });
-test('project defaults, personal overrides, temporary overrides resolve in order', () => {
-  const config = resolveLayers(systems, base, { language: 'ZH' }, { language: 'DE' });
-  assert.equal(config.client, '000');
-  assert.equal(config.language, 'DE');
-  assert.equal(config.passwordCipher, 'cipher');
-  assert.equal(config.sources.language, 'temporary');
-  assert.equal(publicConfig(config).hasPassword, true);
-  assert.ok(!JSON.stringify(publicConfig(config)).includes('cipher'));
+
+test('a credential is bound to the system address, client and SAP user', () => {
+  const b = binding(system, 'DEV01');
+  assert.notEqual(binding({ ...system, client: '200' }, 'DEV01'), b);
+  assert.notEqual(binding({ ...system, sapUrl: 'https://moved.invalid' }, 'DEV01'), b);
+  assert.notEqual(binding(system, 'DEV02'), b);
+  assert.equal(binding({ ...system }, 'DEV01'), b);
 });
-test('system switch resets inherited identity and uses new system language', () => {
-  const config = resolveLayers(systems, base, { systemId: 's2' }, null);
-  assert.equal(config.client, null);
-  assert.equal(config.username, null);
-  assert.equal(config.passwordCipher, null);
-  assert.equal(config.language, 'ZH');
-});
-test('Client or username change and system URL change invalidate old password', () => {
-  for (const delta of [{ client: '100' }, { username: 'OTHER' }])
-    assert.equal(resolveLayers(systems, base, delta).passwordCipher, null);
+
+test('this-login credentials belong to one login, one person and one system, and expire', async () => {
+  const actor = { userId: 'u1', sessionId: 'login-1' };
+  rememberForSession('login-1', 'u1', system, 'DEV01', 'secret');
+  const found = await credentialFor(empty, 'o', actor, system, DEFAULT_POLICY);
+  assert.deepEqual([found.username, found.password, found.source], ['DEV01', 'secret', 'session']);
   assert.equal(
-    resolveLayers([{ ...systems[0], sapUrl: 'https://moved.invalid' }], base).passwordCipher,
+    await credentialFor(empty, 'o', { ...actor, sessionId: 'login-2' }, system, DEFAULT_POLICY),
     null,
   );
+  assert.equal(
+    await credentialFor(empty, 'o', { ...actor, userId: 'u2' }, system, DEFAULT_POLICY),
+    null,
+  );
+  // A changed client invalidates the remembered credential.
+  assert.equal(
+    await credentialFor(empty, 'o', actor, { ...system, client: '200' }, DEFAULT_POLICY),
+    null,
+  );
+  rememberForSession('login-1', 'u1', system, 'DEV01', 'secret', Date.now() - 9 * 3600 * 1000);
+  assert.equal(await credentialFor(empty, 'o', actor, system, DEFAULT_POLICY), null);
+  rememberForSession('login-1', 'u1', system, 'DEV01', 'secret');
+  forgetForSession('login-1', 's1');
+  assert.equal(await credentialFor(empty, 'o', actor, system, DEFAULT_POLICY), null);
 });
-test('explicit none blocks password inheritance and one-time password is never public', () => {
-  assert.equal(resolveLayers(systems, base, { passwordMode: 'none' }).passwordCipher, null);
-  const result = resolveLayers(systems, base, null, {
-    passwordMode: 'override',
-    password: 'one-time',
+
+test('the policy decides who may save passwords', () => {
+  assert.equal(maySave(DEFAULT_POLICY, 'employee'), true);
+  assert.equal(maySave(DEFAULT_POLICY, 'subcontractor'), false);
+  assert.equal(maySave({ ...DEFAULT_POLICY, subcontractorSave: true }, 'subcontractor'), true);
+  assert.equal(maySave({ ...DEFAULT_POLICY, allowSave: false }, 'employee'), false);
+});
+
+test('a project system never carries credentials and is development or test only', () => {
+  const input = systemInput({
+    name: 'S/4 开发',
+    purpose: 'development',
+    sid: 's4d',
+    sapUrl: 'https://sap.example:44300',
+    client: '100',
+    username: 'IGNORED',
+    password: 'IGNORED',
   });
-  assert.equal(result.password, 'one-time');
-  assert.ok(!JSON.stringify(publicConfig(result)).includes('one-time'));
+  assert.deepEqual(Object.keys(input).sort(), [
+    'client',
+    'description',
+    'language',
+    'name',
+    'purpose',
+    'sapUrl',
+    'sid',
+    'status',
+  ]);
+  assert.equal(input.sid, 'S4D');
+  assert.throws(() => systemInput({ ...input, purpose: 'production' }));
+  assert.throws(() => systemInput({ ...input, sid: 'S4' }));
+  assert.throws(() => systemInput({ ...input, client: '1000' }));
+  assert.throws(() => credentialInput({ username: 'X', password: '' }));
+  assert.equal(credentialInput({ username: 'X', password: 'p' }).mode, 'saved');
 });

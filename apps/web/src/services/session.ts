@@ -3,20 +3,35 @@ export interface Identity {
   user: { id: string; loginName: string; displayName: string };
   organization: { id: string; name: string };
   mustChangePassword: boolean;
-  canManageOrganization: boolean;
+  // Organization-level permission codes (contract 3.5); project ones come per project.
+  permissions: string[];
 }
 export interface Project {
   id: string;
   code: string;
   name: string;
+  shortName: string;
   customerName: string;
+  projectType: string;
   status: string;
   isPaused: boolean;
   description: string | null;
   plannedStartDate: string | null;
   plannedEndDate: string | null;
+  currentPhase?: string | null;
+  goLive?: string | null;
+  health?: { overall: string; reportedOn: string } | null;
+}
+// The user's permissions in one project (GET /api/projects/:id/access).
+export interface ProjectAccess {
+  projectId: string;
+  permissions: string[];
+  // For the permissions narrowed by module or "own items": one entry per grant.
+  limits: Record<string, { modules: string[]; ownOnly: boolean }[]>;
 }
 export const identity = ref<Identity | null>(null);
+// Whether the signed-in user holds an organization-level permission.
+export const can = (code: string) => !!identity.value?.permissions?.includes(code);
 export class ApiError extends Error {
   constructor(
     public status: number,
