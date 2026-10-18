@@ -1,7 +1,7 @@
 /* The record page of a development item (DESIGN.md 4.3): a slim bar with the item, the design /
    development tabs and the conversation; the conversation, the artifact panel and the details
    panel side by side below it. */
-.shell-content:has(.item-workspace) {
+.shell-body:has(.item-workspace) {
   padding: 0;
   max-width: none;
   display: flex;

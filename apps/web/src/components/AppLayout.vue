@@ -2,17 +2,15 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMediaQuery } from '@vueuse/core';
-import { Check, ChevronsUpDown, Menu, PanelLeft, Search, Star } from '@lucide/vue';
+import { ChevronDown, ChevronRight, Menu, PanelLeft, Search } from '@lucide/vue';
 import AppIcon from './AppIcon.vue';
 import ConfirmDialog from './ConfirmDialog.vue';
 import CommandPalette from './CommandPalette.vue';
+import ProjectSwitcher from './ProjectSwitcher.vue';
 import UserMenu from './UserMenu.vue';
 import BaseDialog from './base/BaseDialog.vue';
 import BaseIconButton from './base/BaseIconButton.vue';
 import BaseKbd from './base/BaseKbd.vue';
-import BaseMenu from './base/BaseMenu.vue';
-import BaseMenuItem from './base/BaseMenuItem.vue';
-import BaseMenuSeparator from './base/BaseMenuSeparator.vue';
 import BaseNavItem from './base/BaseNavItem.vue';
 import BaseResizeHandle from './base/BaseResizeHandle.vue';
 import BaseToaster from './base/BaseToaster.vue';
@@ -20,14 +18,9 @@ import { modules, moduleOf, entryOf, visibleSections } from '../features/navigat
 import { api, identity } from '../services/session';
 import { useShortcut } from '../services/shortcuts';
 import {
-  projects,
-  currentProject,
   projectAccess,
-  defaultProject,
   projectError,
   loadProjects,
-  selectProject,
-  setDefaultProject,
   leaveDelivery,
 } from '../services/projectContext';
 
@@ -36,26 +29,71 @@ import {
 const route = useRoute();
 const router = useRouter();
 const module = computed(() => moduleOf(route.path));
-// Only what the user may open is listed (docs/specs/project-access-admin.md 4.3); the settings
-// project group is titled with the current project.
+// Only what the user may open is listed (docs/specs/project-access-admin.md 4.3).
 const sections = computed(() =>
   visibleSections(module.value.sections, {
     organization: identity.value?.permissions ?? [],
     project: projectAccess.value,
-  }).map((s) => {
-    if (s.id !== 'project') return s;
-    const p = projects.value.find((x) => x.id === currentProject.value);
-    return { ...s, label: '项目 · ' + (p?.shortName || p?.name || '未选择') };
   }),
 );
 const activeEntry = computed(() => entryOf(route.path));
-// Archived projects stay out of the switcher (they open from 企业 → 项目), unless current.
-const switchable = computed(() =>
-  projects.value.filter((p) => p.status !== 'archived' || p.id === currentProject.value),
+const activeSection = computed(() =>
+  sections.value.find((s) => s.items.some((i) => i.id === activeEntry.value?.id)),
 );
+// The page header (DESIGN.md 4.1): the project switcher where the page works on the current
+// project, then the module and the page; organization and personal settings carry no switcher.
+const projectScoped = computed(
+  () => module.value.id !== 'settings' || activeSection.value?.id === 'project',
+);
+const crumbs = computed(() => {
+  const entry = activeEntry.value;
+  if (module.value.id === 'settings') {
+    const section = activeSection.value;
+    const list = [{ label: '设置', to: entry?.id === 'settings' ? undefined : '/settings' }];
+    if (section?.label) list.push({ label: section.label, to: undefined });
+    if (entry && entry.id !== 'settings')
+      list.push({ label: entry.label, to: route.path === entry.path ? undefined : entry.path });
+    return list;
+  }
+  const list = [{ label: module.value.label, to: undefined as string | undefined }];
+  if (entry && entry.label !== module.value.label)
+    list.push({ label: entry.label, to: route.path === entry.path ? undefined : entry.path });
+  return list;
+});
 // The settings menu filters itself as you type (Plain's “Search settings”).
 const filter = ref('');
 watch(module, () => (filter.value = ''));
+// Menu groups fold (DESIGN.md 4.2). Personal and project start open, the rest closed; opening a
+// page opens its group, and every group shows while searching. Remembered per browser.
+const defaultClosed = ['organization', 'agents', 'operations'];
+function storedGroups(): Record<string, boolean> {
+  try {
+    return JSON.parse(localStorage.getItem('shell-menu-groups') ?? '{}') as Record<string, boolean>;
+  } catch {
+    return {};
+  }
+}
+const groupOpen = ref(storedGroups());
+function isOpen(id: string) {
+  if (filter.value.trim()) return true;
+  return groupOpen.value[id] ?? !defaultClosed.includes(id);
+}
+function setGroup(id: string, open: boolean) {
+  groupOpen.value = { ...groupOpen.value, [id]: open };
+  try {
+    localStorage.setItem('shell-menu-groups', JSON.stringify(groupOpen.value));
+  } catch {
+    // Storage may be refused; the choice then lasts for this page only.
+  }
+}
+const toggleGroup = (id: string) => setGroup(id, !isOpen(id));
+watch(
+  () => activeSection.value?.id,
+  (id) => {
+    if (id && !isOpen(id)) setGroup(id, true);
+  },
+  { immediate: true },
+);
 const shownSections = computed(() => {
   const q = filter.value.trim().toLowerCase();
   if (!q) return sections.value;
@@ -99,10 +137,6 @@ const palette = ref(false);
 const shortcuts = ref(false);
 const logoutError = ref('');
 const loggingOut = ref(false);
-const projectName = computed(() => {
-  const p = projects.value.find((x) => x.id === currentProject.value);
-  return p ? p.shortName || p.name : '选择项目';
-});
 watch(menuHidden, (hidden) => {
   try {
     localStorage.setItem('shell-menu', hidden ? 'hidden' : 'shown');
@@ -188,36 +222,10 @@ const keys = [
         @done="saveNavWidth"
       />
       <header class="menu-head">
-        <BaseMenu align="start">
-          <template #trigger>
-            <button type="button" class="project" :title="identity?.organization.name">
-              <span class="project-text"
-                ><strong>{{ projectName }}</strong
-                ><small>{{ identity?.organization.name }}</small></span
-              ><ChevronsUpDown class="project-chevron" />
-            </button>
-          </template>
-          <BaseMenuItem
-            v-for="p in switchable"
-            :key="p.id"
-            :note="p.id === defaultProject ? '默认' : undefined"
-            @select="selectProject(p.id)"
-            ><template #icon
-              ><Check :style="{ visibility: p.id === currentProject ? 'visible' : 'hidden' }"
-            /></template>
-            {{ p.name }}</BaseMenuItem
-          >
-          <BaseMenuSeparator v-if="switchable.length" />
-          <BaseMenuItem
-            tone="yellow"
-            :disabled="!currentProject || currentProject === defaultProject"
-            @select="setDefaultProject"
-            ><template #icon><Star /></template
-            >{{
-              currentProject && currentProject === defaultProject ? '已是默认项目' : '设为默认项目'
-            }}</BaseMenuItem
-          >
-        </BaseMenu>
+        <p class="identity" :title="identity?.organization.name">
+          <strong>{{ identity?.organization.name }}</strong
+          ><small>SAP 智能交付工作台</small>
+        </p>
         <BaseIconButton
           label="收起菜单"
           kbd="["
@@ -226,7 +234,6 @@ const keys = [
           ><PanelLeft
         /></BaseIconButton>
       </header>
-      <p v-if="projectError" class="menu-error" role="alert">{{ projectError }}</p>
       <h2 class="menu-title">{{ module.label }}</h2>
       <label v-if="module.id === 'settings'" class="menu-search">
         <Search />
@@ -238,27 +245,75 @@ const keys = [
           @keydown.enter.prevent="openFirst"
         />
       </label>
-      <section v-for="section in shownSections" :key="section.id" class="menu-section">
-        <h3 v-if="section.label">{{ section.label }}</h3>
-        <BaseNavItem
-          v-for="item in section.items"
-          :key="item.id"
-          :to="item.path"
-          :label="item.label"
-          :planned="item.planned"
-          :active="activeEntry?.id === item.id"
-          ><template #icon><AppIcon :name="item.icon" :size="16" /></template
-        ></BaseNavItem>
+      <section
+        v-for="section in shownSections"
+        :key="section.id"
+        class="menu-section"
+        :class="{ grouped: section.label, closed: section.label && !isOpen(section.id) }"
+      >
+        <h3 v-if="section.label">
+          <button
+            type="button"
+            class="menu-group"
+            :aria-expanded="isOpen(section.id)"
+            :aria-controls="'menu-group-' + section.id"
+            @click="toggleGroup(section.id)"
+          >
+            <span>{{ section.label }}</span
+            ><ChevronDown class="menu-group-chevron" />
+          </button>
+        </h3>
+        <div :id="'menu-group-' + section.id" class="menu-items">
+          <div
+            class="menu-items-inner"
+            :inert="section.label && !isOpen(section.id) ? true : undefined"
+          >
+            <BaseNavItem
+              v-for="item in section.items"
+              :key="item.id"
+              :to="item.path"
+              :label="item.label"
+              :planned="item.planned"
+              :active="activeEntry?.id === item.id"
+              ><template #icon><AppIcon :name="item.icon" :size="16" /></template
+            ></BaseNavItem>
+          </div>
+        </div>
       </section>
       <p v-if="filter && !shownSections.length" class="menu-empty">没有匹配的设置。</p>
     </nav>
     <main id="main-content" class="shell-content">
-      <span v-if="menuHidden && !record && !narrow" class="show-menu"
-        ><BaseIconButton label="展开菜单" kbd="[" size="sm" @click="menuHidden = false"
-          ><PanelLeft /></BaseIconButton
-      ></span>
-      <p v-if="logoutError" class="error-note" role="alert">{{ logoutError }}</p>
-      <RouterView :key="route.meta.keepOnQuery ? route.path : route.fullPath" />
+      <header v-if="!record" class="page-bar">
+        <BaseIconButton
+          v-if="menuHidden && !narrow"
+          label="展开菜单"
+          kbd="["
+          size="sm"
+          @click="menuHidden = false"
+          ><PanelLeft
+        /></BaseIconButton>
+        <nav class="crumbs" aria-label="当前位置">
+          <template v-if="projectScoped">
+            <ProjectSwitcher />
+            <ChevronRight class="crumb-sep" aria-hidden="true" />
+          </template>
+          <template v-for="(c, i) in crumbs" :key="i">
+            <ChevronRight v-if="i" class="crumb-sep" aria-hidden="true" />
+            <RouterLink v-if="c.to" :to="c.to" class="crumb">{{ c.label }}</RouterLink>
+            <span
+              v-else
+              class="crumb"
+              :aria-current="i === crumbs.length - 1 ? 'page' : undefined"
+              >{{ c.label }}</span
+            >
+          </template>
+        </nav>
+        <p v-if="projectError" class="page-bar-error" role="alert">{{ projectError }}</p>
+      </header>
+      <div class="shell-body">
+        <p v-if="logoutError" class="error-note" role="alert">{{ logoutError }}</p>
+        <RouterView :key="route.meta.keepOnQuery ? route.path : route.fullPath" />
+      </div>
     </main>
     <CommandPalette v-model:open="palette" />
     <BaseDialog v-model:open="shortcuts" title="键盘快捷键">
@@ -344,60 +399,27 @@ const keys = [
   gap: var(--space-1);
   margin-bottom: var(--space-4);
 }
-.project {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-  padding: var(--space-1) var(--space-2);
-  border: 0;
-  border-radius: var(--radius-6);
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color var(--motion-fast);
-}
-.project:hover,
-.project[data-state='open'] {
-  background: var(--hover);
-}
-.project:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--focus);
-}
-.project-text {
+.identity {
   display: grid;
   flex: 1;
   min-width: 0;
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
 }
-.project-text strong,
-.project-text small {
+.identity strong,
+.identity small {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.project-text strong {
+.identity strong {
   font-size: var(--font-14);
   font-weight: var(--weight-550);
 }
-.project-text small {
+.identity small {
   color: var(--text-muted);
   font-size: var(--font-12);
   line-height: var(--leading-16);
-}
-.project-chevron {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-  color: var(--neutral-icon-1);
-}
-.menu-error {
-  margin: 0 var(--space-2) var(--space-2);
-  color: var(--red-text-2);
-  font-size: var(--font-12);
 }
 .menu-title {
   margin: 0 0 var(--space-1);
@@ -407,7 +429,70 @@ const keys = [
 }
 .menu-section {
   display: grid;
+}
+/* A labelled group (DESIGN.md 4.2): a strong title with a fold arrow, a hairline above, and its
+   pages indented beneath; folding animates the height. */
+.menu-section.grouped {
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+.menu-section h3 {
+  margin: 0 0 var(--space-0-5);
+}
+.menu-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  height: var(--control-menu-item);
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-6);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--font-12);
+  font-weight: var(--weight-550);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--motion-fast);
+}
+.menu-group span {
+  flex: 1;
+}
+.menu-group:hover {
+  background: var(--hover);
+}
+.menu-group:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus);
+}
+.menu-group-chevron {
+  width: 14px;
+  height: 14px;
+  color: var(--neutral-icon-1);
+  transition: transform var(--motion-slow);
+}
+.closed .menu-group-chevron {
+  transform: rotate(-90deg);
+}
+.menu-items {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows var(--motion-slow);
+}
+.closed .menu-items {
+  grid-template-rows: 0fr;
+}
+.menu-items-inner {
+  display: grid;
   gap: var(--space-0-5);
+  min-height: 0;
+  overflow: hidden;
+}
+.grouped .menu-items-inner {
+  padding-left: var(--space-2);
 }
 .menu-search {
   display: flex;
@@ -444,32 +529,76 @@ const keys = [
   color: var(--text-muted);
   font-size: var(--font-12);
 }
-.menu-section h3 {
-  margin: var(--space-4) 0 var(--space-1);
-  padding: 0 var(--space-2);
-  color: var(--text-muted);
-  font-size: var(--font-12);
-  font-weight: var(--weight-400);
-}
 .shell-content {
   position: relative;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  min-height: 0;
   margin: var(--layout-gap) var(--layout-gap) var(--layout-gap) 0;
-  overflow: auto;
-  padding: var(--space-6) var(--space-8);
+  overflow: hidden;
   border-radius: var(--radius-12);
   background: var(--panel);
   box-shadow: var(--shadow-card);
 }
-.record .shell-content {
+/* The page header (DESIGN.md 4.1): one slim row with the project switcher and where you are. */
+.page-bar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--layout-record-bar);
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+.crumbs {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  color: var(--text-muted);
+}
+.crumb {
+  overflow: hidden;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-4);
+  color: inherit;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+a.crumb:hover {
+  color: var(--text);
+}
+a.crumb:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus);
+}
+.crumb[aria-current='page'] {
+  color: var(--text);
+}
+.crumb-sep {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--text-subtle);
+}
+.page-bar-error {
+  margin: 0;
+  color: var(--red-text-2);
+  font-size: var(--font-12);
+}
+.shell-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-6) var(--space-8);
+}
+.record .shell-body {
   padding: 0;
   overflow: hidden;
-}
-.show-menu {
-  position: absolute;
-  top: var(--space-2);
-  left: var(--space-2);
-  z-index: 3;
 }
 .keys {
   display: grid;
@@ -517,8 +646,11 @@ const keys = [
     border: 0;
     background: var(--scrim);
   }
-  .shell-content {
+  .shell-body {
     padding: var(--space-4);
+  }
+  .page-bar {
+    padding: 0 var(--space-2);
   }
 }
 </style>

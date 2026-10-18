@@ -274,10 +274,12 @@ test('settings: menu by permission, customers, models, project SAP login and lis
     await page.goto('http://127.0.0.1:5188/settings');
     await page.getByRole('heading', { name: '设置', exact: true, level: 1 }).waitFor();
     const menu = page.getByRole('navigation', { name: '设置菜单' });
-    // Planned pages are listed; pages the user may not open are not; the project group carries
-    // the project's short name.
+    // Planned pages are listed; pages the user may not open are not. Groups fold: personal and
+    // project start open, the rest closed; the page header names the place.
     await menu.getByRole('link', { name: /通知/ }).waitFor();
-    await menu.getByText('项目 · 采购').waitFor();
+    await menu.getByRole('button', { name: '项目', exact: true, expanded: true }).waitFor();
+    await menu.getByRole('button', { name: '智能体', exact: true, expanded: false }).waitFor();
+    await page.getByRole('navigation', { name: '当前位置' }).getByText('设置').waitFor();
     assert.equal(await menu.getByRole('link', { name: '用户', exact: true }).count(), 0);
     assert.equal(await menu.getByRole('link', { name: '角色与权限', exact: true }).count(), 0);
     assert.equal(await menu.getByRole('link', { name: '规模与商务', exact: true }).count(), 0);
@@ -290,6 +292,7 @@ test('settings: menu by permission, customers, models, project SAP login and lis
     await page.getByLabel('搜索设置').fill('');
     await menu.getByRole('link', { name: /通知/ }).click();
     await page.getByRole('heading', { name: '通知', exact: true, level: 1 }).waitFor();
+    await menu.getByRole('button', { name: '智能体', exact: true }).click();
     await menu.getByRole('link', { name: '大模型', exact: true }).click();
     await page.getByRole('button', { name: '测试模型1', exact: true }).click();
     await page.locator('.model-drawer[open]').waitFor();
@@ -322,6 +325,8 @@ test('settings: menu by permission, customers, models, project SAP login and lis
     // A project's SAP system stores no password; the user logs in with their own SAP user.
     await page.goto('http://127.0.0.1:5188/settings/project/sap');
     await page.getByText('S/4 开发 100').first().waitFor();
+    // Project pages carry the project switcher in the page header.
+    await page.getByRole('button', { name: '切换项目' }).getByText('采购').waitFor();
     assert.equal(
       await page.getByRole('button', { name: '测试连接', exact: true }).isDisabled(),
       true,

@@ -1257,7 +1257,7 @@
   grid-template-columns: var(--list-width, var(--layout-list-panel)) minmax(0, 1fr);
 }
 /* The list page fills the content panel; only the table and the detail panel scroll. */
-.shell-content:has(.delivery-page) {
+.shell-body:has(.delivery-page) {
   overflow: clip;
 }
 .list-column {

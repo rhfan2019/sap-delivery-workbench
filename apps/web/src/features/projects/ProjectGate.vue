@@ -11,7 +11,7 @@ defineProps<{ loading: boolean; error: string; ready: boolean; archived?: boolea
   <BaseEmptyState
     v-if="!currentProject"
     title="还没有选择项目"
-    text="在左上角的项目切换器中选择一个项目，这里会显示它的设置。"
+    text="在页头的项目切换器中选择一个项目，这里会显示它的设置。"
   >
     <template #icon><AppIcon name="folder" :size="16" /></template>
   </BaseEmptyState>

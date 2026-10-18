@@ -149,11 +149,7 @@ const statuses = Object.entries(PROJECT_STATUSES).filter(([k]) => k !== 'archive
               :disabled="!editable"
             />
           </SettingsField>
-          <SettingsField
-            label="简称"
-            for="p-short"
-            help="显示在项目切换器与设置菜单中，最多 20 字。"
-          >
+          <SettingsField label="简称" for="p-short" help="显示在页头的项目切换器中，最多 20 字。">
             <input
               id="p-short"
               v-model="draft.shortName"
