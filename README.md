@@ -54,6 +54,7 @@ tests/
   e2e/                       浏览器验收
   fixtures/                  测试样本
 infra/production/            Docker 和 Nginx 部署
+infra/dev/                   本机开发用的 Docker 配置（pgAdmin 服务器登记）
 vendor/abap-adt/              内置第三方 SAP MCP 运行时
 docs/                        架构、规格、计划、使用指南和历史报告
 .runtime/                    本机数据、凭据、日志、附件和验证产物
@@ -80,22 +81,24 @@ ABAP 开发助手 `abap-dev-agent`（开发项工作区“开发”阶段）首�
 
 所有命令从根目录运行：
 
-| 命令                         | 用途                                  |
-| ---------------------------- | ------------------------------------- |
-| `npm ci`                     | 按锁文件安装全部 workspace 依赖       |
-| `npm run setup:env`          | 创建本机环境配置，保留已有 .env       |
-| `npm run db:up`              | 启动开发 PostgreSQL                   |
-| `npm run db:migrate`         | 执行数据库迁移                        |
-| `npm run db:provision`       | 配置受限运行账号                      |
-| `npm run bootstrap`          | 幂等业务初始化                        |
-| `npm run dev`                | 前台联合运行 API 与 Vite，Ctrl+C 停止 |
-| `npm run check:architecture` | 校验目录、导入、包 exports 和测试归属 |
-| `npm run check`              | 架构、类型与生产构建                  |
-| `npm run test:unit`          | 无主数据库依赖的单元测试              |
-| `npm run test:setup`         | 准备独立测试数据库，保留主数据库      |
-| `npm test`                   | 全部单元和隔离集成测试                |
-| `npm run test:integration`   | 仅隔离集成测试                        |
-| `npm run test:e2e`           | 浏览器回归                            |
+| 命令                         | 用途                                                                                             |
+| ---------------------------- | ------------------------------------------------------------------------------------------------ |
+| `npm ci`                     | 按锁文件安装全部 workspace 依赖                                                                  |
+| `npm run setup:env`          | 创建本机环境配置，保留已有 .env                                                                  |
+| `npm run db:up`              | 启动开发 PostgreSQL                                                                              |
+| `npm run db:admin`           | 启动本项目的 pgAdmin（127.0.0.1:5051），用法见[查看开发数据库](docs/guides/database-browsing.md) |
+| `npm run db:admin:stop`      | 停止 pgAdmin                                                                                     |
+| `npm run db:migrate`         | 执行数据库迁移                                                                                   |
+| `npm run db:provision`       | 配置受限运行账号                                                                                 |
+| `npm run bootstrap`          | 幂等业务初始化                                                                                   |
+| `npm run dev`                | 前台联合运行 API 与 Vite，Ctrl+C 停止                                                            |
+| `npm run check:architecture` | 校验目录、导入、包 exports 和测试归属                                                            |
+| `npm run check`              | 架构、类型与生产构建                                                                             |
+| `npm run test:unit`          | 无主数据库依赖的单元测试                                                                         |
+| `npm run test:setup`         | 准备独立测试数据库，保留主数据库                                                                 |
+| `npm test`                   | 全部单元和隔离集成测试                                                                           |
+| `npm run test:integration`   | 仅隔离集成测试                                                                                   |
+| `npm run test:e2e`           | 浏览器回归                                                                                       |
 
 集成测试配置为 `.runtime/fs-tests.env`，数据库端口 55439，数据库名称必须满足 `sap_fs_test_*dev`。测试命令不会回退到主 `.env`。单元测试与集成测试不调用真实付费模型；实时 SAP 验证使用显式 `npm run verify:sap`。
 

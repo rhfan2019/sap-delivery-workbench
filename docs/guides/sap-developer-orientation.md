@@ -17,26 +17,27 @@ database/migrations/             所有表结构变更
 
 ## 2. 与 SAP 的对照
 
-| 本项目                                      | SAP / Fiori 对应物                                        |
-| ------------------------------------------- | --------------------------------------------------------- |
-| `apps/web/`（Vue 前端）                     | Fiori 应用的 `webapp/`                                    |
-| `apps/web/src/router/index.ts`              | `manifest.json` 的 routing：URL 对应哪个页面              |
-| `apps/web/src/features/<模块>/*.vue`        | View + Controller（Vue 把模板、逻辑、样式写在一个文件里） |
-| `apps/web/src/services/session.ts` 的 `api` | ODataModel：前端统一通过它调用后端 `/api/...`             |
-| `apps/web/src/assets/theme.css`             | 主题（Theme Designer）：颜色、字号等只能在这里定义        |
-| `apps/api/src/app.mjs`                      | 服务注册（`/IWFND/MAINT_SERVICE`）：把各模块的接口挂上来  |
-| `apps/api/src/modules/<模块>/routes.mjs`    | SEGW / RAP 服务定义：对外有哪些接口                       |
-| `apps/api/src/modules/<模块>/*.mjs`         | DPC_EXT 及其调用的业务类                                  |
-| `apps/api/src/modules/<模块>/store.mjs`     | 读写表的 Open SQL 部分                                    |
-| `apps/api/src/platform/`                    | 基础层：登录认证、密码、数据库连接                        |
-| `packages/contracts/`                       | SE11 结构 / 数据元素 / 域值：前后端共用的字段和校验       |
-| `database/migrations/*.sql`                 | SE11 建表 + 传输请求：按时间戳顺序导入，已导入的不能改    |
-| `tests/`                                    | ABAP Unit 与测试脚本                                      |
-| `scripts/`                                  | SE38 工具报表：启动、迁移、测试、架构检查                 |
-| `infra/production/`                         | Basis 层：Docker 与 Nginx 部署                            |
-| `vendor/`、`node_modules/`                  | 第三方组件与依赖，不读不改                                |
-| `.runtime/`                                 | 本机运行数据：日志、附件、凭据，**不能删**                |
-| `package.json` 的 `scripts`                 | 常用事务码清单：`npm start`、`npm test` 等                |
+| 本项目                                      | SAP / Fiori 对应物                                                            |
+| ------------------------------------------- | ----------------------------------------------------------------------------- |
+| `apps/web/`（Vue 前端）                     | Fiori 应用的 `webapp/`                                                        |
+| `apps/web/src/router/index.ts`              | `manifest.json` 的 routing：URL 对应哪个页面                                  |
+| `apps/web/src/features/<模块>/*.vue`        | View + Controller（Vue 把模板、逻辑、样式写在一个文件里）                     |
+| `apps/web/src/services/session.ts` 的 `api` | ODataModel：前端统一通过它调用后端 `/api/...`                                 |
+| `apps/web/src/assets/theme.css`             | 主题（Theme Designer）：颜色、字号等只能在这里定义                            |
+| `apps/api/src/app.mjs`                      | 服务注册（`/IWFND/MAINT_SERVICE`）：把各模块的接口挂上来                      |
+| `apps/api/src/modules/<模块>/routes.mjs`    | SEGW / RAP 服务定义：对外有哪些接口                                           |
+| `apps/api/src/modules/<模块>/*.mjs`         | DPC_EXT 及其调用的业务类                                                      |
+| `apps/api/src/modules/<模块>/store.mjs`     | 读写表的 Open SQL 部分                                                        |
+| `apps/api/src/platform/`                    | 基础层：登录认证、密码、数据库连接                                            |
+| `packages/contracts/`                       | SE11 结构 / 数据元素 / 域值：前后端共用的字段和校验                           |
+| `database/migrations/*.sql`                 | SE11 建表 + 传输请求：按时间戳顺序导入，已导入的不能改                        |
+| `tests/`                                    | ABAP Unit 与测试脚本                                                          |
+| `scripts/`                                  | SE38 工具报表：启动、迁移、测试、架构检查                                     |
+| `infra/production/`                         | Basis 层：Docker 与 Nginx 部署                                                |
+| `infra/dev/`                                | 本机开发用的 Docker 配置（pgAdmin，见[查看开发数据库](database-browsing.md)） |
+| `vendor/`、`node_modules/`                  | 第三方组件与依赖，不读不改                                                    |
+| `.runtime/`                                 | 本机运行数据：日志、附件、凭据，**不能删**                                    |
+| `package.json` 的 `scripts`                 | 常用事务码清单：`npm start`、`npm test` 等                                    |
 
 ## 3. 业务模块
 

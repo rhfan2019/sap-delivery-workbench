@@ -15,7 +15,11 @@ try {
     /^LLM_CREDENTIAL_KEY=$/m,
     'LLM_CREDENTIAL_KEY=' + randomBytes(32).toString('hex'),
   );
-  await writeFile(target, withModelKey, { flag: 'wx', mode: 0o600 });
+  const withPgAdmin = withModelKey.replace(
+    /^PGADMIN_DEFAULT_PASSWORD=$/m,
+    'PGADMIN_DEFAULT_PASSWORD=' + randomBytes(24).toString('base64url'),
+  );
+  await writeFile(target, withPgAdmin, { flag: 'wx', mode: 0o600 });
   console.log('Created local .env with random passwords; values are not printed.');
 } catch (error) {
   if (error.code === 'EEXIST') {

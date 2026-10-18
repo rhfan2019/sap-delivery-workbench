@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "sap-delivery-workbench（开发库）",
+      "Group": "sap-delivery-workbench",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "sap_delivery_workbench_dev",
+      "Username": "postgres",
+      "SSLMode": "prefer"
+    }
+  }
+}

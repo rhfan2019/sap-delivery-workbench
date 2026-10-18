@@ -19,5 +19,34 @@ services:
       timeout: 5s
       retries: 12
       start_period: 10s
+  # Optional database browser (npm run db:admin); not started by npm start.
+  pgadmin:
+    image: dpage/pgadmin4:9@sha256:c332c5f6dfba995d9ebc4af261d93506d6876085d712eaaa3defc8dd1a3f26de
+    profiles: ['tools']
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:?Set PGADMIN_DEFAULT_EMAIL in .env}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?Set PGADMIN_DEFAULT_PASSWORD in .env}
+      PGADMIN_CONFIG_SERVER_MODE: 'True'
+      PGADMIN_REPLACE_SERVERS_ON_STARTUP: 'True'
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # libpq reads the development database password from this file, so the registered server opens without a prompt.
+      PGPASSFILE: /var/lib/pgadmin/pgpass
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >-
+        echo "postgres:5432:*:$$POSTGRES_USER:$$POSTGRES_PASSWORD" > "$$PGPASSFILE"
+        && chmod 600 "$$PGPASSFILE" && exec /entrypoint.sh
+    ports:
+      - '127.0.0.1:${PGADMIN_PORT:-5051}:80'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./infra/dev/pgadmin-servers.json:/pgadmin4/servers.json:ro
 volumes:
   postgres_data:
+  pgadmin_data:

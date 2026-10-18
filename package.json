@@ -19,6 +19,8 @@
     "setup:env": "node scripts/dev/setup-env.mjs",
     "db:up": "docker compose up -d --wait postgres",
     "db:stop": "docker compose stop postgres",
+    "db:admin": "docker compose up -d --wait pgadmin",
+    "db:admin:stop": "docker compose stop pgadmin",
     "db:status": "node --env-file=.env scripts/database/status.mjs",
     "db:migrate": "node --env-file=.env scripts/database/migrate.mjs",
     "db:provision": "node --env-file=.env scripts/database/provision.mjs",

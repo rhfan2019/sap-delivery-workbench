@@ -22,6 +22,7 @@
 - abap-dev-agent 系统指令：[主指令](../apps/api/src/modules/abap-dev-agent/prompts/system.md)、[可执行程序规范](../apps/api/src/modules/abap-dev-agent/prompts/report.md)与[范例](../apps/api/src/modules/abap-dev-agent/prompts/report-example.abap)，框架类内置副本在 [frameworks/](../apps/api/src/modules/abap-dev-agent/frameworks/)。
 - [待办与问题清单](plans/backlog.md)：日常发现的小问题和零散改进，攒批统一处理。
 - [SAP 开发者导读](guides/sap-developer-orientation.md)：用 SAP / Fiori 概念对照本仓库的目录、模块、一条完整调用链路与文档阅读顺序，新人入口。
+- [查看开发数据库与表关系图](guides/database-browsing.md)：本项目自带的 pgAdmin（`npm run db:admin`，127.0.0.1:5051）的登录、预登记的开发库与 ERD 画图方法。
 - [表格页面模板：开发清单](guides/table-page-template.md)：按钮分类、行内编辑、详情抽屉与新表格页面接入约定。
 - `guides/`：当前维护与操作说明。
 - `specs/`：版本化设计规格。
