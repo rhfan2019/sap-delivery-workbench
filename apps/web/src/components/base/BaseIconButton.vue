@@ -2,8 +2,9 @@
 import { RouterLink } from 'vue-router';
 import BaseTooltip from './BaseTooltip.vue';
 // Square icon button with an accessible name; shows the name as a tooltip unless told not to.
-// With `to` it is a link (the icon rail).
-withDefaults(
+// With `to` it is a link (the icon rail). Disabled with a tooltip it stays hoverable
+// (aria-disabled) so the tooltip can say why; the click is swallowed.
+const props = withDefaults(
   defineProps<{
     label: string;
     size?: 'md' | 'sm';
@@ -12,11 +13,17 @@ withDefaults(
     kbd?: string;
     to?: string;
     side?: 'top' | 'right' | 'bottom' | 'left';
+    disabled?: boolean;
   }>(),
   { size: 'md', tooltip: true, side: 'top' },
 );
 // Declared so the click reaches the button itself, not the tooltip wrapper around it.
 const emit = defineEmits<{ click: [event: MouseEvent] }>();
+function click(event: MouseEvent) {
+  if (!props.disabled) return emit('click', event);
+  event.preventDefault();
+  event.stopImmediatePropagation();
+}
 </script>
 <template>
   <BaseTooltip v-if="tooltip" :text="label" :kbd="kbd" :side="side">
@@ -29,7 +36,8 @@ const emit = defineEmits<{ click: [event: MouseEvent] }>();
       :aria-label="label"
       :aria-pressed="to ? undefined : (pressed ?? undefined)"
       :aria-current="to && pressed ? 'page' : undefined"
-      @click="emit('click', $event)"
+      :aria-disabled="disabled || undefined"
+      @click="click"
     >
       <slot />
     </component>
@@ -44,7 +52,9 @@ const emit = defineEmits<{ click: [event: MouseEvent] }>();
     :aria-label="label"
     :aria-pressed="to ? undefined : (pressed ?? undefined)"
     :aria-current="to && pressed ? 'page' : undefined"
-    @click="emit('click', $event)"
+    :disabled="to ? undefined : disabled"
+    :aria-disabled="(to && disabled) || undefined"
+    @click="click"
   >
     <slot />
   </component>
@@ -73,11 +83,15 @@ const emit = defineEmits<{ click: [event: MouseEvent] }>();
   width: 16px;
   height: 16px;
 }
-.base-icon-button:hover {
+.base-icon-button:is(:disabled, [aria-disabled='true']) {
+  opacity: 0.5;
+  cursor: default;
+}
+.base-icon-button:hover:not(:disabled, [aria-disabled='true']) {
   background: var(--hover);
   color: var(--text);
 }
-.base-icon-button:active,
+.base-icon-button:active:not(:disabled, [aria-disabled='true']),
 .pressed {
   background: var(--selected);
   color: var(--text);
