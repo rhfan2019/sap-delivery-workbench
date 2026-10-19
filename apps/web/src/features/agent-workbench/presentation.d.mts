@@ -4,7 +4,7 @@ export function composerState(input: {
   blocked?: boolean;
   loading?: boolean;
   text?: string;
-  modelId?: string;
+  ready?: boolean;
 }): { status: 'streaming' | 'ready'; canSend: boolean; canStop: boolean };
 export function restoreDraft(current: string, submitted: string): string;
 export function stepPresentation(status: string): { label: string; tone: string };

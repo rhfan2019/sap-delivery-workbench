@@ -6,7 +6,7 @@ import type {
   AgentStep,
 } from '@sap-delivery-workbench/contracts/agent-core/types';
 import { createSseParser } from '@sap-delivery-workbench/contracts/agent-core/sse';
-import { api, identity } from '../../services/session';
+import { api, ApiError, identity } from '../../services/session';
 import { reconnectingChatStream } from './chatStream.mjs';
 import {
   answersFromValues,
@@ -47,6 +47,28 @@ export function useAgentSession(base: string) {
       localStorage.setItem(sapKey, value);
     } catch {}
   });
+  // The model the next message runs on (spec 4.3); empty means the organization default.
+  // Remembered per organization, user and assistant, like the SAP system.
+  const modelKey = `agent-model:${identity.value?.organization.id}:${identity.value?.user.id}:${base.split('/').pop()}`;
+  let rememberedModel: string | null = null;
+  try {
+    rememberedModel = localStorage.getItem(modelKey);
+  } catch {}
+  const modelId = ref(rememberedModel ?? '');
+  watch(modelId, (value) => {
+    try {
+      localStorage.setItem(modelKey, value);
+    } catch {}
+  });
+  // A picked model the organization removed: forget it, so the next message uses the default.
+  async function post<T>(url: string, body: Record<string, unknown>) {
+    try {
+      return await api<T>(url, { ...body, modelId: modelId.value || undefined }, 'POST');
+    } catch (e) {
+      if (e instanceof ApiError && e.code === 'MODEL_UNAVAILABLE') modelId.value = '';
+      throw e;
+    }
+  }
   const sessionId = ref('');
   const messages = ref<AgentMessage[]>([]);
   const steps = ref<AgentStep[]>([]);
@@ -267,11 +289,11 @@ export function useAgentSession(base: string) {
     decision.value = null;
     // A new message supersedes an open test data request.
     testData.value = null;
-    const started = await api<{ turnId: string }>(
-      `${base}/sessions/${sessionId.value}/messages`,
-      { content, sapSystemId: sapSystemId.value || undefined, ...(answers ? { answers } : {}) },
-      'POST',
-    );
+    const started = await post<{ turnId: string }>(`${base}/sessions/${sessionId.value}/messages`, {
+      content,
+      sapSystemId: sapSystemId.value || undefined,
+      ...(answers ? { answers } : {}),
+    });
     messages.value.push({
       id: 'local-' + started.turnId,
       role: 'user',
@@ -294,14 +316,10 @@ export function useAgentSession(base: string) {
     const request = testData.value;
     if (busy.value || !request || !sessionId.value) return false;
     error.value = '';
-    const started = await api<{ turnId: string }>(
-      `${base}/sessions/${sessionId.value}/messages`,
-      {
-        authorization: { requestId: request.id, decision, note },
-        sapSystemId: sapSystemId.value || undefined,
-      },
-      'POST',
-    );
+    const started = await post<{ turnId: string }>(`${base}/sessions/${sessionId.value}/messages`, {
+      authorization: { requestId: request.id, decision, note },
+      sapSystemId: sapSystemId.value || undefined,
+    });
     testData.value = null;
     messages.value.push({
       id: 'local-' + started.turnId,
@@ -346,6 +364,7 @@ export function useAgentSession(base: string) {
     decision,
     testData,
     sapSystemId,
+    modelId,
     status,
     busy,
     error,

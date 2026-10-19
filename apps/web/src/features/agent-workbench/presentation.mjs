@@ -4,11 +4,12 @@ export function composerState({
   blocked = false,
   loading = false,
   text = '',
-  modelId = '',
+  // A model is available: the organization default or the one the user picked.
+  ready = true,
 }) {
   return {
     status: busy ? 'streaming' : 'ready',
-    canSend: !busy && !blocked && !loading && !!text.trim() && !!modelId,
+    canSend: !busy && !blocked && !loading && !!text.trim() && ready,
     canStop: busy && !stopping,
   };
 }

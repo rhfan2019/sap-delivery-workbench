@@ -7,6 +7,7 @@ import DecisionCard from './DecisionCard.vue';
 import TestDataCard from './TestDataCard.vue';
 import TestSystemLogin from './TestSystemLogin.vue';
 import SapSystemSelect from './SapSystemSelect.vue';
+import ModelPicker from './ModelPicker.vue';
 import RunSteps from './RunSteps.vue';
 import ChatComposer from './ChatComposer.vue';
 import ConversationTimeline from './ConversationTimeline.vue';
@@ -21,7 +22,6 @@ import { CircleHelp, FlaskConical, Sparkles } from '@lucide/vue';
 import BaseAvatar from '../../components/base/BaseAvatar.vue';
 import BaseBanner from '../../components/base/BaseBanner.vue';
 import { Button } from '@/components/ui/button';
-import type { ModelRecord } from '../models/types';
 import type { AgentArtifactRef } from '@sap-delivery-workbench/contracts/agent-core/types';
 
 const props = withDefaults(
@@ -43,11 +43,8 @@ const emit = defineEmits<{
   filesChanged: [];
 }>();
 const run = props.session;
-// The agent always uses the organization's default model; the selector only shows it.
-const models = computed(() =>
-  props.modelName ? [{ id: 'default', name: props.modelName } as unknown as ModelRecord] : [],
-);
-const modelId = ref('default');
+// A model is available: the organization default, or one the user picked (spec 4.3).
+const ready = computed(() => !!props.modelName || !!run.modelId.value);
 const draft = ref('');
 const uploading = ref(false);
 const error = ref('');
@@ -139,7 +136,7 @@ async function uploadFiles() {
 
 async function send() {
   if (sending.value) return run.stop();
-  if (!draft.value.trim() || !props.editable || props.blocked || !models.value.length) return;
+  if (!draft.value.trim() || !props.editable || props.blocked || !ready.value) return;
   if (uploading.value || preparing.value) return;
   if (attachments.value.some((a) => !a.remoteId)) await uploadFiles();
   if (attachments.value.some((a) => a.state === 'failed' || a.state === 'uploading')) {
@@ -265,7 +262,7 @@ const empty = computed(() => !run.messages.value.length && !sending.value);
           <div class="assistant-bottom">
             <TestSystemLogin v-if="testSystem && editable" compact :base="base" />
             <p v-if="notice" class="assistant-notice" role="alert">{{ notice }}</p>
-            <p v-if="!models.length" class="assistant-notice">
+            <p v-if="!ready" class="assistant-notice">
               尚未配置组织默认模型。<RouterLink to="/settings/models">前往大模型配置</RouterLink>
             </p>
             <div ref="composer">
@@ -275,8 +272,7 @@ const empty = computed(() => !run.messages.value.length && !sending.value);
               <ChatComposer
                 quiet
                 v-model="draft"
-                v-model:model-id="modelId"
-                :models="models"
+                :ready="ready"
                 :busy="sending"
                 :loading="false"
                 :blocked="preparing || uploading || !editable || blocked"
@@ -292,6 +288,12 @@ const empty = computed(() => !run.messages.value.length && !sending.value);
                     v-model="run.sapSystemId.value"
                     :base="base"
                     :purpose="development ? 'development' : 'test'"
+                    :disabled="sending || !editable || blocked"
+                  />
+                  <ModelPicker
+                    v-model="run.modelId.value"
+                    :base="base"
+                    :default-name="modelName"
                     :disabled="sending || !editable || blocked"
                   />
                 </template>

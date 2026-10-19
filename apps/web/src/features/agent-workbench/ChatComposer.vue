@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, provide, ref } from 'vue';
-import { Plus, Square, ArrowUp, Check, ChevronDown, LoaderCircle } from '@lucide/vue';
+import { Plus, Square, ArrowUp, LoaderCircle } from '@lucide/vue';
 import {
   PromptInput,
   PromptInputBody,
@@ -14,24 +14,11 @@ import {
   PROMPT_INPUT_KEY,
   type PromptInputContext,
 } from '@/components/ai-elements/prompt-input/types';
-import {
-  ModelSelector,
-  ModelSelectorTrigger,
-  ModelSelectorContent,
-  ModelSelectorInput,
-  ModelSelectorList,
-  ModelSelectorEmpty,
-  ModelSelectorItem,
-  ModelSelectorName,
-  ModelSelectorGroup,
-} from '@/components/ai-elements/model-selector';
-import { Button } from '@/components/ui/button';
 import { composerState } from './presentation.mjs';
-import type { ModelRecord } from '../models/types';
 const text = defineModel<string>({ required: true });
-const modelId = defineModel<string>('modelId', { required: true });
 const props = defineProps<{
-  models: ModelRecord[];
+  // A model is available for the next message (spec 4.3).
+  ready: boolean;
   busy: boolean;
   blocked: boolean;
   loading: boolean;
@@ -42,13 +29,7 @@ const props = defineProps<{
   placeholder?: string;
 }>();
 const emit = defineEmits<{ send: []; stop: []; attach: []; files: [files: File[]] }>();
-const state = computed(() => composerState({ ...props, text: text.value, modelId: modelId.value }));
-const modelOpen = ref(false);
-const selectedName = computed(
-  () =>
-    props.models.find((m) => m.id === modelId.value)?.name ??
-    (props.loading ? '加载模型…' : '选择模型'),
-);
+const state = computed(() => composerState({ ...props, text: text.value }));
 function submit() {
   if (state.value.canSend) emit('send');
 }
@@ -102,43 +83,6 @@ provide(PROMPT_INPUT_KEY, context);
       </PromptInputTools>
       <div class="flex min-w-0 items-center gap-2">
         <slot name="tools" />
-        <ModelSelector v-model:open="modelOpen">
-          <ModelSelectorTrigger as-child
-            ><Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              class="min-w-0 max-w-48 shrink text-xs font-normal text-muted-foreground"
-              aria-label="选择模型"
-              :disabled="busy || loading || blocked"
-              ><span class="truncate">{{ selectedName }}</span
-              ><ChevronDown class="size-4" /></Button
-          ></ModelSelectorTrigger>
-          <ModelSelectorContent
-            title="选择模型"
-            class="elements-overlay"
-            :aria-describedby="undefined"
-          >
-            <ModelSelectorInput placeholder="搜索模型…" aria-label="搜索模型" />
-            <ModelSelectorList
-              ><ModelSelectorEmpty>没有匹配的模型</ModelSelectorEmpty>
-              <ModelSelectorGroup heading="可用模型">
-                <ModelSelectorItem
-                  v-for="m in models"
-                  :key="m.id"
-                  :value="m.name + ' ' + m.id"
-                  @select="
-                    modelId = m.id;
-                    modelOpen = false;
-                  "
-                >
-                  <ModelSelectorName>{{ m.name }}</ModelSelectorName
-                  ><Check v-if="modelId === m.id" class="ml-auto size-4" />
-                </ModelSelectorItem>
-              </ModelSelectorGroup>
-            </ModelSelectorList>
-          </ModelSelectorContent>
-        </ModelSelector>
         <PromptInputButton
           v-if="busy"
           aria-label="停止生成"
@@ -165,5 +109,10 @@ provide(PROMPT_INPUT_KEY, context);
 <style scoped>
 .composer-footer {
   container-type: inline-size;
+}
+@container (max-width: 560px) {
+  .composer-footer :deep(.context-trigger.collapsible .context-value) {
+    display: none;
+  }
 }
 </style>

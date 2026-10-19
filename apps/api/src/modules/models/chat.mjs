@@ -3,28 +3,65 @@ import { failure } from '../../platform/auth.mjs';
 import { requestModelStream } from './transport.mjs';
 import { openKey } from './crypto.mjs';
 
-// The organization's default model with its decrypted key, for server-side agents.
-// Unlike resolveDefaultModel this does not require a fresh capability probe: tool calling
-// is not probed, and the agent reports provider errors itself.
-export async function resolveAgentModel(db, organizationId) {
-  const row = (
-    await db.query(
-      `SELECT v.id AS "versionId",v.model_id AS "modelId",v.config,v.credential_id AS "credentialId",c.secret_cipher AS "secret"
-       FROM app.llm_default d
-       JOIN app.llm_model_version v ON v.id=d.version_id AND v.organization_id=d.organization_id
-       JOIN app.llm_model m ON m.id=d.model_id AND m.deleted_at IS NULL
-       JOIN app.llm_credential c ON c.id=v.credential_id AND c.organization_id=v.organization_id
-       WHERE d.organization_id=$1`,
-      [organizationId],
-    )
-  ).rows[0];
-  if (!row) throw failure(409, '尚未配置默认模型，请联系组织管理员。');
+// A model with its decrypted key, for server-side agents: the one the user picked for this
+// message (docs/specs/agent-workspace-start-and-composer.md 4.3), else the organization's
+// default. Unlike resolveDefaultModel this does not require a fresh capability probe: tool
+// calling is not probed, and the agent reports provider errors itself.
+const AGENT_MODEL = `SELECT m.id AS "id",v.id AS "versionId",v.model_id AS "modelId",v.config,v.credential_id AS "credentialId",c.secret_cipher AS "secret"
+  FROM app.llm_model m
+  JOIN app.llm_model_version v ON v.id=m.latest_version_id AND v.organization_id=m.organization_id
+  JOIN app.llm_credential c ON c.id=v.credential_id AND c.organization_id=v.organization_id`;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export async function resolveAgentModel(db, organizationId, pickedModelId) {
+  let row;
+  if (pickedModelId) {
+    row = UUID.test(String(pickedModelId))
+      ? (
+          await db.query(
+            AGENT_MODEL + ' WHERE m.organization_id=$1 AND m.id=$2 AND m.deleted_at IS NULL',
+            [organizationId, pickedModelId],
+          )
+        ).rows[0]
+      : null;
+    if (!row)
+      throw Object.assign(failure(422, '所选模型不可用，请改用默认模型。'), {
+        code: 'MODEL_UNAVAILABLE',
+      });
+  } else {
+    row = (
+      await db.query(
+        `SELECT d.model_id AS "id",v.id AS "versionId",v.model_id AS "modelId",v.config,v.credential_id AS "credentialId",c.secret_cipher AS "secret"
+         FROM app.llm_default d
+         JOIN app.llm_model_version v ON v.id=d.version_id AND v.organization_id=d.organization_id
+         JOIN app.llm_model m ON m.id=d.model_id AND m.deleted_at IS NULL
+         JOIN app.llm_credential c ON c.id=v.credential_id AND c.organization_id=v.organization_id
+         WHERE d.organization_id=$1`,
+        [organizationId],
+      )
+    ).rows[0];
+    if (!row) throw failure(409, '尚未配置默认模型，请联系组织管理员。');
+  }
   return {
     versionId: row.versionId,
     modelId: row.modelId,
     config: row.config,
     key: openKey(row.secret, organizationId, row.credentialId),
   };
+}
+
+// The models an assistant user may pick, the default first: every model of the organization
+// with a key. No secrets and no endpoints, only what the picker shows.
+export async function listAgentModels(db, organizationId) {
+  const { rows } = await db.query(
+    `SELECT m.id,v.config->>'name' AS name,v.config->>'provider' AS provider,(m.id=d.model_id) AS "isDefault"
+     FROM app.llm_model m
+     JOIN app.llm_model_version v ON v.id=m.latest_version_id AND v.organization_id=m.organization_id
+     LEFT JOIN app.llm_default d ON d.organization_id=m.organization_id
+     WHERE m.organization_id=$1 AND m.deleted_at IS NULL AND v.credential_id IS NOT NULL
+     ORDER BY (m.id=d.model_id) DESC NULLS LAST, v.config->>'name', m.id`,
+    [organizationId],
+  );
+  return rows.map((r) => ({ ...r, isDefault: !!r.isDefault }));
 }
 
 export function chatPayload(config, { messages, tools, maxOutputTokens, thinking }) {

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { failure } from '../../platform/auth.mjs';
 import { deniedError } from '../access/public.mjs';
 import { createWorkContext } from '../item-workspace/public.mjs';
-import { resolveAgentModel } from '../models/public.mjs';
+import { resolveAgentModel, listAgentModels } from '../models/public.mjs';
 import {
   parseFile,
   openTurn,
@@ -125,6 +125,12 @@ export function registerAbapDevAgent(app, pool, organizationId, requireSession, 
     return v;
   });
 
+  // Models the composer offers, fetched each time the picker opens (spec 4.3).
+  app.get(base + '/models', async (req) => {
+    await c.authorize(req, pool, false);
+    return (deps.listModels ?? listAgentModels)(pool, organizationId);
+  });
+
   app.post(base + '/sessions', async (req, reply) => {
     await c.authorize(req, pool, true);
     const id = await repo.createSession(pool, req.work.scope, String(req.body?.title ?? ''));
@@ -161,7 +167,12 @@ export function registerAbapDevAgent(app, pool, organizationId, requireSession, 
       ? answersText(answers) + (req.body?.content?.trim() ? '\n\n' + req.body.content.trim() : '')
       : text(req.body?.content, '消息', 100000);
     const environment = sapSelector(req.body?.sapSystemId, 'development');
-    const model = await (deps.resolveModel ?? resolveAgentModel)(pool, organizationId);
+    // The model the user picked for this message, else the organization default (spec 4.3).
+    const model = await (deps.resolveModel ?? resolveAgentModel)(
+      pool,
+      organizationId,
+      req.body?.modelId || undefined,
+    );
     const turnId = randomUUID();
     const claimed = await repo.claimTurn(pool, s.id, turnId, req.work.scope.actorId, {
       versionId: model.versionId,
