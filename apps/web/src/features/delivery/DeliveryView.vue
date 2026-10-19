@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { RouterLink, onBeforeRouteLeave } from 'vue-router';
+import { RouterLink, onBeforeRouteLeave, useRoute, useRouter } from 'vue-router';
 import {
   Plus,
   Trash2,
@@ -39,6 +39,12 @@ import { useShortcut } from '../../services/shortcuts';
 import WorkbenchTable from '../../components/workbench-table/WorkbenchTable.vue';
 import { api, ApiError, identity, type ProjectAccess } from '../../services/session';
 import { allows } from '../access/permissions';
+import {
+  AGENT_STAGES,
+  DEV_AGENT_KINDS,
+  stageOwner,
+  type AgentStage,
+} from '@sap-delivery-workbench/contracts/delivery/fields';
 import { currentProject, projects, leaveDelivery } from '../../services/projectContext';
 import { askConfirmation } from '../../services/confirmation';
 import {
@@ -373,6 +379,27 @@ const activeFilters = computed(() => {
   return list;
 });
 
+// --- links from the assistant pages ------------------------------------------------------
+// ?project=&item=&section= opens that item's drawer at a section (e.g. 成果, spec 6.3).
+const route = useRoute(),
+  router = useRouter();
+const link = {
+  project: typeof route.query.project === 'string' ? route.query.project : '',
+  item: typeof route.query.item === 'string' ? route.query.item : '',
+  section: typeof route.query.section === 'string' ? route.query.section : '',
+};
+const drawerSection = ref('');
+if (link.project && link.project !== currentProject.value) currentProject.value = link.project;
+function followLink() {
+  if (!link.item) return;
+  if (items.value.some((i) => i.id === link.item)) {
+    drawerId.value = link.item;
+    drawerSection.value = link.section;
+  }
+  link.item = '';
+  void router.replace({ query: {} }).catch(() => {});
+}
+
 // --- loading -----------------------------------------------------------------------------
 let generation = 0;
 async function load(reset = false) {
@@ -403,6 +430,7 @@ async function load(reset = false) {
     readOnly.value = result.readOnly;
     access.value = result.access;
     loaded.value = true;
+    followLink();
     void loadFreeze(currentProject.value);
     checked.value = checked.value.filter((id) => result.items.some((i) => i.id === id));
     if (drawerId.value && !result.items.some((i) => i.id === drawerId.value)) drawerId.value = null;
@@ -530,8 +558,28 @@ async function removeOne(item: Item) {
   }
 }
 const comingSoon = (label: string) => notify(`“${label}”Agent 即将开发`);
-// Development types the development agent can generate code for (reports and functions).
-const DEV_AGENT_KINDS = ['report', 'function'];
+// Entry to the assistants follows agent.*:run on the item, owned by the stage's assignee
+// (else the creator) as the API decides; agent.*:view reads the outputs in the drawer.
+const mayRun = (item: Item, stage: AgentStage) =>
+  allows(
+    access.value,
+    AGENT_STAGES[stage].agent + ':run',
+    {
+      module: item.module,
+      owners: [
+        stageOwner(item.phases[AGENT_STAGES[stage].phase]?.assigneeId, item.createdBy),
+      ].filter(Boolean) as string[],
+    },
+    identity.value?.user.id,
+  );
+const agentAccess = (item: Item) => ({
+  design: { run: mayRun(item, 'design'), view: may('agent.fsd:view') },
+  development: { run: mayRun(item, 'development'), view: may('agent.dev:view') },
+});
+const noRun = {
+  design: '你没有使用设计助手的权限，可在开发项的“成果”中查看功能说明书',
+  development: '你没有使用开发助手的权限，可在开发项的“成果”中查看开发方案与代码',
+};
 // --- batch actions -----------------------------------------------------------------------
 const selectedItems = computed(() => items.value.filter((i) => checked.value.includes(i.id)));
 async function batch(action: string, extra: Record<string, unknown> = {}) {
@@ -906,14 +954,35 @@ const summary = (item: Item) =>
             </span>
             <div v-else-if="column.key === 'actions'" class="row-actions" data-no-open>
               <RouterLink
+                v-if="mayRun(item, 'design')"
                 class="row-icon"
                 :to="`/projects/${currentProject}/development-items/${item.id}/design`"
                 :aria-label="'设计 ' + item.code"
                 title="设计"
                 ><Sparkles
               /></RouterLink>
+              <button
+                v-else
+                type="button"
+                class="row-icon"
+                aria-disabled="true"
+                :aria-label="'设计 ' + item.code + '（无权限）'"
+                :title="noRun.design"
+              >
+                <Sparkles />
+              </button>
+              <button
+                v-if="DEV_AGENT_KINDS.includes(item.kind) && !mayRun(item, 'development')"
+                type="button"
+                class="row-icon"
+                aria-disabled="true"
+                :aria-label="'开发 ' + item.code + '（无权限）'"
+                :title="noRun.development"
+              >
+                <Code2 />
+              </button>
               <RouterLink
-                v-if="DEV_AGENT_KINDS.includes(item.kind)"
+                v-else-if="DEV_AGENT_KINDS.includes(item.kind)"
                 class="row-icon"
                 :to="`/projects/${currentProject}/development-items/${item.id}/development`"
                 :aria-label="'开发 ' + item.code"
@@ -1025,6 +1094,8 @@ const summary = (item: Item) =>
           (drawerItem ? !mayOn('delivery.item:edit', drawerItem) : !may('delivery.item:create'))
         "
         :create-tag="createTag"
+        :agents="drawerItem ? agentAccess(drawerItem) : undefined"
+        :section="drawerSection"
         @close="closeDrawer"
         @saved="saved"
         @delete="removeOne"

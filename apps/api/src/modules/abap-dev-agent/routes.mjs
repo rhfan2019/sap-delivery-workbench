@@ -83,9 +83,46 @@ export function registerAbapDevAgent(app, pool, organizationId, requireSession, 
       supported: !!SUPPORTED_KINDS[item.kind],
       canEdit: req.work.canEdit,
       canFinalize: req.work.canFinalize,
+      stages: req.work.stages,
       model,
       sessions: await repo.listSessions(pool, scope),
     };
+  });
+
+  // The item drawer (docs/specs/agent-workspace-start-and-composer.md 6.4): the newest and the
+  // final plan and code, readable with agent.dev:view alone; no conversation, no comments.
+  app.get(base + '/outputs', async (req) => {
+    await c.authorizeView(req);
+    return repo.itemOutputs(pool, organizationId, req.work.item.id);
+  });
+
+  app.get(base + '/outputs/:sessionId/:version', async (req, reply) => {
+    await c.authorizeView(req);
+    const number = Number(req.params.version);
+    const v =
+      UUID.test(req.params.sessionId) && Number.isInteger(number)
+        ? await repo.itemVersion(
+            pool,
+            organizationId,
+            req.work.item.id,
+            req.params.sessionId,
+            number,
+          )
+        : null;
+    if (!v) throw failure(404, '版本不存在。');
+    if (req.query?.download) {
+      const t = target(req.query.download);
+      if (!v[t]) throw failure(404, t === 'code' ? '还没有代码。' : '还没有开发方案。');
+      const name =
+        t === 'code'
+          ? `${req.work.scope.itemCode}-v${v.version}.abap`
+          : `${req.work.scope.itemCode}-开发方案-v${v.version}.md`;
+      reply
+        .header('Content-Type', `${t === 'code' ? 'text/plain' : 'text/markdown'}; charset=utf-8`)
+        .header('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(name)}`);
+      return v[t];
+    }
+    return v;
   });
 
   app.post(base + '/sessions', async (req, reply) => {

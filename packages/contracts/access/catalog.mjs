@@ -61,12 +61,18 @@ export const PERMISSIONS = [
   p('delivery.item:export', 'delivery', 'action', '导出开发项', '把开发清单导出为 Excel。'),
   p('delivery.config:manage', 'delivery', 'action', '维护清单设置', '自定义列与标签。'),
 
-  p('agent.fsd:view', 'agent.fsd', 'menu', '查看设计', '查看设计对话、功能说明书与批注。'),
-  p('agent.fsd:run', 'agent.fsd', 'action', '使用设计助手', '发起对话、上传资料、批注。'),
+  p('agent.fsd:view', 'agent.fsd', 'menu', '查看设计', '在开发项中查看功能说明书（成果）。'),
+  p('agent.fsd:run', 'agent.fsd', 'action', '使用设计助手', '进入设计助手：对话、上传资料、批注。'),
   p('agent.fsd:finalize', 'agent.fsd', 'action', '定稿功能说明书', '给功能说明书版本打定稿标签。'),
 
-  p('agent.dev:view', 'agent.dev', 'menu', '查看开发', '查看开发对话、开发方案与代码。'),
-  p('agent.dev:run', 'agent.dev', 'action', '使用开发助手', '对话、批注、上传或从 SAP 同步代码。'),
+  p('agent.dev:view', 'agent.dev', 'menu', '查看开发', '在开发项中查看开发方案与代码（成果）。'),
+  p(
+    'agent.dev:run',
+    'agent.dev',
+    'action',
+    '使用开发助手',
+    '进入开发助手：对话、批注、上传或从 SAP 同步代码。',
+  ),
   p('agent.dev:finalize', 'agent.dev', 'action', '定稿代码', '给代码版本打定稿标签。'),
 
   p('sap.development:read', 'sap', 'action', '读取开发系统', '助手用本人的 SAP 用户读取开发系统。'),
@@ -216,7 +222,7 @@ export const BUILT_IN_ROLES = [
     '只读查看审计日志、用户与角色，可评论助手运行。',
     ['audit:view', 'audit:comment', 'user:view', 'role:view'],
   ),
-  single('PRJ_VIEW', 'project', '项目查看', '进入项目，查看开发清单、设计与开发。', [
+  single('PRJ_VIEW', 'project', '项目查看', '进入项目，查看开发清单与设计、开发成果。', [
     'project:view',
     'project.member:view',
     'project.sap:view',

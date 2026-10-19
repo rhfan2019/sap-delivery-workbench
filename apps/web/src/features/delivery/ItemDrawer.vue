@@ -21,6 +21,7 @@ import { api } from '../../services/session';
 import FieldEditor from './FieldEditor.vue';
 import FieldValue from './FieldValue.vue';
 import ItemExtras from './ItemExtras.vue';
+import ItemOutputs from '../agent-workbench/ItemOutputs.vue';
 import {
   GROUPS,
   PHASES,
@@ -36,6 +37,7 @@ import {
   type ListContext,
   type Tag,
 } from './model';
+import { DEV_AGENT_KINDS } from '@sap-delivery-workbench/contracts/delivery/fields';
 
 // Right-side drawer in the model-registry style: one scrolling page grouped by section.
 const props = defineProps<{
@@ -46,6 +48,10 @@ const props = defineProps<{
   projectId: string;
   readOnly: boolean;
   createTag: (name: string) => Promise<Tag>;
+  // Who may open each assistant (agent.*:run on this item) and read its outputs (:view).
+  agents?: Record<'design' | 'development', { run: boolean; view: boolean }>;
+  // A section to scroll to when the drawer opens (a link from an assistant page).
+  section?: string;
 }>();
 const emit = defineEmits<{
   close: [];
@@ -163,6 +169,19 @@ const phaseStatus = (key: string) => {
   return status === 'not_started' ? undefined : status;
 };
 
+// Outputs of the assistants the reader may view; the development one only for kinds it supports.
+const outputStages = computed(() =>
+  (['design', 'development'] as const).filter(
+    (stage) =>
+      props.agents?.[stage].view &&
+      (stage === 'design' || DEV_AGENT_KINDS.includes(props.item?.kind ?? '')),
+  ),
+);
+const showOutputs = computed(() => outputStages.value.length > 0);
+const noRun = {
+  design: '你没有使用设计助手的权限，可在下方“成果”中查看功能说明书',
+  development: '你没有使用开发助手的权限，可在下方“成果”中查看开发方案与代码',
+};
 // The assistants open on another page: show the click at once, and fetch that page's code
 // while the panel is open so the switch does not wait for it.
 const going = ref<'' | 'design' | 'development'>('');
@@ -188,6 +207,7 @@ let trigger: HTMLElement | null = null;
 onMounted(() => {
   trigger = document.activeElement as HTMLElement;
   prefetchAgents();
+  if (props.section) void nextTick(() => jump(props.section!));
   if (creating.value)
     void nextTick(() => body.value?.querySelector<HTMLElement>('select,input')?.focus());
 });
@@ -224,21 +244,31 @@ defineExpose({ dirty, busy });
         </div>
         <div class="drawer-tools">
           <template v-if="item">
-            <BaseButton
-              size="sm"
-              :loading="going === 'design'"
-              :disabled="!!going"
-              @click="goAgent('design')"
-              ><template #icon><Sparkles class="agent-icon" /></template>设计</BaseButton
+            <span
+              class="blocked-hint"
+              :title="agents?.design.run === false ? noRun.design : undefined"
             >
-            <BaseButton
-              v-if="['report', 'function'].includes(item.kind)"
-              size="sm"
-              :loading="going === 'development'"
-              :disabled="!!going"
-              @click="goAgent('development')"
-              ><template #icon><Code2 /></template>开发</BaseButton
+              <BaseButton
+                size="sm"
+                :loading="going === 'design'"
+                :disabled="!!going || agents?.design.run === false"
+                @click="goAgent('design')"
+                ><template #icon><Sparkles class="agent-icon" /></template>设计</BaseButton
+              >
+            </span>
+            <span
+              v-if="DEV_AGENT_KINDS.includes(item.kind)"
+              class="blocked-hint"
+              :title="agents?.development.run === false ? noRun.development : undefined"
             >
+              <BaseButton
+                size="sm"
+                :loading="going === 'development'"
+                :disabled="!!going || agents?.development.run === false"
+                @click="goAgent('development')"
+                ><template #icon><Code2 /></template>开发</BaseButton
+              >
+            </span>
             <BaseButton v-else size="sm" @click="emit('agent', '开发')"
               ><template #icon><Code2 /></template>开发</BaseButton
             >
@@ -271,6 +301,14 @@ defineExpose({ dirty, busy });
           }}<span v-if="phaseStatus(s.key)" class="status-pill" :data-status="phaseStatus(s.key)">{{
             OPTIONS.status[phaseStatus(s.key)!]
           }}</span>
+        </button>
+        <button
+          v-if="item && showOutputs"
+          type="button"
+          :aria-current="active === 'outputs' ? 'true' : undefined"
+          @click="jump('outputs')"
+        >
+          成果
         </button>
         <button
           v-if="item"
@@ -317,6 +355,24 @@ defineExpose({ dirty, busy });
               </div>
             </div>
           </div>
+        </section>
+        <section
+          v-if="item && showOutputs"
+          id="section-outputs"
+          data-section="outputs"
+          class="drawer-section"
+        >
+          <header class="section-title">
+            <h3>成果</h3>
+          </header>
+          <template v-for="stage in outputStages" :key="stage">
+            <ItemOutputs
+              :project-id="projectId"
+              :item-id="item.id"
+              :stage="stage"
+              :can-run="!!agents?.[stage].run"
+            />
+          </template>
         </section>
         <div v-if="item" id="section-extras" data-section="extras">
           <ItemExtras :path="base + '/' + item.id" :read-only="readOnly" :fields="fields" />

@@ -135,6 +135,39 @@ test('project permissions narrow by module and own items', async () => {
   }
 });
 
+// Assistant entry (docs/specs/agent-workspace-start-and-composer.md 6.3): "own items only" means
+// the stage's assignee, else the creator — the rule the API applies, not the item-edit owners.
+test('assistant entry follows the stage owner', async () => {
+  const vite = await createServer({
+    root,
+    server: { middlewareMode: true, hmr: false },
+    appType: 'custom',
+  });
+  try {
+    const { allows } = await vite.ssrLoadModule('/src/features/access/permissions.ts');
+    const { stageOwner, AGENT_STAGES } =
+      await import('@sap-delivery-workbench/contracts/delivery/fields');
+    assert.equal(AGENT_STAGES.design.phase, 'fsd');
+    assert.equal(stageOwner('a', 'c'), 'a');
+    assert.equal(stageOwner(null, 'c'), 'c');
+    assert.equal(stageOwner('', null), null);
+    const access = {
+      projectId: 'p',
+      permissions: ['agent.dev:view', 'agent.dev:run'],
+      limits: { 'agent.dev:run': [{ modules: [], ownOnly: true }] },
+    };
+    // The subcontractor assigned to FSD (not development) may not open the development page.
+    const owners = [stageOwner('someone-else', 'u')];
+    assert.equal(allows(access, 'agent.dev:run', { module: 'MM', owners }, 'u'), false);
+    assert.equal(
+      allows(access, 'agent.dev:run', { module: 'MM', owners: [stageOwner(null, 'u')] }, 'u'),
+      true,
+    );
+  } finally {
+    await vite.close();
+  }
+});
+
 // The settings card saves only itself and stays quiet while nothing changed.
 test('a settings card offers saving only when editable and changed', async () => {
   const vite = await createServer({

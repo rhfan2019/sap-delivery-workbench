@@ -295,3 +295,20 @@ export async function itemDocument(db, organizationId, itemId, sessionId, versio
     )
   ).rows[0];
 }
+
+// What the item drawer shows without the conversation: the newest FSD version of the item
+// and the newest one labelled 定稿, across its design sessions.
+export async function itemOutputs(db, organizationId, itemId) {
+  const pick = async (finalOnly) =>
+    (
+      await db.query(
+        `SELECT d.session_id AS "sessionId",s.title AS "sessionTitle",d.version,d.labels,
+          d.created_at AS "createdAt",length(d.markdown) AS "length"
+         FROM ${T}document d JOIN ${T}session s ON s.id=d.session_id
+         WHERE s.organization_id=$1 AND s.item_id=$2 ${finalOnly ? "AND '定稿'=ANY(d.labels)" : ''}
+         ORDER BY d.created_at DESC LIMIT 1`,
+        [organizationId, itemId],
+      )
+    ).rows[0] ?? null;
+  return { latest: await pick(false), final: await pick(true) };
+}

@@ -70,6 +70,7 @@ export function registerAbapFsdAgent(app, pool, organizationId, requireSession, 
       },
       canEdit: req.work.canEdit,
       canFinalize: req.work.canFinalize,
+      stages: req.work.stages,
       model,
       sessions: await repo.listSessions(pool, req.work.scope),
     };
@@ -82,6 +83,42 @@ export function registerAbapFsdAgent(app, pool, organizationId, requireSession, 
     );
     if (!found) throw failure(404, '附件不存在。');
     return found;
+  });
+
+  // The item drawer (docs/specs/agent-workspace-start-and-composer.md 6.4): the newest and the
+  // final FSD, readable with agent.fsd:view alone; no conversation, no comments.
+  app.get(base + '/outputs', async (req) => {
+    await c.authorizeView(req);
+    return repo.itemOutputs(pool, organizationId, req.work.item.id);
+  });
+
+  app.get(base + '/outputs/:sessionId/:version', async (req, reply) => {
+    await c.authorizeView(req);
+    const version = Number(req.params.version);
+    const doc =
+      UUID.test(req.params.sessionId) && Number.isInteger(version)
+        ? await repo.itemDocument(
+            pool,
+            organizationId,
+            req.work.item.id,
+            req.params.sessionId,
+            version,
+          )
+        : null;
+    if (!doc) throw failure(404, '文档版本不存在。');
+    if (req.query?.download) {
+      const name = `${req.work.scope.itemCode}-FSD-v${doc.version}.md`;
+      reply
+        .header('Content-Type', 'text/markdown; charset=utf-8')
+        .header('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(name)}`);
+      return doc.markdown;
+    }
+    return {
+      sessionId: doc.sessionId,
+      version: doc.version,
+      labels: doc.labels,
+      markdown: doc.markdown,
+    };
   });
 
   app.post(base + '/sessions', async (req, reply) => {

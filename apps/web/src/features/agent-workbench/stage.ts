@@ -6,7 +6,6 @@ import type { AgentSession } from '@sap-delivery-workbench/contracts/agent-core/
 export interface StageConfig {
   agent: 'abap-fsd-agent' | 'abap-dev-agent';
   assistantName: string;
-  readonlyNote: string;
   sessionsHeading: string;
   development: boolean;
   // The purpose of the SAP system a message reads unless the user picks one (contract 3.4).

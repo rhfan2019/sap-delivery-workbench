@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router';
 import { useMediaQuery } from '@vueuse/core';
-import { api, identity } from '../../services/session';
+import { api, ApiError, identity } from '../../services/session';
 import { askConfirmation } from '../../services/confirmation';
 import AgentWorkbench from './AgentWorkbench.vue';
 import { useAgentSession } from './useAgentSession';
@@ -66,10 +66,14 @@ const state = ref<{
   };
   supported?: boolean;
   canEdit: boolean;
+  // Whether the reader may use each assistant on this item (the other tab, spec 5).
+  stages?: { design: boolean; development: boolean };
   model: string | null;
 } | null>(null);
 const sessions = ref<AgentSession[]>([]);
 const error = ref(''),
+  // Without agent.*:run the page is closed; the outputs are in the item drawer (spec 6.3).
+  denied = ref(false),
   loading = ref(true),
   agentBusy = ref(false),
   version = ref<number | null>(null),
@@ -111,10 +115,18 @@ async function load() {
     await run.load(wanted ?? sessions.value[0]?.id ?? '');
     restorePanel();
   } catch (e) {
-    if (!controller.signal.aborted) error.value = (e as Error).message;
+    if (controller.signal.aborted) return;
+    if (e instanceof ApiError && e.status === 403) denied.value = true;
+    else error.value = (e as Error).message;
   } finally {
     loading.value = false;
   }
+}
+function showOutputs() {
+  void router.push({
+    path: '/workspace/development-items',
+    query: { project: props.projectId, item: props.itemId, section: 'outputs' },
+  });
 }
 // A session created by the first message or upload joins the list and the address. A switch
 // the reader made is a history entry (Back returns to the previous conversation).
@@ -472,15 +484,26 @@ onBeforeUnmount(() => controller.abort());
     <div v-if="loading" role="status" class="work-loading" aria-label="正在读取开发项">
       <BaseSkeleton v-for="n in 4" :key="n" />
     </div>
+    <section v-else-if="denied" class="work-denied" aria-label="无权使用助手">
+      <h2>你没有使用{{ config.assistantName }}的权限</h2>
+      <p>
+        需要“{{ config.development ? '使用开发助手' : '使用设计助手' }}”，并在你的模块范围内。{{
+          config.development ? '开发方案与代码' : '功能说明书'
+        }}可以在开发项的“成果”中查看。
+      </p>
+      <BaseButton @click="showOutputs"
+        >查看{{ config.development ? '开发成果' : '功能说明书' }}</BaseButton
+      >
+    </section>
     <div v-else-if="state" ref="shell" class="work-body">
       <section
         v-show="!compact || (!panelOpen && !detailsOpen)"
         class="work-chat"
         aria-label="对话工作区"
       >
-        <BaseBanner v-if="!state.canEdit" tone="yellow" class="record-banner">{{
-          config.readonlyNote
-        }}</BaseBanner>
+        <BaseBanner v-if="!state.canEdit" tone="yellow" class="record-banner"
+          >项目已归档，只能查看。</BaseBanner
+        >
         <AgentWorkbench
           :base="agentBase"
           :session="run"

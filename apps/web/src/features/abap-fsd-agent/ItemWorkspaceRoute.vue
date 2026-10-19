@@ -7,8 +7,6 @@ const route = useRoute();
 const config: StageConfig = {
   agent: 'abap-fsd-agent',
   assistantName: '设计助手',
-  readonlyNote:
-    '当前为只读：你没有在本开发项使用设计助手的权限（需要“使用设计助手”，并在你的模块范围内）。',
   sessionsHeading: '本开发项的设计对话',
   development: false,
   sapPurpose: 'test',

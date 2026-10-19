@@ -311,3 +311,33 @@ export async function recentTurns(db, organizationId, { limit = 50 } = {}) {
     )
   ).rows;
 }
+
+// What the item drawer shows without the conversation: the newest plan-and-code version of
+// the item and the newest one labelled 定稿, across its development sessions.
+export async function itemOutputs(db, organizationId, itemId) {
+  const pick = async (finalOnly) =>
+    (
+      await db.query(
+        `SELECT v.session_id AS "sessionId",s.title AS "sessionTitle",v.version,v.labels,
+          v.created_at AS "createdAt",length(v.plan) AS "planLength",
+          CASE WHEN v.code='' THEN 0 ELSE array_length(string_to_array(v.code, E'\n'),1) END AS "codeLines"
+         FROM ${T}version v JOIN ${T}session s ON s.id=v.session_id
+         WHERE s.organization_id=$1 AND s.item_id=$2 ${finalOnly ? "AND '定稿'=ANY(v.labels)" : ''}
+         ORDER BY v.created_at DESC LIMIT 1`,
+        [organizationId, itemId],
+      )
+    ).rows[0] ?? null;
+  return { latest: await pick(false), final: await pick(true) };
+}
+
+// One version of an item for the drawer, by session and version (no comments).
+export async function itemVersion(db, organizationId, itemId, sessionId, version) {
+  return (
+    await db.query(
+      `SELECT v.session_id AS "sessionId",v.version,v.plan,v.code,v.labels,v.created_at AS "createdAt"
+       FROM ${T}version v JOIN ${T}session s ON s.id=v.session_id
+       WHERE s.organization_id=$1 AND s.item_id=$2 AND v.session_id=$3 AND v.version=$4`,
+      [organizationId, itemId, sessionId, version],
+    )
+  ).rows[0];
+}

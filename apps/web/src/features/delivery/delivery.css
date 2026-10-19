@@ -191,6 +191,15 @@
 .row-icon[aria-expanded='true'] {
   background: var(--blue-fill-1);
 }
+/* An assistant the reader may not use: visible, with the reason in its tooltip. */
+.row-icon[aria-disabled='true'] {
+  color: var(--text-subtle);
+  background: none;
+  cursor: not-allowed;
+}
+.blocked-hint .base-button:disabled {
+  pointer-events: none;
+}
 .menu-panel hr {
   border: 0;
   border-top: 1px solid var(--blue-fill-1);
