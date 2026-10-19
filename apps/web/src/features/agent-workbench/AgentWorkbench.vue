@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
-import { useDropZone, useFileDialog, useMediaQuery } from '@vueuse/core';
+import { useFileDialog, useMediaQuery } from '@vueuse/core';
 import { Splitpanes, Pane } from 'splitpanes';
 import 'splitpanes/dist/splitpanes.css';
 import DecisionCard from './DecisionCard.vue';
@@ -79,7 +79,21 @@ watch(run.quoted, async (q) => {
 });
 const { open, onChange } = useFileDialog({ multiple: true, reset: true });
 onChange((files) => void addFiles(files));
-const { isOverDropZone } = useDropZone(composer, { onDrop: () => {} });
+// Files dropped anywhere on the conversation join the next message, not only on the composer.
+const dragging = ref(false);
+const canDrop = computed(() => props.editable && !props.blocked && !sending.value);
+function dragEnter(e: DragEvent) {
+  if (canDrop.value && e.dataTransfer?.types?.includes('Files')) dragging.value = true;
+}
+function dragLeave(e: DragEvent) {
+  const area = e.currentTarget as HTMLElement;
+  if (!area.contains(e.relatedTarget as Node | null)) dragging.value = false;
+}
+function drop(e: DragEvent) {
+  dragging.value = false;
+  if (canDrop.value && e.dataTransfer?.files.length)
+    void addFiles(Array.from(e.dataTransfer.files));
+}
 // R puts the cursor in the composer, U opens the file picker (DESIGN.md 6.3).
 useShortcut('R', () => composer.value?.querySelector('textarea')?.focus());
 useShortcut('U', () => {
@@ -161,36 +175,35 @@ async function authorize(decision: 'approve' | 'reject', note: string) {
   }
 }
 const previewOpen = computed(() => !!activeAttachment.value);
-// A conversation with nothing in it opens on the start page: a greeting and the composer in
-// the middle, suggestions below (DESIGN.md 6).
+// A conversation with nothing in it opens on the start page: what this assistant produces and
+// the composer in the middle, nothing below it (docs/specs/agent-workspace-start-and-composer.md 3).
 const empty = computed(() => !run.messages.value.length && !sending.value);
-const suggestions = computed(() =>
-  props.development
-    ? [
-        ['梳理需求并出开发方案', '请分析这个开发项的资料，先写开发方案，并列出需要我确认的问题。'],
-        ['直接写方案和代码', '需求已经清楚，请查询 SAP 后直接写开发方案和代码。'],
-      ]
-    : [
-        ['梳理需求与待确认问题', '请分析这个开发项的需求，先找出需要客户确认的问题。'],
-        ['直接起草 FSD 初稿', '需求已经比较清楚，请直接查询 SAP 并起草 FSD 初稿。'],
-      ],
-);
 </script>
 <template>
   <section class="assistant-test assistant-elements embedded" aria-label="AI助手">
     <Splitpanes class="assistant-split" :horizontal="compact" :maximize-panes="false">
       <Pane v-if="!compact || !previewOpen" :size="previewOpen ? 55 : 100" :min-size="30">
-        <div class="assistant-chat" :class="{ 'is-start': empty }">
+        <div
+          class="assistant-chat"
+          :class="{ 'is-start': empty }"
+          @dragenter="dragEnter"
+          @dragover.prevent
+          @dragleave="dragLeave"
+          @drop.prevent="drop"
+        >
+          <div v-if="dragging" class="drop-overlay" aria-hidden="true">
+            <span>松开即可添加到本次消息</span>
+          </div>
           <div v-if="empty" class="start-greeting">
             <BaseAvatar class="start-avatar" name="助手" hue="green" :size="32"
               ><Sparkles
             /></BaseAvatar>
-            <h1>{{ development ? '今天要开发什么？' : '今天要梳理哪个需求？' }}</h1>
+            <h1>{{ development ? '编写开发方案与代码' : '编写功能说明书' }}</h1>
             <p>
               {{
                 development
-                  ? '描述需求、上传 FSD 或资料，助手会查询 SAP、提出必要问题，写出开发方案和代码。'
-                  : '描述需求或上传资料，助手会查询 SAP、提出必要问题并编写 FSD。'
+                  ? '引用 FSD、上传资料或直接描述，助手会查询 SAP、问清必要问题后写出开发方案和代码。'
+                  : '上传需求文档、粘贴截图或直接描述，助手会查询 SAP、问清必要问题后起草 FSD。'
               }}
             </p>
           </div>
@@ -268,7 +281,7 @@ const suggestions = computed(() =>
                 :loading="false"
                 :blocked="preparing || uploading || !editable || blocked"
                 :stopping="run.status.value === 'stopping'"
-                :dragging="isOverDropZone"
+                :dragging="dragging"
                 @send="send"
                 @stop="run.stop"
                 @attach="open()"
@@ -317,18 +330,7 @@ const suggestions = computed(() =>
                 </div>
               </ChatComposer>
             </div>
-            <div v-if="empty" class="start-suggestions">
-              <button
-                v-for="[label, text] in suggestions"
-                :key="label"
-                type="button"
-                :disabled="blocked || !editable"
-                @click="draft = text"
-              >
-                {{ label }}
-              </button>
-            </div>
-            <div v-else class="composer-footnote">
+            <div v-if="!empty" class="composer-footnote">
               <span>内容由 AI 生成，请结合业务与系统证据核对</span>
             </div>
           </div>

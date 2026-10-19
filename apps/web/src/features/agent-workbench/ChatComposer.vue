@@ -38,6 +38,8 @@ const props = defineProps<{
   stopping: boolean;
   dragging: boolean;
   quiet?: boolean;
+  // Empty by default: the start page already says what to write (spec 3).
+  placeholder?: string;
 }>();
 const emit = defineEmits<{ send: []; stop: []; attach: []; files: [files: File[]] }>();
 const state = computed(() => composerState({ ...props, text: text.value, modelId: modelId.value }));
@@ -82,13 +84,13 @@ provide(PROMPT_INPUT_KEY, context);
     <PromptInputBody>
       <PromptInputTextarea
         aria-label="输入消息"
-        placeholder="描述需求，或继续追问…"
+        :placeholder="placeholder ?? ''"
         :readonly="blocked && !busy"
         maxlength="20000"
         class="min-h-20 px-4 py-3"
       />
     </PromptInputBody>
-    <!-- One type size for the hint, the SAP system and the model; the hint gives way first. -->
+    <!-- One type size for the SAP system and the model; the key hint lives on the send button. -->
     <PromptInputFooter class="composer-footer">
       <PromptInputTools>
         <PromptInputButton
@@ -97,9 +99,6 @@ provide(PROMPT_INPUT_KEY, context);
           @click="emit('attach')"
           ><Plus class="size-5"
         /></PromptInputButton>
-        <span class="composer-hint whitespace-nowrap text-xs text-muted-foreground"
-          >Enter 发送 · Shift + Enter 换行</span
-        >
       </PromptInputTools>
       <div class="flex min-w-0 items-center gap-2">
         <slot name="tools" />
@@ -154,6 +153,7 @@ provide(PROMPT_INPUT_KEY, context);
         <PromptInputSubmit
           v-else
           aria-label="发送消息"
+          title="发送（Enter）· Shift + Enter 换行"
           :disabled="!state.canSend"
           class="size-10 rounded-full"
           ><ArrowUp class="size-5"
@@ -165,10 +165,5 @@ provide(PROMPT_INPUT_KEY, context);
 <style scoped>
 .composer-footer {
   container-type: inline-size;
-}
-@container (max-width: 560px) {
-  .composer-hint {
-    display: none;
-  }
 }
 </style>

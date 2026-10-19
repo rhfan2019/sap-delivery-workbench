@@ -86,3 +86,13 @@ export function customField(definition: CustomFieldDefinition): FieldDef;
 export function fieldValue(item: object, key: string): unknown;
 export function progressFor(status: string, progress: number): number;
 export function richText(html: string | null | undefined): string;
+export type AgentStage = 'design' | 'development';
+export const AGENT_STAGES: Record<
+  AgentStage,
+  { agent: 'agent.fsd' | 'agent.dev'; phase: 'fsd' | 'development' }
+>;
+export const DEV_AGENT_KINDS: string[];
+export function stageOwner(
+  phaseAssigneeId: string | null | undefined,
+  createdBy: string | null | undefined,
+): string | null;

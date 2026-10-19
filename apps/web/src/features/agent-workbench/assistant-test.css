@@ -14,10 +14,28 @@
   min-height: 0;
 }
 .assistant-chat {
+  position: relative;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+/* Shown while files are dragged over the conversation; the drop lands on the overlay. */
+.drop-overlay {
+  position: absolute;
+  inset: var(--space-2);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--blue-border-2);
+  border-radius: var(--radius-12);
+  background: var(--blue-bg-1);
+  color: var(--blue-text-1);
+  font-size: var(--font-14);
+}
+.drop-overlay span {
+  pointer-events: none;
 }
 .assistant-split :deep(.splitpanes__splitter) {
   background: var(--border);
@@ -119,31 +137,6 @@ select:focus-visible {
   font-size: var(--font-14);
   line-height: var(--leading-20);
   color: var(--text-muted);
-}
-.start-suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
-}
-.start-suggestions button {
-  height: var(--control-button);
-  padding: 0 var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-6);
-  background: var(--panel);
-  color: var(--text-muted);
-  font-size: var(--font-14);
-  box-shadow: var(--shadow-card);
-  cursor: pointer;
-  transition:
-    background var(--motion-fast),
-    color var(--motion-fast);
-}
-.start-suggestions button:hover {
-  background: var(--hover);
-  color: var(--text);
 }
 @media (max-width: 700px) {
   .assistant-bottom {

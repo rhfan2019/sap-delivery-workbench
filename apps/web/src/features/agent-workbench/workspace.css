@@ -668,3 +668,10 @@
     padding: var(--space-2-5) var(--space-3);
   }
 }
+.record-tab.disabled {
+  color: var(--text-subtle);
+  cursor: not-allowed;
+}
+.record-tab.disabled:hover {
+  color: var(--text-subtle);
+}

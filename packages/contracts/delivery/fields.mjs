@@ -175,3 +175,16 @@ export function richText(html) {
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
+
+// The two assistants of an item and the phase each one works in (contract 3.5).
+export const AGENT_STAGES = {
+  design: { agent: 'agent.fsd', phase: 'fsd' },
+  development: { agent: 'agent.dev', phase: 'development' },
+};
+// Kinds the development assistant writes code for.
+export const DEV_AGENT_KINDS = ['report', 'function'];
+// Who owns an item's work in a stage for "own items only": the phase's assignee, else the
+// creator. The API and the web decide entry buttons with the same rule.
+export function stageOwner(phaseAssigneeId, createdBy) {
+  return phaseAssigneeId || createdBy || null;
+}

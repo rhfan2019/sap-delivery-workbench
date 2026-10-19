@@ -38,7 +38,11 @@ import BasePropertyRow from '../../components/base/BasePropertyRow.vue';
 import BaseSection from '../../components/base/BaseSection.vue';
 import BaseSkeleton from '../../components/base/BaseSkeleton.vue';
 import BaseTag from '../../components/base/BaseTag.vue';
-import { OPTIONS, richText } from '@sap-delivery-workbench/contracts/delivery/fields';
+import {
+  DEV_AGENT_KINDS,
+  OPTIONS,
+  richText,
+} from '@sap-delivery-workbench/contracts/delivery/fields';
 import './workspace.css';
 
 // The item workspace of one assistant: the conversation on the left, what it produced on the
@@ -143,8 +147,9 @@ watch(switcherOpen, (open) => {
   if (!open) renaming.value = '';
 });
 const current = computed(() => sessions.value.find((s) => s.id === run.sessionId.value));
+// "新对话" is the button on the right; the switcher only names the current conversation.
 const currentTitle = computed(() =>
-  run.sessionId.value ? current.value?.title?.trim() || '未命名对话' : '新对话',
+  run.sessionId.value ? current.value?.title?.trim() || '未命名对话' : '对话',
 );
 const time = (iso: string) =>
   new Date(iso).toLocaleString('zh-CN', {
@@ -205,11 +210,18 @@ function toggleDetails() {
   remember(detailsKey, detailsOpen.value ? 'open' : 'closed');
 }
 // The same item in the other assistant: the record page has a design and a development tab.
+// A tab the reader cannot use stays visible but disabled, with the reason (spec 5).
 const stages = computed(() => {
   const root = `/projects/${props.projectId}/development-items/${props.itemId}`;
+  const kind = state.value?.item.kind ?? '';
   return [
-    { id: 'abap-fsd-agent', label: '设计', to: `${root}/design` },
-    { id: 'abap-dev-agent', label: '开发', to: `${root}/development` },
+    { id: 'abap-fsd-agent', label: '设计', to: `${root}/design`, blocked: '' },
+    {
+      id: 'abap-dev-agent',
+      label: '开发',
+      to: `${root}/development`,
+      blocked: kind && !DEV_AGENT_KINDS.includes(kind) ? '当前版本只支持报表与功能类开发项' : '',
+    },
   ];
 });
 const changeTypeLabel = computed(
@@ -298,15 +310,23 @@ onBeforeUnmount(() => controller.abort());
         <h1>{{ state?.item.name || '开发项' }}</h1>
       </div>
       <nav class="record-tabs" aria-label="助手">
-        <RouterLink
-          v-for="s in stages"
-          :key="s.id"
-          :to="s.to"
-          class="record-tab"
-          :class="{ selected: s.id === config.agent }"
-          :aria-current="s.id === config.agent ? 'page' : undefined"
-          >{{ s.label }}</RouterLink
-        >
+        <template v-for="s in stages" :key="s.id">
+          <span
+            v-if="s.blocked && s.id !== config.agent"
+            class="record-tab disabled"
+            aria-disabled="true"
+            :title="s.blocked"
+            >{{ s.label }}</span
+          >
+          <RouterLink
+            v-else
+            :to="s.to"
+            class="record-tab"
+            :class="{ selected: s.id === config.agent }"
+            :aria-current="s.id === config.agent ? 'page' : undefined"
+            >{{ s.label }}</RouterLink
+          >
+        </template>
       </nav>
       <BasePopover v-model:open="switcherOpen" align="start">
         <template #trigger>
@@ -420,8 +440,11 @@ onBeforeUnmount(() => controller.abort());
           ><Info :size="16"
         /></BaseIconButton>
         <BaseIconButton
-          :label="panelOpen ? '关闭成果面板' : '打开成果面板'"
+          :label="
+            panelOpen ? '关闭成果面板' : hasArtifact ? '打开成果面板' : '助手写出第一版后可查看成果'
+          "
           :pressed="panelOpen"
+          :disabled="!panelOpen && !hasArtifact"
           side="bottom"
           @click="togglePanel"
           ><PanelRight :size="16"
