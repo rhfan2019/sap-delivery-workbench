@@ -152,3 +152,56 @@ select:focus-visible {
 .assistant-chat :deep(.test-data-card) {
   margin-left: calc(var(--space-6) + var(--space-3));
 }
+/* The reference picker opens above the composer (spec 4.2). */
+.composer-anchor {
+  position: relative;
+}
+.reference-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+.reference-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 100%;
+  height: var(--control-button);
+  padding: 0 var(--space-1) 0 var(--space-2);
+  border: 1px solid var(--blue-border-1);
+  border-radius: var(--radius-6);
+  background: var(--blue-bg-1);
+  color: var(--blue-text-1);
+  font-size: var(--font-12);
+}
+.reference-chip-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reference-chip-badge {
+  flex-shrink: 0;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-4);
+  background: var(--blue-fill-1);
+  font-size: var(--font-11);
+}
+.reference-chip button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-4);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.reference-chip button:hover {
+  background: var(--blue-fill-2);
+}

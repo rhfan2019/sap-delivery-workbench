@@ -19,3 +19,9 @@ export {
   assertTestSystemReady,
   pendingTestDataRequest,
 } from './test-data.mjs';
+export {
+  referenceCatalog,
+  resolveReferences,
+  REFERENCE_KINDS,
+  MAX_REFERENCES,
+} from './references.mjs';

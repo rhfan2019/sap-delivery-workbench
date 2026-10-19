@@ -72,6 +72,8 @@ export const router = createRouter({
         {
           path: 'workspace/development-items',
           component: () => import('../features/delivery/DeliveryView.vue'),
+          // ?project=&item=&section= (a link from an assistant page) is read once, then cleared.
+          meta: { keepOnQuery: true },
         },
         { path: 'workspace/:module', component: WorkspaceView },
         // Settings (docs/specs/project-access-admin.md 4.3). Planned entries have no route here:

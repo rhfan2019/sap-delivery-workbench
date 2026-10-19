@@ -282,6 +282,8 @@ export function useAgentSession(base: string) {
   async function send(
     content: string,
     answers?: { question: string; choice: string; note?: string }[],
+    // Item materials referenced by this message (spec 4.2), copied to the session's files.
+    references?: { kind: string; id: string }[],
   ) {
     if (busy.value || (!content.trim() && !answers?.length)) return false;
     if (!sessionId.value) await create(content.slice(0, 60));
@@ -293,6 +295,7 @@ export function useAgentSession(base: string) {
       content,
       sapSystemId: sapSystemId.value || undefined,
       ...(answers ? { answers } : {}),
+      ...(references?.length ? { references } : {}),
     });
     messages.value.push({
       id: 'local-' + started.turnId,

@@ -8,6 +8,7 @@ import TestDataCard from './TestDataCard.vue';
 import TestSystemLogin from './TestSystemLogin.vue';
 import SapSystemSelect from './SapSystemSelect.vue';
 import ModelPicker from './ModelPicker.vue';
+import ReferencePicker, { type Reference } from './ReferencePicker.vue';
 import RunSteps from './RunSteps.vue';
 import ChatComposer from './ChatComposer.vue';
 import ConversationTimeline from './ConversationTimeline.vue';
@@ -18,7 +19,7 @@ import type { useAgentSession } from './useAgentSession';
 import { api } from '../../services/session';
 import { restoreDraft } from './presentation.mjs';
 import { useShortcut } from '../../services/shortcuts';
-import { CircleHelp, FlaskConical, Sparkles } from '@lucide/vue';
+import { AtSign, CircleHelp, FlaskConical, Sparkles, X } from '@lucide/vue';
 import BaseAvatar from '../../components/base/BaseAvatar.vue';
 import BaseBanner from '../../components/base/BaseBanner.vue';
 import { Button } from '@/components/ui/button';
@@ -134,6 +135,70 @@ async function uploadFiles() {
   }
 }
 
+// --- References to item materials (spec 4.1, 4.2) ------------------------------------------
+// Opened from the “+” menu, or by typing @ at a word start: the text after @ is the search,
+// and arrow keys, Enter and Esc go to the picker until it closes.
+const references = ref<Reference[]>([]);
+const referenceKeys = computed(() => references.value.map((r) => `${r.kind}:${r.id}`));
+const pickerOpen = ref(false);
+const mention = ref<{ start: number; query: string } | null>(null);
+const picker = ref<InstanceType<typeof ReferencePicker> | null>(null);
+const textarea = () => composer.value?.querySelector('textarea') ?? null;
+function openPicker() {
+  if (!props.editable || props.blocked || sending.value) return;
+  mention.value = null;
+  pickerOpen.value = true;
+}
+function closePicker() {
+  pickerOpen.value = false;
+  mention.value = null;
+}
+function toggleReference(r: Reference) {
+  const key = `${r.kind}:${r.id}`;
+  references.value = referenceKeys.value.includes(key)
+    ? references.value.filter((x) => `${x.kind}:${x.id}` !== key)
+    : [...references.value, r];
+  const at = mention.value;
+  if (!at) return;
+  // Picked by @: the @query typed so far gives way to the card.
+  const input = textarea();
+  const caret = input?.selectionStart ?? draft.value.length;
+  draft.value = draft.value.slice(0, at.start) + draft.value.slice(caret);
+  closePicker();
+  void nextTick(() => {
+    input?.focus();
+    input?.setSelectionRange(at.start, at.start);
+  });
+}
+function composerInput(e: Event) {
+  const input = e.target as HTMLTextAreaElement;
+  if (input.tagName !== 'TEXTAREA' || !props.editable || props.blocked) return;
+  const before = input.value.slice(0, input.selectionStart ?? input.value.length);
+  const found = /(^|\s)@([^\s@]{0,30})$/.exec(before);
+  if (found) {
+    mention.value = { start: before.length - found[2].length - 1, query: found[2] };
+    pickerOpen.value = true;
+  } else if (mention.value) closePicker();
+}
+function composerKeydown(e: KeyboardEvent) {
+  if (!pickerOpen.value || !mention.value || e.isComposing) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    e.stopPropagation();
+    picker.value?.move(e.key === 'ArrowDown' ? 1 : -1);
+  } else if (e.key === 'Enter' && !e.shiftKey) {
+    // Never sends while the list is open: picks the highlighted item, or closes the list
+    // (still loading, or nothing matches) so the next Enter sends.
+    e.preventDefault();
+    e.stopPropagation();
+    if (!picker.value?.choose()) closePicker();
+  } else if (e.key === 'Escape') {
+    e.preventDefault();
+    e.stopPropagation();
+    closePicker();
+  }
+}
+
 async function send() {
   if (sending.value) return run.stop();
   if (!draft.value.trim() || !props.editable || props.blocked || !ready.value) return;
@@ -144,11 +209,18 @@ async function send() {
     return;
   }
   const text = draft.value;
+  const referenced = references.value;
   draft.value = '';
   error.value = '';
+  closePicker();
   try {
-    await run.send(text);
+    await run.send(
+      text,
+      undefined,
+      referenced.map((r) => ({ kind: r.kind, id: r.id })),
+    );
     for (const a of attachments.value) removeFile(a.id);
+    references.value = [];
   } catch (e) {
     error.value = e instanceof Error ? e.message : '发送失败';
     draft.value = restoreDraft(draft.value, text);
@@ -265,7 +337,23 @@ const empty = computed(() => !run.messages.value.length && !sending.value);
             <p v-if="!ready" class="assistant-notice">
               尚未配置组织默认模型。<RouterLink to="/settings/models">前往大模型配置</RouterLink>
             </p>
-            <div ref="composer">
+            <div
+              ref="composer"
+              class="composer-anchor"
+              @input="composerInput"
+              @keydown.capture="composerKeydown"
+            >
+              <ReferencePicker
+                v-if="pickerOpen"
+                ref="picker"
+                :base="base"
+                :session-id="run.sessionId.value"
+                :selected="referenceKeys"
+                :query="mention ? mention.query : null"
+                :development="development"
+                @toggle="toggleReference"
+                @close="closePicker"
+              />
               <p v-if="preparing" class="text-xs text-muted-foreground" role="status">
                 正在读取附件…
               </p>
@@ -281,6 +369,7 @@ const empty = computed(() => !run.messages.value.length && !sending.value);
                 @send="send"
                 @stop="run.stop"
                 @attach="open()"
+                @reference="openPicker"
                 @files="addFiles"
               >
                 <template #tools>
@@ -297,6 +386,22 @@ const empty = computed(() => !run.messages.value.length && !sending.value);
                     :disabled="sending || !editable || blocked"
                   />
                 </template>
+                <ul v-if="references.length" class="reference-chips" aria-label="引用的资料">
+                  <li v-for="r in references" :key="r.kind + r.id" class="reference-chip">
+                    <AtSign :size="12" aria-hidden="true" /><span class="reference-chip-label">{{
+                      r.label
+                    }}</span
+                    ><span class="reference-chip-badge">引用</span
+                    ><button
+                      type="button"
+                      :aria-label="'移除引用 ' + r.label"
+                      :disabled="sending"
+                      @click="toggleReference(r)"
+                    >
+                      <X :size="12" />
+                    </button>
+                  </li>
+                </ul>
                 <AttachmentTray
                   compact
                   v-if="attachments.length"

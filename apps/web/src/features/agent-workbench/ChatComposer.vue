@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, provide, ref } from 'vue';
-import { Plus, Square, ArrowUp, LoaderCircle } from '@lucide/vue';
+import { AtSign, Paperclip, Plus, Square, ArrowUp, LoaderCircle } from '@lucide/vue';
+import BaseMenu from '../../components/base/BaseMenu.vue';
+import BaseMenuItem from '../../components/base/BaseMenuItem.vue';
 import {
   PromptInput,
   PromptInputBody,
@@ -28,7 +30,13 @@ const props = defineProps<{
   // Empty by default: the start page already says what to write (spec 3).
   placeholder?: string;
 }>();
-const emit = defineEmits<{ send: []; stop: []; attach: []; files: [files: File[]] }>();
+const emit = defineEmits<{
+  send: [];
+  stop: [];
+  attach: [];
+  reference: [];
+  files: [files: File[]];
+}>();
 const state = computed(() => composerState({ ...props, text: text.value }));
 function submit() {
   if (state.value.canSend) emit('send');
@@ -74,12 +82,21 @@ provide(PROMPT_INPUT_KEY, context);
     <!-- One type size for the SAP system and the model; the key hint lives on the send button. -->
     <PromptInputFooter class="composer-footer">
       <PromptInputTools>
-        <PromptInputButton
-          aria-label="添加文件或图片"
-          :disabled="busy || blocked || loading"
-          @click="emit('attach')"
-          ><Plus class="size-5"
-        /></PromptInputButton>
+        <!-- Upload, or reference what the item already has (spec 4.1). -->
+        <BaseMenu side="top">
+          <template #trigger>
+            <PromptInputButton aria-label="添加资料" :disabled="busy || blocked || loading"
+              ><Plus class="size-5"
+            /></PromptInputButton>
+          </template>
+          <BaseMenuItem kbd="U" @select="emit('attach')"
+            ><template #icon><Paperclip :size="14" /></template>上传文件或图片</BaseMenuItem
+          >
+          <BaseMenuItem kbd="@" @select="emit('reference')"
+            ><template #icon><AtSign :size="14" /></template>引用开发项资料…</BaseMenuItem
+          >
+          <p class="composer-menu-note">也可以直接粘贴截图或拖入文件</p>
+        </BaseMenu>
       </PromptInputTools>
       <div class="flex min-w-0 items-center gap-2">
         <slot name="tools" />
@@ -107,6 +124,13 @@ provide(PROMPT_INPUT_KEY, context);
   </PromptInput>
 </template>
 <style scoped>
+.composer-menu-note {
+  margin: var(--space-1) 0 0;
+  padding: var(--space-1) var(--space-2);
+  border-top: 1px solid var(--border);
+  font-size: var(--font-11);
+  color: var(--text-muted);
+}
 .composer-footer {
   container-type: inline-size;
 }

@@ -265,7 +265,8 @@ export async function addAttachment(db, sessionId, a) {
 export async function listAttachments(db, sessionId, { withText = false } = {}) {
   return (
     await db.query(
-      `SELECT id,file_name AS "fileName",size,parse_state AS "parseState",warnings,created_at AS "createdAt"
+      `SELECT id,file_name AS "fileName",size,parse_state AS "parseState",warnings,created_at AS "createdAt",
+        CASE WHEN storage_key LIKE 'ref:%' THEN split_part(storage_key,':',2) ELSE 'upload' END AS "source"
        ${withText ? ',extracted_text AS "text"' : ''} FROM ${T}attachment WHERE session_id=$1 ORDER BY created_at`,
       [sessionId],
     )
@@ -311,4 +312,28 @@ export async function itemOutputs(db, organizationId, itemId) {
       )
     ).rows[0] ?? null;
   return { latest: await pick(false), final: await pick(true) };
+}
+
+// Attachments of the item's other sessions, for referencing them in this one (spec 4.2).
+export async function itemAttachments(db, scope, exceptSessionId) {
+  return (
+    await db.query(
+      `SELECT a.id,a.file_name AS "fileName",a.size,a.parse_state AS "parseState",a.warnings,
+        a.extracted_text AS "text",a.created_at AS "createdAt",s.id AS "sessionId",s.title AS "sessionTitle"
+       FROM ${T}attachment a JOIN ${T}session s ON s.id=a.session_id
+       WHERE s.organization_id=$1 AND s.project_id=$2 AND s.item_id=$3 AND s.id<>$4
+       ORDER BY a.created_at DESC LIMIT 100`,
+      [scope.organizationId, scope.projectId, scope.itemId, exceptSessionId],
+    )
+  ).rows;
+}
+
+// The attachment a reference was copied to in this session, if any (one copy per source).
+export async function findReferenced(db, sessionId, storageKey) {
+  return (
+    await db.query(`SELECT id FROM ${T}attachment WHERE session_id=$1 AND storage_key=$2`, [
+      sessionId,
+      storageKey,
+    ])
+  ).rows[0];
 }

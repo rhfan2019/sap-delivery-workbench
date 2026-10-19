@@ -12,12 +12,18 @@ import {
   streamTurnEvents,
   answersText,
   sapSelector,
+  referenceCatalog,
+  resolveReferences,
+  REFERENCE_KINDS,
 } from '../agent-core/public.mjs';
 import { diffLines } from './artifacts.mjs';
 import { SUPPORTED_KINDS } from './context.mjs';
 import { runTurn } from './loop.mjs';
 import * as repo from './repository.mjs';
 
+// The development assistant reads the item's files and FSD versions by itself (materials.mjs),
+// so only the business function and other conversations' files are referenced.
+const REFERENCES = ['business_function', 'session_file'];
 export const base = '/api/projects/:projectId/development-items/:itemId/abap-dev-agent';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -131,6 +137,19 @@ export function registerAbapDevAgent(app, pool, organizationId, requireSession, 
     return (deps.listModels ?? listAgentModels)(pool, organizationId);
   });
 
+  // Item materials a message may reference instead of uploading again (spec 4.2).
+  const NO_SESSION = '00000000-0000-0000-0000-000000000000';
+  async function referenceSources(req, sessionId) {
+    const files = REFERENCES.includes('item_file') ? await c.itemFiles(pool, req.work.item.id) : [];
+    const others = await repo.itemAttachments(pool, req.work.scope, sessionId ?? NO_SESSION);
+    return { item: req.work.item, files, others, kinds: REFERENCES };
+  }
+  app.get(base + '/references', async (req) => {
+    await c.authorize(req, pool, false);
+    const sid = UUID.test(String(req.query?.session ?? '')) ? req.query.session : null;
+    return { groups: referenceCatalog(await referenceSources(req, sid)) };
+  });
+
   app.post(base + '/sessions', async (req, reply) => {
     await c.authorize(req, pool, true);
     const id = await repo.createSession(pool, req.work.scope, String(req.body?.title ?? ''));
@@ -167,6 +186,20 @@ export function registerAbapDevAgent(app, pool, organizationId, requireSession, 
       ? answersText(answers) + (req.body?.content?.trim() ? '\n\n' + req.body.content.trim() : '')
       : text(req.body?.content, '消息', 100000);
     const environment = sapSelector(req.body?.sapSystemId, 'development');
+    // Referenced item materials become this session's attachments, once per source.
+    if (Array.isArray(req.body?.references) && req.body.references.length) {
+      const rows = await resolveReferences(req.body.references, {
+        ...(await referenceSources(req, s.id)),
+        ...(deps.parseFile ? { parse: deps.parseFile } : {}),
+      });
+      for (const r of rows)
+        if (!(await repo.findReferenced(pool, s.id, r.storageKey)))
+          await repo.addAttachment(pool, s.id, {
+            id: randomUUID(),
+            ...r,
+            actorId: req.work.scope.actorId,
+          });
+    }
     // The model the user picked for this message, else the organization default (spec 4.3).
     const model = await (deps.resolveModel ?? resolveAgentModel)(
       pool,

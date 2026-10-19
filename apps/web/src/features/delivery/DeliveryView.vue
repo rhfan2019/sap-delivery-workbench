@@ -389,15 +389,30 @@ const link = {
   section: typeof route.query.section === 'string' ? route.query.section : '',
 };
 const drawerSection = ref('');
-if (link.project && link.project !== currentProject.value) currentProject.value = link.project;
+// The project list may load (and pick the default project) after this view: switch to the
+// linked project once it is known, and open the drawer only from that project's items.
+watch(
+  [projects, currentProject],
+  () => {
+    if (
+      link.item &&
+      link.project &&
+      currentProject.value !== link.project &&
+      projects.value.some((p) => p.id === link.project)
+    )
+      currentProject.value = link.project;
+  },
+  { immediate: true },
+);
+// The list may reload while the project context settles (and a reload closes the drawer):
+// the link holds until the reader closes the drawer or opens another item.
 function followLink() {
-  if (!link.item) return;
-  if (items.value.some((i) => i.id === link.item)) {
+  if (!link.item || (link.project && currentProject.value !== link.project)) return;
+  if (drawerId.value === null && items.value.some((i) => i.id === link.item)) {
     drawerId.value = link.item;
     drawerSection.value = link.section;
   }
-  link.item = '';
-  void router.replace({ query: {} }).catch(() => {});
+  if (route.query.item) void router.replace({ query: {} }).catch(() => {});
 }
 
 // --- loading -----------------------------------------------------------------------------
@@ -497,6 +512,7 @@ onBeforeUnmount(() => {
 // --- drawer and single-item actions ------------------------------------------------------
 async function open(id: string) {
   if (drawerId.value === id || !(await safeLeave())) return;
+  link.item = '';
   menu.value = '';
   drawerId.value = id;
 }
@@ -505,7 +521,9 @@ async function openCreate() {
   drawerId.value = '';
 }
 async function closeDrawer() {
-  if (await safeLeave()) drawerId.value = null;
+  if (!(await safeLeave())) return;
+  link.item = '';
+  drawerId.value = null;
 }
 function saved(item: Item) {
   const created = drawerId.value === '';
