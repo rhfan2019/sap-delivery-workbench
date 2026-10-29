@@ -1,12 +1,12 @@
 # 工作台多标签页交接文档
 
-> 状态：现行，持续更新。最后更新：2026-10-29（main `53eb9d5`，第一期完成）。
+> 状态：现行，持续更新。最后更新：2026-10-29（main `033e115`，第一期完成）。
 
 用于开启新会话，继续**工作台浏览器式多标签页**。读完本文、[AGENTS.md](../../AGENTS.md)、[目录与依赖契约](../architecture/repository-contract.md)、[工作台多标签页](../specs/workbench-tabs.md)和[设计规范](../specs/DESIGN.md)第 4.1 节即可接手。运行与登录见[智能助手本机运行与观察](../guides/agent-operations.md)；未完成事项以[待办与问题清单](backlog.md)为准，本文只列编号。
 
 ## 1. 现状一句话
 
-第一期已完成（`53eb9d5`）：外壳增加标签栏，工作台菜单页面在标签内打开、切换时保留滚动与状态，Ctrl / 中键 / 右键新开标签，关闭时询问未保存修改，按用户记住；开发项记录页仍在当前标签内打开、不保留；项目仍是全局的。
+第一期已完成（`53eb9d5`）：外壳增加标签栏，工作台菜单页面在标签内打开、切换时保留滚动与状态，单击菜单项打开或切到该菜单项的标签（BUG-007，`033e115`），Ctrl / 中键 / 右键总是新开标签，关闭时询问未保存修改，按用户记住；开发项记录页仍在当前标签内打开、不保留；项目仍是全局的。
 
 ## 2. 下一步
 
@@ -36,6 +36,7 @@ FEAT-006、FEAT-007。
 
 - 被保留的页面在后台仍是挂载状态：新增页面若用全局单例（`services/shell.ts` 的 `detailOpen`、`projectContext` 的 `leaveDelivery`）、`window` 监听或快捷键，必须在 `onDeactivated` / `onActivated` 里收放，或用 `useShortcut`。
 - 往页头 `#page-actions` 放按钮的页面，退到后台时要撤下（`Teleport v-if`，见开发清单），否则按钮会留在别的标签的页头上。
+- 新的菜单式入口（列出页面供跳转的地方）用 `openPage()`，不要直接 `router.push`；页面内的链接才在当前标签内导航。
 - 后台保留的页面不要自行导航（`router.push` / `replace`）：导航总是作用于当前标签。
 - 有“未保存修改”的页面：离开守卫写成 `switchingTab() || safeLeave()`，并用 `useTabLeave(safeLeave)` 让关闭标签时询问。
 - 界面只用 `theme.css` 令牌；标签栏取值见 DESIGN.md 第 4.1 节。
