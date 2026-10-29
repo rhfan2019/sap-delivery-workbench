@@ -2,7 +2,7 @@
 
 版本：1.20。日期：2026-10-28。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
 
-1.20 变更：根目录登记 `.workbuddy`（WorkBuddy 助手在本机写入的记忆，与 `.claude` 同类，整体不入库）。此前它未登记，`npm start` 第一步的架构检查失败，API 与前端均未启动，浏览器打不开 `http://127.0.0.1:5173/home`。
+1.20 变更：根目录登记 `.workbuddy`（WorkBuddy 助手在本机写入的记忆，与 `.claude` 同类，整体不入库）。此前它未登记，`npm start` 第一步的架构检查失败，API 与前端均未启动，浏览器打不开 `http://127.0.0.1:5173/home`。架构检查是提交前的门槛，不是本机启动的前提：启动器（`start.cmd` / `npm start`）遇到检查不通过只告警、继续启动；并在 PostgreSQL、API（含数据库连接）、Vue 页面与依赖预构建、前端到 API 的代理都确认可用后，才报告启动成功。
 
 1.19 变更：用户 2026-10-18 要求本项目有独立的 pgAdmin 查看开发库与表关系图。根 `compose.yaml` 新增 `pgadmin` 服务（`tools` profile，不随 `npm start` 启动，只监听 127.0.0.1:5051），命令 `npm run db:admin` / `db:admin:stop`；本机开发用的 Docker 配置文件放 `infra/dev/`（首个文件 `pgadmin-servers.json`），与 `infra/production/` 并列。登录账号取 `.env` 的 `PGADMIN_DEFAULT_EMAIL`、`PGADMIN_DEFAULT_PASSWORD`，数据库密码在容器启动时写入容器内 pgpass，不入库。说明见 [查看开发数据库与表关系图](../guides/database-browsing.md)。
 

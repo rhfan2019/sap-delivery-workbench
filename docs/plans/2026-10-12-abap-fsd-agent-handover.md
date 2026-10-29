@@ -35,7 +35,7 @@ FSD 设计助手已按[方向决策](../architecture/2026-10-11-fsd-assistant-di
 
 ## 4. 运行与验证
 
-- 启动 / 停止：`npm start` / `npm run stop`（数据库、API、前端 `http://127.0.0.1:5173`）。首次依赖预构建慢，可能报“前端未就绪”但随后可用。API 不热更新，改后端或提示词要重启。**重启会打断正在运行的轮次，重启前必须先征得用户同意。**
+- 启动 / 停止：`npm start` / `npm run stop`（数据库、API、前端 `http://127.0.0.1:5173`）。启动器逐项确认数据库、API、前端页面与代理都可用后才提示成功；开机后首次启动较慢（可能一分钟左右）。API 不热更新，改后端或提示词要重启。**重启会打断正在运行的轮次，重启前必须先征得用户同意。**
 - 检查：`npm run check:architecture`、`npm run typecheck`、`npm run test:unit`、`npm run test:integration`。集成测试依赖测试库容器 `sap-fs-tests-dev-postgres-1`（端口 55439），停了就 `docker start` 它。
 - 浏览器自动登录：`.env` 中 `TEST_USER_NAME` / `TEST_USER_PASS`（本地管理员）。在内置浏览器里用页面内 `fetch('/api/login', {loginName, password})` 最可靠，表单输入曾失败。不要把密码复述到聊天。
 - 观察一轮运行：查 `app.abap_fsd_agent_turn` / `app.abap_fsd_agent_tool_call`（可用 Monitor 轮询），或调用 `/api/audit/runs/:turnId`（含对话、工具调用、文档比对）。

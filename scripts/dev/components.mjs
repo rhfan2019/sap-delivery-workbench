@@ -54,47 +54,86 @@ async function start() {
     if (process.platform === 'win32') run('cmd.exe', ['/d', '/c', 'npm ci']);
     else run('npm', ['ci']);
   }
-  run(process.execPath, ['scripts/checks/architecture.mjs']);
+  // The architecture check gates commits, not the local app: a violation (such as a folder
+  // another tool created) is reported but must not keep the workbench from starting.
+  const architecture = spawnSync(process.execPath, ['scripts/checks/architecture.mjs'], {
+    cwd: root,
+    stdio: 'inherit',
+    windowsHide: true,
+  });
+  if (architecture.status !== 0)
+    console.warn(
+      'WARNING: architecture check failed (see above). Starting anyway; fix it before committing.',
+    );
   run(process.execPath, ['scripts/dev/setup-env.mjs']);
   run(process.execPath, ['scripts/vendor/setup-sap-mcp.mjs']);
   run('docker', ['compose', 'up', '-d', '--wait', 'postgres']);
   run(process.execPath, ['--env-file=.env', 'scripts/database/migrate.mjs']);
   run(process.execPath, ['--env-file=.env', 'scripts/database/provision.mjs']);
   run(process.execPath, ['--env-file=.env', 'scripts/database/bootstrap.mjs']);
+  console.log('Ready: PostgreSQL');
+  let child, startupError;
   if (!alreadyRunning) {
     const log = openSync(join(runtime, 'web.log'), 'a');
-    const child = spawn(process.execPath, ['scripts/dev/web-server.mjs'], {
+    child = spawn(process.execPath, ['scripts/dev/web-server.mjs'], {
       cwd: root,
       detached: true,
       windowsHide: true,
       stdio: ['ignore', log, log],
     });
     closeSync(log);
-    let startupError;
     child.once('error', (error) => {
       startupError = error;
     });
     child.unref();
-    // The first launch after boot reads node_modules from a cold disk cache (and antivirus
-    // scans every file), so loading the API can take over 30s; wait while the process lives.
-    console.log(
-      'Waiting for API and Vue to start; the first launch after boot can take a minute...',
-    );
-    const deadline = Date.now() + 180_000;
-    while (!(await control('status'))) {
+  }
+  // The first launch after boot reads node_modules from a cold disk cache (and antivirus
+  // scans every file), so loading the API can take over 30s; wait while the process lives.
+  console.log('Waiting for API and Vue; the first launch after boot can take a minute...');
+  const deadline = Date.now() + 180_000;
+  async function waitFor(name, check) {
+    let lastError;
+    for (;;) {
+      try {
+        await check();
+        console.log(`Ready: ${name}`);
+        return;
+      } catch (error) {
+        lastError = error;
+      }
       if (startupError) throw startupError;
-      if (child.exitCode !== null)
+      if (child && child.exitCode !== null)
         throw new Error(
           `API/web process exited with code ${child.exitCode}. Check .runtime/web.log.`,
         );
       if (Date.now() > deadline)
         throw new Error(
-          'Frontend did not become ready within 3 minutes. Check .runtime/web.log; database may remain running.',
+          `${name} did not become ready within 3 minutes (${lastError.message}). Check .runtime/web.log; database may remain running.`,
         );
-      await delay(250);
+      await delay(500);
     }
   }
+  await waitFor('API and Vue processes', async () => {
+    if (!(await control('status'))) throw new Error('not listening yet');
+  });
+  await waitFor('API (database connection)', () =>
+    fetchText('http://127.0.0.1:3001/api/health/ready'),
+  );
+  await waitFor('Vue page and dependency bundle', async () => {
+    await fetchText('http://127.0.0.1:5173/home');
+    const entry = await fetchText('http://127.0.0.1:5173/src/main.ts');
+    // An optimized dependency is served only after Vite has finished bundling dependencies.
+    const dependency = entry.match(/["'](\/node_modules\/\.vite\/deps\/[^"'?]+)/)?.[1];
+    if (dependency) await fetchText(`http://127.0.0.1:5173${dependency}`);
+  });
+  await waitFor('Vue to API proxy', () => fetchText('http://127.0.0.1:5173/api/health/ready'));
   console.log('Started PostgreSQL, API and Vue: http://127.0.0.1:5173/home');
+}
+
+async function fetchText(url) {
+  const response = await fetch(url, { signal: AbortSignal.timeout(60_000) });
+  if (!response.ok) throw new Error(`${url} returned ${response.status}`);
+  return response.text();
 }
 
 async function stop() {

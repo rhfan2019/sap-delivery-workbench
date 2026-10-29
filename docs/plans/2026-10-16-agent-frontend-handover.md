@@ -43,12 +43,12 @@ SSE 事件：`step`、`delta`（text / reasoning）、`tool.start`、`tool.end`�
 4. **对话切换不直观**：对话列表藏在右侧面板的“对话”页签；新对话没有标题时列表里不好辨认；地址里不含对话编号，刷新或分享无法定位到具体对话（靠 `localStorage` 记住上次的对话）。
 5. **SAP 系统选择**：标签被截断（“QAS · SAP S/4 HANA 20…”）；未显示系统代码；只能选 DEV / QAS，未配置的显示“（未配置）”。以后项目配置默认 DEV / QAS 后，这里要跟着调整。
 6. **模型选择器只是展示**：组织统一用默认模型，选择器只有一个选项，容易误以为能切换。
-7. **API 重启后浏览器回到登录页**：本轮多次出现，原因未查。可能与开发服务器重载有关，需要确认是否属于正常行为。
+7. **API 重启后浏览器回到登录页**：已查明（2026-10-17），不是重启丢会话。会话存库，`npm stop` / `npm start` 不清理会话；实测重启后 Vite 重载页面，`/api/session` 仍为 200，集成测试 `auth.test.mjs` 已覆盖"新 API 进程沿用旧会话"。被退回登录页有两种原因：其一，会话空闲 30 分钟即失效（只有 API 请求会续期，属设计行为），改后端期间页面闲置超过 30 分钟，重启触发的重载就是失效后的第一次请求；其二，不同会话的内置浏览器、用户自己的 Chrome 各有一套 cookie，换一个浏览器就要重新登录。登录页显示"服务暂不可用"时，是 `/api/session` 请求失败（非 401），不是登录失效。
 8. 已有但未使用的组件：`TestDataCard.vue`、`TestSystemLogin.vue`。设计阶段已不显示，不要删除（留给测试助手）。
 
 ## 5. 运行、登录与观察
 
-- 启动 / 停止：`npm start` / `npm stop`（数据库、API、前端 `http://127.0.0.1:5173`）。首次启动可能报“前端未就绪”，随后可用。**API 不热更新**，改后端要重启；**重启前确认没有运行中的轮次**（查 `app.abap_fsd_agent_turn` / `app.abap_dev_agent_turn` 的 `status='running'`）。前端改动由 Vite 热更新。
+- 启动 / 停止：`npm start` / `npm stop`（数据库、API、前端 `http://127.0.0.1:5173`）。启动器逐项确认数据库、API、前端页面与代理都可用后才提示成功；开机后首次启动较慢（可能一分钟左右）。**API 不热更新**，改后端要重启；**重启前确认没有运行中的轮次**（查 `app.abap_fsd_agent_turn` / `app.abap_dev_agent_turn` 的 `status='running'`）。前端改动由 Vite 热更新。
 - 内置浏览器预览：`.claude/launch.json` 的 `dev` 配置连接已运行的 5173（不另起进程）；`.claude` 目录不入库（契约 1.11）。
 - 登录工作台：页面内 `fetch('/api/login', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({loginName, password})})`，账号取 `.env` 的 `TEST_USER_NAME` / `TEST_USER_PASS`（本地管理员），不要把密码写进聊天。
 - SAP：DEV 与 QAS 目前是同一套 SELF-S4H-2020（client 100），项目参数中已保存凭据，只读访问直接可用。

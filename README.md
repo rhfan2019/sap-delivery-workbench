@@ -8,7 +8,7 @@ Vue 3 + Fastify + PostgreSQL 的全栈 Web 应用，使用 npm workspaces 统一
 
 需要 Node.js 24 LTS（最低 22.12）、npm 10+、运行中的 Docker Desktop/Linux containers。
 
-Windows 双击 `start.cmd`，或在根目录执行 `npm start`。启动器检查目录/依赖、保留已有环境配置，启动数据库并执行迁移与幂等初始化，然后后台启动 API 和前端。
+Windows 双击 `start.cmd`，或在根目录执行 `npm start`。启动器检查目录/依赖（架构检查不通过只告警，不阻止启动）、保留已有环境配置，启动数据库并执行迁移与幂等初始化，然后后台启动 API 和前端，逐项确认数据库、API、前端页面与代理都可用后才提示启动成功。开机后首次启动需要较长时间（可能一分钟左右）。
 
 打开 http://127.0.0.1:5173/home 。前端端口为 5173，API 为 3001，开发数据库映射到 55432。前端同源代理 `/api`。
 
