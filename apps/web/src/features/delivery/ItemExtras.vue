@@ -115,35 +115,39 @@ watch(() => props.path, load);
           @change="upload"
       /></label>
     </header>
-    <p v-if="error" class="error-note" role="alert">{{ error }}</p>
-    <ul v-if="files.length" class="file-list">
-      <li v-for="f in files" :key="f.id">
-        <Paperclip :size="14" /><a :href="'/api' + path + '/files/' + f.id">{{ f.name }}</a
-        ><small>{{ size(f.size) }} · {{ f.authorName }}</small
-        ><button
-          v-if="!readOnly"
-          type="button"
-          class="icon-button file-remove"
-          :aria-label="'删除附件 ' + f.name"
-          :title="'删除附件 ' + f.name"
-          :disabled="busy"
-          @click="remove(f)"
-        >
-          <Trash2 :size="14" />
-        </button>
-      </li>
-    </ul>
-    <p v-else class="empty-value">暂无附件，单个文件不超过 5 MB。</p>
+    <div class="field-card">
+      <p v-if="error" class="error-note" role="alert">{{ error }}</p>
+      <ul v-if="files.length" class="file-list">
+        <li v-for="f in files" :key="f.id">
+          <Paperclip :size="14" /><a :href="'/api' + path + '/files/' + f.id">{{ f.name }}</a
+          ><small>{{ size(f.size) }} · {{ f.authorName }}</small
+          ><button
+            v-if="!readOnly"
+            type="button"
+            class="icon-button file-remove"
+            :aria-label="'删除附件 ' + f.name"
+            :title="'删除附件 ' + f.name"
+            :disabled="busy"
+            @click="remove(f)"
+          >
+            <Trash2 :size="14" />
+          </button>
+        </li>
+      </ul>
+      <p v-else class="empty-value">暂无附件，单个文件不超过 5 MB。</p>
+    </div>
   </section>
   <section class="drawer-section">
     <header class="section-title"><h3>最近活动</h3></header>
-    <ol v-if="events.length" class="activity-list">
-      <li v-for="e in events" :key="e.id">
-        <span>{{ e.actorName }} {{ describe(e) }}</span
-        ><time>{{ time(e.createdAt) }}</time>
-      </li>
-    </ol>
-    <p v-else class="empty-value">暂无活动记录。</p>
+    <div class="field-card">
+      <ol v-if="events.length" class="activity-list">
+        <li v-for="e in events" :key="e.id">
+          <span>{{ e.actorName }} {{ describe(e) }}</span
+          ><time>{{ time(e.createdAt) }}</time>
+        </li>
+      </ol>
+      <p v-else class="empty-value">暂无活动记录。</p>
+    </div>
   </section>
 </template>
 <style scoped>

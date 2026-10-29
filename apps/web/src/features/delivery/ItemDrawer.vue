@@ -15,6 +15,7 @@ import BaseButton from '../../components/base/BaseButton.vue';
 import BaseIconButton from '../../components/base/BaseIconButton.vue';
 import BaseMenu from '../../components/base/BaseMenu.vue';
 import BaseMenuItem from '../../components/base/BaseMenuItem.vue';
+import BaseAvatar from '../../components/base/BaseAvatar.vue';
 import BaseTag from '../../components/base/BaseTag.vue';
 import { kindIdentity, moduleHue } from '../../components/base/identity';
 import { api } from '../../services/session';
@@ -29,12 +30,14 @@ import {
   changedKeys,
   cloneItem,
   emptyItem,
+  displayText,
   fieldValue,
   setFieldValue,
   type Changes,
   type FieldDef,
   type Item,
   type ListContext,
+  type PhaseKey,
   type Tag,
 } from './model';
 import { DEV_AGENT_KINDS } from '@sap-delivery-workbench/contracts/delivery/fields';
@@ -78,6 +81,7 @@ watch(
       editing.value = false;
       error.value = '';
       active.value = 'basic';
+      opened.value = new Set();
       if (body.value) body.value.scrollTop = 0;
     }
     draft.value = cloneItem(next ?? emptyItem());
@@ -97,17 +101,138 @@ const wide = (f: FieldDef) =>
   ['rich', 'objects', 'tags'].includes(f.type) || f.customType === 'long_text';
 const title = computed(() => (creating.value ? '新建开发项' : props.item!.name));
 
+// Each group is a card of label-over-value cells (DESIGN.md 4.1, 开发项详情面板): short
+// properties in a grid, long ones in full rows. Reading leaves out what the head already shows
+// and gathers the empty fields into one line; editing puts every field back in its place.
+type Cell =
+  { type: 'field'; field: FieldDef; span?: 2 } | { type: 'plan'; start: FieldDef; end: FieldDef };
+interface Card {
+  key: string;
+  label: string;
+  phase?: PhaseKey;
+  assignee?: FieldDef;
+  cells: Cell[];
+  rows: FieldDef[];
+  empty: string[];
+  idle: boolean;
+}
+const IDENTITY = ['code', 'module', 'kind', 'name'];
+// Editing leads with what is filled in first; reading leads a stage with its plan.
+const LEADING: Record<string, number> = {
+  name: 0,
+  module: 1,
+  kind: 2,
+  assigneeId: 0,
+  status: 1,
+  progress: 2,
+};
+const READING: Record<string, number> = {
+  plannedStart: 0,
+  actualEnd: 1,
+  effortDays: 2,
+  progress: 3,
+};
+const shown = computed(() => (editing.value ? draft.value : (props.item ?? draft.value)));
+const filled = (f: FieldDef) => displayText(shown.value, f, props.ctx) !== '';
+const cards = computed<Card[]>(() =>
+  sections.value.map((s) => {
+    const phase = PHASES.find((p) => p.key === s.key)?.key;
+    const named = (name: string) => s.fields.find((f) => f.phase && f.name === name);
+    const start = named('plannedStart');
+    const end = named('plannedEnd');
+    const card: Card = {
+      key: s.key,
+      label: s.label,
+      phase,
+      cells: [],
+      rows: [],
+      empty: [],
+      idle: false,
+    };
+    const order = editing.value ? LEADING : READING;
+    const lead = (f: FieldDef) => order[f.phase ? f.name! : f.key] ?? 9;
+    const fields = [...s.fields]
+      .filter((f) => editing.value || !IDENTITY.includes(f.key))
+      .sort((a, b) => lead(a) - lead(b));
+    let planned = false;
+    for (const f of fields) {
+      if (f.key === 'code') continue;
+      if (f === start || f === end) {
+        if (planned || !start || !end) continue;
+        planned = true;
+        if (editing.value || filled(start) || filled(end))
+          card.cells.push({ type: 'plan', start, end });
+        else card.empty.push('计划日期');
+        continue;
+      }
+      if (!editing.value) {
+        if (f.phase && f.name === 'assigneeId') {
+          card.assignee = f;
+          continue;
+        }
+        if (f.phase && f.name === 'status') continue;
+        if (!filled(f)) {
+          card.empty.push(f.label);
+          continue;
+        }
+      }
+      if (wide(f)) card.rows.push(f);
+      else
+        card.cells.push({
+          type: 'field',
+          field: f,
+          span: f.key === 'name' || (f.phase && f.name === 'assigneeId') ? 2 : undefined,
+        });
+    }
+    // A stage nobody has started or filled in shrinks to one line.
+    card.idle =
+      !editing.value &&
+      !!phase &&
+      shown.value.phases[phase]?.status === 'not_started' &&
+      s.fields.every((f) => f.name === 'status' || f.name === 'progress' || !filled(f));
+    return card;
+  }),
+);
+const stageStatus = (key: string) =>
+  props.item && PHASES.some((p) => p.key === key)
+    ? props.item.phases[key as PhaseKey]?.status
+    : undefined;
+// Long text shows three lines until the reader opens it.
+const opened = ref(new Set<string>());
+const long = (f: FieldDef) =>
+  f.type === 'rich' && displayText(shown.value, f, props.ctx).length > 120;
+function toggleOpen(key: string) {
+  const next = new Set(opened.value);
+  if (!next.delete(key)) next.add(key);
+  opened.value = next;
+}
+// Switching between reading and editing changes the cards' height: keep the group in view where
+// it was.
+function holdPlace() {
+  const el = body.value?.querySelector<HTMLElement>('#section-' + active.value);
+  const before = el?.getBoundingClientRect().top;
+  return () =>
+    void nextTick(() => {
+      if (!el?.isConnected || before === undefined || !body.value) return;
+      body.value.scrollTop += el.getBoundingClientRect().top - before;
+    });
+}
+
 function startEdit() {
+  const restore = holdPlace();
   draft.value = cloneItem(props.item!);
   original.value = cloneItem(draft.value);
   error.value = '';
   editing.value = true;
+  restore();
 }
 function cancelEdit() {
   if (creating.value) return emit('close');
+  const restore = holdPlace();
   draft.value = cloneItem(props.item!);
   error.value = '';
   editing.value = false;
+  restore();
 }
 async function save() {
   if (busy.value) return;
@@ -131,7 +256,9 @@ async function save() {
           { rowVersion: props.item!.rowVersion, changes },
           'PATCH',
         );
+    const restore = holdPlace();
     editing.value = false;
+    restore();
     draft.value = cloneItem(saved);
     original.value = cloneItem(saved);
     emit('saved', saved);
@@ -322,25 +449,87 @@ defineExpose({ dirty, busy });
       <div ref="body" class="drawer-body" @scroll.passive="spy">
         <p v-if="error" class="error-note" role="alert">{{ error }}</p>
         <section
-          v-for="s in sections"
-          :id="'section-' + s.key"
-          :key="s.key"
-          :data-section="s.key"
+          v-for="c in cards"
+          :id="'section-' + c.key"
+          :key="c.key"
+          :data-section="c.key"
           class="drawer-section"
         >
           <header class="section-title">
-            <h3>{{ s.label }}</h3>
+            <h3>{{ c.label }}</h3>
+            <span
+              v-if="c.phase && stageStatus(c.key)"
+              class="status-pill"
+              :data-status="stageStatus(c.key)"
+              >{{ OPTIONS.status[stageStatus(c.key)!] }}</span
+            >
           </header>
-          <div class="field-grid">
-            <div v-for="f in s.fields" :key="f.key" class="field-row" :class="{ wide: wide(f) }">
-              <label :for="editing ? 'field-' + f.key : undefined"
+          <div v-if="c.idle" class="field-card idle">
+            {{ readOnly ? '尚未开始' : '尚未开始，点“编辑”填写负责人和计划' }}
+          </div>
+          <div v-else class="field-card">
+            <div v-if="c.assignee" class="card-owner">
+              <BaseAvatar :name="displayText(shown, c.assignee, ctx) || '?'" :size="24" />
+              <span :class="displayText(shown, c.assignee, ctx) ? 'owner-name' : 'empty-value'">{{
+                displayText(shown, c.assignee, ctx) || '未分配'
+              }}</span>
+              <span class="owner-role">{{ c.assignee.label }}</span>
+            </div>
+            <div v-if="c.cells.length" class="field-grid">
+              <div
+                v-for="cell in c.cells"
+                :key="cell.type === 'plan' ? 'plan' : cell.field.key"
+                class="field-cell"
+                :class="{ 'span-2': cell.type === 'plan' || cell.span === 2 }"
+              >
+                <template v-if="cell.type === 'plan'">
+                  <span class="field-label">{{ editing ? '计划开始 → 计划完成' : '计划' }}</span>
+                  <div v-if="editing" class="plan-inputs">
+                    <FieldEditor
+                      v-for="f in [cell.start, cell.end]"
+                      :key="f.key"
+                      :field="f"
+                      :model-value="fieldValue(draft, f.key)"
+                      :ctx="ctx"
+                      :disabled="busy"
+                      :create-tag="createTag"
+                      @update:model-value="setFieldValue(draft, f.key, $event)"
+                    />
+                  </div>
+                  <div v-else class="field-read">
+                    {{ displayText(shown, cell.start, ctx) || '—' }} →
+                    {{ displayText(shown, cell.end, ctx) || '—' }}
+                  </div>
+                </template>
+                <template v-else>
+                  <label class="field-label" :for="editing ? 'field-' + cell.field.key : undefined"
+                    >{{ cell.field.label }}<b v-if="editing && cell.field.required">*</b></label
+                  >
+                  <div
+                    v-if="editing && cell.field.type !== 'readonly'"
+                    :id="'field-' + cell.field.key"
+                    class="field-input"
+                  >
+                    <FieldEditor
+                      :field="cell.field"
+                      :model-value="fieldValue(draft, cell.field.key)"
+                      :ctx="ctx"
+                      :disabled="busy"
+                      :create-tag="createTag"
+                      @update:model-value="setFieldValue(draft, cell.field.key, $event)"
+                    />
+                  </div>
+                  <div v-else class="field-read">
+                    <FieldValue :item="shown" :field="cell.field" :ctx="ctx" />
+                  </div>
+                </template>
+              </div>
+            </div>
+            <div v-for="f in c.rows" :key="f.key" class="field-cell full">
+              <label class="field-label" :for="editing ? 'field-' + f.key : undefined"
                 >{{ f.label }}<b v-if="editing && f.required">*</b></label
               >
-              <div
-                v-if="editing && f.type !== 'readonly'"
-                :id="'field-' + f.key"
-                class="field-input"
-              >
+              <div v-if="editing" :id="'field-' + f.key" class="field-input">
                 <FieldEditor
                   :field="f"
                   :model-value="fieldValue(draft, f.key)"
@@ -350,10 +539,16 @@ defineExpose({ dirty, busy });
                   @update:model-value="setFieldValue(draft, f.key, $event)"
                 />
               </div>
-              <div v-else class="field-read">
-                <FieldValue :item="item ?? draft" :field="f" :ctx="ctx" />
-              </div>
+              <template v-else>
+                <div class="field-read" :class="{ clamped: long(f) && !opened.has(f.key) }">
+                  <FieldValue :item="shown" :field="f" :ctx="ctx" />
+                </div>
+                <button v-if="long(f)" type="button" class="text-button" @click="toggleOpen(f.key)">
+                  {{ opened.has(f.key) ? '收起' : '展开' }}
+                </button>
+              </template>
             </div>
+            <p v-if="c.empty.length" class="card-empty">{{ c.empty.join('、') }}未填写</p>
           </div>
         </section>
         <section
@@ -365,14 +560,16 @@ defineExpose({ dirty, busy });
           <header class="section-title">
             <h3>成果</h3>
           </header>
-          <template v-for="stage in outputStages" :key="stage">
-            <ItemOutputs
-              :project-id="projectId"
-              :item-id="item.id"
-              :stage="stage"
-              :can-run="!!agents?.[stage].run"
-            />
-          </template>
+          <div class="field-card">
+            <template v-for="stage in outputStages" :key="stage">
+              <ItemOutputs
+                :project-id="projectId"
+                :item-id="item.id"
+                :stage="stage"
+                :can-run="!!agents?.[stage].run"
+              />
+            </template>
+          </div>
         </section>
         <div v-if="item" id="section-extras" data-section="extras">
           <ItemExtras :path="base + '/' + item.id" :read-only="readOnly" :fields="fields" />

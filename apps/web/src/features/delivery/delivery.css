@@ -540,6 +540,10 @@
   scroll-padding-top: var(--space-2);
   scrollbar-gutter: stable;
 }
+/* Groups (DESIGN.md 4.1, 开发项详情面板): a 16px title over a card of label-over-value cells. */
+.drawer-body {
+  container-type: inline-size;
+}
 .drawer-section {
   padding: var(--space-4) 0;
   border-bottom: 1px solid var(--border);
@@ -557,39 +561,118 @@
   font-size: var(--font-14);
   margin: 0;
 }
-.field-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-0-5) var(--space-6);
+.item-drawer .drawer-section {
+  padding: var(--space-5) 0 0;
+  border-bottom: 0;
 }
-/* Property rows (DESIGN.md 5): a muted label and the value, 32px high. */
-.field-row {
+.item-drawer .section-title {
+  justify-content: flex-start;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+.item-drawer .section-title h3 {
+  font-size: var(--font-16);
+  font-weight: var(--weight-550);
+  line-height: var(--leading-24);
+}
+.item-drawer .section-title > :last-child:not(h3, .status-pill) {
+  margin-left: auto;
+}
+.field-card {
   display: grid;
-  grid-template-columns: 104px minmax(0, 1fr);
-  gap: var(--space-2-5);
-  align-items: start;
-  min-height: var(--control-icon);
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-12);
+  background: var(--panel);
   font-size: var(--font-14);
 }
-.field-row.wide {
-  grid-column: 1 / -1;
+.field-card.idle {
+  padding-block: var(--space-2-5);
+  color: var(--text-subtle);
 }
-.item-drawer .field-row > label {
-  display: block;
-  color: var(--text-muted);
+.field-card > :is(.card-owner, .field-grid) + *,
+.field-card > * + .card-empty {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+.card-owner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.owner-name {
+  font-weight: var(--weight-550);
+}
+.owner-role {
+  color: var(--text-subtle);
   font-size: var(--font-12);
-  padding-top: var(--space-1-5);
-  line-height: var(--leading-20);
 }
-.field-row b {
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-4);
+}
+.field-cell {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.field-cell.span-2 {
+  grid-column: span 2;
+}
+@container (max-width: 559px) {
+  .field-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container (max-width: 359px) {
+  .field-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .field-cell.span-2 {
+    grid-column: 1 / -1;
+  }
+}
+.field-label {
+  color: var(--text-subtle);
+  font-size: var(--font-12);
+  line-height: var(--leading-16);
+}
+.field-label b {
   color: var(--red-text-2);
+  font-weight: var(--weight-400);
   margin-left: var(--space-0-5);
 }
 .field-read {
-  padding-top: var(--space-1-5);
   line-height: 1.6;
   overflow-wrap: anywhere;
   min-width: 0;
+}
+.field-grid .field-read {
+  font-weight: var(--weight-475);
+}
+.field-read.clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+.field-cell.full > .text-button {
+  justify-self: start;
+  font-size: var(--font-12);
+}
+.plan-inputs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-2);
+}
+.card-empty {
+  margin: 0;
+  color: var(--text-subtle);
+  font-size: var(--font-12);
 }
 .field-input {
   min-width: 0;
@@ -693,8 +776,10 @@
 }
 .unit-input input {
   width: 100%;
+  min-width: 0;
 }
 .unit-input span {
+  flex: none;
   color: var(--text-muted);
   font-size: var(--font-12);
 }
@@ -1063,13 +1148,6 @@
 }
 
 @media (max-width: 760px) {
-  .field-grid {
-    grid-template-columns: 1fr;
-  }
-  .field-row {
-    grid-template-columns: 1fr;
-    gap: var(--space-1);
-  }
   .batch-row {
     grid-template-columns: 1fr;
   }
@@ -1382,6 +1460,9 @@ tr.checked .row-actions,
   }
   .drawer-section {
     padding: var(--space-3) 0;
+  }
+  .item-drawer .drawer-section {
+    padding: var(--space-4) 0 0;
   }
   .item-drawer footer {
     padding: var(--space-2) var(--space-4);
