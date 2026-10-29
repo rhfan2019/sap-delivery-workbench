@@ -56,7 +56,7 @@ withDefaults(
 .settings-page.list > :deep(.s-table-surface) {
   margin-top: var(--space-1);
 }
-@media (min-width: 1100px) {
+@media (min-width: 1500px) {
   .settings-page.drawer {
     padding-right: calc(var(--space-2) + var(--layout-drawer));
   }

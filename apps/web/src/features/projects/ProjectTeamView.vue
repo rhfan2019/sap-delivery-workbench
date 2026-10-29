@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import {
+  ChevronLeft,
+  ChevronRight,
+  Contact as ContactIcon,
+  Plus,
+  Search,
+  Trash2,
+} from '@lucide/vue';
+import {
   CONTACT_ROLES,
   KEY_ROLES,
   SAP_MODULES,
 } from '@sap-delivery-workbench/contracts/projects/options';
 import BaseAvatar from '../../components/base/BaseAvatar.vue';
-import BaseButton from '../../components/base/BaseButton.vue';
-import BaseDialog from '../../components/base/BaseDialog.vue';
 import BaseTag from '../../components/base/BaseTag.vue';
 import { toast } from '../../components/base/toast';
 import { askConfirmation } from '../../services/confirmation';
@@ -15,13 +21,16 @@ import { api } from '../../services/session';
 import SettingsPage from '../settings/SettingsPage.vue';
 import SettingsCard from '../settings/SettingsCard.vue';
 import SettingsField from '../settings/SettingsField.vue';
-import ChoiceChips from '../settings/ChoiceChips.vue';
+import SettingsRowMenu from '../settings/SettingsRowMenu.vue';
+import { useDrawerLeave } from '../settings/useDrawerLeave';
 import { useSave } from '../settings/useLoad';
+import ContactDrawer from './ContactDrawer.vue';
 import ProjectGate from './ProjectGate.vue';
 import { useProject, type Contact, type ProjectDetail } from './useProject';
 import '../settings/settings.css';
 
-// 项目 → 团队与干系人 (docs/specs/project-access-admin.md 1.4).
+// 项目 → 团队与干系人 (docs/specs/project-access-admin.md 1.4): our key roles and module leads as
+// a settings card, the customer's contacts as a settings list with its drawer (DESIGN.md 6.2).
 const { project, loading, error, replace, can, readOnly } = useProject();
 const editable = computed(() => can('project.team:edit') && !readOnly.value);
 const keyRoles = ref<Record<string, string | null>>({});
@@ -73,45 +82,62 @@ async function saveTeam() {
   }
 }
 
-type ContactDraft = Omit<Contact, 'id' | 'rowVersion'> & { id?: string; rowVersion?: string };
-const editing = ref<ContactDraft | null>(null);
-const contactSave = useSave();
 const moduleOptions = computed(() =>
   (project.value?.modules.length ? project.value.modules : SAP_MODULES).map((m) => ({
     value: m,
     label: m,
   })),
 );
-function openContact(c?: Contact) {
-  contactSave.error.value = '';
-  editing.value = c
-    ? { ...c, modules: [...c.modules] }
-    : {
-        name: '',
-        title: '',
-        department: '',
-        contactRole: 'key_user',
-        modules: [],
-        phone: '',
-        email: '',
-        notes: '',
-      };
+const query = ref('');
+const role = ref('');
+const page = ref(1);
+const contacts = computed(() => project.value?.contacts ?? []);
+const filtered = computed(() =>
+  contacts.value.filter(
+    (c) =>
+      (!role.value || c.contactRole === role.value) &&
+      (c.name + c.title + c.department + c.modules.join('') + c.phone + c.email)
+        .toLowerCase()
+        .includes(query.value.trim().toLowerCase()),
+  ),
+);
+const pages = computed(() => Math.max(1, Math.ceil(filtered.value.length / 10)));
+const rows = computed(() => filtered.value.slice((page.value - 1) * 10, page.value * 10));
+watch([query, role], () => (page.value = 1));
+watch(pages, (n) => (page.value = Math.min(n, page.value)));
+
+// The drawer: one contact at a time; another row or “新增联系人” asks before dropping changes.
+const open = ref(false);
+const editing = ref<Contact | null>(null);
+const drawer = ref<InstanceType<typeof ContactDrawer> | null>(null);
+async function canLeave() {
+  if (drawer.value?.busy) return false;
+  return !drawer.value?.dirty || (await askConfirmation('放弃尚未保存的联系人修改？'));
 }
-async function saveContact() {
-  const c = editing.value!;
-  const base = `/projects/${project.value!.id}/contacts`;
-  const result = await contactSave.run(() =>
-    c.id ? api<ProjectDetail>(`${base}/${c.id}`, c, 'PATCH') : api<ProjectDetail>(base, c),
-  );
-  if (result) {
-    replace(result);
+async function openContact(c: Contact | null) {
+  if (!editable.value) return;
+  if (open.value && c && editing.value?.id === c.id) return;
+  if (open.value && !(await canLeave())) return;
+  editing.value = c;
+  open.value = true;
+}
+async function close() {
+  if (await canLeave()) {
+    open.value = false;
     editing.value = null;
-    toast('联系人已保存。', 'green');
   }
 }
+useDrawerLeave(canLeave, () => !!drawer.value?.dirty);
+function saved(result: ProjectDetail) {
+  replace(result);
+  open.value = false;
+  editing.value = null;
+  toast('联系人已保存。', 'green');
+}
+const removal = useSave();
 async function removeContact(c: Contact) {
   if (!(await askConfirmation(`删除联系人“${c.name}”？`))) return;
-  const result = await contactSave.run(() =>
+  const result = await removal.run(() =>
     api<ProjectDetail>(
       `/projects/${project.value!.id}/contacts/${c.id}`,
       { rowVersion: c.rowVersion },
@@ -120,9 +146,21 @@ async function removeContact(c: Contact) {
   );
   if (result) {
     replace(result);
-    editing.value = null;
+    if (editing.value?.id === c.id) {
+      open.value = false;
+      editing.value = null;
+    }
   }
 }
+const rowMenu = (c: Contact) => [
+  {
+    label: '删除',
+    icon: Trash2,
+    danger: true,
+    disabled: removal.busy.value,
+    run: () => removeContact(c),
+  },
+];
 const roleTone = {
   customer_pm: 'blue',
   it_lead: 'purple',
@@ -132,7 +170,12 @@ const roleTone = {
 } as const;
 </script>
 <template>
-  <SettingsPage title="团队与干系人" description="我方关键岗位、模块负责人，以及客户方联系人。">
+  <SettingsPage
+    title="团队与干系人"
+    description="我方关键岗位、模块负责人，以及客户方联系人。"
+    wide
+    :drawer="open"
+  >
     <ProjectGate :loading="loading" :error="error" :ready="!!project" :archived="readOnly">
       <template v-if="project">
         <SettingsCard
@@ -189,95 +232,141 @@ const roleTone = {
           </SettingsField>
         </SettingsCard>
 
-        <SettingsCard
-          title="客户方联系人"
-          description="客户方人员不是平台用户，以通讯录方式登记；电话与邮箱只对有“查看客户联系人”权限的成员显示。"
-          flush
-        >
-          <template #headerActions>
-            <BaseButton v-if="editable" size="sm" @click="openContact()">新增联系人</BaseButton>
-          </template>
-          <div v-if="project.contacts.length" class="s-list">
-            <button
-              v-for="c in project.contacts"
-              :key="c.id"
-              type="button"
-              class="s-list-row"
-              :disabled="!editable"
-              @click="openContact(c)"
-            >
-              <BaseAvatar :name="c.name" :size="32" />
-              <span class="s-list-main">
-                <strong>{{ c.name }}</strong>
-                <small>{{ [c.title, c.department].filter(Boolean).join(' · ') || '—' }}</small>
-              </span>
-              <span class="s-list-side">
-                <BaseTag v-for="m in c.modules" :key="m" variant="outline">{{ m }}</BaseTag>
-                <BaseTag :tone="roleTone[c.contactRole as keyof typeof roleTone]">{{
-                  CONTACT_ROLES[c.contactRole as keyof typeof CONTACT_ROLES]
-                }}</BaseTag>
-                <span v-if="c.hidden">联系方式已隐藏</span>
-                <span v-else>{{ [c.phone, c.email].filter(Boolean).join(' · ') }}</span>
-              </span>
-            </button>
-          </div>
-          <p v-else class="empty-note">还没有登记客户方联系人。</p>
-        </SettingsCard>
-      </template>
-    </ProjectGate>
-
-    <BaseDialog
-      :open="!!editing"
-      :title="editing?.id ? '编辑联系人' : '新增联系人'"
-      wide
-      @update:open="(v) => !v && (editing = null)"
-    >
-      <form v-if="editing" class="dialog-form" @submit.prevent="saveContact">
-        <div class="s-grid-2">
-          <label
-            >姓名<input v-model="editing.name" class="s-input" maxlength="60" required
-          /></label>
-          <label
-            >角色<select v-model="editing.contactRole" class="s-select">
+        <section class="s-list-section" aria-labelledby="contacts-title">
+          <header class="s-list-head">
+            <h2 id="contacts-title">客户方联系人</h2>
+            <p>
+              客户方人员不是平台用户，以通讯录方式登记；电话与邮箱只对有“查看客户联系人”权限的成员显示。
+            </p>
+          </header>
+          <p v-if="removal.error.value" class="s-error" role="alert">{{ removal.error.value }}</p>
+          <div class="s-table-toolbar">
+            <label class="s-table-search"
+              ><Search :size="17" /><input
+                v-model="query"
+                aria-label="搜索联系人"
+                placeholder="搜索姓名、职务、部门或模块" /></label
+            ><select v-model="role" aria-label="筛选联系人角色">
+              <option value="">全部角色</option>
               <option v-for="(label, key) in CONTACT_ROLES" :key="key" :value="key">
                 {{ label }}
               </option>
-            </select></label
-          >
-          <label>职务<input v-model="editing.title" class="s-input" maxlength="60" /></label>
-          <label>部门<input v-model="editing.department" class="s-input" maxlength="60" /></label>
-          <label>电话<input v-model="editing.phone" class="s-input" maxlength="40" /></label>
-          <label
-            >邮箱<input v-model="editing.email" class="s-input" type="email" maxlength="254"
-          /></label>
-        </div>
-        <div class="dialog-field">
-          <span>负责模块</span>
-          <ChoiceChips v-model="editing.modules" :options="moduleOptions" label="负责模块" />
-        </div>
-        <label>备注<textarea v-model="editing.notes" class="s-textarea" maxlength="500" /></label>
-        <p v-if="contactSave.error.value" class="s-error" role="alert">
-          {{ contactSave.error.value }}
-        </p>
-      </form>
-      <template #footer>
-        <BaseButton
-          v-if="editing?.id"
-          variant="danger"
-          class="dialog-left"
-          @click="removeContact(editing as Contact)"
-          >删除</BaseButton
-        >
-        <BaseButton @click="editing = null">取消</BaseButton>
-        <BaseButton
-          variant="primary"
-          :loading="contactSave.busy.value"
-          :disabled="!editing?.name"
-          @click="saveContact"
-          >保存</BaseButton
-        >
+            </select>
+            <div v-if="editable" class="s-table-actions">
+              <button class="primary-button" @click="openContact(null)">
+                <Plus :size="17" />新增联系人
+              </button>
+            </div>
+          </div>
+          <div class="s-table-surface">
+            <div v-if="!rows.length" class="s-table-empty">
+              <ContactIcon :size="32" />
+              <h2>{{ query || role ? '没有匹配的联系人' : '还没有登记客户方联系人' }}</h2>
+              <p>
+                {{
+                  query || role
+                    ? '调整搜索或筛选条件后再试。'
+                    : '登记客户方项目经理、IT 负责人与关键用户后显示在这里。'
+                }}
+              </p>
+            </div>
+            <table v-else class="s-table">
+              <thead>
+                <tr>
+                  <th>联系人</th>
+                  <th>角色</th>
+                  <th class="hide-narrow">负责模块</th>
+                  <th>联系方式</th>
+                  <th v-if="editable" class="actions-col">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="c in rows"
+                  :key="c.id"
+                  :class="{ clickable: editable, selected: open && editing?.id === c.id }"
+                  @click="openContact(c)"
+                >
+                  <td>
+                    <div class="s-table-person">
+                      <BaseAvatar :name="c.name" :size="32" />
+                      <div>
+                        <button
+                          class="s-table-name"
+                          :disabled="!editable"
+                          @click.stop="openContact(c)"
+                        >
+                          {{ c.name }}
+                        </button>
+                        <small>{{
+                          [c.title, c.department].filter(Boolean).join(' · ') || '—'
+                        }}</small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <BaseTag :tone="roleTone[c.contactRole as keyof typeof roleTone]">{{
+                      CONTACT_ROLES[c.contactRole as keyof typeof CONTACT_ROLES]
+                    }}</BaseTag>
+                  </td>
+                  <td class="hide-narrow">
+                    <div v-if="c.modules.length" class="s-table-tags">
+                      <BaseTag v-for="m in c.modules" :key="m" variant="outline">{{ m }}</BaseTag>
+                    </div>
+                    <span v-else>—</span>
+                  </td>
+                  <td>
+                    <span v-if="c.hidden" class="s-state untested">联系方式已隐藏</span>
+                    <template v-else>
+                      <span>{{ c.phone || '—' }}</span
+                      ><small v-if="c.email">{{ c.email }}</small>
+                    </template>
+                  </td>
+                  <td v-if="editable">
+                    <div class="s-row-actions" @click.stop>
+                      <button class="text-button" @click="openContact(c)">编辑</button>
+                      <SettingsRowMenu :label="c.name + '的更多操作'" :items="rowMenu(c)" />
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <footer class="s-table-footer">
+              <span>共 {{ filtered.length }} 位联系人</span>
+              <div>
+                <button
+                  class="icon-button"
+                  aria-label="上一页"
+                  :disabled="page === 1"
+                  @click="page--"
+                >
+                  <ChevronLeft :size="17" /></button
+                ><span>{{ page }} / {{ pages }}</span
+                ><button
+                  class="icon-button"
+                  aria-label="下一页"
+                  :disabled="page === pages"
+                  @click="page++"
+                >
+                  <ChevronRight :size="17" />
+                </button>
+              </div>
+            </footer>
+          </div>
+        </section>
       </template>
-    </BaseDialog>
+    </ProjectGate>
+
+    <ContactDrawer
+      v-if="project && open"
+      ref="drawer"
+      :key="editing?.id ?? 'new'"
+      :project-id="project.id"
+      :contact="editing"
+      :modules="moduleOptions"
+      @saved="saved"
+      @close="close"
+    />
   </SettingsPage>
 </template>
 <style scoped>
@@ -294,24 +383,5 @@ const roleTone = {
 .lead :deep(.base-tag) {
   min-width: 48px;
   justify-content: center;
-}
-.empty-note {
-  margin: 0;
-  padding: var(--space-4);
-  color: var(--text-muted);
-}
-.dialog-form {
-  display: grid;
-  gap: var(--space-3);
-}
-.dialog-form label,
-.dialog-field {
-  display: grid;
-  gap: var(--space-1);
-  font-size: var(--font-12);
-  color: var(--text-muted);
-}
-.dialog-left {
-  margin-right: auto;
 }
 </style>

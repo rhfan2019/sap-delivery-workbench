@@ -1,64 +1,63 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { Search } from '@lucide/vue';
+import { ChevronLeft, ChevronRight, Copy, Plus, RefreshCw, Search, ShieldCheck } from '@lucide/vue';
 import {
   PERMISSIONS,
   PERMISSION_GROUPS,
   PROJECT_SCOPES,
 } from '@sap-delivery-workbench/contracts/access/catalog';
 import BaseAvatar from '../../components/base/BaseAvatar.vue';
-import BaseButton from '../../components/base/BaseButton.vue';
-import BaseDialog from '../../components/base/BaseDialog.vue';
-import BaseTabs from '../../components/base/BaseTabs.vue';
 import BaseTag from '../../components/base/BaseTag.vue';
 import BaseSkeleton from '../../components/base/BaseSkeleton.vue';
+import { askConfirmation } from '../../services/confirmation';
 import { can } from '../../services/session';
 import SettingsPage from '../settings/SettingsPage.vue';
 import SettingsCard from '../settings/SettingsCard.vue';
-import StatGrid from '../settings/StatGrid.vue';
-import { useLoad, useSave } from '../settings/useLoad';
+import SettingsRowMenu from '../settings/SettingsRowMenu.vue';
+import { useDrawerLeave } from '../settings/useDrawerLeave';
+import { useLoad } from '../settings/useLoad';
+import RoleDrawer from './RoleDrawer.vue';
 import { accessApi, day, type Holder, type Role } from './api';
 import '../settings/settings.css';
 
-// 企业 → 角色与权限 (docs/specs/project-access-admin.md 2.5, 2.8): built-in and custom roles, and
-// the permission report (who holds a permission, through which role).
+// 企业 → 角色与权限 (docs/specs/project-access-admin.md 2.5, 2.8): built-in and custom roles in
+// one settings list (DESIGN.md 6.2), each opening on its own page; and the permission report
+// (who holds a permission, through which role).
 const router = useRouter();
 const { data, loading, error, reload } = useLoad(accessApi.roles);
 onMounted(reload);
-const tab = ref('all');
+const view = ref<'roles' | 'report'>('roles');
+const filter = ref('all');
 const query = ref('');
+const page = ref(1);
 const roles = computed(() => data.value ?? []);
-const shown = computed(() =>
+// Project composites first, then project singles, then organization roles, as the groups were.
+const rank = (r: Role) => (r.scope === 'organization' ? 2 : r.kind === 'composite' ? 0 : 1);
+const filtered = computed(() =>
   roles.value
     .filter((r) =>
-      tab.value === 'all' ? true : tab.value === 'custom' ? !r.builtIn : r.scope === tab.value,
+      filter.value === 'all'
+        ? true
+        : filter.value === 'custom'
+          ? !r.builtIn
+          : filter.value === 'builtIn'
+            ? r.builtIn
+            : r.scope === filter.value,
     )
     .filter((r) =>
       (r.name + r.code + r.description).toLowerCase().includes(query.value.trim().toLowerCase()),
-    ),
+    )
+    .map((r, i) => ({ r, i }))
+    .sort((a, b) => rank(a.r) - rank(b.r) || a.i - b.i)
+    .map(({ r }) => r),
 );
-const sections = computed(() =>
-  [
-    {
-      title: '项目级复合角色',
-      note: '对应项目中的实际岗位，在“成员与权限”中分配。',
-      items: shown.value.filter((r) => r.scope === 'project' && r.kind === 'composite'),
-    },
-    {
-      title: '项目级单一角色',
-      note: '复合角色的组成部分，也可直接补充分配。',
-      items: shown.value.filter((r) => r.scope === 'project' && r.kind === 'single'),
-    },
-    {
-      title: '企业级角色',
-      note: '在用户详情中分配，可带项目范围。',
-      items: shown.value.filter((r) => r.scope === 'organization'),
-    },
-  ].filter((s) => s.items.length),
-);
-const tabs = computed(() => [
-  { id: 'all', label: '全部', count: roles.value.length },
+const pages = computed(() => Math.max(1, Math.ceil(filtered.value.length / 10)));
+const rows = computed(() => filtered.value.slice((page.value - 1) * 10, page.value * 10));
+watch([filter, query], () => (page.value = 1));
+watch(pages, (n) => (page.value = Math.min(n, page.value)));
+const filters = computed(() => [
+  { id: 'all', label: '全部角色', count: roles.value.length },
   {
     id: 'project',
     label: '项目级',
@@ -69,16 +68,25 @@ const tabs = computed(() => [
     label: '企业级',
     count: roles.value.filter((r) => r.scope === 'organization').length,
   },
+  { id: 'builtIn', label: '系统角色', count: roles.value.filter((r) => r.builtIn).length },
   { id: 'custom', label: '自定义', count: roles.value.filter((r) => !r.builtIn).length },
-  { id: 'report', label: '权限报表' },
 ]);
-const stats = computed(() => [
-  { label: '系统角色', value: roles.value.filter((r) => r.builtIn).length },
-  { label: '自定义角色', value: roles.value.filter((r) => !r.builtIn).length },
-  { label: '权限点', value: PERMISSIONS.length },
-  { label: '未使用的自定义角色', value: roles.value.filter((r) => !r.builtIn && !r.inUse).length },
-]);
+const unused = computed(() => roles.value.filter((r) => !r.builtIn && !r.inUse).length);
 const usage = (r: Role) => r.assignmentCount + r.projectAssignmentCount;
+const typeText = (r: Role) =>
+  r.scope === 'organization'
+    ? '企业级角色'
+    : r.kind === 'composite'
+      ? '项目级复合角色'
+      : '项目级单一角色';
+const detail = (r: Role) => '/settings/roles/' + r.id;
+// A click on the row opens the role's page; the name and 查看 are links of their own.
+function openRow(e: MouseEvent, r: Role) {
+  if ((e.target as Element).closest('a, button')) return;
+  void router.push(detail(r));
+}
+const manage = computed(() => can('role:manage'));
+const rowMenu = (r: Role) => [{ label: '复制为新角色', icon: Copy, run: () => openCreate(r) }];
 
 // The permission report.
 const reportCode = ref('');
@@ -103,113 +111,171 @@ const permissionGroups = PERMISSION_GROUPS.map((g) => ({
 }));
 const chosen = computed(() => PERMISSIONS.find((p) => p.code === reportCode.value));
 
-// Creating a role: a code and a name, single or composite, organization or project level; the
-// permissions are chosen on the role page afterwards (or copied from an existing role).
-const creating = ref(false);
-const draft = ref({
-  code: 'Z_',
-  name: '',
-  description: '',
-  kind: 'single',
-  scope: 'project',
-  copyFrom: '',
-});
-const save = useSave();
-const sources = computed(() =>
-  roles.value.filter((r) => r.kind === draft.value.kind && r.scope === draft.value.scope),
-);
-function openCreate(copy?: Role) {
-  save.error.value = '';
-  draft.value = copy
-    ? {
-        code: 'Z_' + copy.code.replace(/^(SYS_|C_|PRJ_|DL_|AG_)/, ''),
-        name: copy.name + '（副本）',
-        description: copy.description,
-        kind: copy.kind,
-        scope: copy.scope,
-        copyFrom: copy.id,
-      }
-    : { code: 'Z_', name: '', description: '', kind: 'single', scope: 'project', copyFrom: '' };
-  creating.value = true;
+// The drawer creates a role, blank or copied from a row; the new role then opens on its page.
+const open = ref(false);
+const copying = ref<Role | null>(null);
+const drawer = ref<InstanceType<typeof RoleDrawer> | null>(null);
+async function canLeave() {
+  if (drawer.value?.busy) return false;
+  return !drawer.value?.dirty || (await askConfirmation('放弃尚未保存的新角色？'));
 }
-async function create() {
-  const source = roles.value.find((r) => r.id === draft.value.copyFrom);
-  if (draft.value.kind === 'composite' && !source) {
-    save.error.value = '复合角色请先选择“复制自”的复合角色，创建后再调整包含的单一角色。';
-    return;
+async function openCreate(copy?: Role) {
+  const next = copy ?? null;
+  if (open.value && copying.value?.id === next?.id) return;
+  if (open.value && !(await canLeave())) return;
+  copying.value = next;
+  open.value = true;
+}
+async function close() {
+  if (await canLeave()) {
+    open.value = false;
+    copying.value = null;
   }
-  const role = await save.run(() =>
-    accessApi.createRole({
-      ...draft.value,
-      permissions: source?.kind === 'single' ? source.permissions : [],
-      members: source?.kind === 'composite' ? source.members.map((m) => m.id) : [],
-    }),
-  );
-  if (role) {
-    creating.value = false;
-    await router.push('/settings/roles/' + role.id);
-  }
+}
+useDrawerLeave(canLeave, () => !!drawer.value?.dirty);
+async function onCreated(role: Role) {
+  open.value = false;
+  copying.value = null;
+  await router.push(detail(role));
 }
 </script>
 <template>
   <SettingsPage
     title="角色与权限"
     description="角色是一组权限点；复合角色由单一角色组成，对应实际岗位。系统角色随版本更新，不能修改，可以复制后调整。"
-    wide
+    list
+    :drawer="open"
   >
     <template #actions>
-      <BaseButton v-if="can('role:manage')" variant="primary" @click="openCreate()"
-        >新建角色</BaseButton
-      >
+      <button class="icon-button" aria-label="刷新角色列表" :disabled="loading" @click="reload">
+        <RefreshCw :size="18" />
+      </button>
     </template>
     <p v-if="error" class="s-error" role="alert">{{ error }}</p>
     <BaseSkeleton v-if="loading && !data" height="240px" />
     <template v-if="data">
-      <StatGrid :stats="stats" />
-      <div class="s-toolbar">
-        <BaseTabs v-model="tab" :tabs="tabs" label="角色筛选" />
-        <label v-if="tab !== 'report'" class="s-search"
-          ><Search :size="14" /><input
-            v-model="query"
-            placeholder="搜索角色名称或编码"
-            aria-label="搜索角色"
-        /></label>
+      <p class="s-summary">
+        系统角色：<strong>{{ filters[3].count }} 个</strong
+        ><span
+          >· 自定义角色 {{ filters[4].count }} · 权限点 {{ PERMISSIONS.length }} ·
+          未使用的自定义角色 {{ unused }}</span
+        >
+      </p>
+      <div class="s-table-toolbar">
+        <template v-if="view === 'roles'">
+          <label class="s-table-search"
+            ><Search :size="17" /><input
+              v-model="query"
+              aria-label="搜索角色"
+              placeholder="搜索角色名称或编码" /></label
+          ><select v-model="filter" aria-label="筛选角色">
+            <option v-for="f in filters" :key="f.id" :value="f.id">
+              {{ f.label }}（{{ f.count }}）
+            </option>
+          </select>
+        </template>
+        <div class="s-table-actions">
+          <button
+            class="secondary-button"
+            :aria-pressed="view === 'report'"
+            @click="view = view === 'report' ? 'roles' : 'report'"
+          >
+            {{ view === 'report' ? '返回角色列表' : '权限报表' }}
+          </button>
+          <button v-if="manage" class="primary-button" @click="openCreate()">
+            <Plus :size="17" />新建角色
+          </button>
+        </div>
       </div>
 
-      <template v-if="tab !== 'report'">
-        <SettingsCard
-          v-for="s in sections"
-          :key="s.title"
-          :title="s.title"
-          :description="s.note"
-          flush
-        >
-          <div class="s-list">
-            <RouterLink
-              v-for="r in s.items"
-              :key="r.id"
-              :to="'/settings/roles/' + r.id"
-              class="s-list-row"
-            >
-              <span class="s-list-main">
-                <strong
-                  >{{ r.name }} <span class="s-mono role-code">{{ r.code }}</span></strong
-                >
-                <small>{{
-                  r.description ||
-                  (r.kind === 'composite' ? r.members.map((m) => m.name).join('、') : '')
-                }}</small>
-              </span>
-              <span class="s-list-side">
-                <BaseTag v-if="!r.builtIn" tone="purple">自定义</BaseTag>
-                <BaseTag v-if="r.status === 'inactive'" strike>停用</BaseTag>
-                <span>{{ r.permissions.length }} 个权限点</span>
-                <span>{{ usage(r) ? usage(r) + ' 次分配' : '未分配' }}</span>
-              </span>
-            </RouterLink>
+      <template v-if="view === 'roles'">
+        <div class="s-table-surface">
+          <div v-if="!rows.length" class="s-table-empty">
+            <ShieldCheck :size="32" />
+            <h2>没有匹配的角色</h2>
+            <p>调整搜索或筛选条件后再试。</p>
           </div>
-        </SettingsCard>
-        <p v-if="!sections.length" class="s-note">没有匹配的角色。</p>
+          <table v-else class="s-table">
+            <thead>
+              <tr>
+                <th>角色</th>
+                <th>类型</th>
+                <th class="hide-narrow">说明</th>
+                <th>权限点</th>
+                <th>分配</th>
+                <th class="actions-col">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in rows" :key="r.id" class="clickable" @click="openRow($event, r)">
+                <td>
+                  <RouterLink :to="detail(r)" class="s-table-name">{{ r.name }}</RouterLink
+                  ><span v-if="r.status === 'inactive'" class="s-badge muted">停用</span>
+                  <small class="mono">{{ r.code }}</small>
+                </td>
+                <td>
+                  <span>{{ typeText(r) }}</span>
+                  <small
+                    ><BaseTag v-if="!r.builtIn" tone="purple">自定义</BaseTag
+                    ><template v-else>系统角色</template></small
+                  >
+                </td>
+                <td class="hide-narrow description">
+                  {{
+                    r.description ||
+                    (r.kind === 'composite' ? r.members.map((m) => m.name).join('、') : '—')
+                  }}
+                </td>
+                <td>
+                  <span>{{ r.permissions.length }} 个权限点</span
+                  ><small v-if="r.kind === 'composite'"
+                    >由 {{ r.members.length }} 个单一角色组成</small
+                  >
+                </td>
+                <td>
+                  <span>{{ usage(r) ? usage(r) + ' 次分配' : '未分配' }}</span
+                  ><small>{{
+                    r.scope === 'organization' ? '在用户页中分配' : '在“成员与权限”中分配'
+                  }}</small>
+                </td>
+                <td>
+                  <div class="s-row-actions" @click.stop>
+                    <RouterLink :to="detail(r)" class="text-button">查看</RouterLink>
+                    <SettingsRowMenu
+                      v-if="manage"
+                      :label="r.name + '的更多操作'"
+                      :items="rowMenu(r)"
+                    />
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <footer class="s-table-footer">
+            <span>共 {{ filtered.length }} 个角色</span>
+            <div>
+              <button
+                class="icon-button"
+                aria-label="上一页"
+                :disabled="page === 1"
+                @click="page--"
+              >
+                <ChevronLeft :size="17" /></button
+              ><span>{{ page }} / {{ pages }}</span
+              ><button
+                class="icon-button"
+                aria-label="下一页"
+                :disabled="page === pages"
+                @click="page++"
+              >
+                <ChevronRight :size="17" />
+              </button>
+            </div>
+          </footer>
+        </div>
+        <p class="s-table-note">
+          项目级复合角色对应项目中的实际岗位，在“成员与权限”中分配；项目级单一角色是复合角色的组成部分，也可直接补充分配；企业级角色在用户页中分配，可带项目范围。
+        </p>
       </template>
 
       <div v-else class="report">
@@ -261,68 +327,24 @@ async function create() {
       </div>
     </template>
 
-    <BaseDialog
-      v-model:open="creating"
-      title="新建角色"
-      description="先确定编码、名称与类型；权限点在角色页中勾选。"
-      wide
-    >
-      <form class="create-form" @submit.prevent="create">
-        <div class="s-grid-2">
-          <label
-            >编码<input
-              v-model="draft.code"
-              class="s-input mono"
-              maxlength="40"
-              placeholder="Z_ 开头便于区分"
-          /></label>
-          <label>名称<input v-model="draft.name" class="s-input" maxlength="60" /></label>
-          <label
-            >类型<select v-model="draft.kind" class="s-select" @change="draft.copyFrom = ''">
-              <option value="single">单一角色（一组权限点）</option>
-              <option value="composite">复合角色（一组单一角色）</option>
-            </select></label
-          >
-          <label
-            >层级<select v-model="draft.scope" class="s-select" @change="draft.copyFrom = ''">
-              <option value="project">项目级（在项目中分配）</option>
-              <option value="organization">企业级（可带项目范围）</option>
-            </select></label
-          >
-        </div>
-        <label
-          >复制自<select v-model="draft.copyFrom" class="s-select">
-            <option value="">
-              {{ draft.kind === 'composite' ? '选择一个复合角色' : '不复制，从空白开始' }}
-            </option>
-            <option v-for="r in sources" :key="r.id" :value="r.id">
-              {{ r.name }}（{{ r.code }}）
-            </option>
-          </select></label
-        >
-        <label
-          >说明<textarea v-model="draft.description" class="s-textarea" maxlength="300" />
-        </label>
-        <p v-if="save.error.value" class="s-error" role="alert">{{ save.error.value }}</p>
-      </form>
-      <template #footer>
-        <BaseButton @click="creating = false">取消</BaseButton>
-        <BaseButton
-          variant="primary"
-          :loading="save.busy.value"
-          :disabled="!draft.name || draft.code.length < 2"
-          @click="create"
-          >创建</BaseButton
-        >
-      </template>
-    </BaseDialog>
+    <RoleDrawer
+      v-if="open"
+      ref="drawer"
+      :key="copying?.id ?? 'new'"
+      :roles="roles"
+      :copy="copying"
+      @created="onCreated"
+      @close="close"
+    />
   </SettingsPage>
 </template>
 <style scoped>
-.role-code {
-  margin-left: var(--space-1-5);
-  color: var(--text-subtle);
-  font-weight: var(--weight-400);
+.s-badge.muted {
+  vertical-align: middle;
+}
+.description {
+  max-width: 360px;
+  color: var(--text-muted);
 }
 .report {
   display: grid;
@@ -366,16 +388,6 @@ async function create() {
 }
 .report-pad {
   padding: var(--space-4);
-}
-.create-form {
-  display: grid;
-  gap: var(--space-3);
-}
-.create-form label {
-  display: grid;
-  gap: var(--space-1);
-  color: var(--text-muted);
-  font-size: var(--font-12);
 }
 @media (max-width: 860px) {
   .report {

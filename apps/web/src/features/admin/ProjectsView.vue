@@ -1,29 +1,28 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { Search } from '@lucide/vue';
+import { ChevronLeft, ChevronRight, FolderKanban, Plus, RefreshCw, Search } from '@lucide/vue';
 import {
   HEALTH,
   PROJECT_STATUSES,
   PROJECT_TYPES,
 } from '@sap-delivery-workbench/contracts/projects/options';
-import BaseButton from '../../components/base/BaseButton.vue';
-import BaseDialog from '../../components/base/BaseDialog.vue';
 import BaseSkeleton from '../../components/base/BaseSkeleton.vue';
-import BaseTabs from '../../components/base/BaseTabs.vue';
-import BaseTable from '../../components/base/BaseTable.vue';
 import BaseTag from '../../components/base/BaseTag.vue';
 import { toast } from '../../components/base/toast';
+import { askConfirmation } from '../../services/confirmation';
 import { can } from '../../services/session';
 import { loadProjects, projects as mine, selectProject } from '../../services/projectContext';
 import SettingsPage from '../settings/SettingsPage.vue';
-import StatGrid from '../settings/StatGrid.vue';
-import { useLoad, useSave } from '../settings/useLoad';
+import { useDrawerLeave } from '../settings/useDrawerLeave';
+import { useLoad } from '../settings/useLoad';
+import ProjectDrawer from './ProjectDrawer.vue';
 import { adminApi, type AdminUser, type Customer, type DirectoryProject } from './api';
 import '../settings/settings.css';
 
-// 企业 → 项目: every project of the organization, creating projects (with phases, milestones and
-// the project manager) and opening a project's settings.
+// 企业 → 项目: every project of the organization as a settings list (DESIGN.md 6.2), creating
+// projects (with phases, milestones and the project manager) in its drawer, and opening a
+// project's settings.
 const router = useRouter();
 const { data, loading, error, reload } = useLoad(adminApi.projects);
 const customers = ref<Customer[]>([]);
@@ -39,15 +38,18 @@ onMounted(async () => {
       : [];
   }
 });
-const tab = ref('open');
+const all = computed(() => data.value ?? []);
+const count = (f: (p: DirectoryProject) => boolean) => all.value.filter(f).length;
+
+const filter = ref('open');
 const query = ref('');
-const rows = computed(() => data.value ?? []);
-const shown = computed(() =>
-  rows.value
+const page = ref(1);
+const filtered = computed(() =>
+  all.value
     .filter((p) =>
-      tab.value === 'open'
+      filter.value === 'open'
         ? p.status !== 'archived'
-        : tab.value === 'archived'
+        : filter.value === 'archived'
           ? p.status === 'archived'
           : true,
     )
@@ -57,28 +59,10 @@ const shown = computed(() =>
         .includes(query.value.trim().toLowerCase()),
     ),
 );
-const tabs = computed(() => [
-  { id: 'open', label: '进行中', count: rows.value.filter((p) => p.status !== 'archived').length },
-  {
-    id: 'archived',
-    label: '已归档',
-    count: rows.value.filter((p) => p.status === 'archived').length,
-  },
-  { id: 'all', label: '全部', count: rows.value.length },
-]);
-const stats = computed(() => [
-  { label: '实施中', value: rows.value.filter((p) => p.status === 'active').length },
-  { label: '已上线', value: rows.value.filter((p) => p.status === 'live').length },
-  {
-    label: '健康度红',
-    value: rows.value.filter((p) => p.health === 'red').length,
-    tone: rows.value.some((p) => p.health === 'red') ? ('red' as const) : undefined,
-  },
-  {
-    label: '未指定项目经理',
-    value: rows.value.filter((p) => !p.managerName && p.status !== 'archived').length,
-  },
-]);
+const pages = computed(() => Math.max(1, Math.ceil(filtered.value.length / 10)));
+const rows = computed(() => filtered.value.slice((page.value - 1) * 10, page.value * 10));
+watch([filter, query], () => (page.value = 1));
+watch(pages, (n) => (page.value = Math.min(n, page.value)));
 const statusTone = {
   preparing: 'purple',
   active: 'blue',
@@ -87,224 +71,174 @@ const statusTone = {
   archived: 'neutral',
 } as const;
 const healthTone = { green: 'green', yellow: 'yellow', red: 'red' } as const;
+const planned = (p: DirectoryProject) =>
+  p.plannedStartDate || p.plannedEndDate
+    ? `计划 ${p.plannedStartDate ?? '—'} 至 ${p.plannedEndDate ?? '—'}`
+    : '';
 async function openProject(p: DirectoryProject) {
+  if (creating.value) {
+    if (!(await canLeave())) return;
+    creating.value = false;
+  }
   if (!mine.value.some((x) => x.id === p.id)) await loadProjects();
   await selectProject(p.id);
   await router.push('/settings/project/general');
 }
 
+// The drawer creates a project; leaving with an unsaved draft asks first.
 const creating = ref(false);
-const draft = ref({
-  customerId: '',
-  code: '',
-  name: '',
-  shortName: '',
-  projectType: 'implementation',
-  plannedStartDate: '',
-  plannedEndDate: '',
-  managerId: '',
-});
-const save = useSave();
-function openCreate() {
-  save.error.value = '';
-  draft.value = {
-    customerId: customers.value[0]?.id ?? '',
-    code: '',
-    name: '',
-    shortName: '',
-    projectType: 'implementation',
-    plannedStartDate: '',
-    plannedEndDate: '',
-    managerId: '',
-  };
-  creating.value = true;
+const drawer = ref<InstanceType<typeof ProjectDrawer> | null>(null);
+async function canLeave() {
+  if (drawer.value?.busy) return false;
+  return !drawer.value?.dirty || (await askConfirmation('放弃尚未保存的新项目？'));
 }
-async function create() {
-  const created = await save.run(() =>
-    adminApi.createProject({ ...draft.value, managerId: draft.value.managerId || null }),
-  );
-  if (created) {
-    creating.value = false;
-    toast('项目已创建，已生成 SAP Activate 阶段与预置里程碑。', 'green');
-    await Promise.all([reload(), loadProjects()]);
-  }
+async function close() {
+  if (await canLeave()) creating.value = false;
+}
+useDrawerLeave(canLeave, () => !!drawer.value?.dirty);
+async function created() {
+  creating.value = false;
+  toast('项目已创建，已生成 SAP Activate 阶段与预置里程碑。', 'green');
+  await Promise.all([reload(), loadProjects()]);
 }
 </script>
 <template>
   <SettingsPage
     title="项目"
     description="企业的全部项目。点开一个项目会切换到它，并打开它的设置。"
-    wide
+    list
+    :drawer="creating"
   >
     <template #actions>
-      <BaseButton v-if="can('project:create')" variant="primary" @click="openCreate"
-        >新建项目</BaseButton
-      >
+      <button class="icon-button" aria-label="刷新项目列表" :disabled="loading" @click="reload">
+        <RefreshCw :size="18" />
+      </button>
     </template>
     <p v-if="error" class="s-error" role="alert">{{ error }}</p>
     <BaseSkeleton v-if="loading && !data" height="240px" />
     <template v-if="data">
-      <StatGrid :stats="stats" />
-      <div class="s-toolbar">
-        <BaseTabs v-model="tab" :tabs="tabs" label="项目筛选" />
-        <label class="s-search"
-          ><Search :size="14" /><input
+      <p class="s-summary">
+        项目：<strong>{{ all.length }} 个</strong
+        ><span
+          >· 实施中 {{ count((p) => p.status === 'active') }} · 已上线
+          {{ count((p) => p.status === 'live') }} · 健康度红
+          {{ count((p) => p.health === 'red') }} · 未指定项目经理
+          {{ count((p) => !p.managerName && p.status !== 'archived') }}</span
+        >
+      </p>
+      <div class="s-table-toolbar">
+        <label class="s-table-search"
+          ><Search :size="17" /><input
             v-model="query"
-            placeholder="搜索项目、客户或项目经理"
             aria-label="搜索项目"
-        /></label>
+            placeholder="搜索项目、客户或项目经理" /></label
+        ><select v-model="filter" aria-label="项目筛选">
+          <option value="open">进行中（{{ count((p) => p.status !== 'archived') }}）</option>
+          <option value="archived">已归档（{{ count((p) => p.status === 'archived') }}）</option>
+          <option value="all">全部（{{ all.length }}）</option>
+        </select>
+        <div v-if="can('project:create')" class="s-table-actions">
+          <button class="primary-button" @click="creating = true">
+            <Plus :size="17" />新建项目
+          </button>
+        </div>
       </div>
-      <div class="table-card">
-        <BaseTable>
-          <table>
-            <thead>
-              <tr>
-                <th>项目</th>
-                <th>客户</th>
-                <th>类型</th>
-                <th>状态</th>
-                <th>项目经理</th>
-                <th>成员</th>
-                <th>上线</th>
-                <th>健康度</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="p in shown"
-                :key="p.id"
-                class="clickable"
-                tabindex="0"
-                @click="openProject(p)"
-                @keydown.enter="openProject(p)"
-              >
-                <td class="primary-cell">
-                  {{ p.name }}<small class="sub">{{ p.code }}</small>
-                </td>
-                <td>{{ p.customerName }}</td>
-                <td class="muted-cell">{{ PROJECT_TYPES[p.projectType as 'other'] }}</td>
-                <td>
+      <div class="s-table-surface">
+        <div v-if="!rows.length" class="s-table-empty">
+          <FolderKanban :size="32" />
+          <h2>{{ query ? '没有匹配的项目' : '这里还没有项目' }}</h2>
+          <p>
+            {{
+              query
+                ? '调整搜索或筛选条件后再试。'
+                : filter === 'archived'
+                  ? '归档的项目显示在这里。'
+                  : '新建项目后显示在这里。'
+            }}
+          </p>
+        </div>
+        <table v-else class="s-table">
+          <thead>
+            <tr>
+              <th>项目</th>
+              <th>客户</th>
+              <th>状态</th>
+              <th>项目经理</th>
+              <th class="hide-narrow">上线</th>
+              <th>健康度</th>
+              <th class="actions-col">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="p in rows" :key="p.id" class="clickable" @click="openProject(p)">
+              <td>
+                <button class="s-table-name" @click.stop="openProject(p)">{{ p.name }}</button>
+                <small class="mono">{{ p.code }}</small>
+              </td>
+              <td>
+                <span>{{ p.customerName }}</span
+                ><small>{{ PROJECT_TYPES[p.projectType as 'other'] }}</small>
+              </td>
+              <td>
+                <div class="s-table-tags">
                   <BaseTag :tone="statusTone[p.status as 'active']">{{
                     PROJECT_STATUSES[p.status as 'active']
                   }}</BaseTag>
                   <BaseTag v-if="p.isPaused" tone="yellow">暂停</BaseTag>
-                </td>
-                <td :class="{ 'muted-cell': !p.managerName }">{{ p.managerName ?? '未指定' }}</td>
-                <td class="muted-cell">{{ p.memberCount }}</td>
-                <td class="muted-cell">{{ p.goLive ?? '—' }}</td>
-                <td>
-                  <BaseTag v-if="p.health" :tone="healthTone[p.health as 'green']">{{
-                    HEALTH[p.health as 'green']
-                  }}</BaseTag>
-                  <span v-else class="muted-cell">—</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </BaseTable>
-        <p v-if="!shown.length" class="empty-note">
-          {{ query ? '没有匹配的项目。' : '这里还没有项目。' }}
-        </p>
+                </div>
+              </td>
+              <td>
+                <span :class="{ muted: !p.managerName }">{{ p.managerName ?? '未指定' }}</span
+                ><small>{{ p.memberCount }} 名成员</small>
+              </td>
+              <td class="hide-narrow">
+                <span :class="{ muted: !p.goLive }">{{ p.goLive ?? '—' }}</span
+                ><small v-if="planned(p)">{{ planned(p) }}</small>
+              </td>
+              <td>
+                <BaseTag v-if="p.health" :tone="healthTone[p.health as 'green']">{{
+                  HEALTH[p.health as 'green']
+                }}</BaseTag>
+                <span v-else class="muted">—</span>
+              </td>
+              <td>
+                <div class="s-row-actions" @click.stop>
+                  <button class="text-button" @click="openProject(p)">打开设置</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <footer class="s-table-footer">
+          <span>共 {{ filtered.length }} 个项目</span>
+          <div>
+            <button class="icon-button" aria-label="上一页" :disabled="page === 1" @click="page--">
+              <ChevronLeft :size="17" /></button
+            ><span>{{ page }} / {{ pages }}</span
+            ><button
+              class="icon-button"
+              aria-label="下一页"
+              :disabled="page === pages"
+              @click="page++"
+            >
+              <ChevronRight :size="17" />
+            </button>
+          </div>
+        </footer>
       </div>
+      <p class="s-table-note">
+        点开项目会切换到该项目并打开它的设置；成员、计划、SAP
+        系统等在项目设置中维护。项目数据无限期保留，归档后只读。
+      </p>
     </template>
-
-    <BaseDialog
-      v-model:open="creating"
-      title="新建项目"
-      description="创建后自动生成 SAP Activate 六个阶段与九个预置里程碑；指定的项目经理会以“项目经理”角色加入项目。"
-      wide
-    >
-      <form class="dialog-form" @submit.prevent="create">
-        <label
-          >客户<select v-model="draft.customerId" class="s-select" required>
-            <option v-for="c in customers" :key="c.id" :value="c.id">{{ c.name }}</option>
-          </select></label
-        >
-        <div class="s-grid-2">
-          <label
-            >项目编号<input v-model="draft.code" class="s-input mono" maxlength="32" required
-          /></label>
-          <label>简称<input v-model="draft.shortName" class="s-input" maxlength="20" /></label>
-        </div>
-        <label
-          >项目名称<input v-model="draft.name" class="s-input" maxlength="200" required
-        /></label>
-        <div class="s-grid-2">
-          <label
-            >项目类型<select v-model="draft.projectType" class="s-select">
-              <option v-for="(label, key) in PROJECT_TYPES" :key="key" :value="key">
-                {{ label }}
-              </option>
-            </select></label
-          >
-          <label
-            >项目经理<select v-model="draft.managerId" class="s-select">
-              <option value="">稍后在成员中指定</option>
-              <option v-for="u in users" :key="u.id" :value="u.id">
-                {{ u.displayName }}{{ u.position ? ' · ' + u.position.name : '' }}
-              </option>
-            </select></label
-          >
-          <label
-            >计划开始<input v-model="draft.plannedStartDate" class="s-input" type="date"
-          /></label>
-          <label
-            >计划结束<input v-model="draft.plannedEndDate" class="s-input" type="date"
-          /></label>
-        </div>
-        <p v-if="!customers.length" class="s-note">请先在“客户”中建立有效的客户。</p>
-        <p v-if="save.error.value" class="s-error" role="alert">{{ save.error.value }}</p>
-      </form>
-      <template #footer>
-        <BaseButton @click="creating = false">取消</BaseButton>
-        <BaseButton
-          variant="primary"
-          :loading="save.busy.value"
-          :disabled="!draft.customerId || !draft.code || !draft.name"
-          @click="create"
-          >创建</BaseButton
-        >
-      </template>
-    </BaseDialog>
+    <ProjectDrawer
+      v-if="creating"
+      ref="drawer"
+      key="new"
+      :customers="customers"
+      :users="users"
+      @created="created"
+      @close="close"
+    />
   </SettingsPage>
 </template>
-<style scoped>
-.table-card {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-12);
-  background: var(--panel);
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
-}
-.clickable {
-  cursor: pointer;
-}
-.clickable:focus-visible {
-  outline: none;
-  box-shadow: inset 0 0 0 2px var(--focus);
-}
-.sub {
-  display: block;
-  color: var(--text-muted);
-  font-size: var(--font-12);
-  font-weight: var(--weight-400);
-}
-td :deep(.base-tag) + :deep(.base-tag) {
-  margin-left: var(--space-1);
-}
-.empty-note {
-  margin: 0;
-  padding: var(--space-4);
-  color: var(--text-muted);
-}
-.dialog-form {
-  display: grid;
-  gap: var(--space-3);
-}
-.dialog-form label {
-  display: grid;
-  gap: var(--space-1);
-  color: var(--text-muted);
-  font-size: var(--font-12);
-}
-</style>

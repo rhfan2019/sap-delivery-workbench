@@ -144,13 +144,6 @@ button.s-list-row:hover {
   color: var(--text-muted);
   font-size: var(--font-12);
 }
-.s-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
 .s-search {
   display: flex;
   align-items: center;
@@ -343,6 +336,10 @@ button.s-list-row:hover {
 .s-table-name:disabled {
   cursor: default;
 }
+/* A main value that opens nothing: the weight of the name button without the button. */
+.s-table-main {
+  font-weight: var(--weight-550);
+}
 .s-table-person {
   display: flex;
   align-items: center;
@@ -364,8 +361,26 @@ button.s-list-row:hover {
   white-space: nowrap;
 }
 .s-badge.muted {
+  margin-top: 0;
   background: var(--neutral-fill-1);
   color: var(--text-muted);
+}
+/* A badge on the sub line or alone in a cell sits without the gap it keeps after a name. */
+.s-table small .s-badge,
+.s-table td > .s-badge:first-child {
+  display: inline-block;
+  margin-left: 0;
+}
+.s-table .muted {
+  margin-top: 0;
+  color: var(--text-muted);
+}
+.s-table .clamp {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--text-muted);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 .s-badge.warning {
   background: var(--yellow-fill-1);
@@ -409,6 +424,9 @@ button.s-list-row:hover {
 }
 .s-state.untested {
   color: var(--text-muted);
+}
+.s-state.warning {
+  color: var(--yellow-text-2);
 }
 .s-row-actions {
   display: flex;
@@ -571,8 +589,22 @@ button.s-list-row:hover {
   color: var(--text);
   font: inherit;
 }
+.s-field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 80px;
+  padding: var(--space-2) var(--space-2-5);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-6);
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  resize: vertical;
+}
 .s-field input:focus,
-.s-field select:focus {
+.s-field select:focus,
+.s-field textarea:focus {
   outline: 2px solid var(--focus);
   outline-offset: 1px;
 }
@@ -583,6 +615,12 @@ button.s-list-row:hover {
 }
 .s-field .mono {
   font-family: var(--font-mono);
+}
+/* A group of checkboxes in a drawer, wrapping in rows. */
+.s-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-5);
 }
 .s-drawer-body .s-check {
   margin-top: var(--space-4);
@@ -618,4 +656,23 @@ button.s-list-row:hover {
 }
 .s-drawer-foot button {
   font-size: var(--font-14);
+}
+
+/* A list inside a page of settings cards (团队与干系人, 计划与健康): a title in the weight of a
+   card's, one line of description, then the toolbar and table. */
+.s-list-section {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+.s-list-head h2 {
+  margin: 0;
+  font-size: var(--font-16);
+  font-weight: var(--weight-550);
+}
+.s-list-head p {
+  margin: var(--space-1) 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-12);
+  line-height: var(--leading-16);
 }

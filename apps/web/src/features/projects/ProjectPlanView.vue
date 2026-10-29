@@ -1,6 +1,19 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import {
+  AlertCircle,
+  CalendarClock,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Flag,
+  MinusCircle,
+  Plus,
+  Search,
+  Trash2,
+} from '@lucide/vue';
+import {
   HEALTH,
   HEALTH_DIMENSIONS,
   HEALTH_STALE_DAYS,
@@ -10,14 +23,17 @@ import {
   milestoneState,
 } from '@sap-delivery-workbench/contracts/projects/options';
 import BaseButton from '../../components/base/BaseButton.vue';
-import BaseDialog from '../../components/base/BaseDialog.vue';
 import BaseTag from '../../components/base/BaseTag.vue';
 import { toast } from '../../components/base/toast';
 import { askConfirmation } from '../../services/confirmation';
 import { api } from '../../services/session';
 import SettingsPage from '../settings/SettingsPage.vue';
 import SettingsCard from '../settings/SettingsCard.vue';
+import SettingsRowMenu from '../settings/SettingsRowMenu.vue';
+import { useDrawerLeave } from '../settings/useDrawerLeave';
 import { useSave } from '../settings/useLoad';
+import HealthDrawer from './HealthDrawer.vue';
+import MilestoneDrawer from './MilestoneDrawer.vue';
 import ProjectGate from './ProjectGate.vue';
 import {
   useProject,
@@ -28,7 +44,9 @@ import {
 } from './useProject';
 import '../settings/settings.css';
 
-// 项目 → 计划与健康 (docs/specs/project-access-admin.md 1.3, 1.6).
+// 项目 → 计划与健康 (docs/specs/project-access-admin.md 1.3, 1.6): health and phases as settings
+// cards, milestones as a settings list; adding a milestone or a health report is done in a
+// drawer (DESIGN.md 6.2).
 const { project, loading, error, replace, can, readOnly } = useProject();
 const phases = ref<Phase[]>([]);
 watch(project, (p) => (phases.value = p ? JSON.parse(JSON.stringify(p.phases)) : []), {
@@ -38,6 +56,7 @@ const phasesDirty = computed(
   () => !!project.value && JSON.stringify(phases.value) !== JSON.stringify(project.value.phases),
 );
 const planEditable = computed(() => can('project.plan:edit') && !readOnly.value);
+const healthEditable = computed(() => can('project.health:edit') && !readOnly.value);
 const phaseSave = useSave();
 async function savePhases() {
   const result = await phaseSave.run(() =>
@@ -51,44 +70,95 @@ async function savePhases() {
 
 const phaseName = (key: string | null) =>
   phases.value.find((p) => p.key === key)?.name ?? PHASES.find((p) => p.key === key)?.name ?? '—';
-const stateTone = {
-  achieved: 'green',
-  delayed: 'red',
-  due: 'yellow',
-  upcoming: 'neutral',
-  unplanned: 'neutral',
-} as const;
+type MilestoneState = keyof typeof MILESTONE_STATES;
+const stateClass: Record<MilestoneState, string> = {
+  achieved: 'passed',
+  delayed: 'failed',
+  due: 'warning',
+  upcoming: 'untested',
+  unplanned: 'untested',
+};
+const stateIcon = {
+  achieved: CheckCircle2,
+  delayed: AlertCircle,
+  due: Clock,
+  upcoming: CalendarClock,
+  unplanned: MinusCircle,
+};
 const milestones = computed(() =>
-  (project.value?.milestones ?? []).map((m) => ({ ...m, state: milestoneState(m) })),
+  (project.value?.milestones ?? []).map((m) => ({
+    ...m,
+    state: milestoneState(m) as MilestoneState,
+  })),
 );
 const counts = computed(() => ({
   achieved: milestones.value.filter((m) => m.state === 'achieved').length,
   delayed: milestones.value.filter((m) => m.state === 'delayed').length,
 }));
+const query = ref('');
+const stateFilter = ref('');
+const page = ref(1);
+const filtered = computed(() =>
+  milestones.value.filter(
+    (m) =>
+      (!stateFilter.value || m.state === stateFilter.value) &&
+      (m.name + phaseName(m.phaseKey) + m.notes)
+        .toLowerCase()
+        .includes(query.value.trim().toLowerCase()),
+  ),
+);
+const pages = computed(() => Math.max(1, Math.ceil(filtered.value.length / 10)));
+const rows = computed(() => filtered.value.slice((page.value - 1) * 10, page.value * 10));
+watch([query, stateFilter], () => (page.value = 1));
+watch(pages, (n) => (page.value = Math.min(n, page.value)));
 
-const editing = ref<Partial<Milestone> | null>(null);
-const milestoneSave = useSave();
-function openMilestone(m?: Milestone) {
-  milestoneSave.error.value = '';
-  editing.value = m
-    ? { ...m }
-    : { name: '', phaseKey: 'realize', plannedOn: null, achievedOn: null, notes: '' };
-}
-async function saveMilestone() {
-  const m = editing.value!;
-  const base = `/projects/${project.value!.id}/milestones`;
-  const result = await milestoneSave.run(() =>
-    m.id ? api<ProjectDetail>(`${base}/${m.id}`, m, 'PATCH') : api<ProjectDetail>(base, m),
+// The drawer holds one milestone or a health report at a time; opening another asks before
+// dropping changes.
+const panel = ref<'milestone' | 'health' | null>(null);
+const editing = ref<Milestone | null>(null);
+const drawer = ref<InstanceType<typeof MilestoneDrawer> | InstanceType<typeof HealthDrawer> | null>(
+  null,
+);
+async function canLeave() {
+  if (drawer.value?.busy) return false;
+  return (
+    !drawer.value?.dirty ||
+    (await askConfirmation(
+      panel.value === 'health' ? '放弃尚未保存的健康度修改？' : '放弃尚未保存的里程碑修改？',
+    ))
   );
-  if (result) {
-    replace(result);
+}
+async function openMilestone(m: Milestone | null) {
+  if (!planEditable.value) return;
+  if (panel.value === 'milestone' && m && editing.value?.id === m.id) return;
+  if (panel.value && !(await canLeave())) return;
+  editing.value = m;
+  panel.value = 'milestone';
+}
+async function openReport() {
+  if (!healthEditable.value || panel.value === 'health') return;
+  if (panel.value && !(await canLeave())) return;
+  editing.value = null;
+  panel.value = 'health';
+}
+async function close() {
+  if (await canLeave()) {
+    panel.value = null;
     editing.value = null;
-    toast('里程碑已保存。', 'green');
   }
 }
+useDrawerLeave(canLeave, () => !!drawer.value?.dirty);
+function saved(result: ProjectDetail) {
+  const kind = panel.value;
+  replace(result);
+  panel.value = null;
+  editing.value = null;
+  toast(kind === 'health' ? '健康度已更新。' : '里程碑已保存。', 'green');
+}
+const removal = useSave();
 async function removeMilestone(m: Milestone) {
   if (!(await askConfirmation(`删除里程碑“${m.name}”？`))) return;
-  const result = await milestoneSave.run(() =>
+  const result = await removal.run(() =>
     api<ProjectDetail>(
       `/projects/${project.value!.id}/milestones/${m.id}`,
       { rowVersion: m.rowVersion },
@@ -97,46 +167,34 @@ async function removeMilestone(m: Milestone) {
   );
   if (result) {
     replace(result);
-    editing.value = null;
+    if (editing.value?.id === m.id) {
+      panel.value = null;
+      editing.value = null;
+    }
   }
 }
+const rowMenu = (m: Milestone) => [
+  {
+    label: '删除',
+    icon: Trash2,
+    danger: true,
+    disabled: removal.busy.value || !!m.key,
+    title: m.key ? '预置里程碑不能删除' : '',
+    run: () => removeMilestone(m),
+  },
+];
 
-const levels = Object.entries(HEALTH) as [keyof typeof HEALTH, string][];
 const dimensions = Object.entries(HEALTH_DIMENSIONS) as [keyof typeof HEALTH_DIMENSIONS, string][];
-const pickRows: [string, string][] = [['overall', '综合'], ...dimensions];
 const levelOf = (h: HealthReport, key: string) => h[key as 'overall'] as keyof typeof HEALTH;
 const healthTone = { green: 'green', yellow: 'yellow', red: 'red' } as const;
 const latest = computed(() => project.value?.health[0]);
-const reporting = ref<Record<string, string> | null>(null);
-const healthSave = useSave();
-function openReport() {
-  healthSave.error.value = '';
-  const base = latest.value;
-  reporting.value = {
-    overall: base?.overall ?? 'green',
-    schedule: base?.schedule ?? 'green',
-    scope: base?.scope ?? 'green',
-    cost: base?.cost ?? 'green',
-    quality: base?.quality ?? 'green',
-    note: '',
-  };
-}
-async function saveReport() {
-  const result = await healthSave.run(() =>
-    api<ProjectDetail>(`/projects/${project.value!.id}/health`, reporting.value),
-  );
-  if (result) {
-    replace(result);
-    reporting.value = null;
-    toast('健康度已更新。', 'green');
-  }
-}
 </script>
 <template>
   <SettingsPage
     title="计划与健康"
     description="SAP Activate 阶段、关键里程碑，以及项目经理每周更新的健康度。"
     wide
+    :drawer="!!panel"
   >
     <ProjectGate :loading="loading" :error="error" :ready="!!project" :archived="readOnly">
       <template v-if="project">
@@ -145,9 +203,7 @@ async function saveReport() {
           :description="`每周更新一次；超过 ${HEALTH_STALE_DAYS} 天未更新会提示已过期。`"
         >
           <template #headerActions>
-            <BaseButton v-if="can('project.health:edit') && !readOnly" size="sm" @click="openReport"
-              >更新健康度</BaseButton
-            >
+            <BaseButton v-if="healthEditable" size="sm" @click="openReport">更新健康度</BaseButton>
           </template>
           <div v-if="latest" class="health-now">
             <div class="health-overall">
@@ -243,123 +299,141 @@ async function saveReport() {
           </div>
         </SettingsCard>
 
-        <SettingsCard
-          title="里程碑"
-          :description="`已达成 ${counts.achieved} 个${counts.delayed ? `，已延期 ${counts.delayed} 个` : ''}。开发冻结与上线会显示在开发清单与项目列表中。`"
-          flush
-        >
-          <template #headerActions>
-            <BaseButton v-if="planEditable" size="sm" @click="openMilestone()"
-              >新增里程碑</BaseButton
-            >
-          </template>
-          <div class="s-list">
-            <button
-              v-for="m in milestones"
-              :key="m.id"
-              type="button"
-              class="s-list-row"
-              :disabled="!planEditable"
-              @click="openMilestone(m)"
-            >
-              <span class="s-list-main">
-                <strong>{{ m.name }}</strong>
-                <small
-                  >{{ phaseName(m.phaseKey)
-                  }}<template v-if="m.notes"> · {{ m.notes }}</template></small
-                >
-              </span>
-              <span class="s-list-side">
-                <span v-if="m.achievedOn || m.plannedOn">{{
-                  m.achievedOn ? '实际 ' + m.achievedOn : '计划 ' + m.plannedOn
-                }}</span>
-                <BaseTag :tone="stateTone[m.state as keyof typeof stateTone]">{{
-                  MILESTONE_STATES[m.state as keyof typeof MILESTONE_STATES]
-                }}</BaseTag>
-              </span>
-            </button>
+        <section class="s-list-section" aria-labelledby="milestones-title">
+          <header class="s-list-head">
+            <h2 id="milestones-title">里程碑</h2>
+            <p>
+              已达成 {{ counts.achieved }} 个<template v-if="counts.delayed"
+                >，已延期 {{ counts.delayed }} 个</template
+              >。开发冻结与上线会显示在开发清单与项目列表中。
+            </p>
+          </header>
+          <p v-if="removal.error.value" class="s-error" role="alert">{{ removal.error.value }}</p>
+          <div class="s-table-toolbar">
+            <label class="s-table-search"
+              ><Search :size="17" /><input
+                v-model="query"
+                aria-label="搜索里程碑"
+                placeholder="搜索名称、阶段或说明" /></label
+            ><select v-model="stateFilter" aria-label="筛选里程碑状态">
+              <option value="">全部状态</option>
+              <option v-for="(label, key) in MILESTONE_STATES" :key="key" :value="key">
+                {{ label }}
+              </option>
+            </select>
+            <div v-if="planEditable" class="s-table-actions">
+              <button class="primary-button" @click="openMilestone(null)">
+                <Plus :size="17" />新增里程碑
+              </button>
+            </div>
           </div>
-        </SettingsCard>
+          <div class="s-table-surface">
+            <div v-if="!rows.length" class="s-table-empty">
+              <Flag :size="32" />
+              <h2>{{ query || stateFilter ? '没有匹配的里程碑' : '还没有里程碑' }}</h2>
+              <p>
+                {{
+                  query || stateFilter
+                    ? '调整搜索或筛选条件后再试。'
+                    : '新增里程碑并填写计划日期后显示在这里。'
+                }}
+              </p>
+            </div>
+            <table v-else class="s-table">
+              <thead>
+                <tr>
+                  <th>里程碑</th>
+                  <th class="hide-narrow">所在阶段</th>
+                  <th>日期</th>
+                  <th>状态</th>
+                  <th v-if="planEditable" class="actions-col">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="m in rows"
+                  :key="m.id"
+                  :class="{
+                    clickable: planEditable,
+                    selected: panel === 'milestone' && editing?.id === m.id,
+                  }"
+                  @click="openMilestone(m)"
+                >
+                  <td>
+                    <button
+                      class="s-table-name"
+                      :disabled="!planEditable"
+                      @click.stop="openMilestone(m)"
+                    >
+                      {{ m.name }}</button
+                    ><span v-if="m.key" class="s-badge muted">预置</span>
+                    <small>{{ m.notes || '—' }}</small>
+                  </td>
+                  <td class="hide-narrow">{{ phaseName(m.phaseKey) }}</td>
+                  <td>
+                    <span>{{ m.plannedOn ? '计划 ' + m.plannedOn : '未排期' }}</span
+                    ><small v-if="m.achievedOn">实际 {{ m.achievedOn }}</small>
+                  </td>
+                  <td>
+                    <span class="s-state" :class="stateClass[m.state]"
+                      ><component :is="stateIcon[m.state]" :size="17" />{{
+                        MILESTONE_STATES[m.state]
+                      }}</span
+                    >
+                  </td>
+                  <td v-if="planEditable">
+                    <div class="s-row-actions" @click.stop>
+                      <button class="text-button" @click="openMilestone(m)">编辑</button>
+                      <SettingsRowMenu :label="m.name + '的更多操作'" :items="rowMenu(m)" />
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <footer class="s-table-footer">
+              <span>共 {{ filtered.length }} 个里程碑</span>
+              <div>
+                <button
+                  class="icon-button"
+                  aria-label="上一页"
+                  :disabled="page === 1"
+                  @click="page--"
+                >
+                  <ChevronLeft :size="17" /></button
+                ><span>{{ page }} / {{ pages }}</span
+                ><button
+                  class="icon-button"
+                  aria-label="下一页"
+                  :disabled="page === pages"
+                  @click="page++"
+                >
+                  <ChevronRight :size="17" />
+                </button>
+              </div>
+            </footer>
+          </div>
+        </section>
       </template>
     </ProjectGate>
 
-    <BaseDialog
-      :open="!!editing"
-      :title="editing?.id ? '编辑里程碑' : '新增里程碑'"
-      :description="
-        editing?.key ? '预置里程碑可改名与改日期，不能删除；不需要时清空计划日期即可。' : undefined
-      "
-      @update:open="(v) => !v && (editing = null)"
-    >
-      <form v-if="editing" class="dialog-form" @submit.prevent="saveMilestone">
-        <label>名称<input v-model="editing.name" class="s-input" maxlength="60" required /></label>
-        <label
-          >所在阶段<select v-model="editing.phaseKey" class="s-select">
-            <option :value="null">未指定</option>
-            <option v-for="p in phases" :key="p.key" :value="p.key">{{ p.name }}</option>
-          </select></label
-        >
-        <div class="s-grid-2">
-          <label>计划日期<input v-model="editing.plannedOn" type="date" class="s-input" /></label>
-          <label>实际日期<input v-model="editing.achievedOn" type="date" class="s-input" /></label>
-        </div>
-        <label>说明<textarea v-model="editing.notes" class="s-textarea" maxlength="500" /></label>
-        <p v-if="milestoneSave.error.value" class="s-error" role="alert">
-          {{ milestoneSave.error.value }}
-        </p>
-      </form>
-      <template #footer>
-        <BaseButton
-          v-if="editing?.id && !editing.key"
-          variant="danger"
-          class="dialog-left"
-          @click="removeMilestone(editing as Milestone)"
-          >删除</BaseButton
-        >
-        <BaseButton @click="editing = null">取消</BaseButton>
-        <BaseButton
-          variant="primary"
-          :loading="milestoneSave.busy.value"
-          :disabled="!editing?.name"
-          @click="saveMilestone"
-          >保存</BaseButton
-        >
-      </template>
-    </BaseDialog>
-
-    <BaseDialog
-      :open="!!reporting"
-      title="更新健康度"
-      description="四个维度各取绿、黄、红；综合状态由你判断，不自动取最差值。"
-      @update:open="(v) => !v && (reporting = null)"
-    >
-      <form v-if="reporting" class="dialog-form" @submit.prevent="saveReport">
-        <fieldset v-for="[key, label] in pickRows" :key="key" class="health-pick">
-          <legend>{{ label }}</legend>
-          <label v-for="[level, name] in levels" :key="level" class="health-option" :class="level">
-            <input v-model="reporting[key]" type="radio" :name="'h-' + key" :value="level" />
-            <i :class="'dot ' + level" aria-hidden="true"></i>{{ name }}
-          </label>
-        </fieldset>
-        <label
-          >一句话说明<textarea
-            v-model="reporting.note"
-            class="s-textarea"
-            maxlength="500"
-            placeholder="如：蓝图签字延期一周，已调整开发计划"
-          />
-        </label>
-        <p v-if="healthSave.error.value" class="s-error" role="alert">
-          {{ healthSave.error.value }}
-        </p>
-      </form>
-      <template #footer>
-        <BaseButton @click="reporting = null">取消</BaseButton>
-        <BaseButton variant="primary" :loading="healthSave.busy.value" @click="saveReport"
-          >保存</BaseButton
-        >
-      </template>
-    </BaseDialog>
+    <MilestoneDrawer
+      v-if="project && panel === 'milestone'"
+      ref="drawer"
+      :key="editing?.id ?? 'new'"
+      :project-id="project.id"
+      :milestone="editing"
+      :phases="phases"
+      @saved="saved"
+      @close="close"
+    />
+    <HealthDrawer
+      v-else-if="project && panel === 'health'"
+      ref="drawer"
+      :project-id="project.id"
+      :latest="latest"
+      @saved="saved"
+      @close="close"
+    />
   </SettingsPage>
 </template>
 <style scoped>
@@ -438,56 +512,5 @@ async function saveReport() {
   color: var(--text-muted);
   font-size: var(--font-12);
   font-weight: var(--weight-550);
-}
-.dialog-form {
-  display: grid;
-  gap: var(--space-3);
-}
-.dialog-form label:not(.health-option) {
-  display: grid;
-  gap: var(--space-1);
-  font-size: var(--font-12);
-  color: var(--text-muted);
-}
-.dialog-left {
-  margin-right: auto;
-}
-.health-pick {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-.health-pick legend {
-  float: left;
-  width: 48px;
-  color: var(--text-muted);
-  font-size: var(--font-12);
-}
-.health-option {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1-5);
-  height: var(--control-tab);
-  padding: 0 var(--space-2-5);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-6);
-  cursor: pointer;
-}
-.health-option input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-.health-option:has(input:checked) {
-  border-color: var(--border-emphasis);
-  background: var(--selected);
-  font-weight: var(--weight-550);
-}
-.health-option:has(input:focus-visible) {
-  box-shadow: 0 0 0 2px var(--focus);
 }
 </style>

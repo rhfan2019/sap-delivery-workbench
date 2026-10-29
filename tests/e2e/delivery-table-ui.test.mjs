@@ -75,6 +75,9 @@ test('development list: page/batch/row actions, inline edit, grouped drawer, col
       'delivery.item:import',
       'delivery.item:export',
       'delivery.config:manage',
+      // The development list links an assistant only for those who may run it (c16f934).
+      'agent.fsd:run',
+      'agent.dev:run',
     ],
     limits: {},
   };
