@@ -42,6 +42,7 @@ import {
   isRecord,
   linkPath,
   openInNewTab,
+  openPage,
   pageKey,
   startTabs,
   stopTabs,
@@ -135,7 +136,7 @@ function openFirst() {
   const rank = (label: string) =>
     label.toLowerCase() === q ? 0 : label.toLowerCase().includes(q) ? 1 : 2;
   const best = [...items].sort((a, b) => rank(a.label) - rank(b.label))[0];
-  if (best) void router.push(best.path);
+  if (best) void openPage(best.path);
 }
 const record = computed(() => route.path.includes('/development-items/'));
 const narrow = useMediaQuery('(max-width: 760px)');
@@ -225,16 +226,21 @@ watch(
   },
   { flush: 'post' },
 );
-// Ctrl / ⌘ or middle click on a menu entry or a module opens it in a new tab; right click
-// offers the same (DESIGN.md 4.1 “标签栏”).
-function newTabClick(event: MouseEvent) {
+// A click on a menu entry or a module brings its tab forward or opens one; Ctrl / ⌘ or middle
+// click always opens a new tab, and right click offers it (workbench-tabs.md 3).
+function menuClick(event: MouseEvent) {
   const middle = event.type === 'auxclick' && event.button === 1;
-  if (!middle && !(event.type === 'click' && (event.ctrlKey || event.metaKey))) return;
+  if (event.type === 'auxclick' && !middle) return;
   const path = linkPath(event.target);
   if (!path) return;
   event.preventDefault();
   event.stopPropagation();
-  void openInNewTab(path);
+  if (middle || event.ctrlKey || event.metaKey) void openInNewTab(path);
+  else {
+    if (event.currentTarget instanceof HTMLElement && event.currentTarget.matches('.rail'))
+      openModule();
+    void openPage(path);
+  }
 }
 function linkItems(target: EventTarget | null): ContextItem[] | null {
   const path = linkPath(target);
@@ -321,8 +327,8 @@ const keys = [
       <aside
         class="rail"
         aria-label="模块"
-        @click.capture="newTabClick"
-        @auxclick.capture="newTabClick"
+        @click.capture="menuClick"
+        @auxclick.capture="menuClick"
       >
         <RouterLink to="/home" class="mark" aria-label="SAP 智能交付工作台">S</RouterLink>
         <BaseIconButton
@@ -361,8 +367,8 @@ const keys = [
       <nav
         class="menu"
         :aria-label="module.label + '菜单'"
-        @click.capture="newTabClick"
-        @auxclick.capture="newTabClick"
+        @click.capture="menuClick"
+        @auxclick.capture="menuClick"
       >
         <BaseResizeHandle
           v-if="!narrow && !hidden && !record"

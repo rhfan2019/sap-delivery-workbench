@@ -1,15 +1,14 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
 import { Keyboard, LogOut, Settings } from '@lucide/vue';
 import BaseAvatar from './base/BaseAvatar.vue';
 import BaseMenu from './base/BaseMenu.vue';
 import BaseMenuItem from './base/BaseMenuItem.vue';
 import BaseMenuSeparator from './base/BaseMenuSeparator.vue';
 import { identity } from '../services/session';
+import { openPage } from '../services/tabs';
 // The account menu at the foot of the icon rail.
 defineProps<{ busy: boolean }>();
 const emit = defineEmits<{ logout: []; shortcuts: [] }>();
-const router = useRouter();
 </script>
 <template>
   <BaseMenu side="right" align="end">
@@ -26,7 +25,7 @@ const router = useRouter();
       </div>
     </div>
     <BaseMenuSeparator />
-    <BaseMenuItem @select="router.push('/settings/profile')"
+    <BaseMenuItem @select="openPage('/settings/profile')"
       ><template #icon><Settings /></template>个人设置</BaseMenuItem
     >
     <BaseMenuItem kbd="?" @select="emit('shortcuts')"

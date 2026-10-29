@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
 import { DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTitle } from 'reka-ui';
 import { CornerDownLeft, FolderOpen, Search } from '@lucide/vue';
 import AppIcon from './AppIcon.vue';
 import BaseKbd from './base/BaseKbd.vue';
 import { menus, visible } from '../features/navigation';
 import { identity } from '../services/session';
+import { openPage } from '../services/tabs';
 import { currentProject, projectAccess, projects, selectProject } from '../services/projectContext';
 
 // Command palette (Ctrl K): go to any page or switch project by typing.
 const open = defineModel<boolean>('open', { default: false });
-const router = useRouter();
 const query = ref('');
 const index = ref(0);
 const input = ref<HTMLInputElement | null>(null);
@@ -26,7 +25,7 @@ const entries = computed<Entry[]>(() => {
       label: m.label,
       note: m.planned ? '规划中' : m.path.startsWith('/settings') ? '设置' : '页面',
       icon: m.icon,
-      run: () => void router.push(m.path),
+      run: () => void openPage(m.path),
     }));
   const switches: Entry[] = projects.value
     .filter((p) => p.id !== currentProject.value)

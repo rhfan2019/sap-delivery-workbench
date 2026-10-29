@@ -34,6 +34,7 @@ test('workbench tabs open, follow, close and come back', async () => {
             { path: 'home', component: page },
             { path: 'settings', component: page },
             { path: 'settings/users', component: page },
+            { path: 'settings/users/:id', component: page },
             { path: 'workspace/development-items', component: page, meta: { keepOnQuery: true } },
             { path: 'projects/:p/development-items/:i/design', component: page },
           ],
@@ -53,6 +54,35 @@ test('workbench tabs open, follow, close and come back', async () => {
     assert.deepEqual(labels(), ['开发清单', '用户', '设置']);
     assert.equal(active(), '用户');
     assert.equal(router.currentRoute.value.fullPath, '/settings/users');
+
+    // A menu entry has one tab: clicking it again brings that tab forward instead of adding one;
+    // a details page counts as its list's tab; a new entry opens right of the current tab.
+    await t.openPage('/settings');
+    assert.deepEqual(labels(), ['开发清单', '用户', '设置']);
+    assert.equal(active(), '设置');
+    await router.push('/settings/users/42');
+    await t.activateTab(t.tabs.value[0].id);
+    await t.openPage('/settings/users');
+    assert.equal(t.tabs.value.length, 3);
+    assert.equal(router.currentRoute.value.fullPath, '/settings/users');
+    await t.openPage('/workspace/development-items');
+    assert.equal(active(), '开发清单');
+    await t.activateTab(t.tabs.value[2].id);
+    await router.push('/settings');
+    await t.openPage('/home');
+    assert.deepEqual(labels(), ['开发清单', '用户', '设置', '工作台']);
+    await router.push('/settings/users');
+    assert.deepEqual(labels(), ['开发清单', '用户', '设置', '用户']);
+    await t.closeTab(t.activeTab.value.id);
+    await t.openPage('/settings/users');
+    assert.equal(active(), '用户');
+    assert.equal(t.tabs.value.length, 3);
+    await router.push('/settings/users/7');
+    await t.activateTab(t.tabs.value[0].id);
+    await t.openPage('/settings/users');
+    assert.equal(router.currentRoute.value.fullPath, '/settings/users/7');
+    assert.equal(t.tabs.value.length, 3);
+    await router.push('/settings/users');
 
     // A plain navigation changes the current tab; pages outside the shell leave tabs alone.
     await router.push('/home');

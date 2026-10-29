@@ -150,6 +150,21 @@ export async function openInNewTab(path: string) {
   return go(target, { id, open: at });
 }
 
+// A menu entry has one tab (workbench-tabs.md 2, 3): opening it from the menu, a module, the
+// command palette or the settings search brings its tab forward, the one on exactly its address
+// first, else one on a page of it (a user's details belong to “用户”); only without one does a
+// tab open.
+const pathOf = (fullPath: string) => fullPath.split(/[?#]/)[0]!;
+export async function openPage(path: string) {
+  if (!router) return false;
+  const target = pathOf(router.resolve(path).fullPath);
+  const entry = entryOf(target)?.id;
+  const tab =
+    tabs.value.find((t) => pathOf(t.path) === target) ??
+    (entry ? tabs.value.find((t) => entryOf(pathOf(t.path))?.id === entry) : undefined);
+  return tab ? activateTab(tab.id) : openInNewTab(path);
+}
+
 // A page with unsaved changes asks before its tab closes (the shared confirmation dialog).
 const leaveChecks = new Map<string, () => Promise<boolean> | boolean>();
 export function useTabLeave(check: () => Promise<boolean> | boolean) {
