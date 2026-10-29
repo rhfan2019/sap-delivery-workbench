@@ -14,14 +14,16 @@
 - [项目主数据、权限与后台管理设计](specs/project-access-admin.md)：项目主数据扩展、职位 / 角色 / 复合角色 / 数据权限、项目 SAP 系统与个人凭据安全策略、对照 Plain 的设置菜单体系（已实施，执行记录见第 8 节）。
 - [权限测试](plans/2026-10-18-permission-test.md)：虚拟测试项目中模块组长、项目经理、开发组长的测试账号、预期权限矩阵、自动验证结果（71/71）与手工测试清单。
 - [开发清单重构设计](specs/development-list.md)：字段口径、数据库表设计、标签与自定义列、接口与实施结果（已实施）。
-- [abap-fsd-agent 端到端测试](plans/2026-10-12-abap-fsd-agent-e2e-test.md)：DEV-0031 测试脚本、结果、结论与问题分析（E2E-01～06，本轮问题的唯一权威清单）。
-- [abap-fsd-agent 交接文档](plans/2026-10-12-abap-fsd-agent-handover.md)：新会话接手入口：现状、运行方法、待办与协作约定。
+- [abap-fsd-agent 端到端测试](plans/2026-10-12-abap-fsd-agent-e2e-test.md)：DEV-0031 测试脚本、结果、结论与问题的原始分析（E2E-01～06；现状以待办清单为准）。
+- [设计助手交接文档](plans/2026-10-12-abap-fsd-agent-handover.md)：设计助手工作线的新会话入口（现行，持续更新）。
 - [ABAP 开发助手方向决策](architecture/2026-10-13-abap-dev-agent-direction-decision.md)：abap-dev-agent 的工作模式、产物、框架加载、工具、校验与模块拆分（已确认）。
 - [abap-dev-agent 实施计划](plans/2026-10-14-abap-dev-agent-implementation.md)：契约修订、抽取 agent-core、开发助手后端与前端、端到端验证与进度。
-- [abap-dev-agent 端到端测试](plans/2026-10-14-abap-dev-agent-e2e-test.md)：真实模型与 SAP 下的场景、结论与问题清单（DEV-E2E-01～05）。
-- [abap-dev-agent 测试交接文档](plans/2026-10-15-abap-dev-agent-handover.md)：新会话接手入口：现状、运行与观察方法、测试资产、测试重点、已知问题与协作约定。
+- [abap-dev-agent 端到端测试](plans/2026-10-14-abap-dev-agent-e2e-test.md)：真实模型与 SAP 下的场景、结论与问题的原始分析（DEV-E2E-01～06；现状以待办清单为准）。
+- [开发助手交接文档](plans/2026-10-15-abap-dev-agent-handover.md)：开发助手测试工作线的新会话入口（现行，持续更新）。
+- [智能助手前端交互交接文档](plans/2026-10-16-agent-frontend-handover.md)：两个助手共用前端工作台的新会话入口（现行，持续更新）。
+- [智能助手本机运行与观察](guides/agent-operations.md)：启动与重启、登录、观察一轮运行、模型与代理、测试项目与 SAP、审计与优化建议流程，各交接文档共用。
 - abap-dev-agent 系统指令：[主指令](../apps/api/src/modules/abap-dev-agent/prompts/system.md)、[可执行程序规范](../apps/api/src/modules/abap-dev-agent/prompts/report.md)与[范例](../apps/api/src/modules/abap-dev-agent/prompts/report-example.abap)，框架类内置副本在 [frameworks/](../apps/api/src/modules/abap-dev-agent/frameworks/)。
-- [待办与问题清单](plans/backlog.md)：日常发现的小问题和零散改进，攒批统一处理。
+- [待办与问题清单](plans/backlog.md)：所有未完成事项的唯一入口（日常问题、专项测试问题、交接待办）；已完成的移到 [已完成清单](archive/backlog-done.md)。
 - [SAP 开发者导读](guides/sap-developer-orientation.md)：用 SAP / Fiori 概念对照本仓库的目录、模块、一条完整调用链路与文档阅读顺序，新人入口。
 - [查看开发数据库与表关系图](guides/database-browsing.md)：本项目自带的 pgAdmin（`npm run db:admin`，127.0.0.1:5051）的登录、预登记的开发库与 ERD 画图方法。
 - [表格页面模板：开发清单](guides/table-page-template.md)：按钮分类、行内编辑、详情抽屉与新表格页面接入约定。

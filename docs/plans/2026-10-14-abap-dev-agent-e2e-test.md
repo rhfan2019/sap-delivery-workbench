@@ -1,6 +1,6 @@
 # abap-dev-agent 端到端测试
 
-> 2026-10-14。依据：[实施计划](2026-10-14-abap-dev-agent-implementation.md)第 7 节、[方向决策](../architecture/2026-10-13-abap-dev-agent-direction-decision.md)第 10 节。环境：本机开发环境，目标系统 SELF-S4H-2020（S4CORE 105 · SAP_BASIS 755，client 100），组织默认模型 Gemini 3.1 Pro Preview。本文是本轮问题的唯一权威清单。
+> 2026-10-14。依据：[实施计划](2026-10-14-abap-dev-agent-implementation.md)第 7 节、[方向决策](../architecture/2026-10-13-abap-dev-agent-direction-decision.md)第 10 节。环境：本机开发环境，目标系统 SELF-S4H-2020（S4CORE 105 · SAP_BASIS 755，client 100），组织默认模型 Gemini 3.1 Pro Preview。本文保存本轮问题的原始分析；现状与优先级以[待办与问题清单](backlog.md)为准。
 
 ## 1. 结论
 
