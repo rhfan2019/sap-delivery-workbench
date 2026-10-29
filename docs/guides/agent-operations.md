@@ -7,6 +7,7 @@
 - 启动 / 停止：双击 `start.cmd` / `stop.cmd`，或 `npm start` / `npm stop`。启动器逐项确认数据库、API、前端页面与代理都可用后才提示成功；开机后首次启动较慢（可能一分钟左右）。日志在 `.runtime/web.log`。
 - **API 不热更新**：改后端代码或提示词（`prompts/`）后要重启才生效；前端改动由 Vite 热更新。
 - **重启前确认没有运行中的轮次**：重启会打断正在运行的对话。先查 `app.abap_fsd_agent_turn`、`app.abap_dev_agent_turn` 中 `status='running'` 的记录；有则先问用户。
+- 页面某些入口点了没反应、控制台出现 `504 (Outdated Optimize Dep)` 或 `Failed to fetch dynamically imported module`：开发服务的依赖打包缓存被替换了，重启服务即可。测试已用单独的缓存（`node_modules/.vite-test`，BUG-008）；另起 Vite 时不要用开发服务的缓存目录。
 - 内置浏览器预览：`.claude/launch.json` 的 `dev` 配置只连接已运行的 5173，不另起进程；`.claude` 目录不入库（契约 1.11）。
 
 ## 2. 登录

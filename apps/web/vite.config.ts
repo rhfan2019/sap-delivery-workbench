@@ -16,4 +16,7 @@ export default defineConfig({
   // Crawl every page, lazy routes included, so the dev server bundles all dependencies at start
   // instead of re-bundling (and failing the page's import) the first time an assistant page opens.
   optimizeDeps: { entries: ['index.html', 'src/**/*.vue'] },
+  // Tests start their own Vite servers on this root; with the dev server's cache they would
+  // replace its bundled dependencies while it runs, and every page loaded later would fail.
+  cacheDir: process.env.NODE_ENV === 'test' ? 'node_modules/.vite-test' : 'node_modules/.vite',
 });
