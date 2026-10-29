@@ -188,6 +188,7 @@
   --layout-details: 384px;
   /* The model editor drawer. */
   --layout-drawer: 480px;
+  --layout-drawer-wide: 720px;
   /* The record page bar and the side panel headers line up at one height. */
   --layout-record-bar: 48px;
   /* The tab bar above the content panel and the width a tab grows and shrinks within. */

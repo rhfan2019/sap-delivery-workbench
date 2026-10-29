@@ -256,17 +256,18 @@ Excel 读写需要新增一个依赖（候选 `exceljs`），实施前按契约�
 - **共享字段目录**：`packages/contracts/delivery/fields.mjs`。字段键：基本字段用名称（如 `name`），阶段字段用 `阶段.字段`（如 `fsd.status`、`development.effortDays`），自定义列用 `custom.<id>`，另有 `tags`、`objects`。
 - **接口**（前缀 `/api/projects/:projectId`）：
 
-  | 接口                                                      | 说明                                                                      |
-  | --------------------------------------------------------- | ------------------------------------------------------------------------- |
-  | `GET /development-items`                                  | 清单：开发项（含阶段、对象、标签、自定义值）、成员、标签、自定义列        |
-  | `POST /development-items`、`PATCH /development-items/:id` | 新建；按字段键修改（带 `rowVersion`）                                     |
-  | `DELETE /development-items/:id`                           | 软删除，编号不复用                                                        |
-  | `POST /development-items/batch`                           | `action`：`update`（含 `addTags`/`removeTags`）、`copy`、`delete`；单事务 |
-  | `POST /development-items/export`                          | 导出 Excel（指定 `ids` 与列 `keys`）                                      |
-  | `GET /development-items/import-template`                  | 导入模板（含下拉选项与填写说明）                                          |
-  | `POST /development-items/import/preview`、`/import`       | 导入检查预览；确认导入（全部通过才写入）                                  |
-  | `/development-tags`                                       | 标签增删改                                                                |
-  | `/development-fields`                                     | 自定义列定义（项目管理员）；删除即归档                                    |
+  | 接口                                                                                             | 说明                                                                         |
+  | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+  | `GET /development-items`                                                                         | 清单：开发项（含阶段、对象、标签、自定义值）、成员、标签、自定义列           |
+  | `POST /development-items`、`PATCH /development-items/:id`                                        | 新建；按字段键修改（带 `rowVersion`）                                        |
+  | `DELETE /development-items/:id`                                                                  | 软删除，编号不复用                                                           |
+  | `POST /development-items/batch`                                                                  | `action`：`update`（含 `addTags`/`removeTags`）、`copy`、`delete`；单事务    |
+  | `POST /development-items/export`                                                                 | 导出 Excel（指定 `ids` 与列 `keys`）                                         |
+  | `GET /development-items/import-template`                                                         | 导入模板（含下拉选项与填写说明）                                             |
+  | `POST /development-items/import/preview`、`/import`                                              | 导入检查预览；确认导入（全部通过才写入）                                     |
+  | `GET`、`POST /development-items/:id/files`、`GET`、`DELETE /development-items/:id/files/:fileId` | 附件列表、上传、下载、删除（删除写开发项事件 `file_removed`，2026-10-29 起） |
+  | `/development-tags`                                                                              | 标签增删改                                                                   |
+  | `/development-fields`                                                                            | 自定义列定义（项目管理员）；删除即归档                                       |
 
 - **测试副本**（`/:id/test-copy`）：编号取新流水号，名称加测试前缀，FSD 负责人为发起人。
 - **删除**：旧的报表案例导入脚本 `scripts/maintenance/import-report-cases.mjs` 由 Excel 导入替代后删除。

@@ -525,6 +525,9 @@ button.s-list-row:hover {
   color: var(--text);
   box-shadow: var(--shadow-dialog);
 }
+.s-drawer.wide {
+  width: var(--layout-drawer-wide);
+}
 .s-drawer > form {
   display: flex;
   flex-direction: column;

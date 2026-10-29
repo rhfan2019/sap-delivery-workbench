@@ -62,6 +62,22 @@ export function fileRoutes(app, c) {
       throw error;
     }
   });
+  // The stored file goes only after the row is gone for good; a file already missing is fine.
+  app.delete(base + '/:id/files/:fileId', async (req) => {
+    const removed = await c.write(req, 'delivery.item:edit', async (db, current, project) => {
+      await c.allow(db, project, await c.item(db, req), 'delivery.item:edit');
+      uuid(req.params.fileId);
+      const { rows } = await db.query(
+        'DELETE FROM app.development_file WHERE organization_id=$1 AND item_id=$2 AND id=$3 RETURNING id,name',
+        [c.organizationId, req.params.id, req.params.fileId],
+      );
+      if (!rows[0]) throw failure(404, '附件不存在。');
+      await c.event(db, req, current, 'file_removed', { name: rows[0].name });
+      return rows[0];
+    });
+    await unlink(join(folder, removed.id)).catch(() => {});
+    return { ok: true };
+  });
   app.get(base + '/:id/files/:fileId', async (req, reply) => {
     await c.read(req);
     await c.item(c.pool, req);

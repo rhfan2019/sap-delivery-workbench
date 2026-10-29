@@ -1,25 +1,36 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
-import { ChevronLeft, ChevronRight, Plus, RefreshCw, Search, Users } from '@lucide/vue';
+import { useRoute, useRouter } from 'vue-router';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  RefreshCw,
+  Search,
+  UserCheck,
+  Users,
+  UserX,
+} from '@lucide/vue';
 import { PERSON_TYPES } from '@sap-delivery-workbench/contracts/access/catalog';
 import BaseAvatar from '../../components/base/BaseAvatar.vue';
 import BaseButton from '../../components/base/BaseButton.vue';
 import BaseDialog from '../../components/base/BaseDialog.vue';
 import BaseSkeleton from '../../components/base/BaseSkeleton.vue';
 import BaseTag from '../../components/base/BaseTag.vue';
+import { toast } from '../../components/base/toast';
 import { askConfirmation } from '../../services/confirmation';
-import { can } from '../../services/session';
+import { can, identity } from '../../services/session';
 import SettingsPage from '../settings/SettingsPage.vue';
+import SettingsRowMenu from '../settings/SettingsRowMenu.vue';
 import { useDrawerLeave } from '../settings/useDrawerLeave';
-import { useLoad } from '../settings/useLoad';
+import { useLoad, useSave } from '../settings/useLoad';
 import { accessApi, day, expiresSoon, type Position } from '../access/api';
 import { adminApi, type AdminUser } from './api';
+import UserDetailDrawer from './UserDetailDrawer.vue';
 import UserDrawer from './UserDrawer.vue';
 import '../settings/settings.css';
 
-// 企业 → 用户: a settings list (DESIGN.md 6.2); a user opens on their own page, a new one is
-// created in the drawer.
+// 企业 → 用户: a settings list (DESIGN.md 6.2); a user is created and edited in the drawer.
 const router = useRouter();
 const { data, loading, error, reload } = useLoad(adminApi.users);
 const positions = ref<Position[]>([]);
@@ -68,36 +79,85 @@ const admins = computed(
   () => users.value.filter((u) => u.roles.some((r) => r.code === 'SYS_SUPER_ADMIN')).length,
 );
 const expiring = computed(() => users.value.filter(soon).length);
-const detail = (u: AdminUser) => '/settings/users/' + u.id;
-// A click on the row opens the user's page; the name and 查看 are links of their own.
-function openRow(e: MouseEvent, u: AdminUser) {
-  if ((e.target as Element).closest('a, button')) return;
-  void router.push(detail(u));
-}
+const self = (u: AdminUser) => u.id === identity.value?.user.id;
 
-// The drawer creates a user; the temporary password is then shown once in a small dialog.
-const open = ref(false);
-const drawer = ref<InstanceType<typeof UserDrawer> | null>(null);
+// The drawer (DESIGN.md 5 “抽屉”): a new user, or one user at a time in the wide drawer; another
+// row asks before dropping changes. `?user=<id>` opens that user's drawer and follows it, so the
+// workbench tab keeps the address.
+const route = useRoute();
+const here = route.path;
+const creating = ref(false);
+const openId = ref<string | null>(null);
+const createDrawer = ref<InstanceType<typeof UserDrawer> | null>(null);
+const userDrawer = ref<InstanceType<typeof UserDetailDrawer> | null>(null);
 const created = ref<{ user: AdminUser; temporaryPassword: string; granted: string[] } | null>(null);
+const current = () => (creating.value ? createDrawer.value : userDrawer.value);
 async function canLeave() {
-  if (drawer.value?.busy) return false;
-  return !drawer.value?.dirty || (await askConfirmation('放弃尚未保存的新用户？'));
+  const d = current();
+  if (d?.busy) return false;
+  return (
+    !d?.dirty ||
+    (await askConfirmation(creating.value ? '放弃尚未保存的新用户？' : '放弃尚未保存的用户修改？'))
+  );
 }
-function openCreate() {
-  open.value = true;
+function follow(id: string | null) {
+  const query = { ...route.query };
+  if (id) query.user = id;
+  else delete query.user;
+  void router.replace({ query }).catch(() => {});
+}
+async function openUser(id: string) {
+  if (openId.value === id) return;
+  if ((creating.value || openId.value) && !(await canLeave())) return;
+  creating.value = false;
+  openId.value = id;
+  follow(id);
+}
+async function openCreate() {
+  if (creating.value) return;
+  if (openId.value && !(await canLeave())) return;
+  openId.value = null;
+  creating.value = true;
+  follow(null);
 }
 async function close() {
-  if (await canLeave()) open.value = false;
+  if (!(await canLeave())) return;
+  creating.value = false;
+  openId.value = null;
+  follow(null);
 }
-useDrawerLeave(canLeave, () => !!drawer.value?.dirty);
+watch(
+  () => route.query.user,
+  async (id) => {
+    if (route.path !== here) return;
+    const next = typeof id === 'string' && id ? id : null;
+    if (next === openId.value) return;
+    if (next) await openUser(next);
+    else if (openId.value) await close();
+    // Refused to leave unsaved changes: put the address back.
+    if (openId.value !== next) follow(openId.value);
+  },
+  { immediate: true },
+);
+useDrawerLeave(canLeave, () => !!current()?.dirty);
+// A click on the row opens the user's drawer; its buttons act on their own.
+function openRow(e: MouseEvent, u: AdminUser) {
+  if ((e.target as Element).closest('a, button')) return;
+  void openUser(u.id);
+}
 async function onCreated(result: {
   user: AdminUser;
   temporaryPassword: string;
   granted: string[];
 }) {
-  open.value = false;
+  creating.value = false;
   created.value = result;
   await reload();
+}
+function viewCreated() {
+  const id = created.value!.user.id;
+  created.value = null;
+  void openUser(id);
 }
 async function copyPassword() {
   try {
@@ -106,13 +166,60 @@ async function copyPassword() {
     // The password stays on screen to copy by hand.
   }
 }
+
+// 停用 / 启用 from the row's ⋯ menu; the backend keeps the last super admin and refuses the
+// signed-in account.
+const statusSave = useSave();
+async function toggleStatus(u: AdminUser) {
+  const disable = u.status === 'active';
+  const question = disable
+    ? `停用 ${u.displayName}？停用后立即退出所有登录，并清除其保存的 SAP 凭据。`
+    : `启用 ${u.displayName}？启用后可以重新登录。`;
+  if (!(await askConfirmation(question))) return;
+  const result = await statusSave.run(() =>
+    adminApi.saveUser(u.id, {
+      displayName: u.displayName,
+      email: u.email ?? '',
+      status: disable ? 'disabled' : 'active',
+      personType: u.personType,
+      positionId: u.position?.id ?? null,
+      skillModules: u.skillModules,
+      grantPositionRoles: false,
+      rowVersion: u.rowVersion,
+    }),
+  );
+  if (!result) return;
+  toast(disable ? '账号已停用。' : '账号已启用。', 'green');
+  await reload();
+  if (openId.value === u.id) await userDrawer.value?.refresh();
+}
+const rowMenu = (u: AdminUser) =>
+  u.status === 'active'
+    ? [
+        {
+          label: '停用',
+          icon: UserX,
+          danger: true,
+          disabled: statusSave.busy.value || self(u),
+          title: self(u) ? '不能停用当前登录的账号' : '',
+          run: () => toggleStatus(u),
+        },
+      ]
+    : [
+        {
+          label: '启用',
+          icon: UserCheck,
+          disabled: statusSave.busy.value,
+          run: () => toggleStatus(u),
+        },
+      ];
 </script>
 <template>
   <SettingsPage
     title="用户"
     description="企业的账号、人员类型、职位与企业级角色。项目内的角色在各项目的“成员与权限”中分配。"
     list
-    :drawer="open"
+    :drawer="creating ? true : openId ? 'wide' : false"
   >
     <template #actions>
       <button class="icon-button" aria-label="刷新用户列表" :disabled="loading" @click="load">
@@ -120,6 +227,7 @@ async function copyPassword() {
       </button>
     </template>
     <p v-if="error" class="s-error" role="alert">{{ error }}</p>
+    <p v-if="statusSave.error.value" class="s-error" role="alert">{{ statusSave.error.value }}</p>
     <BaseSkeleton v-if="loading && !data" height="240px" />
     <template v-if="data">
       <p class="s-summary">
@@ -162,14 +270,20 @@ async function copyPassword() {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="u in rows" :key="u.id" class="clickable" @click="openRow($event, u)">
+            <tr
+              v-for="u in rows"
+              :key="u.id"
+              class="clickable"
+              :class="{ selected: openId === u.id }"
+              @click="openRow($event, u)"
+            >
               <td>
                 <div class="s-table-person">
                   <BaseAvatar :name="u.displayName" :size="32" />
                   <div>
-                    <RouterLink :to="detail(u)" class="s-table-name">{{
-                      u.displayName
-                    }}</RouterLink>
+                    <button class="s-table-name" @click.stop="openUser(u.id)">
+                      {{ u.displayName }}</button
+                    ><span v-if="self(u)" class="s-badge muted">你</span>
                     <small
                       ><span class="mono">{{ u.loginName }}</span
                       >{{ u.email ? ' · ' + u.email : '' }}</small
@@ -198,7 +312,14 @@ async function copyPassword() {
               </td>
               <td>
                 <div class="s-row-actions" @click.stop>
-                  <RouterLink :to="detail(u)" class="text-button">查看</RouterLink>
+                  <button class="text-button" @click="openUser(u.id)">
+                    {{ can('user:manage') ? '编辑' : '查看' }}
+                  </button>
+                  <SettingsRowMenu
+                    v-if="can('user:manage')"
+                    :label="u.displayName + '的更多操作'"
+                    :items="rowMenu(u)"
+                  />
                 </div>
               </td>
             </tr>
@@ -222,16 +343,25 @@ async function copyPassword() {
         </footer>
       </div>
       <p class="s-table-note">
-        停用、重置密码、职位与企业级角色在用户页中处理；项目内的角色在各项目的“成员与权限”中分配。
+        账号、重置密码、职位与企业级角色在用户抽屉中处理，停用与启用也可在行尾 ⋯
+        菜单中操作；项目内的角色在各项目的“成员与权限”中分配。
       </p>
     </template>
 
     <UserDrawer
-      v-if="open"
-      ref="drawer"
+      v-if="creating"
+      ref="createDrawer"
       key="new"
       :positions="positions"
       @created="onCreated"
+      @close="close"
+    />
+    <UserDetailDrawer
+      v-else-if="openId"
+      ref="userDrawer"
+      :key="openId"
+      :user-id="openId"
+      @changed="reload"
       @close="close"
     />
 
@@ -250,9 +380,7 @@ async function copyPassword() {
       </div>
       <template #footer>
         <BaseButton @click="copyPassword">复制密码</BaseButton>
-        <BaseButton variant="primary" @click="router.push(detail(created!.user))"
-          >查看用户</BaseButton
-        >
+        <BaseButton variant="primary" @click="viewCreated">查看用户</BaseButton>
       </template>
     </BaseDialog>
   </SettingsPage>

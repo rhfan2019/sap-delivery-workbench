@@ -15,6 +15,9 @@ import {
   referenceCatalog,
   resolveReferences,
   REFERENCE_KINDS,
+  sessionPatch,
+  changeSession,
+  assertSessionOpen,
 } from '../agent-core/public.mjs';
 import { diffLines } from './artifacts.mjs';
 import { SUPPORTED_KINDS } from './context.mjs';
@@ -159,8 +162,16 @@ export function registerAbapDevAgent(app, pool, organizationId, requireSession, 
 
   app.patch(base + '/sessions/:sessionId', async (req) => {
     const s = await session(req, true);
-    await repo.renameSession(pool, req.work.scope, s.id, text(req.body?.title, '对话名称', 200));
-    return repo.findSession(pool, req.work.scope, s.id);
+    const scope = req.work.scope;
+    await changeSession(pool, {
+      scope,
+      session: s,
+      patch: sessionPatch(req.body),
+      rename: (id, title) => repo.renameSession(pool, scope, id, title),
+      setArchived: (id, archived) => repo.setArchived(pool, scope, id, archived),
+      subject: 'abap_dev_agent_session',
+    });
+    return repo.findSession(pool, scope, s.id);
   });
 
   app.get(base + '/sessions/:sessionId', async (req) => {
@@ -181,6 +192,7 @@ export function registerAbapDevAgent(app, pool, organizationId, requireSession, 
 
   app.post(base + '/sessions/:sessionId/messages', { bodyLimit: 200000 }, async (req, reply) => {
     const s = await session(req, true);
+    assertSessionOpen(s);
     const answers = Array.isArray(req.body?.answers) ? req.body.answers.slice(0, 5) : null;
     const content = answers?.length
       ? answersText(answers) + (req.body?.content?.trim() ? '\n\n' + req.body.content.trim() : '')
@@ -213,7 +225,11 @@ export function registerAbapDevAgent(app, pool, organizationId, requireSession, 
       modelId: model.config.modelId,
       sap: environment.systemId ?? environment.purpose,
     });
-    if (!claimed) throw failure(409, '上一轮还在进行中，请等待完成或先停止。');
+    if (!claimed) {
+      // Archived between reading the session and claiming it.
+      assertSessionOpen((await repo.findSession(pool, req.work.scope, s.id)) ?? s);
+      throw failure(409, '上一轮还在进行中，请等待完成或先停止。');
+    }
     await repo.appendMessage(pool, s.id, {
       turnId,
       role: 'user',

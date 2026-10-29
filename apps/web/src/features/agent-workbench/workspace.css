@@ -213,6 +213,27 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+/* The collapsed "已归档（n）" group at the bottom of the switcher. */
+.work-archived-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  margin-top: var(--space-2);
+  padding: var(--space-1);
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--font-12);
+  font-weight: var(--weight-550);
+  cursor: pointer;
+}
+.work-archived-toggle:hover {
+  color: var(--text);
+}
 .work-rename {
   flex: 1;
   display: flex;

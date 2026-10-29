@@ -6,7 +6,7 @@ import { accessApi, type Role } from './api';
 
 // Creating a role in the list's drawer (docs/specs/project-access-admin.md 2.5; DESIGN.md 5
 // “抽屉”): a code and a name, single or composite, organization or project level; the
-// permissions are chosen on the role page afterwards (or copied from an existing role).
+// permissions are chosen in the role's own drawer afterwards (or copied from an existing role).
 const props = defineProps<{ roles: Role[]; copy: Role | null }>();
 const emit = defineEmits<{ created: [role: Role]; close: [] }>();
 const source0 = props.copy;
@@ -50,9 +50,9 @@ defineExpose({ dirty, busy: save.busy });
 <template>
   <SettingsDrawer
     :title="copy ? '复制角色' : '新建角色'"
-    description="先确定编码、名称与类型；权限点在角色页中勾选。"
+    description="先确定编码、名称与类型；权限点在创建后勾选。"
     close-label="关闭新建角色抽屉"
-    note="创建后打开角色页"
+    note="创建后打开角色，继续勾选权限点"
     :busy="save.busy.value"
     @close="emit('close')"
     @submit="submit"
@@ -116,7 +116,7 @@ defineExpose({ dirty, busy: save.busy });
         {{
           draft.kind === 'composite'
             ? '复合角色从一个已有的复合角色复制，创建后再调整包含的单一角色。'
-            : '复制已有单一角色的权限点，或从空白开始，创建后在角色页中勾选。'
+            : '复制已有单一角色的权限点，或从空白开始，创建后再勾选。'
         }}
       </p>
     </section>

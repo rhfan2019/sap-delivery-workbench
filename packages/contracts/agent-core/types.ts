@@ -76,6 +76,8 @@ export interface AgentSession {
   activeTurnId: string | null;
   createdAt: string;
   updatedAt: string;
+  // Archived conversations are read-only until restored (never deleted).
+  archivedAt?: string | null;
   documentVersion?: number | null;
   version?: number | null;
 }

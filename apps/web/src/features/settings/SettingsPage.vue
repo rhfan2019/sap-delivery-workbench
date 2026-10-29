@@ -11,13 +11,16 @@ withDefaults(
     back?: { to: string; label: string };
     wide?: boolean;
     list?: boolean;
-    drawer?: boolean;
+    drawer?: boolean | 'wide';
   }>(),
   { wide: false, list: false, drawer: false },
 );
 </script>
 <template>
-  <div class="settings-page" :class="{ wide, list, drawer }">
+  <div
+    class="settings-page"
+    :class="{ wide, list, drawer: !!drawer, 'drawer-wide': drawer === 'wide' }"
+  >
     <RouterLink v-if="back" :to="back.to" class="settings-back"
       ><AppIcon name="back" :size="14" />{{ back.label }}</RouterLink
     >
@@ -59,6 +62,17 @@ withDefaults(
 @media (min-width: 1500px) {
   .settings-page.drawer {
     padding-right: calc(var(--space-2) + var(--layout-drawer));
+  }
+}
+/* A wide drawer makes room only where the list still keeps about 760. */
+@media (min-width: 1500px) and (max-width: 1739px) {
+  .settings-page.drawer-wide {
+    padding-right: var(--space-2);
+  }
+}
+@media (min-width: 1740px) {
+  .settings-page.drawer-wide {
+    padding-right: calc(var(--space-2) + var(--layout-drawer-wide));
   }
 }
 :global(.shell-body:has(.settings-page.list)) {

@@ -55,7 +55,7 @@ export const PERMISSIONS = [
 
   p('delivery.item:view', 'delivery', 'menu', '查看开发清单', '查看开发项、附件与变更历史。'),
   p('delivery.item:create', 'delivery', 'action', '新建开发项', '新建与复制开发项。'),
-  p('delivery.item:edit', 'delivery', 'action', '修改开发项', '修改开发项、阶段与上传附件。'),
+  p('delivery.item:edit', 'delivery', 'action', '修改开发项', '修改开发项、阶段，上传与删除附件。'),
   p('delivery.item:delete', 'delivery', 'action', '删除开发项', '删除开发项（含批量删除）。'),
   p('delivery.item:import', 'delivery', 'action', '导入开发项', '从 Excel 导入开发项。'),
   p('delivery.item:export', 'delivery', 'action', '导出开发项', '把开发清单导出为 Excel。'),
@@ -84,7 +84,7 @@ export const PERMISSIONS = [
   p('org.security:manage', 'org', 'action', '管理安全策略', 'SAP 凭据保存策略与强制清除凭据。'),
 
   p('customer:view', 'customer', 'menu', '查看客户', '查看客户档案。'),
-  p('customer:manage', 'customer', 'action', '管理客户', '新建、修改、停用客户。'),
+  p('customer:manage', 'customer', 'action', '管理客户', '新建、修改、停用与删除客户。'),
   p('project.directory:view', 'customer', 'action', '查看全部项目', '查看企业的全部项目一览。'),
   p('project:create', 'customer', 'action', '新建项目', '新建项目（建立后可在项目设置中维护）。'),
 

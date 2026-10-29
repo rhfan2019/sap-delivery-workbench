@@ -6,7 +6,7 @@ export async function listSessions(db, scope) {
   return (
     await db.query(
       `SELECT s.id,s.title,s.active_turn_id AS "activeTurnId",s.created_at AS "createdAt",s.updated_at AS "updatedAt",
-        (SELECT max(version) FROM ${T}document d WHERE d.session_id=s.id) AS "documentVersion"
+        s.archived_at AS "archivedAt",(SELECT max(version) FROM ${T}document d WHERE d.session_id=s.id) AS "documentVersion"
        FROM ${T}session s WHERE s.organization_id=$1 AND s.project_id=$2 AND s.item_id=$3
        ORDER BY s.updated_at DESC LIMIT 50`,
       [scope.organizationId, scope.projectId, scope.itemId],
@@ -32,10 +32,22 @@ export async function renameSession(db, scope, id, title) {
   return r.rowCount > 0;
 }
 
+// Archiving keeps the list order too, and refuses while a turn is running.
+export async function setArchived(db, scope, id, archived) {
+  const r = await db.query(
+    `UPDATE ${T}session SET archived_at=CASE WHEN $5 THEN coalesce(archived_at,now()) END
+     WHERE id=$1 AND organization_id=$2 AND project_id=$3 AND item_id=$4
+     AND (NOT $5 OR active_turn_id IS NULL)`,
+    [id, scope.organizationId, scope.projectId, scope.itemId, archived],
+  );
+  return r.rowCount > 0;
+}
+
 export async function findSession(db, scope, id) {
   return (
     await db.query(
-      `SELECT id,title,active_turn_id AS "activeTurnId",created_at AS "createdAt",updated_at AS "updatedAt"
+      `SELECT id,title,active_turn_id AS "activeTurnId",created_at AS "createdAt",updated_at AS "updatedAt",
+        archived_at AS "archivedAt"
        FROM ${T}session WHERE id=$1 AND organization_id=$2 AND project_id=$3 AND item_id=$4`,
       [id, scope.organizationId, scope.projectId, scope.itemId],
     )
@@ -45,7 +57,8 @@ export async function findSession(db, scope, id) {
 // Claims the session for one turn; returns false when another turn is running.
 export async function claimTurn(db, sessionId, turnId, actorId, model) {
   const claimed = await db.query(
-    `UPDATE ${T}session SET active_turn_id=$2,updated_at=now() WHERE id=$1 AND active_turn_id IS NULL`,
+    `UPDATE ${T}session SET active_turn_id=$2,updated_at=now()
+     WHERE id=$1 AND active_turn_id IS NULL AND archived_at IS NULL`,
     [sessionId, turnId],
   );
   if (!claimed.rowCount) return false;

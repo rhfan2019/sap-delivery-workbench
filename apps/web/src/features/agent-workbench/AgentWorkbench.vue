@@ -19,9 +19,10 @@ import type { useAgentSession } from './useAgentSession';
 import { api } from '../../services/session';
 import { restoreDraft } from './presentation.mjs';
 import { useShortcut } from '../../services/shortcuts';
-import { AtSign, CircleHelp, FlaskConical, Sparkles, X } from '@lucide/vue';
+import { Archive, AtSign, CircleHelp, FlaskConical, Sparkles, X } from '@lucide/vue';
 import BaseAvatar from '../../components/base/BaseAvatar.vue';
 import BaseBanner from '../../components/base/BaseBanner.vue';
+import BaseButton from '../../components/base/BaseButton.vue';
 import { Button } from '@/components/ui/button';
 import type { AgentArtifactRef } from '@sap-delivery-workbench/contracts/agent-core/types';
 
@@ -35,13 +36,25 @@ const props = withDefaults(
     development?: boolean;
     // Show the user's test system login (contract 3.4) for agents that find or create test data.
     testSystem?: boolean;
+    // An archived conversation is read-only: a banner with 恢复 takes the composer's place.
+    archived?: boolean;
+    restorable?: boolean;
   }>(),
-  { editable: true, blocked: false, modelName: null, development: false, testSystem: false },
+  {
+    editable: true,
+    blocked: false,
+    modelName: null,
+    development: false,
+    testSystem: false,
+    archived: false,
+    restorable: false,
+  },
 );
 const emit = defineEmits<{
   busy: [value: boolean];
   openArtifact: [artifact: AgentArtifactRef];
   filesChanged: [];
+  restore: [];
 }>();
 const run = props.session;
 // A model is available: the organization default, or one the user picked (spec 4.3).
@@ -332,114 +345,123 @@ const empty = computed(() => !run.messages.value.length && !sending.value);
             />
           </ConversationTimeline>
           <div class="assistant-bottom">
-            <TestSystemLogin v-if="testSystem && editable" compact :base="base" />
-            <p v-if="notice" class="assistant-notice" role="alert">{{ notice }}</p>
-            <p v-if="!ready" class="assistant-notice">
-              尚未配置组织默认模型。<RouterLink to="/settings/models">前往大模型配置</RouterLink>
-            </p>
-            <div
-              ref="composer"
-              class="composer-anchor"
-              @input="composerInput"
-              @keydown.capture="composerKeydown"
+            <BaseBanner v-if="archived" tone="neutral" role="status"
+              ><template #icon><Archive :size="14" /></template>对话已归档<template
+                v-if="restorable"
+                #action
+                ><BaseButton size="sm" @click="emit('restore')">恢复</BaseButton></template
+              ></BaseBanner
             >
-              <ReferencePicker
-                v-if="pickerOpen"
-                ref="picker"
-                :base="base"
-                :session-id="run.sessionId.value"
-                :selected="referenceKeys"
-                :query="mention ? mention.query : null"
-                :development="development"
-                @toggle="toggleReference"
-                @close="closePicker"
-              />
-              <p v-if="preparing" class="text-xs text-muted-foreground" role="status">
-                正在读取附件…
+            <template v-else>
+              <TestSystemLogin v-if="testSystem && editable" compact :base="base" />
+              <p v-if="notice" class="assistant-notice" role="alert">{{ notice }}</p>
+              <p v-if="!ready" class="assistant-notice">
+                尚未配置组织默认模型。<RouterLink to="/settings/models">前往大模型配置</RouterLink>
               </p>
-              <ChatComposer
-                quiet
-                v-model="draft"
-                :ready="ready"
-                :busy="sending"
-                :loading="false"
-                :blocked="preparing || uploading || !editable || blocked"
-                :stopping="run.status.value === 'stopping'"
-                :dragging="dragging"
-                @send="send"
-                @stop="run.stop"
-                @attach="open()"
-                @reference="openPicker"
-                @files="addFiles"
+              <div
+                ref="composer"
+                class="composer-anchor"
+                @input="composerInput"
+                @keydown.capture="composerKeydown"
               >
-                <template #tools>
-                  <SapSystemSelect
-                    v-model="run.sapSystemId.value"
-                    :base="base"
-                    :purpose="development ? 'development' : 'test'"
-                    :disabled="sending || !editable || blocked"
-                  />
-                  <ModelPicker
-                    v-model="run.modelId.value"
-                    :base="base"
-                    :default-name="modelName"
-                    :disabled="sending || !editable || blocked"
-                  />
-                </template>
-                <ul v-if="references.length" class="reference-chips" aria-label="引用的资料">
-                  <li v-for="r in references" :key="r.kind + r.id" class="reference-chip">
-                    <AtSign :size="12" aria-hidden="true" /><span class="reference-chip-label">{{
-                      r.label
-                    }}</span
-                    ><span class="reference-chip-badge">引用</span
-                    ><button
-                      type="button"
-                      :aria-label="'移除引用 ' + r.label"
-                      :disabled="sending"
-                      @click="toggleReference(r)"
-                    >
-                      <X :size="12" />
-                    </button>
-                  </li>
-                </ul>
-                <AttachmentTray
-                  compact
-                  v-if="attachments.length"
-                  :items="attachments"
-                  :busy="preparing || uploading || sending || !editable || blocked"
-                  :selected-id="previewId"
-                  @preview="previewId = $event"
-                  @remove="removeFile"
+                <ReferencePicker
+                  v-if="pickerOpen"
+                  ref="picker"
+                  :base="base"
+                  :session-id="run.sessionId.value"
+                  :selected="referenceKeys"
+                  :query="mention ? mention.query : null"
+                  :development="development"
+                  @toggle="toggleReference"
+                  @close="closePicker"
                 />
-                <div v-if="attachments.length" class="attachment-status">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    :disabled="preparing || uploading || sending || !editable || blocked"
-                    @click="uploadFiles"
-                    type="button"
-                  >
-                    {{ uploading ? '正在处理附件…' : '处理附件' }}</Button
-                  ><span v-for="a in attachments" :key="a.id"
-                    >{{ a.file.name }} ·
-                    {{
-                      a.state === 'ready'
-                        ? '已就绪'
-                        : a.state === 'preview_only'
-                          ? '仅预览，不发给模型'
-                          : a.state === 'failed'
-                            ? '处理失败' + (a.note ? '：' + a.note : '')
-                            : a.state === 'uploading'
-                              ? '处理中'
-                              : '发送时上传'
-                    }}</span
-                  >
-                </div>
-              </ChatComposer>
-            </div>
-            <div v-if="!empty" class="composer-footnote">
-              <span>内容由 AI 生成，请结合业务与系统证据核对</span>
-            </div>
+                <p v-if="preparing" class="text-xs text-muted-foreground" role="status">
+                  正在读取附件…
+                </p>
+                <ChatComposer
+                  quiet
+                  v-model="draft"
+                  :ready="ready"
+                  :busy="sending"
+                  :loading="false"
+                  :blocked="preparing || uploading || !editable || blocked"
+                  :stopping="run.status.value === 'stopping'"
+                  :dragging="dragging"
+                  @send="send"
+                  @stop="run.stop"
+                  @attach="open()"
+                  @reference="openPicker"
+                  @files="addFiles"
+                >
+                  <template #tools>
+                    <SapSystemSelect
+                      v-model="run.sapSystemId.value"
+                      :base="base"
+                      :purpose="development ? 'development' : 'test'"
+                      :disabled="sending || !editable || blocked"
+                    />
+                    <ModelPicker
+                      v-model="run.modelId.value"
+                      :base="base"
+                      :default-name="modelName"
+                      :disabled="sending || !editable || blocked"
+                    />
+                  </template>
+                  <ul v-if="references.length" class="reference-chips" aria-label="引用的资料">
+                    <li v-for="r in references" :key="r.kind + r.id" class="reference-chip">
+                      <AtSign :size="12" aria-hidden="true" /><span class="reference-chip-label">{{
+                        r.label
+                      }}</span
+                      ><span class="reference-chip-badge">引用</span
+                      ><button
+                        type="button"
+                        :aria-label="'移除引用 ' + r.label"
+                        :disabled="sending"
+                        @click="toggleReference(r)"
+                      >
+                        <X :size="12" />
+                      </button>
+                    </li>
+                  </ul>
+                  <AttachmentTray
+                    compact
+                    v-if="attachments.length"
+                    :items="attachments"
+                    :busy="preparing || uploading || sending || !editable || blocked"
+                    :selected-id="previewId"
+                    @preview="previewId = $event"
+                    @remove="removeFile"
+                  />
+                  <div v-if="attachments.length" class="attachment-status">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      :disabled="preparing || uploading || sending || !editable || blocked"
+                      @click="uploadFiles"
+                      type="button"
+                    >
+                      {{ uploading ? '正在处理附件…' : '处理附件' }}</Button
+                    ><span v-for="a in attachments" :key="a.id"
+                      >{{ a.file.name }} ·
+                      {{
+                        a.state === 'ready'
+                          ? '已就绪'
+                          : a.state === 'preview_only'
+                            ? '仅预览，不发给模型'
+                            : a.state === 'failed'
+                              ? '处理失败' + (a.note ? '：' + a.note : '')
+                              : a.state === 'uploading'
+                                ? '处理中'
+                                : '发送时上传'
+                      }}</span
+                    >
+                  </div>
+                </ChatComposer>
+              </div>
+              <div v-if="!empty" class="composer-footnote">
+                <span>内容由 AI 生成，请结合业务与系统证据核对</span>
+              </div>
+            </template>
           </div>
         </div>
       </Pane>

@@ -56,6 +56,8 @@ export const adminApi = {
   customers: () => api<Customer[]>('/admin/customers'),
   saveCustomer: (body: unknown, id?: string) =>
     api<Customer>('/admin/customers' + (id ? '/' + id : ''), body, id ? 'PATCH' : 'POST'),
+  removeCustomer: (id: string, rowVersion: string) =>
+    api<{ id: string }>('/admin/customers/' + id, { rowVersion }, 'DELETE'),
   projects: () => api<DirectoryProject[]>('/admin/projects'),
   createProject: (body: unknown) => api<{ id: string }>('/admin/projects', body),
   users: () => api<AdminUser[]>('/admin/users'),

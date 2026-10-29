@@ -89,14 +89,14 @@ async function submit() {
     </SettingsCard>
     <SettingsCard
       title="已保存的凭据"
-      description="只列出谁在哪个系统保存了凭据，不显示密码。需要强制清除时，打开该用户的详情页。"
+      description="只列出谁在哪个系统保存了凭据，不显示密码。需要强制清除时，在“用户”中打开该用户。"
       flush
     >
       <div class="s-list">
         <RouterLink
           v-for="c in list.data.value ?? []"
           :key="c.userId + c.sid + c.client + c.projectCode"
-          :to="'/settings/users/' + c.userId"
+          :to="'/settings/users?user=' + c.userId"
           class="s-list-row"
         >
           <BaseAvatar :name="c.displayName" :size="24" />

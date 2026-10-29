@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { apiFixture } from '../../fixtures/api.mjs';
+import { grantRole } from '../../fixtures/access.mjs';
 import { REQUIRED_SECTIONS } from '../../../apps/api/src/modules/abap-fsd-agent/tools/check.mjs';
 
 const bodies = {
@@ -265,6 +266,88 @@ test('one turn at a time; a running turn can be cancelled; strangers are rejecte
     assert.equal((await call('PATCH', `/sessions/${sid}`, { title: ' ' })).status, 400);
     const listedAfter = (await call('GET', '/sessions')).json().sessions;
     assert.equal(listedAfter.find((x) => x.id === sid).title, '逾期清单初稿');
+  } finally {
+    await f.close();
+  }
+});
+
+// Leave the member with the observer role only (PRJ_VIEW: view, no run).
+async function becomeObserver(f) {
+  await f.db.query('DELETE FROM app.access_project_role WHERE project_id=$1 AND user_id=$2', [
+    f.scope.projectId,
+    f.scope.actorId,
+  ]);
+  await grantRole(f.db, f.scope.organizationId, f.scope.actorId, 'C_OBSERVER', {
+    projectId: f.scope.projectId,
+  });
+}
+
+// docs/guides/development-discipline.md 5: conversations are archived and restored, not deleted.
+test('a conversation is archived and restored, never while running; archived ones take no messages', async () => {
+  const { f, model, call, send } = await setup();
+  try {
+    const older = (await call('POST', '/sessions', { title: '旧对话' })).json().id;
+    const sid = (await call('POST', '/sessions', { title: '逾期清单' })).json().id;
+
+    // A running turn blocks archiving.
+    model.queue.push(
+      (_messages, signal) =>
+        new Promise((_, reject) => signal.addEventListener('abort', () => reject(signal.reason))),
+    );
+    const first = await call('POST', `/sessions/${sid}/messages`, { content: '开始' });
+    assert.equal(first.status, 202);
+    const running = await call('PATCH', `/sessions/${sid}`, { archived: true });
+    assert.equal(running.status, 409);
+    assert.equal(running.json().message, '对话正在运行，结束后再归档。');
+    await call('POST', `/sessions/${sid}/cancel`, {});
+    await call('GET', `/sessions/${sid}/turns/${first.json().turnId}/events`);
+    const order = (await call('GET', '/sessions')).json().sessions.map((x) => x.id);
+
+    const archived = await call('PATCH', `/sessions/${sid}`, { archived: true });
+    assert.equal(archived.status, 200, archived.body);
+    assert.ok(archived.json().archivedAt);
+    assert.equal(archived.json().title, '逾期清单');
+    // Still listed in the same place, with archivedAt; the other one stays open.
+    const listed = (await call('GET', '/sessions')).json().sessions;
+    assert.deepEqual(
+      listed.map((x) => x.id),
+      order,
+    );
+    assert.ok(listed.find((x) => x.id === sid).archivedAt);
+    assert.equal(listed.find((x) => x.id === older).archivedAt, null);
+    assert.ok((await call('GET', `/sessions/${sid}`)).json().session.archivedAt);
+
+    const refused = await call('POST', `/sessions/${sid}/messages`, { content: '继续' });
+    assert.equal(refused.status, 409);
+    assert.equal(refused.json().message, '对话已归档，恢复后再继续。');
+    assert.equal((await call('PATCH', `/sessions/${sid}`, { archived: 'yes' })).status, 400);
+    assert.equal((await call('PATCH', `/sessions/${sid}`, {})).status, 400);
+
+    // Rename and restore in one request; the conversation takes messages again.
+    const restored = await call('PATCH', `/sessions/${sid}`, {
+      title: '逾期清单（续）',
+      archived: false,
+    });
+    assert.equal(restored.json().archivedAt, null);
+    assert.equal(restored.json().title, '逾期清单（续）');
+    model.queue.push(async () => reply('好的。'));
+    assert.equal((await send(sid, { content: '继续' })).end.status, 'completed');
+
+    const audit = await f.db.query(
+      `SELECT action FROM app.audit_event WHERE subject_type='abap_fsd_agent_session' AND subject_id=$1
+       ORDER BY occurred_at`,
+      [sid],
+    );
+    assert.deepEqual(
+      audit.rows.map((r) => r.action),
+      ['abap_fsd_agent_session.archive', 'abap_fsd_agent_session.restore'],
+    );
+
+    // Archiving needs agent.fsd:run, like renaming.
+    await becomeObserver(f);
+    const denied = await call('PATCH', `/sessions/${older}`, { archived: true });
+    assert.equal(denied.status, 403);
+    assert.equal(denied.json().details.permission, 'agent.fsd:run');
   } finally {
     await f.close();
   }

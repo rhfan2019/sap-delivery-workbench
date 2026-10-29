@@ -238,6 +238,45 @@ test('organization administration, project master data and accounts follow the p
       assert.equal((await req('GET', '/api/projects', undefined, m)).json().length, 0);
       assert.equal((await req('GET', '/api/projects/' + project.id, undefined, m)).statusCode, 404);
     });
+    await t.test('only an unused customer can be deleted', async () => {
+      const spare = (
+        await req('POST', '/api/admin/customers', { name: 'Spare', code: 'SPARE' }, a)
+      ).json();
+      const remove = (id, rowVersion, cookie) =>
+        req('DELETE', '/api/admin/customers/' + id, { rowVersion }, cookie);
+      const denied = await remove(spare.id, spare.rowVersion, m);
+      assert.equal(denied.statusCode, 403);
+      assert.equal(denied.json().details.permission, 'customer:manage');
+      // The customer of a project stays; deactivating is the way out.
+      const current = (await req('GET', '/api/admin/customers', undefined, a))
+        .json()
+        .find((c) => c.id === customer.id);
+      const used = await remove(customer.id, current.rowVersion, a);
+      assert.equal(used.statusCode, 409);
+      assert.match(used.json().message, /1 个项目/);
+      // So does one that limits an organization-level role assignment.
+      await grantRole(db, org, pm, 'C_PMO', { projectScope: 'customers', scopeIds: [spare.id] });
+      const scoped = await remove(spare.id, spare.rowVersion, a);
+      assert.equal(scoped.statusCode, 409);
+      assert.match(scoped.json().message, /角色分配/);
+      await db.query(
+        "DELETE FROM app.access_assignment WHERE organization_id=$1 AND user_id=$2 AND project_scope='customers'",
+        [org, pm],
+      );
+      assert.equal((await remove(spare.id, '999', a)).statusCode, 409, 'stale version');
+      assert.equal((await remove(randomUUID(), '1', a)).statusCode, 404);
+      assert.equal((await remove(spare.id, spare.rowVersion, a)).statusCode, 200);
+      assert.ok(
+        !(await req('GET', '/api/admin/customers', undefined, a))
+          .json()
+          .some((c) => c.id === spare.id),
+      );
+      const audit = await db.query(
+        "SELECT details FROM app.audit_event WHERE organization_id=$1 AND action='admin.customer.delete' AND subject_id=$2",
+        [org, spare.id],
+      );
+      assert.equal(audit.rows[0]?.details.code, 'SPARE');
+    });
     await t.test('the project manager maintains the master data', async () => {
       let r = await req(
         'PATCH',

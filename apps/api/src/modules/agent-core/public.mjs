@@ -25,3 +25,10 @@ export {
   REFERENCE_KINDS,
   MAX_REFERENCES,
 } from './references.mjs';
+export {
+  sessionPatch,
+  changeSession,
+  assertSessionOpen,
+  SESSION_ARCHIVED,
+  SESSION_RUNNING,
+} from './sessions.mjs';

@@ -9,6 +9,7 @@ import {
   Plus,
   RefreshCw,
   Search,
+  Trash2,
 } from '@lucide/vue';
 import BaseSkeleton from '../../components/base/BaseSkeleton.vue';
 import { toast } from '../../components/base/toast';
@@ -87,10 +88,29 @@ async function toggle(c: Customer) {
     toast(status === 'active' ? '客户已启用。' : '客户已停用。', 'green');
   }
 }
+async function remove(c: Customer) {
+  if (!(await askConfirmation(`删除客户“${c.name}”？删除后不能恢复。`))) return;
+  if (await action.run(() => adminApi.removeCustomer(c.id, c.rowVersion))) {
+    if (editing.value?.id === c.id) {
+      open.value = false;
+      editing.value = null;
+    }
+    await reload();
+    toast('客户已删除。', 'green');
+  }
+}
 const rowMenu = (c: Customer) => [
   c.status === 'active'
     ? { label: '停用', icon: CirclePause, disabled: action.busy.value, run: () => toggle(c) }
     : { label: '启用', icon: CirclePlay, disabled: action.busy.value, run: () => toggle(c) },
+  {
+    label: '删除',
+    icon: Trash2,
+    danger: true,
+    disabled: action.busy.value || c.projectCount > 0,
+    title: c.projectCount > 0 ? '客户下有项目，不能删除；不再使用时请停用' : '',
+    run: () => remove(c),
+  },
 ];
 </script>
 <template>
@@ -198,7 +218,7 @@ const rowMenu = (c: Customer) => [
         </footer>
       </div>
       <p class="s-table-note">
-        停用的客户保留其项目与历史，但不能再为其新建项目。项目的 SAP
+        停用的客户保留其项目与历史，但不能再为其新建项目；没有项目的客户可以删除。项目的 SAP
         系统形态、团队与系统登记在各项目中。
       </p>
     </template>

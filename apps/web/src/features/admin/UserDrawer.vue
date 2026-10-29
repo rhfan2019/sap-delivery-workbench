@@ -9,7 +9,8 @@ import type { Position } from '../access/api';
 import { adminApi, type AdminUser } from './api';
 
 // Creating a user in the list's drawer (DESIGN.md 5 “抽屉”): the account, its person type, and
-// optionally a position whose organization roles come with it; the rest is on the user page.
+// optionally a position whose organization roles come with it; the rest is in the user's own
+// drawer (UserDetailDrawer).
 const props = defineProps<{ positions: Position[] }>();
 const emit = defineEmits<{
   created: [result: { user: AdminUser; temporaryPassword: string; granted: string[] }];

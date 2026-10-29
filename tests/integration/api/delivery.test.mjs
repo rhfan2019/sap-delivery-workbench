@@ -399,6 +399,46 @@ test('development list: numbering, phases, objects, tags, custom columns, batch,
       undefined,
       404,
     );
+    // Deleting an attachment needs the right to edit the item; the stored file goes too.
+    const fileUrl = base + '/' + item.id + '/files/' + file.id;
+    await grantRole(db, org, outsider, 'C_OBSERVER', { projectId: project });
+    const viewerToken = randomBytes(32).toString('hex');
+    await db.query(
+      "INSERT INTO app.auth_session(organization_id,user_id,token_hash,idle_expires_at,expires_at) VALUES($1,$2,$3,now()+interval '30 minutes',now()+interval '8 hours')",
+      [org, outsider, digest(viewerToken)],
+    );
+    const viewerDelete = await app.inject({
+      method: 'DELETE',
+      url: fileUrl,
+      payload: {},
+      headers: { origin: 'http://127.0.0.1:5173', cookie: 'sapwb_local_session=' + viewerToken },
+    });
+    assert.equal(viewerDelete.statusCode, 403, viewerDelete.body);
+    assert.equal(viewerDelete.json().details.permission, 'delivery.item:edit');
+    await expect(
+      'DELETE',
+      '/api/projects/' + hidden + '/development-items/' + item.id + '/files/' + file.id,
+      {},
+      404,
+    );
+    await expect('DELETE', base + '/' + item.id + '/files/' + randomUUID(), {}, 404);
+    const { access: fileAccess } = await import('node:fs/promises');
+    const { resolve: resolvePath } = await import('node:path');
+    const stored = resolvePath(
+      process.env.DELIVERY_FILES_DIR ?? '.runtime/delivery-files',
+      file.id,
+    );
+    await fileAccess(stored);
+    await expect('DELETE', fileUrl, {});
+    assert.deepEqual(await expect('GET', base + '/' + item.id + '/files'), []);
+    await expect('GET', fileUrl, undefined, 404);
+    await assert.rejects(fileAccess(stored));
+    assert.ok(
+      (await expect('GET', base + '/' + item.id + '/events')).some(
+        (e) => e.action === 'file_removed' && e.changes.name === '需求.txt',
+      ),
+    );
+    await expect('DELETE', fileUrl, {}, 404);
     await expect('POST', '/api/project-preference', { projectId: project });
     assert.equal((await expect('GET', '/api/project-preference')).projectId, project);
     await expect('POST', '/api/project-preference', { projectId: hidden }, 404);

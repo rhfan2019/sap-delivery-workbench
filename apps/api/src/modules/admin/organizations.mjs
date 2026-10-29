@@ -101,6 +101,37 @@ export function organizationRoutes(app, ctx) {
       return { subjectId: id, data: await customer(db, id) };
     });
   });
+  // Only an unused customer can be deleted: projects (with their SAP systems) and role
+  // assignments limited to its projects keep it; such a customer is deactivated instead.
+  app.delete('/api/admin/customers/:id', async (req) => {
+    const id = v.uuid(req.params.id),
+      revision = v.version(req.body?.rowVersion);
+    return write(req, 'customer:manage', 'admin.customer.delete', 'customer', async (db) => {
+      const old = await customer(db, id);
+      if (old.projectCount)
+        throw failure(
+          409,
+          `客户“${old.name}”下有 ${old.projectCount} 个项目，不能删除；不再使用时请停用。`,
+        );
+      const assignments = await ctx.customerAssignments(db, id);
+      if (assignments)
+        throw failure(
+          409,
+          `有 ${assignments} 个企业级角色分配限定在客户“${old.name}”的项目，请先调整这些分配的项目范围。`,
+        );
+      changed(
+        await db.query(
+          'DELETE FROM app.customer WHERE organization_id=$1 AND id=$2 AND row_version=$3 RETURNING id',
+          [org, id, revision],
+        ),
+      );
+      return {
+        subjectId: id,
+        data: { id },
+        details: { code: old.code, name: old.name },
+      };
+    });
+  });
 
   // Every project of the organization (section 4.3 “企业 → 项目”).
   app.get('/api/admin/projects', async (req) => {

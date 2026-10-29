@@ -1,7 +1,15 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { ChevronLeft, ChevronRight, FolderKanban, Plus, RefreshCw, Search } from '@lucide/vue';
+import {
+  Archive,
+  ChevronLeft,
+  ChevronRight,
+  FolderKanban,
+  Plus,
+  RefreshCw,
+  Search,
+} from '@lucide/vue';
 import {
   HEALTH,
   PROJECT_STATUSES,
@@ -11,18 +19,22 @@ import BaseSkeleton from '../../components/base/BaseSkeleton.vue';
 import BaseTag from '../../components/base/BaseTag.vue';
 import { toast } from '../../components/base/toast';
 import { askConfirmation } from '../../services/confirmation';
-import { can } from '../../services/session';
+import { api, can, identity } from '../../services/session';
 import { loadProjects, projects as mine, selectProject } from '../../services/projectContext';
+import { allows } from '../access/permissions';
+import type { ProjectDetail } from '../projects/useProject';
 import SettingsPage from '../settings/SettingsPage.vue';
+import SettingsRowMenu from '../settings/SettingsRowMenu.vue';
 import { useDrawerLeave } from '../settings/useDrawerLeave';
-import { useLoad } from '../settings/useLoad';
+import { useLoad, useSave } from '../settings/useLoad';
 import ProjectDrawer from './ProjectDrawer.vue';
+import ProjectEditDrawer from './ProjectEditDrawer.vue';
 import { adminApi, type AdminUser, type Customer, type DirectoryProject } from './api';
 import '../settings/settings.css';
 
-// 企业 → 项目: every project of the organization as a settings list (DESIGN.md 6.2), creating
-// projects (with phases, milestones and the project manager) in its drawer, and opening a
-// project's settings.
+// 企业 → 项目: every project of the organization as a settings list with its drawer like 大模型
+// (DESIGN.md 6.2): a row opens the project's main data, “新建项目” creates one with its phases,
+// milestones and manager, and “打开设置” switches to the project and opens its settings.
 const router = useRouter();
 const { data, loading, error, reload } = useLoad(adminApi.projects);
 const customers = ref<Customer[]>([]);
@@ -75,39 +87,94 @@ const planned = (p: DirectoryProject) =>
   p.plannedStartDate || p.plannedEndDate
     ? `计划 ${p.plannedStartDate ?? '—'} 至 ${p.plannedEndDate ?? '—'}`
     : '';
-async function openProject(p: DirectoryProject) {
-  if (creating.value) {
+// The drawer: a project's main data, or a new project; another row asks before dropping changes.
+const open = ref(false);
+const editing = ref<DirectoryProject | null>(null);
+const drawer = ref<{ dirty: boolean; busy: boolean } | null>(null);
+async function canLeave() {
+  if (drawer.value?.busy) return false;
+  return (
+    !drawer.value?.dirty ||
+    (await askConfirmation(editing.value ? '放弃尚未保存的项目修改？' : '放弃尚未保存的新项目？'))
+  );
+}
+async function edit(p: DirectoryProject | null) {
+  if (open.value && p && editing.value?.id === p.id) return;
+  if (open.value && !(await canLeave())) return;
+  editing.value = p;
+  open.value = true;
+}
+async function close() {
+  if (await canLeave()) {
+    open.value = false;
+    editing.value = null;
+  }
+}
+useDrawerLeave(canLeave, () => !!drawer.value?.dirty);
+async function created() {
+  open.value = false;
+  toast('项目已创建，已生成 SAP Activate 阶段与预置里程碑。', 'green');
+  await Promise.all([reload(), loadProjects()]);
+}
+async function saved() {
+  open.value = false;
+  editing.value = null;
+  toast('项目信息已保存。', 'green');
+  await Promise.all([reload(), loadProjects()]);
+}
+// What a row click did before the drawer: switch to the project and open its settings.
+async function openSettings(p: DirectoryProject) {
+  if (open.value) {
     if (!(await canLeave())) return;
-    creating.value = false;
+    open.value = false;
+    editing.value = null;
+    await nextTick();
   }
   if (!mine.value.some((x) => x.id === p.id)) await loadProjects();
   await selectProject(p.id);
   await router.push('/settings/project/general');
 }
 
-// The drawer creates a project; leaving with an unsaved draft asks first.
-const creating = ref(false);
-const drawer = ref<InstanceType<typeof ProjectDrawer> | null>(null);
-async function canLeave() {
-  if (drawer.value?.busy) return false;
-  return !drawer.value?.dirty || (await askConfirmation('放弃尚未保存的新项目？'));
+// Archiving is one-way and needs project:archive in that project, read from its detail.
+const action = useSave();
+async function archive(p: DirectoryProject) {
+  const detail = await action.run(() => api<ProjectDetail>('/projects/' + p.id));
+  if (!detail) return;
+  if (!allows(detail.access, 'project:archive', undefined, identity.value?.user.id)) {
+    action.error.value = `你在项目“${p.name}”中没有归档项目的权限。`;
+    return;
+  }
+  if (!(await askConfirmation(`归档“${p.name}”？归档后项目及其全部数据只读、不可恢复。`))) return;
+  if (open.value && editing.value?.id === p.id) {
+    if (!(await canLeave())) return;
+    open.value = false;
+    editing.value = null;
+  }
+  const done = await action.run(() =>
+    api('/projects/' + p.id + '/archive', { rowVersion: detail.rowVersion }),
+  );
+  if (done) {
+    toast('项目已归档，项目及其全部数据只读。', 'green');
+    await Promise.all([reload(), loadProjects()]);
+  }
 }
-async function close() {
-  if (await canLeave()) creating.value = false;
-}
-useDrawerLeave(canLeave, () => !!drawer.value?.dirty);
-async function created() {
-  creating.value = false;
-  toast('项目已创建，已生成 SAP Activate 阶段与预置里程碑。', 'green');
-  await Promise.all([reload(), loadProjects()]);
-}
+const rowMenu = (p: DirectoryProject) => [
+  {
+    label: '归档',
+    icon: Archive,
+    danger: true,
+    disabled: action.busy.value || p.status === 'archived',
+    title: p.status === 'archived' ? '项目已归档' : '',
+    run: () => archive(p),
+  },
+];
 </script>
 <template>
   <SettingsPage
     title="项目"
-    description="企业的全部项目。点开一个项目会切换到它，并打开它的设置。"
+    description="企业的全部项目。点开一个项目查看与修改它的主数据；“打开设置”切换到该项目并打开它的设置。"
     list
-    :drawer="creating"
+    :drawer="open"
   >
     <template #actions>
       <button class="icon-button" aria-label="刷新项目列表" :disabled="loading" @click="reload">
@@ -115,6 +182,7 @@ async function created() {
       </button>
     </template>
     <p v-if="error" class="s-error" role="alert">{{ error }}</p>
+    <p v-if="action.error.value" class="s-error" role="alert">{{ action.error.value }}</p>
     <BaseSkeleton v-if="loading && !data" height="240px" />
     <template v-if="data">
       <p class="s-summary">
@@ -138,9 +206,7 @@ async function created() {
           <option value="all">全部（{{ all.length }}）</option>
         </select>
         <div v-if="can('project:create')" class="s-table-actions">
-          <button class="primary-button" @click="creating = true">
-            <Plus :size="17" />新建项目
-          </button>
+          <button class="primary-button" @click="edit(null)"><Plus :size="17" />新建项目</button>
         </div>
       </div>
       <div class="s-table-surface">
@@ -170,9 +236,15 @@ async function created() {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="p in rows" :key="p.id" class="clickable" @click="openProject(p)">
+            <tr
+              v-for="p in rows"
+              :key="p.id"
+              class="clickable"
+              :class="{ selected: open && editing?.id === p.id }"
+              @click="edit(p)"
+            >
               <td>
-                <button class="s-table-name" @click.stop="openProject(p)">{{ p.name }}</button>
+                <button class="s-table-name" @click.stop="edit(p)">{{ p.name }}</button>
                 <small class="mono">{{ p.code }}</small>
               </td>
               <td>
@@ -203,7 +275,8 @@ async function created() {
               </td>
               <td>
                 <div class="s-row-actions" @click.stop>
-                  <button class="text-button" @click="openProject(p)">打开设置</button>
+                  <button class="text-button" @click="openSettings(p)">打开设置</button>
+                  <SettingsRowMenu :label="p.name + '的更多操作'" :items="rowMenu(p)" />
                 </div>
               </td>
             </tr>
@@ -227,12 +300,21 @@ async function created() {
         </footer>
       </div>
       <p class="s-table-note">
-        点开项目会切换到该项目并打开它的设置；成员、计划、SAP
-        系统等在项目设置中维护。项目数据无限期保留，归档后只读。
+        点开项目查看与修改它的基本信息；成员、计划、SAP
+        系统等在项目设置中维护。项目数据无限期保留，归档后只读、不可恢复，项目不删除。
       </p>
     </template>
+    <ProjectEditDrawer
+      v-if="open && editing"
+      ref="drawer"
+      :key="editing.id"
+      :project="editing"
+      @saved="saved"
+      @settings="openSettings(editing)"
+      @close="close"
+    />
     <ProjectDrawer
-      v-if="creating"
+      v-else-if="open"
       ref="drawer"
       key="new"
       :customers="customers"

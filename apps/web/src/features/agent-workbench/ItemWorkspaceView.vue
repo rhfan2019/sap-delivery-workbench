@@ -13,9 +13,11 @@ import type {
   AgentSession,
 } from '@sap-delivery-workbench/contracts/agent-core/types';
 import {
+  Archive,
   ArrowLeft,
   Check,
   ChevronDown,
+  ChevronRight,
   FileText,
   Maximize2,
   MessageSquare,
@@ -108,11 +110,11 @@ async function load() {
   error.value = '';
   try {
     await refreshSessions();
-    // The address names the conversation; the last one used here is the fallback.
-    const wanted = [querySession(), recall(sessionKey)].find((id) =>
-      sessions.value.some((s) => s.id === id),
-    );
-    await run.load(wanted ?? sessions.value[0]?.id ?? '');
+    // The address names the conversation, archived or not; the last open one used here, then
+    // the newest open one, is the fallback.
+    const named = sessions.value.find((s) => s.id === querySession());
+    const last = openSessions.value.find((s) => s.id === recall(sessionKey));
+    await run.load(named?.id ?? last?.id ?? openSessions.value[0]?.id ?? '');
     restorePanel();
   } catch (e) {
     if (controller.signal.aborted) return;
@@ -159,6 +161,15 @@ watch(switcherOpen, (open) => {
   if (!open) renaming.value = '';
 });
 const current = computed(() => sessions.value.find((s) => s.id === run.sessionId.value));
+// Archived conversations fold into a group at the bottom of the switcher (discipline 5).
+const openSessions = computed(() => sessions.value.filter((s) => !s.archivedAt));
+const archivedSessions = computed(() => sessions.value.filter((s) => s.archivedAt));
+const currentArchived = computed(() => !!current.value?.archivedAt);
+const archivedOpen = ref(false),
+  archiving = ref('');
+watch(switcherOpen, (open) => {
+  if (open) archivedOpen.value = currentArchived.value;
+});
 // "新对话" is the button on the right; the switcher only names the current conversation.
 const currentTitle = computed(() =>
   run.sessionId.value ? current.value?.title?.trim() || '未命名对话' : '对话',
@@ -198,6 +209,32 @@ function startRename(s: AgentSession) {
   renaming.value = s.id;
   newTitle.value = s.title ?? '';
   renameError.value = '';
+}
+// Archiving the open conversation moves to the newest open one, or the new-conversation state.
+async function setArchived(s: AgentSession, archived: boolean) {
+  if (archiving.value) return;
+  archiving.value = s.id;
+  error.value = '';
+  try {
+    await api(`${agentBase}/sessions/${s.id}`, { archived }, 'PATCH');
+    await refreshSessions();
+    if (archived && s.id === run.sessionId.value) {
+      version.value = null;
+      filePreview.value = null;
+      const next = openSessions.value[0]?.id ?? '';
+      await run.load(next);
+      if (!next) {
+        const query = { ...route.query };
+        delete query.session;
+        void router.replace({ query }).catch(() => {});
+      }
+      restorePanel();
+    }
+  } catch (e) {
+    error.value = (e as Error).message;
+  } finally {
+    archiving.value = '';
+  }
 }
 async function saveRename() {
   const id = renaming.value;
@@ -349,10 +386,10 @@ onBeforeUnmount(() => controller.abort());
         </template>
         <section v-if="state" class="work-sessions" aria-label="切换对话">
           <h3>{{ config.sessionsHeading }}</h3>
-          <p v-if="!sessions.length" class="work-empty">发送第一条消息后，对话会保存在这里。</p>
+          <p v-if="!openSessions.length" class="work-empty">发送第一条消息后，对话会保存在这里。</p>
           <ul role="listbox">
             <li
-              v-for="s in sessions"
+              v-for="s in openSessions"
               :key="s.id"
               role="option"
               :aria-selected="s.id === run.sessionId.value"
@@ -394,9 +431,67 @@ onBeforeUnmount(() => controller.abort());
                 >
                   <Pencil :size="14" />
                 </button>
+                <button
+                  v-if="state.canEdit"
+                  class="work-icon"
+                  aria-label="归档对话"
+                  :title="
+                    s.activeTurnId || (agentBusy && s.id === run.sessionId.value)
+                      ? '对话正在运行，结束后再归档'
+                      : '归档'
+                  "
+                  :disabled="
+                    !!archiving || !!s.activeTurnId || (agentBusy && s.id === run.sessionId.value)
+                  "
+                  @click="setArchived(s, true)"
+                >
+                  <Archive :size="14" />
+                </button>
               </template>
             </li>
           </ul>
+          <template v-if="archivedSessions.length">
+            <button
+              type="button"
+              class="work-archived-toggle"
+              :aria-expanded="archivedOpen"
+              @click="archivedOpen = !archivedOpen"
+            >
+              <component :is="archivedOpen ? ChevronDown : ChevronRight" :size="14" />已归档（{{
+                archivedSessions.length
+              }}）
+            </button>
+            <ul v-if="archivedOpen" role="listbox" aria-label="已归档的对话">
+              <li
+                v-for="s in archivedSessions"
+                :key="s.id"
+                role="option"
+                :aria-selected="s.id === run.sessionId.value"
+                class="work-session-row"
+                :class="{ selected: s.id === run.sessionId.value }"
+              >
+                <button
+                  class="work-session-pick"
+                  :disabled="agentBusy && s.id !== run.sessionId.value"
+                  @click="selectSession(s.id)"
+                >
+                  <strong>{{ s.title?.trim() || '未命名对话' }}</strong>
+                  <small
+                    >{{ time(s.updatedAt) }}{{ config.sessionVersion(s)
+                    }}{{ s.id === run.sessionId.value ? ' · 当前' : '' }}</small
+                  >
+                </button>
+                <BaseButton
+                  v-if="state.canEdit"
+                  variant="ghost"
+                  size="sm"
+                  :disabled="!!archiving"
+                  @click="setArchived(s, false)"
+                  >恢复</BaseButton
+                >
+              </li>
+            </ul>
+          </template>
         </section>
       </BasePopover>
       <div class="record-actions">
@@ -508,8 +603,11 @@ onBeforeUnmount(() => controller.abort());
           :base="agentBase"
           :session="run"
           :model-name="state.model"
-          :editable="state.canEdit"
+          :editable="state.canEdit && !currentArchived"
+          :archived="currentArchived"
+          :restorable="state.canEdit"
           :development="config.development"
+          @restore="current && setArchived(current, false)"
           @busy="agentBusy = $event"
           @open-artifact="openArtifact"
           @files-changed="run.refresh()"
@@ -568,7 +666,7 @@ onBeforeUnmount(() => controller.abort());
             v-else
             :base="agentBase"
             :session="run"
-            :can-edit="state.canEdit"
+            :can-edit="state.canEdit && !currentArchived"
             :version="version"
             @version="version = $event"
           />

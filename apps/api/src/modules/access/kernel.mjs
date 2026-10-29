@@ -180,5 +180,21 @@ export function createAccess(pool, organizationId) {
     if (code && !grant.has(code, context)) throw deniedError(code);
     return grant;
   }
-  return { organization, project, projects, requireOrganization, requireProject, grantsOf };
+  // Organization-level assignments limited to a customer's projects; such a customer stays.
+  async function customerAssignments(db, customerId) {
+    const { rows } = await db.query(
+      "SELECT count(*)::int AS n FROM app.access_assignment WHERE organization_id=$1 AND project_scope='customers' AND $2=ANY(scope_ids)",
+      [organizationId, customerId],
+    );
+    return rows[0].n;
+  }
+  return {
+    organization,
+    project,
+    projects,
+    requireOrganization,
+    requireProject,
+    grantsOf,
+    customerAssignments,
+  };
 }

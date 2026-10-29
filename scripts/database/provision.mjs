@@ -28,7 +28,10 @@ try {
   await client.query(
     'GRANT SELECT, INSERT, UPDATE ON app.organization, app.app_user, app.user_password, app.organization_member, app.customer, app.project, app.project_member, app.auth_session, app.login_throttle TO sap_workbench_app',
   );
-  await client.query('GRANT DELETE ON app.auth_session, app.login_throttle TO sap_workbench_app');
+  // An unused customer may be deleted (development-discipline.md 5); one with projects may not.
+  await client.query(
+    'GRANT DELETE ON app.auth_session, app.login_throttle, app.customer TO sap_workbench_app',
+  );
   await client.query('REVOKE ALL ON app.audit_event FROM sap_workbench_app');
   // The audit page reads events; the app may never update or delete them.
   await client.query('GRANT SELECT, INSERT ON app.audit_event TO sap_workbench_app');
@@ -37,9 +40,9 @@ try {
     await client.query(
       'GRANT SELECT,INSERT,UPDATE ON app.development_item,app.development_item_phase,app.development_field,app.project_preference TO sap_workbench_app',
     );
-    await client.query(
-      'GRANT SELECT,INSERT ON app.development_event,app.development_file TO sap_workbench_app',
-    );
+    await client.query('GRANT SELECT,INSERT ON app.development_event TO sap_workbench_app');
+    // Attachments can be removed; the item's events keep that they were there.
+    await client.query('GRANT SELECT,INSERT,DELETE ON app.development_file TO sap_workbench_app');
     await client.query(
       'GRANT SELECT,INSERT,DELETE ON app.development_item_object,app.development_item_tag TO sap_workbench_app',
     );
