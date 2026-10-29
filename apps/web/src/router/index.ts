@@ -70,7 +70,7 @@ export const router = createRouter({
         {
           path: 'workspace/development-items',
           component: () => import('../features/delivery/DeliveryView.vue'),
-          // ?project=&item=&section= (a link from an assistant page) is read once, then cleared.
+          // ?project=&item= names the open drawer (kept in sync); &section= is read once.
           meta: { keepOnQuery: true },
         },
         { path: 'workspace/:module', component: WorkspaceView },

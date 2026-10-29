@@ -381,7 +381,9 @@ const activeFilters = computed(() => {
 });
 
 // --- links from the assistant pages ------------------------------------------------------
-// ?project=&item=&section= opens that item's drawer at a section (e.g. 成果, spec 6.3).
+// ?project=&item=&section= opens that item's drawer at a section (e.g. 成果, spec 6.3). While a
+// drawer is open the address names its item, so Back from an assistant page, or a reload, opens
+// it again.
 const route = useRoute(),
   router = useRouter();
 const link = {
@@ -413,7 +415,6 @@ function followLink() {
     drawerId.value = link.item;
     drawerSection.value = link.section;
   }
-  if (route.query.item) void router.replace({ query: {} }).catch(() => {});
 }
 
 // --- loading -----------------------------------------------------------------------------
@@ -517,6 +518,11 @@ onActivated(() => {
   inFront.value = true;
   detailOpen.value = drawerId.value !== null;
   leaveDelivery.value = safeLeave;
+});
+watch(drawerId, (id) => {
+  if (!inFront.value || (route.query.item ?? '') === (id ?? '')) return;
+  const query = id ? { project: currentProject.value, item: id } : {};
+  void router.replace({ query }).catch(() => {});
 });
 onBeforeUnmount(() => {
   detailOpen.value = false;

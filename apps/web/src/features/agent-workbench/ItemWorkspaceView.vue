@@ -124,6 +124,8 @@ async function load() {
     loading.value = false;
   }
 }
+// Back to the list with this item's drawer open again.
+const listLink = `/workspace/development-items?project=${props.projectId}&item=${props.itemId}`;
 function showOutputs() {
   void router.push({
     path: '/workspace/development-items',
@@ -351,7 +353,7 @@ onBeforeUnmount(() => controller.abort());
 <template>
   <main class="item-workspace" :aria-busy="loading">
     <header class="record-bar">
-      <BaseIconButton label="返回开发清单" to="/workspace/development-items" side="bottom"
+      <BaseIconButton label="返回开发清单" :to="listLink" side="bottom"
         ><ArrowLeft :size="16"
       /></BaseIconButton>
       <div class="record-title">
