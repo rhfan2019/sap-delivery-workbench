@@ -190,6 +190,10 @@
   --layout-drawer: 480px;
   /* The record page bar and the side panel headers line up at one height. */
   --layout-record-bar: 48px;
+  /* The tab bar above the content panel and the width a tab grows and shrinks within. */
+  --layout-tab-bar: 36px;
+  --layout-tab-min: 120px;
+  --layout-tab-max: 200px;
   --control-button: 34px;
   --control-input: 32px;
   --control-icon: 32px;
@@ -206,6 +210,7 @@
 @media (max-height: 820px) {
   :root {
     --layout-record-bar: 40px;
+    --layout-tab-bar: 32px;
     --control-table-row: 36px;
     --control-table-row-double: 48px;
   }

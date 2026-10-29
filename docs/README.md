@@ -26,6 +26,8 @@
 - [待办与问题清单](plans/backlog.md)：所有未完成事项的唯一入口（日常问题、专项测试问题、交接待办）；已完成的移到 [已完成清单](archive/backlog-done.md)。
 - [SAP 开发者导读](guides/sap-developer-orientation.md)：用 SAP / Fiori 概念对照本仓库的目录、模块、一条完整调用链路与文档阅读顺序，新人入口。
 - [查看开发数据库与表关系图](guides/database-browsing.md)：本项目自带的 pgAdmin（`npm run db:admin`，127.0.0.1:5051）的登录、预登记的开发库与 ERD 画图方法。
+- [工作台多标签页](specs/workbench-tabs.md)：浏览器式标签的范围、打开 / 切换 / 关闭规则、记住方式与实现位置（第一期实施中）。
+- [工作台多标签页交接文档](plans/2026-10-29-workbench-tabs-handover.md)：多标签页工作线的新会话入口（现行，持续更新）。
 - [表格页面模板：开发清单](guides/table-page-template.md)：按钮分类、行内编辑、详情抽屉与新表格页面接入约定。
 - `guides/`：当前维护与操作说明。
 - `specs/`：版本化设计规格。

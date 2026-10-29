@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch } from 'vue';
 import { RouterLink, onBeforeRouteLeave, useRoute, useRouter } from 'vue-router';
 import {
   Plus,
@@ -35,6 +35,7 @@ import BasePopover from '../../components/base/BasePopover.vue';
 import BaseTabs from '../../components/base/BaseTabs.vue';
 import { toast as notify } from '../../components/base/toast';
 import { detailOpen } from '../../services/shell';
+import { switchingTab, useTabLeave } from '../../services/tabs';
 import { useShortcut } from '../../services/shortcuts';
 import WorkbenchTable from '../../components/workbench-table/WorkbenchTable.vue';
 import { api, ApiError, identity, type ProjectAccess } from '../../services/session';
@@ -492,7 +493,9 @@ async function safeLeave() {
   return true;
 }
 leaveDelivery.value = safeLeave;
-onBeforeRouteLeave(() => safeLeave());
+// Bringing another tab forward keeps this page as it is; closing its tab asks (workbench-tabs.md 4, 5).
+onBeforeRouteLeave(() => switchingTab() || safeLeave());
+useTabLeave(safeLeave);
 function beforeUnload(event: BeforeUnloadEvent) {
   if (dirty.value || busy.value) {
     event.preventDefault();
@@ -502,6 +505,19 @@ function beforeUnload(event: BeforeUnloadEvent) {
 onMounted(() => window.addEventListener('beforeunload', beforeUnload));
 // A record open beside the list asks the shell for room (DESIGN.md 4.1).
 watch(drawerId, (id) => (detailOpen.value = id !== null), { immediate: true });
+// Kept in a tab behind another, the page gives the room, the page header and the project guard
+// back (a teleported header would otherwise stay on the other tab).
+const inFront = ref(true);
+onDeactivated(() => {
+  inFront.value = false;
+  detailOpen.value = false;
+  if (leaveDelivery.value === safeLeave) leaveDelivery.value = null;
+});
+onActivated(() => {
+  inFront.value = true;
+  detailOpen.value = drawerId.value !== null;
+  leaveDelivery.value = safeLeave;
+});
 onBeforeUnmount(() => {
   detailOpen.value = false;
   generation++;
@@ -725,7 +741,7 @@ const summary = (item: Item) =>
   <div class="delivery-page" :class="{ split: drawerId !== null }">
     <!-- The page header names the page; its actions sit on the right of it (DESIGN.md 6.1). -->
     <h1 class="sr-only">开发清单</h1>
-    <Teleport defer to="#page-actions">
+    <Teleport v-if="inFront" defer to="#page-actions">
       <BaseTag v-if="freeze" :tone="freeze.tone" :title="'开发冻结计划日期 ' + freeze.date">{{
         freeze.text
       }}</BaseTag>

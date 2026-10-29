@@ -1,9 +1,20 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, defineComponent, onBeforeUnmount, ref, watch, type Component } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMediaQuery } from '@vueuse/core';
-import { ChevronDown, ChevronRight, Menu, PanelLeft, Search } from '@lucide/vue';
+import {
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  Link,
+  Menu,
+  PanelLeft,
+  Search,
+  SquarePlus,
+} from '@lucide/vue';
+import AppContextMenu, { type ContextItem } from './AppContextMenu.vue';
 import AppIcon from './AppIcon.vue';
+import AppTabs from './AppTabs.vue';
 import ConfirmDialog from './ConfirmDialog.vue';
 import CommandPalette from './CommandPalette.vue';
 import NotificationButton from './NotificationButton.vue';
@@ -15,6 +26,7 @@ import BaseKbd from './base/BaseKbd.vue';
 import BaseNavItem from './base/BaseNavItem.vue';
 import BaseResizeHandle from './base/BaseResizeHandle.vue';
 import BaseToaster from './base/BaseToaster.vue';
+import { toast } from './base/toast';
 import { modules, moduleOf, entryOf, visibleSections } from '../features/navigation';
 import { api, identity } from '../services/session';
 import { detailOpen } from '../services/shell';
@@ -25,6 +37,16 @@ import {
   loadProjects,
   leaveDelivery,
 } from '../services/projectContext';
+import {
+  activeTabId,
+  isRecord,
+  linkPath,
+  openInNewTab,
+  pageKey,
+  startTabs,
+  stopTabs,
+  tabs,
+} from '../services/tabs';
 
 // The shell (DESIGN.md 4.1): icon rail, the current module's menu, and the content panel. A record
 // page (a development item and its assistants) folds the menu away, as Plain does for a thread.
@@ -149,6 +171,92 @@ function toggleMenu() {
   else menuHidden.value = true;
 }
 const mobileMenu = ref(false);
+// Tabs (docs/specs/workbench-tabs.md): every page opens in a tab and stays alive while another
+// tab is in front, but a development item's assistants (FEAT-007). Each page sits in a wrapper
+// named after its tab and address, so KeepAlive drops exactly the pages whose tab closed.
+startTabs(router, identity.value?.user.id ?? '');
+onBeforeUnmount(stopTabs);
+const pageId = (tabId: string, key: string) => `${tabId}|${key}`;
+const currentPage = computed(() => pageId(activeTabId.value, pageKey(route)));
+const keptPages = computed(() =>
+  tabs.value
+    .filter((t) => !isRecord(t.path.split(/[?#]/)[0]!))
+    .map((t) => pageId(t.id, pageKey(router.resolve(t.path)))),
+);
+const wrappers = new Map<string, Component>();
+function wrapperOf(id: string) {
+  let wrapper = wrappers.get(id);
+  if (!wrapper) {
+    wrapper = defineComponent({
+      name: id,
+      setup:
+        (_, { slots }) =>
+        () =>
+          slots.default?.(),
+    });
+    wrappers.set(id, wrapper);
+  }
+  for (const key of wrappers.keys())
+    if (key !== id && !keptPages.value.includes(key)) wrappers.delete(key);
+  return wrapper;
+}
+// A kept page comes back where it was scrolled: the content body and anything scrolled inside it.
+const body = ref<HTMLElement | null>(null);
+const scrolls = new Map<string, [Element, number, number][]>();
+watch(
+  activeTabId,
+  (_id, old) => {
+    for (const id of scrolls.keys()) if (!tabs.value.some((t) => t.id === id)) scrolls.delete(id);
+    if (!old || !body.value) return;
+    const all = [body.value, ...body.value.querySelectorAll('*')];
+    scrolls.set(
+      old,
+      all.filter((e) => e.scrollTop || e.scrollLeft).map((e) => [e, e.scrollTop, e.scrollLeft]),
+    );
+  },
+  { flush: 'pre' },
+);
+watch(
+  activeTabId,
+  (id) => {
+    const saved = scrolls.get(id);
+    if (!saved && body.value) body.value.scrollTop = 0;
+    for (const [e, top, left] of saved ?? []) e.scrollTo(left, top);
+  },
+  { flush: 'post' },
+);
+// Ctrl / ⌘ or middle click on a menu entry or a module opens it in a new tab; right click
+// offers the same (DESIGN.md 4.1 “标签栏”).
+function newTabClick(event: MouseEvent) {
+  const middle = event.type === 'auxclick' && event.button === 1;
+  if (!middle && !(event.type === 'click' && (event.ctrlKey || event.metaKey))) return;
+  const path = linkPath(event.target);
+  if (!path) return;
+  event.preventDefault();
+  event.stopPropagation();
+  void openInNewTab(path);
+}
+function linkItems(target: EventTarget | null): ContextItem[] | null {
+  const path = linkPath(target);
+  if (!path) return null;
+  return [
+    { label: '在新标签页打开', icon: SquarePlus, run: () => openInNewTab(path) },
+    {
+      label: '在新窗口打开',
+      icon: ExternalLink,
+      run: () => window.open(path, '_blank', 'noopener'),
+    },
+    {
+      label: '复制链接',
+      icon: Link,
+      run: () =>
+        navigator.clipboard.writeText(location.origin + path).then(
+          () => toast('链接已复制'),
+          () => toast('复制失败，请重试。', 'red'),
+        ),
+    },
+  ];
+}
 // The module menu's width is dragged on its right edge and remembered (DESIGN.md 4.1).
 const navWidth = ref(Number(stored('shell-nav-width')) || 248);
 function saveNavWidth(width: number) {
@@ -209,28 +317,39 @@ const keys = [
     :style="{ '--nav-width': navWidth + 'px' }"
   >
     <a class="skip-link" href="#main-content">跳转到主要内容</a>
-    <aside class="rail" aria-label="模块">
-      <RouterLink to="/home" class="mark" aria-label="SAP 智能交付工作台">S</RouterLink>
-      <BaseIconButton v-if="narrow" label="打开菜单" side="right" @click="mobileMenu = !mobileMenu"
-        ><Menu
-      /></BaseIconButton>
-      <BaseIconButton
-        v-for="m in modules"
-        :key="m.id"
-        :label="m.label"
-        :to="m.path"
-        :pressed="module.id === m.id"
-        side="right"
-        @click="openModule"
-        ><AppIcon :name="m.icon" :size="18"
-      /></BaseIconButton>
-      <span class="rail-space"></span>
-      <NotificationButton />
-      <BaseIconButton label="搜索与跳转" kbd="Ctrl+K" side="right" @click="palette = true"
-        ><Search
-      /></BaseIconButton>
-      <UserMenu :busy="loggingOut" @logout="logout" @shortcuts="shortcuts = true" />
-    </aside>
+    <AppContextMenu :resolve="linkItems">
+      <aside
+        class="rail"
+        aria-label="模块"
+        @click.capture="newTabClick"
+        @auxclick.capture="newTabClick"
+      >
+        <RouterLink to="/home" class="mark" aria-label="SAP 智能交付工作台">S</RouterLink>
+        <BaseIconButton
+          v-if="narrow"
+          label="打开菜单"
+          side="right"
+          @click="mobileMenu = !mobileMenu"
+          ><Menu
+        /></BaseIconButton>
+        <BaseIconButton
+          v-for="m in modules"
+          :key="m.id"
+          :label="m.label"
+          :to="m.path"
+          :pressed="module.id === m.id"
+          side="right"
+          @click="openModule"
+          ><AppIcon :name="m.icon" :size="18"
+        /></BaseIconButton>
+        <span class="rail-space"></span>
+        <NotificationButton />
+        <BaseIconButton label="搜索与跳转" kbd="Ctrl+K" side="right" @click="palette = true"
+          ><Search
+        /></BaseIconButton>
+        <UserMenu :busy="loggingOut" @logout="logout" @shortcuts="shortcuts = true" />
+      </aside>
+    </AppContextMenu>
     <button
       v-if="mobileMenu"
       type="button"
@@ -238,112 +357,128 @@ const keys = [
       aria-label="关闭菜单"
       @click="mobileMenu = false"
     ></button>
-    <nav class="menu" :aria-label="module.label + '菜单'">
-      <BaseResizeHandle
-        v-if="!narrow && !hidden && !record"
-        v-model="navWidth"
-        class="menu-resize"
-        label="调整菜单宽度"
-        :min="200"
-        :max="400"
-        @done="saveNavWidth"
-      />
-      <header class="menu-head">
-        <p class="identity" :title="identity?.organization.name">
-          <strong>{{ identity?.organization.name }}</strong
-          ><small>SAP 智能交付工作台</small>
-        </p>
-        <BaseIconButton
-          label="收起菜单"
-          kbd="["
-          size="sm"
-          @click="narrow ? (mobileMenu = false) : toggleMenu()"
-          ><PanelLeft
-        /></BaseIconButton>
-      </header>
-      <h2 class="menu-title">{{ module.label }}</h2>
-      <label v-if="module.id === 'settings'" class="menu-search">
-        <Search />
-        <input
-          v-model="filter"
-          type="search"
-          placeholder="搜索设置…"
-          aria-label="搜索设置"
-          @keydown.enter.prevent="openFirst"
-        />
-      </label>
-      <section
-        v-for="section in shownSections"
-        :key="section.id"
-        class="menu-section"
-        :class="{ grouped: section.label, closed: section.label && !isOpen(section.id) }"
+    <AppContextMenu :resolve="linkItems">
+      <nav
+        class="menu"
+        :aria-label="module.label + '菜单'"
+        @click.capture="newTabClick"
+        @auxclick.capture="newTabClick"
       >
-        <h3 v-if="section.label">
-          <button
-            type="button"
-            class="menu-group"
-            :aria-expanded="isOpen(section.id)"
-            :aria-controls="'menu-group-' + section.id"
-            @click="toggleGroup(section.id)"
-          >
-            <span>{{ section.label }}</span
-            ><ChevronDown class="menu-group-chevron" />
-          </button>
-        </h3>
-        <div :id="'menu-group-' + section.id" class="menu-items">
-          <div
-            class="menu-items-inner"
-            :inert="section.label && !isOpen(section.id) ? true : undefined"
-          >
-            <BaseNavItem
-              v-for="item in section.items"
-              :key="item.id"
-              :to="item.path"
-              :label="item.label"
-              :planned="item.planned"
-              :active="activeEntry?.id === item.id"
-              ><template #icon><AppIcon :name="item.icon" :size="16" /></template
-            ></BaseNavItem>
-          </div>
-        </div>
-      </section>
-      <p v-if="filter && !shownSections.length" class="menu-empty">没有匹配的设置。</p>
-    </nav>
-    <main id="main-content" class="shell-content">
-      <header v-if="!record" class="page-bar">
-        <BaseIconButton
-          v-if="hidden && !narrow"
-          label="展开菜单"
-          kbd="["
-          size="sm"
-          @click="showMenu"
-          ><PanelLeft
-        /></BaseIconButton>
-        <nav class="crumbs" aria-label="当前位置">
-          <template v-if="projectScoped">
-            <ProjectSwitcher />
-            <ChevronRight class="crumb-sep" aria-hidden="true" />
-          </template>
-          <template v-for="(c, i) in crumbs" :key="i">
-            <ChevronRight v-if="i" class="crumb-sep" aria-hidden="true" />
-            <RouterLink v-if="c.to" :to="c.to" class="crumb">{{ c.label }}</RouterLink>
-            <span
-              v-else
-              class="crumb"
-              :aria-current="i === crumbs.length - 1 ? 'page' : undefined"
-              >{{ c.label }}</span
+        <BaseResizeHandle
+          v-if="!narrow && !hidden && !record"
+          v-model="navWidth"
+          class="menu-resize"
+          label="调整菜单宽度"
+          :min="200"
+          :max="400"
+          @done="saveNavWidth"
+        />
+        <header class="menu-head">
+          <p class="identity" :title="identity?.organization.name">
+            <strong>{{ identity?.organization.name }}</strong
+            ><small>SAP 智能交付工作台</small>
+          </p>
+          <BaseIconButton
+            label="收起菜单"
+            kbd="["
+            size="sm"
+            @click="narrow ? (mobileMenu = false) : toggleMenu()"
+            ><PanelLeft
+          /></BaseIconButton>
+        </header>
+        <h2 class="menu-title">{{ module.label }}</h2>
+        <label v-if="module.id === 'settings'" class="menu-search">
+          <Search />
+          <input
+            v-model="filter"
+            type="search"
+            placeholder="搜索设置…"
+            aria-label="搜索设置"
+            @keydown.enter.prevent="openFirst"
+          />
+        </label>
+        <section
+          v-for="section in shownSections"
+          :key="section.id"
+          class="menu-section"
+          :class="{ grouped: section.label, closed: section.label && !isOpen(section.id) }"
+        >
+          <h3 v-if="section.label">
+            <button
+              type="button"
+              class="menu-group"
+              :aria-expanded="isOpen(section.id)"
+              :aria-controls="'menu-group-' + section.id"
+              @click="toggleGroup(section.id)"
             >
-          </template>
-        </nav>
-        <p v-if="projectError" class="page-bar-error" role="alert">{{ projectError }}</p>
-        <!-- A page puts its main actions here with <Teleport defer to="#page-actions">. -->
-        <div id="page-actions" class="page-actions"></div>
-      </header>
-      <div class="shell-body">
-        <p v-if="logoutError" class="error-note" role="alert">{{ logoutError }}</p>
-        <RouterView :key="route.meta.keepOnQuery ? route.path : route.fullPath" />
-      </div>
-    </main>
+              <span>{{ section.label }}</span
+              ><ChevronDown class="menu-group-chevron" />
+            </button>
+          </h3>
+          <div :id="'menu-group-' + section.id" class="menu-items">
+            <div
+              class="menu-items-inner"
+              :inert="section.label && !isOpen(section.id) ? true : undefined"
+            >
+              <BaseNavItem
+                v-for="item in section.items"
+                :key="item.id"
+                :to="item.path"
+                :label="item.label"
+                :planned="item.planned"
+                :active="activeEntry?.id === item.id"
+                ><template #icon><AppIcon :name="item.icon" :size="16" /></template
+              ></BaseNavItem>
+            </div>
+          </div>
+        </section>
+        <p v-if="filter && !shownSections.length" class="menu-empty">没有匹配的设置。</p>
+      </nav>
+    </AppContextMenu>
+    <div class="shell-main">
+      <AppTabs />
+      <main id="main-content" class="shell-content">
+        <header v-if="!record" class="page-bar">
+          <BaseIconButton
+            v-if="hidden && !narrow"
+            label="展开菜单"
+            kbd="["
+            size="sm"
+            @click="showMenu"
+            ><PanelLeft
+          /></BaseIconButton>
+          <nav class="crumbs" aria-label="当前位置">
+            <template v-if="projectScoped">
+              <ProjectSwitcher />
+              <ChevronRight class="crumb-sep" aria-hidden="true" />
+            </template>
+            <template v-for="(c, i) in crumbs" :key="i">
+              <ChevronRight v-if="i" class="crumb-sep" aria-hidden="true" />
+              <RouterLink v-if="c.to" :to="c.to" class="crumb">{{ c.label }}</RouterLink>
+              <span
+                v-else
+                class="crumb"
+                :aria-current="i === crumbs.length - 1 ? 'page' : undefined"
+                >{{ c.label }}</span
+              >
+            </template>
+          </nav>
+          <p v-if="projectError" class="page-bar-error" role="alert">{{ projectError }}</p>
+          <!-- A page puts its main actions here with <Teleport defer to="#page-actions">. -->
+          <div id="page-actions" class="page-actions"></div>
+        </header>
+        <div ref="body" class="shell-body">
+          <p v-if="logoutError" class="error-note" role="alert">{{ logoutError }}</p>
+          <RouterView v-slot="{ Component: page }">
+            <KeepAlive :include="keptPages" :max="10">
+              <component :is="wrapperOf(currentPage)" :key="currentPage"
+                ><component :is="page"
+              /></component>
+            </KeepAlive>
+          </RouterView>
+        </div>
+      </main>
+    </div>
     <CommandPalette v-model:open="palette" />
     <BaseDialog v-model:open="shortcuts" title="键盘快捷键">
       <dl class="keys">
@@ -558,15 +693,29 @@ const keys = [
   color: var(--text-muted);
   font-size: var(--font-12);
 }
-.shell-content {
-  position: relative;
+/* The tab bar takes the gap above the content panel (DESIGN.md 4.1 “标签栏”). */
+.shell-main {
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  margin: var(--layout-gap) var(--layout-gap) var(--layout-gap) 0;
+  padding-right: var(--layout-gap);
+}
+.shell-main > .tab-bar {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+.shell-content {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  margin-bottom: var(--layout-gap);
   overflow: hidden;
-  border-radius: var(--radius-12);
+  border-radius: 0 var(--radius-12) var(--radius-12) var(--radius-12);
   background: var(--panel);
   box-shadow: var(--shadow-card);
 }

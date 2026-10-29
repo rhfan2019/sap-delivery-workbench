@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from 'vue';
 import { onBeforeRouteLeave } from 'vue-router';
 import {
   Star,
@@ -17,6 +17,7 @@ import {
 import { api, can } from '../../services/session';
 import { askConfirmation } from '../../services/confirmation';
 import { leaveDelivery } from '../../services/projectContext';
+import { switchingTab, useTabLeave } from '../../services/tabs';
 import ModelDrawer from './ModelDrawer.vue';
 import {
   canDefault,
@@ -201,8 +202,14 @@ function unload(e: BeforeUnloadEvent) {
     e.returnValue = '';
   }
 }
-onBeforeRouteLeave(canLeave);
+// Bringing another tab forward keeps this page as it is; closing its tab asks (workbench-tabs.md 4, 5).
+onBeforeRouteLeave(() => switchingTab() || canLeave());
+useTabLeave(canLeave);
 leaveDelivery.value = canLeave;
+onActivated(() => (leaveDelivery.value = canLeave));
+onDeactivated(() => {
+  if (leaveDelivery.value === canLeave) leaveDelivery.value = null;
+});
 onMounted(() => {
   void load();
   document.addEventListener('pointerdown', outside);
