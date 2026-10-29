@@ -72,6 +72,8 @@ test('settings: menu by permission, customers, models, project SAP login and lis
       'delivery.item:export',
       'sap.development:read',
       'sap.test:read',
+      // The development list links an assistant only for those who may run it (c16f934).
+      'agent.fsd:run',
     ],
     limits: {},
   };
@@ -312,21 +314,21 @@ test('settings: menu by permission, customers, models, project SAP login and lis
     await menu.getByRole('button', { name: '智能体', exact: true }).click();
     await menu.getByRole('link', { name: '大模型', exact: true }).click();
     await page.getByRole('button', { name: '测试模型1', exact: true }).click();
-    await page.locator('.model-drawer[open]').waitFor();
+    await page.locator('.s-drawer[open]').waitFor();
     assert.equal(await page.getByRole('heading', { name: '默认调用参数', exact: true }).count(), 0);
-    assert.equal(await page.locator('.model-drawer input[type="number"]').count(), 0);
+    assert.equal(await page.locator('.s-drawer input[type="number"]').count(), 0);
     await page.getByRole('button', { name: '测试模型2', exact: true }).click();
-    await page.locator('.model-drawer input').first().waitFor();
-    assert.equal(await page.locator('.model-drawer input').first().inputValue(), '测试模型2');
-    await page.locator('.model-drawer input').first().fill('未保存');
+    await page.locator('.s-drawer input').first().waitFor();
+    assert.equal(await page.locator('.s-drawer input').first().inputValue(), '测试模型2');
+    await page.locator('.s-drawer input').first().fill('未保存');
     await page.getByRole('button', { name: '测试模型1', exact: true }).click();
     await page.getByRole('button', { name: '取消，保留当前内容' }).click();
-    assert.equal(await page.locator('.model-drawer input').first().inputValue(), '未保存');
+    assert.equal(await page.locator('.s-drawer input').first().inputValue(), '未保存');
     await page.getByRole('button', { name: '测试模型1', exact: true }).click();
     await page.getByRole('button', { name: '确认继续' }).click();
-    assert.equal(await page.locator('.model-drawer input').first().inputValue(), '测试模型1');
+    assert.equal(await page.locator('.s-drawer input').first().inputValue(), '测试模型1');
     await page
-      .locator('.model-table tbody tr')
+      .locator('.s-table tbody tr')
       .first()
       .getByRole('button', { name: '测试', exact: true })
       .click();
@@ -344,18 +346,20 @@ test('settings: menu by permission, customers, models, project SAP login and lis
     await page.getByText('S/4 开发 100').first().waitFor();
     // Project pages carry the project switcher in the page header.
     await page.getByRole('button', { name: '切换项目' }).getByText('采购').waitFor();
+    // The list reads like 大模型 (DESIGN.md 6.2): testing needs the user's own login first.
+    const sapRow = page.locator('.s-table tbody tr').first();
     assert.equal(
-      await page.getByRole('button', { name: '测试连接', exact: true }).isDisabled(),
+      await sapRow.getByRole('button', { name: '测试', exact: true }).isDisabled(),
       true,
     );
-    await page.getByRole('button', { name: '登录', exact: true }).click();
+    await sapRow.getByRole('button', { name: '登录', exact: true }).click();
     const dialog = page.getByRole('dialog');
     await dialog.getByLabel('SAP 用户').fill('DEV01');
     await dialog.getByLabel('密码').fill('private');
     await dialog.getByRole('button', { name: '登录', exact: true }).click();
     await page.getByText('已加密保存 · DEV01').waitFor();
     assert.deepEqual(credentials, [{ username: 'DEV01', password: 'private', mode: 'saved' }]);
-    await page.getByRole('button', { name: '测试连接', exact: true }).click();
+    await sapRow.getByRole('button', { name: '测试', exact: true }).click();
     await page
       .getByText(/SAP_BASIS 758/)
       .first()

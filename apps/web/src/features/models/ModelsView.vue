@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from 'vue';
-import { onBeforeRouteLeave } from 'vue-router';
+import { computed, onMounted, ref, watch } from 'vue';
 import {
   Star,
   Search,
   Plus,
   RefreshCw,
-  MoreHorizontal,
   Trash2,
   ChevronLeft,
   ChevronRight,
@@ -16,8 +14,8 @@ import {
 } from '@lucide/vue';
 import { api, can } from '../../services/session';
 import { askConfirmation } from '../../services/confirmation';
-import { leaveDelivery } from '../../services/projectContext';
-import { switchingTab, useTabLeave } from '../../services/tabs';
+import SettingsRowMenu from '../settings/SettingsRowMenu.vue';
+import { useDrawerLeave } from '../settings/useDrawerLeave';
 import ModelDrawer from './ModelDrawer.vue';
 import {
   canDefault,
@@ -26,6 +24,7 @@ import {
   type ModelList,
   type ModelConfig,
 } from './types';
+import '../settings/settings.css';
 import './models.css';
 const data = ref<ModelList>({ items: [], defaultModel: null, defaultRevision: '0' });
 const loading = ref(true),
@@ -37,8 +36,7 @@ const search = ref(''),
   status = ref(''),
   page = ref(1),
   open = ref(false),
-  selected = ref<ModelRecord | null>(null),
-  menu = ref('');
+  selected = ref<ModelRecord | null>(null);
 const drawer = ref<InstanceType<typeof ModelDrawer> | null>(null),
   testing = ref('');
 const filtered = computed(() =>
@@ -89,7 +87,6 @@ async function edit(m: ModelRecord | null) {
   selected.value = m;
   saveError.value = '';
   open.value = true;
-  menu.value = '';
 }
 async function save(body: ModelConfig & { apiKey: string; rowVersion?: string }) {
   busy.value = true;
@@ -116,7 +113,6 @@ async function test(m: ModelRecord, capability: 'text' | 'structured_output' = '
   testing.value = m.id;
   error.value = '';
   saveError.value = '';
-  menu.value = '';
   notice.value = '';
   try {
     const result = await api<{ status: string; message: string }>(
@@ -163,7 +159,6 @@ async function setDefault(m: ModelRecord) {
   }
 }
 async function remove(m: ModelRecord) {
-  menu.value = '';
   if (m.isDefault || busy.value) return;
   if (!(await askConfirmation(`删除“${m.name}”？模型将从配置列表移除，历史版本保留。`))) return;
   busy.value = true;
@@ -193,33 +188,25 @@ const time = (s: string) =>
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(s));
-function outside(e: PointerEvent) {
-  if (!(e.target as Element).closest('.model-more')) menu.value = '';
-}
-function unload(e: BeforeUnloadEvent) {
-  if (drawer.value?.dirty || busy.value) {
-    e.preventDefault();
-    e.returnValue = '';
-  }
-}
 // Bringing another tab forward keeps this page as it is; closing its tab asks (workbench-tabs.md 4, 5).
-onBeforeRouteLeave(() => switchingTab() || canLeave());
-useTabLeave(canLeave);
-leaveDelivery.value = canLeave;
-onActivated(() => (leaveDelivery.value = canLeave));
-onDeactivated(() => {
-  if (leaveDelivery.value === canLeave) leaveDelivery.value = null;
-});
-onMounted(() => {
-  void load();
-  document.addEventListener('pointerdown', outside);
-  window.addEventListener('beforeunload', unload);
-});
-onUnmounted(() => {
-  document.removeEventListener('pointerdown', outside);
-  window.removeEventListener('beforeunload', unload);
-  if (leaveDelivery.value === canLeave) leaveDelivery.value = null;
-});
+useDrawerLeave(canLeave, () => !!drawer.value?.dirty || busy.value);
+onMounted(load);
+const rowMenu = (m: ModelRecord) => [
+  {
+    label: m.isDefault ? '应用已验证修改' : '设为默认',
+    icon: Star,
+    disabled: busy.value || (m.isDefault && m.versionId === data.value.defaultModel?.versionId),
+    run: () => setDefault(m),
+  },
+  {
+    label: '删除',
+    icon: Trash2,
+    danger: true,
+    disabled: busy.value || m.isDefault,
+    title: m.isDefault ? '请先切换默认模型' : '',
+    run: () => remove(m),
+  },
+];
 </script>
 <template>
   <div class="models-page" :class="{ 'drawer-visible': open }">
@@ -240,14 +227,14 @@ onUnmounted(() => {
     <p v-if="error" class="error-note" role="alert">{{ error }}</p>
     <p v-if="notice" class="success-note" role="status">{{ notice }}</p>
     <template v-if="can('model:view')">
-      <p class="model-default-summary">
+      <p class="s-summary">
         当前默认：<strong>{{ data.defaultModel?.name ?? '尚未设置' }}</strong
         ><span
           >· {{ data.defaultModel ? '对本组织的新任务生效' : '测试通过后，选择一个默认模型' }}</span
         >
       </p>
-      <div class="models-toolbar">
-        <label class="model-search"
+      <div class="s-table-toolbar">
+        <label class="s-table-search"
           ><Search :size="17" /><input
             v-model="search"
             aria-label="搜索模型"
@@ -258,14 +245,17 @@ onUnmounted(() => {
           <option value="failed">测试失败</option>
           <option value="timeout">测试超时</option>
           <option value="running">测试中</option>
-          <option value="untested">未测试</option></select
-        ><button class="primary-button" :disabled="busy" @click="edit(null)">
-          <Plus :size="17" />添加模型
-        </button>
+          <option value="untested">未测试</option>
+        </select>
+        <div class="s-table-actions">
+          <button class="primary-button" :disabled="busy" @click="edit(null)">
+            <Plus :size="17" />添加模型
+          </button>
+        </div>
       </div>
-      <div class="model-list-surface">
+      <div class="s-table-surface">
         <p v-if="loading" class="loading-state">正在读取模型…</p>
-        <div v-else-if="!rows.length" class="model-empty">
+        <div v-else-if="!rows.length" class="s-table-empty">
           <Star :size="32" />
           <h2>{{ search || status ? '没有匹配的模型' : '添加第一个模型' }}</h2>
           <p>
@@ -279,13 +269,13 @@ onUnmounted(() => {
             添加模型
           </button>
         </div>
-        <div v-else class="model-table-scroll">
-          <table class="model-table">
+        <div v-else>
+          <table class="s-table">
             <thead>
               <tr>
                 <th class="default-col">默认</th>
                 <th>模型名称</th>
-                <th class="provider-col">提供方</th>
+                <th class="hide-narrow">提供方</th>
                 <th>最近测试</th>
                 <th class="actions-col">操作</th>
               </tr>
@@ -294,12 +284,13 @@ onUnmounted(() => {
               <tr
                 v-for="m in rows"
                 :key="m.id"
+                class="clickable"
                 :class="{ selected: selected?.id === m.id }"
                 @click="edit(m)"
               >
                 <td @click.stop>
                   <button
-                    class="model-star"
+                    class="s-star"
                     :class="{ active: m.isDefault }"
                     :aria-label="m.isDefault ? '当前默认模型：' + m.name : '设为默认：' + m.name"
                     :aria-pressed="m.isDefault"
@@ -319,21 +310,21 @@ onUnmounted(() => {
                   </button>
                 </td>
                 <td>
-                  <button class="model-name" @click.stop="edit(m)">{{ m.name }}</button
-                  ><span v-if="m.isDefault" class="model-default-badge">默认</span
-                  ><small class="model-id">{{ m.modelId }}</small
+                  <button class="s-table-name" @click.stop="edit(m)">{{ m.name }}</button
+                  ><span v-if="m.isDefault" class="s-badge">默认</span
+                  ><small class="mono">{{ m.modelId }}</small
                   ><small
                     v-if="m.isDefault && m.versionId !== data.defaultModel?.versionId"
                     class="model-pending"
                     >有未应用修改 · 当前生效版本保留</small
                   >
                 </td>
-                <td class="provider-col">
+                <td class="hide-narrow">
                   <span>{{ m.provider }}</span
                   ><small>{{ protocolNames[m.protocol] }}</small>
                 </td>
                 <td>
-                  <span class="model-test-state" :class="m.test?.status ?? 'untested'"
+                  <span class="s-state" :class="m.test?.status ?? 'untested'"
                     ><component
                       :is="
                         m.test?.status === 'passed'
@@ -352,43 +343,12 @@ onUnmounted(() => {
                   >
                 </td>
                 <td>
-                  <div class="model-row-actions" @click.stop>
+                  <div class="s-row-actions" @click.stop>
                     <button class="text-button" :disabled="busy" @click="edit(m)">编辑</button
                     ><button class="text-button" :disabled="busy" @click="test(m)">
                       {{ testing === m.id ? '测试中' : '测试' }}
                     </button>
-                    <div class="model-more" @keydown.esc.stop="menu = ''">
-                      <button
-                        class="icon-button"
-                        :aria-label="m.name + '的更多操作'"
-                        :aria-expanded="menu === m.id"
-                        @click="menu = menu === m.id ? '' : m.id"
-                      >
-                        <MoreHorizontal :size="19" />
-                      </button>
-                      <div v-if="menu === m.id" class="model-more-panel">
-                        <button
-                          :disabled="
-                            busy || (m.isDefault && m.versionId === data.defaultModel?.versionId)
-                          "
-                          @click="
-                            menu = '';
-                            setDefault(m);
-                          "
-                        >
-                          <Star :size="15" />{{
-                            m.isDefault ? '应用已验证修改' : '设为默认'
-                          }}</button
-                        ><button
-                          :disabled="busy || m.isDefault"
-                          :title="m.isDefault ? '请先切换默认模型' : ''"
-                          class="model-delete"
-                          @click="remove(m)"
-                        >
-                          <Trash2 :size="15" />删除
-                        </button>
-                      </div>
-                    </div>
+                    <SettingsRowMenu :label="m.name + '的更多操作'" :items="rowMenu(m)" />
                   </div>
                   <button
                     v-if="m.isDefault && m.versionId !== data.defaultModel?.versionId"
@@ -403,7 +363,7 @@ onUnmounted(() => {
             </tbody>
           </table>
         </div>
-        <footer class="model-pagination">
+        <footer class="s-table-footer">
           <span>共 {{ filtered.length }} 个模型</span>
           <div>
             <button class="icon-button" aria-label="上一页" :disabled="page === 1" @click="page--">
@@ -420,11 +380,11 @@ onUnmounted(() => {
           </div>
         </footer>
       </div>
-      <p class="model-list-note">
+      <p class="s-table-note">
         测试仅验证当前版本的文本生成，结果不代表实时在线状态。默认模型不支持直接删除。
       </p>
     </template>
-    <p v-else class="model-empty">仅组织管理员可以维护模型配置。</p>
+    <p v-else class="s-table-empty">仅组织管理员可以维护模型配置。</p>
     <ModelDrawer
       v-if="open"
       ref="drawer"

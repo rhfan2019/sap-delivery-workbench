@@ -4,17 +4,15 @@ import {
   PERSON_TYPES,
   SENSITIVE_PERMISSIONS,
 } from '@sap-delivery-workbench/contracts/access/catalog';
-import BaseButton from '../../components/base/BaseButton.vue';
-import BaseDialog from '../../components/base/BaseDialog.vue';
 import BaseTag from '../../components/base/BaseTag.vue';
 import ChoiceChips from '../settings/ChoiceChips.vue';
+import SettingsDrawer from '../settings/SettingsDrawer.vue';
 import { useSave } from '../settings/useLoad';
 import { accessApi, day, type Candidate, type Member, type Role } from './api';
-import '../settings/settings.css';
 
-// Adding a member or changing a member's project roles (docs/specs/project-access-admin.md 2.4,
-// 4.4): pick roles as cards (Plain's role picker), then the module scope, “own items only” and
-// the validity they share.
+// Adding a member or changing a member's project roles in the list's drawer
+// (docs/specs/project-access-admin.md 2.4, 4.4; DESIGN.md 5 “抽屉”): pick roles as cards (Plain's
+// role picker), then the module scope, “own items only” and the validity they share.
 const props = defineProps<{
   projectId: string;
   roles: Role[];
@@ -22,24 +20,23 @@ const props = defineProps<{
   member: Member | null;
   candidates: Candidate[];
   canSensitive: (code: string) => boolean;
-  removing?: boolean;
 }>();
-const open = defineModel<boolean>('open', { default: false });
-const emit = defineEmits<{ saved: [members: Member[]]; remove: [member: Member] }>();
+const emit = defineEmits<{ saved: [members: Member[]]; close: [] }>();
 
+const first = props.member?.roles[0];
 const userId = ref('');
-const chosen = ref<string[]>([]);
-const modules = ref<string[]>([]);
-const ownOnly = ref(false);
-const validFrom = ref('');
-const validTo = ref('');
-const showSingles = ref(false);
+const chosen = ref<string[]>(props.member?.roles.map((r) => r.roleId) ?? []);
+const modules = ref<string[]>(first?.modules ?? []);
+const ownOnly = ref(first?.ownOnly ?? false);
+const validFrom = ref(day(first?.validFrom));
+const validTo = ref(day(first?.validTo));
 const save = useSave();
 const projectRoles = computed(() =>
   props.roles.filter((r) => r.scope === 'project' && r.status === 'active'),
 );
 const composites = computed(() => projectRoles.value.filter((r) => r.kind === 'composite'));
 const singles = computed(() => projectRoles.value.filter((r) => r.kind === 'single'));
+const showSingles = ref(chosen.value.some((id) => singles.value.some((s) => s.id === id)));
 const candidate = computed(() => props.candidates.find((c) => c.id === userId.value));
 const person = computed(
   () => props.member?.personType ?? candidate.value?.personType ?? 'employee',
@@ -51,19 +48,17 @@ const differing = computed(() => {
     1
   );
 });
-watch(open, (value) => {
-  if (!value) return;
-  save.error.value = '';
-  showSingles.value = false;
-  const first = props.member?.roles[0];
-  userId.value = '';
-  chosen.value = props.member?.roles.map((r) => r.roleId) ?? [];
-  modules.value = first?.modules ?? [];
-  ownOnly.value = first?.ownOnly ?? false;
-  validFrom.value = day(first?.validFrom);
-  validTo.value = day(first?.validTo);
-  if (chosen.value.some((id) => singles.value.some((s) => s.id === id))) showSingles.value = true;
-});
+const snapshot = () =>
+  JSON.stringify([
+    userId.value,
+    [...chosen.value].sort(),
+    [...modules.value].sort(),
+    ownOnly.value,
+    validFrom.value,
+    validTo.value,
+  ]);
+const initial = snapshot();
+const dirty = computed(() => snapshot() !== initial);
 // A new member starts from their position's default roles and their skill modules.
 watch(userId, () => {
   const c = candidate.value;
@@ -85,6 +80,7 @@ const ready = computed(
   () => (props.member || userId.value) && chosen.value.length > 0 && !needsEnd.value,
 );
 async function submit() {
+  if (!ready.value || save.busy.value) return;
   const roles = chosen.value.map((roleId) => ({
     roleId,
     modules: modules.value,
@@ -97,24 +93,27 @@ async function submit() {
       ? accessApi.setRoles(props.projectId, props.member.id, roles)
       : accessApi.addMember(props.projectId, { userId: userId.value, roles }),
   );
-  if (members) {
-    emit('saved', members);
-    open.value = false;
-  }
+  if (members) emit('saved', members);
 }
 const moduleOptions = computed(() => props.modules.map((m) => ({ value: m, label: m })));
+defineExpose({ dirty, busy: save.busy });
 </script>
 <template>
-  <BaseDialog
-    v-model:open="open"
-    :title="member ? '调整 ' + member.displayName + ' 的项目角色' : '添加项目成员'"
+  <SettingsDrawer
+    :title="member ? '调整项目角色' : '添加成员'"
     description="角色决定能做什么；模块范围与“仅本人负责”决定在哪些开发项上做。"
-    wide
+    close-label="关闭成员抽屉"
+    note="保存后立即生效"
+    :busy="save.busy.value"
+    @close="emit('close')"
+    @submit="submit"
   >
-    <form class="member-form" @submit.prevent="submit">
-      <label v-if="!member" class="block">
-        <span>成员</span>
-        <select v-model="userId" class="s-select" required>
+    <p v-if="save.error.value" class="error-note" role="alert">{{ save.error.value }}</p>
+    <section>
+      <h3>成员</h3>
+      <label v-if="!member" class="s-field"
+        ><span>成员 <b>*</b></span
+        ><select v-model="userId" required>
           <option value="" disabled>选择企业内的用户</option>
           <option v-for="c in candidates" :key="c.id" :value="c.id">
             {{ c.displayName }}（{{ c.loginName }}）{{ c.positionName ? ' · ' + c.positionName : ''
@@ -122,52 +121,69 @@ const moduleOptions = computed(() => props.modules.map((m) => ({ value: m, label
               c.personType !== 'employee' ? ' · ' + PERSON_TYPES[c.personType as 'employee'] : ''
             }}
           </option>
-        </select>
-        <small v-if="!candidates.length" class="s-note">企业内所有有效用户都已是项目成员。</small>
-      </label>
-
-      <div class="block">
-        <span>角色</span>
-        <div class="role-cards" role="group" aria-label="项目角色">
-          <button
-            v-for="r in composites"
-            :key="r.id"
-            type="button"
-            class="role-card"
-            :aria-pressed="chosen.includes(r.id)"
-            :disabled="blocked(r) && !chosen.includes(r.id)"
-            @click="toggle(r.id)"
-          >
-            <strong
-              >{{ r.name }}<BaseTag v-if="!r.builtIn" tone="purple">自定义</BaseTag
-              ><BaseTag v-if="blocked(r)" tone="yellow">含敏感权限</BaseTag></strong
-            >
-            <small>{{ r.description || r.members.map((m) => m.name).join('、') }}</small>
-          </button>
-        </div>
-        <button type="button" class="text-button more" @click="showSingles = !showSingles">
-          {{ showSingles ? '收起单一角色' : '补充单一角色（' + singles.length + '）' }}
-        </button>
-        <div v-if="showSingles" class="role-cards compact">
-          <button
-            v-for="r in singles"
-            :key="r.id"
-            type="button"
-            class="role-card"
-            :aria-pressed="chosen.includes(r.id)"
-            :disabled="blocked(r) && !chosen.includes(r.id)"
-            @click="toggle(r.id)"
-          >
-            <strong>{{ r.name }}</strong>
-            <small>{{ r.description }}</small>
-          </button>
-        </div>
-        <small class="s-note"
-          >含敏感权限（成员管理、商务、归档）的角色，只有自己在本项目持有这些权限的人才能分配。</small
+        </select></label
+      >
+      <p v-if="!member && !candidates.length" class="s-drawer-help">
+        企业内所有有效用户都已是项目成员。
+      </p>
+      <div v-if="member" class="s-field">
+        <span>成员</span>
+        <span
+          >{{ member.displayName }}
+          <small class="member-sub"
+            >{{ member.positionName ?? '未设职位' }} · {{ member.loginName
+            }}<template v-if="member.personType !== 'employee'">
+              · {{ PERSON_TYPES[member.personType as 'employee'] }}</template
+            ></small
+          ></span
         >
       </div>
+    </section>
 
-      <div class="block">
+    <section>
+      <h3>角色 <b class="required">*</b></h3>
+      <div class="role-cards" role="group" aria-label="项目角色">
+        <button
+          v-for="r in composites"
+          :key="r.id"
+          type="button"
+          class="role-card"
+          :aria-pressed="chosen.includes(r.id)"
+          :disabled="blocked(r) && !chosen.includes(r.id)"
+          @click="toggle(r.id)"
+        >
+          <strong
+            >{{ r.name }}<BaseTag v-if="!r.builtIn" tone="purple">自定义</BaseTag
+            ><BaseTag v-if="blocked(r)" tone="yellow">含敏感权限</BaseTag></strong
+          >
+          <small>{{ r.description || r.members.map((m) => m.name).join('、') }}</small>
+        </button>
+      </div>
+      <button type="button" class="text-button more" @click="showSingles = !showSingles">
+        {{ showSingles ? '收起单一角色' : '补充单一角色（' + singles.length + '）' }}
+      </button>
+      <div v-if="showSingles" class="role-cards compact">
+        <button
+          v-for="r in singles"
+          :key="r.id"
+          type="button"
+          class="role-card"
+          :aria-pressed="chosen.includes(r.id)"
+          :disabled="blocked(r) && !chosen.includes(r.id)"
+          @click="toggle(r.id)"
+        >
+          <strong>{{ r.name }}</strong>
+          <small>{{ r.description }}</small>
+        </button>
+      </div>
+      <p class="s-drawer-help">
+        含敏感权限（成员管理、商务、归档）的角色，只有自己在本项目持有这些权限的人才能分配。
+      </p>
+    </section>
+
+    <section>
+      <h3>范围与期限</h3>
+      <div class="s-field top">
         <span>模块范围</span>
         <ChoiceChips
           v-if="moduleOptions.length"
@@ -175,57 +191,55 @@ const moduleOptions = computed(() => props.modules.map((m) => ({ value: m, label
           :options="moduleOptions"
           label="模块范围"
         />
-        <small class="s-note">{{
+        <span v-else class="member-sub">全部模块</span>
+      </div>
+      <p class="s-drawer-help">
+        {{
           moduleOptions.length
             ? '不选即全部模块。选定后，其他模块的开发项可看不可改。'
             : '项目还没有登记实施模块，范围为全部模块。'
-        }}</small>
-      </div>
+        }}
+      </p>
       <label class="s-check"
         ><input
           v-model="ownOnly"
           type="checkbox"
         />仅本人负责：只能修改自己负责的开发项，只能在自己负责的阶段使用助手</label
       >
-      <div class="s-grid-2">
-        <label class="block"
-          ><span>开始日期</span><input v-model="validFrom" class="s-input" type="date"
-        /></label>
-        <label class="block"
-          ><span>结束日期{{ person !== 'employee' ? '（必填）' : '' }}</span
-          ><input v-model="validTo" class="s-input" type="date" :required="person !== 'employee'"
-        /></label>
-      </div>
-      <p v-if="needsEnd" class="s-note">分包与外部人员的角色必须设结束日期，到期自动失效。</p>
-      <p v-if="differing" class="s-note">该成员各角色的范围不同；保存后所有角色使用这里的范围。</p>
-      <p v-if="save.error.value" class="s-error" role="alert">{{ save.error.value }}</p>
-    </form>
-    <template #footer>
-      <BaseButton
-        v-if="member"
-        variant="danger"
-        class="footer-left"
-        :loading="removing"
-        @click="emit('remove', member)"
-        >移出项目</BaseButton
+      <label class="s-field"><span>开始日期</span><input v-model="validFrom" type="date" /></label>
+      <label class="s-field"
+        ><span
+          >结束日期<template v-if="person !== 'employee'"> <b>*</b></template></span
+        ><input v-model="validTo" type="date" :required="person !== 'employee'"
+      /></label>
+      <p v-if="needsEnd" class="s-drawer-help">
+        分包与外部人员的角色必须设结束日期，到期自动失效。
+      </p>
+      <p v-if="differing" class="s-drawer-help">
+        该成员各角色的范围不同；保存后所有角色使用这里的范围。
+      </p>
+    </section>
+    <template #actions>
+      <button
+        type="button"
+        class="secondary-button"
+        :disabled="save.busy.value"
+        @click="emit('close')"
       >
-      <BaseButton @click="open = false">取消</BaseButton>
-      <BaseButton variant="primary" :loading="save.busy.value" :disabled="!ready" @click="submit">{{
-        member ? '保存' : '添加'
-      }}</BaseButton>
+        取消</button
+      ><button class="primary-button" :disabled="save.busy.value || !ready">
+        {{ save.busy.value ? '正在处理…' : member ? '保存' : '添加' }}
+      </button>
     </template>
-  </BaseDialog>
+  </SettingsDrawer>
 </template>
 <style scoped>
-.member-form {
-  display: grid;
-  gap: var(--space-4);
+.required {
+  color: var(--red-text-2);
 }
-.block {
-  display: grid;
-  gap: var(--space-1-5);
-}
-.block > span {
+.member-sub {
+  display: block;
+  margin-top: var(--space-1);
   color: var(--text-muted);
   font-size: var(--font-12);
 }
@@ -280,11 +294,11 @@ const moduleOptions = computed(() => props.modules.map((m) => ({ value: m, label
 .compact .role-card {
   padding: var(--space-2) var(--space-3);
 }
-.more {
-  justify-self: start;
+.compact {
+  margin-top: var(--space-2);
 }
-.footer-left {
-  margin-right: auto;
+.more {
+  margin-top: var(--space-3);
 }
 @media (max-width: 560px) {
   .role-cards {

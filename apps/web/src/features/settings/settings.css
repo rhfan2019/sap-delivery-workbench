@@ -192,3 +192,430 @@ button.s-list-row:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* Settings list pages (DESIGN.md 5 “设置列表表格”, 6.2), after 大模型: a summary line, a toolbar
+   of search, filter and actions, a table of two-line rows on a white panel, and a note below. */
+.s-summary {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-14);
+}
+.s-summary strong {
+  margin-right: var(--space-3);
+  color: var(--text);
+}
+.s-summary span {
+  white-space: nowrap;
+}
+.s-table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+.s-table-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  width: 360px;
+  max-width: 45%;
+  height: 44px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-8);
+  background: var(--panel);
+  color: var(--text-muted);
+}
+.s-table-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+.s-table-search:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.s-table-toolbar select {
+  height: 44px;
+  padding: 0 var(--space-8) 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-6);
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+}
+.s-table-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+.s-table-surface {
+  min-height: 220px;
+  border-radius: var(--radius-10);
+  background: var(--panel);
+}
+.s-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--font-14);
+}
+.s-table thead {
+  background: var(--panel);
+  color: var(--text-muted);
+}
+.s-table th {
+  padding: var(--space-4);
+  font-size: var(--font-14);
+  font-weight: var(--weight-550);
+  text-align: left;
+}
+.s-table th:first-child {
+  border-radius: var(--radius-10) 0 0 0;
+}
+.s-table th:last-child {
+  border-radius: 0 var(--radius-10) 0 0;
+}
+.s-table td {
+  box-sizing: border-box;
+  height: 84px;
+  padding: var(--space-5) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.s-table tbody tr {
+  outline-offset: -2px;
+}
+.s-table tbody tr.clickable {
+  cursor: pointer;
+}
+.s-table tbody tr:hover {
+  background: var(--neutral-fill-1);
+}
+.s-table tbody tr.selected {
+  outline: 1px solid var(--focus);
+  background: var(--blue-fill-1);
+}
+.s-table tbody tr:focus-within {
+  outline: 2px solid var(--focus);
+}
+.s-table .default-col {
+  width: 60px;
+  padding-right: var(--space-1);
+}
+.s-table td:first-child {
+  padding-right: var(--space-1);
+}
+.s-table .actions-col {
+  width: 155px;
+}
+.s-table small {
+  display: block;
+  margin-top: var(--space-1-5);
+  color: var(--text-muted);
+  font-size: var(--font-12);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.s-table .mono {
+  font-family: var(--font-mono);
+}
+.s-table-name {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--font-14);
+  font-weight: var(--weight-550);
+  line-height: 1.4;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.s-table-name:hover:not(:disabled) {
+  color: var(--link);
+}
+.s-table-name:disabled {
+  cursor: default;
+}
+.s-table-person {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.s-table-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.s-badge {
+  margin-left: var(--space-2);
+  padding: var(--space-0-5) var(--space-1);
+  border-radius: var(--radius-4);
+  background: var(--blue-fill-1);
+  color: var(--focus);
+  font-size: var(--font-12);
+  font-weight: var(--weight-475);
+  white-space: nowrap;
+}
+.s-badge.muted {
+  background: var(--neutral-fill-1);
+  color: var(--text-muted);
+}
+.s-badge.warning {
+  background: var(--yellow-fill-1);
+  color: var(--yellow-text-2);
+}
+.s-star {
+  display: grid;
+  place-items: center;
+  padding: var(--space-1);
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.s-star.active {
+  color: var(--focus);
+}
+.s-star:disabled:not(.active) {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+.s-star:disabled.active {
+  cursor: default;
+}
+.s-state {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-size: var(--font-14);
+  white-space: nowrap;
+}
+.s-state.passed {
+  color: var(--green-text-2);
+}
+.s-state.failed,
+.s-state.timeout {
+  color: var(--red-text-2);
+}
+.s-state.running {
+  color: var(--link);
+}
+.s-state.untested {
+  color: var(--text-muted);
+}
+.s-row-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  white-space: nowrap;
+}
+.s-row-actions .text-button {
+  padding: var(--space-1) 0;
+  font-size: var(--font-14);
+}
+.s-table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5);
+  color: var(--text-muted);
+  font-size: var(--font-14);
+}
+.s-table-footer > div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.s-table-footer .icon-button {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-6);
+}
+.s-table-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-12);
+  line-height: 1.7;
+}
+.s-table-empty {
+  padding: var(--space-16) var(--space-5);
+  color: var(--text-muted);
+  text-align: center;
+}
+.s-table-empty svg {
+  color: var(--text-subtle);
+}
+.s-table-empty h2 {
+  margin: var(--space-4) 0 var(--space-2);
+  color: var(--text);
+  font-size: var(--font-20);
+}
+.s-table-empty p {
+  margin-bottom: var(--space-5);
+  font-size: var(--font-14);
+}
+@media (max-width: 1200px) {
+  .s-table .hide-narrow {
+    display: none;
+  }
+  .s-table td,
+  .s-table th {
+    padding-right: var(--space-3);
+    padding-left: var(--space-3);
+  }
+  .s-table-toolbar {
+    gap: var(--space-2-5);
+  }
+  .s-summary span {
+    white-space: normal;
+  }
+}
+@media (max-width: 760px) {
+  .s-table-search {
+    width: 100%;
+    max-width: none;
+  }
+  .s-table-surface {
+    overflow-x: auto;
+  }
+  .s-table {
+    min-width: 640px;
+  }
+}
+
+/* The drawer that adds or edits a record of a settings list (DESIGN.md 5 “抽屉”): fixed to the
+   right edge at full height, without a scrim, so the list stays usable beside it. */
+.s-drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  z-index: 40;
+  width: var(--layout-drawer);
+  max-width: 95vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: var(--shadow-dialog);
+}
+.s-drawer > form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.s-drawer-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--space-6);
+  border-bottom: 1px solid var(--blue-fill-1);
+}
+.s-drawer-head h2 {
+  margin: 0 0 var(--space-2-5);
+  font-size: var(--font-20);
+}
+.s-drawer-head p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-14);
+}
+.s-drawer-body {
+  flex: 1;
+  padding: 0 var(--space-6) var(--space-6);
+  overflow-y: auto;
+}
+.s-drawer-body > section {
+  padding: var(--space-6) 0;
+  border-bottom: 1px solid var(--blue-fill-1);
+}
+.s-drawer-body h3 {
+  margin: 0 0 var(--space-5);
+  font-size: var(--font-14);
+}
+.s-field {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+  margin-top: var(--space-4);
+  font-size: var(--font-14);
+}
+.s-field.top {
+  align-items: start;
+}
+.s-field.top > :first-child {
+  padding-top: var(--space-2-5);
+}
+.s-field b {
+  color: var(--red-text-2);
+}
+.s-field input:not([type='checkbox']),
+.s-field select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0 var(--space-2-5);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-6);
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+}
+.s-field input:focus,
+.s-field select:focus {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+.s-field input:disabled,
+.s-field select:disabled {
+  background: var(--neutral-fill-1);
+  color: var(--text-muted);
+}
+.s-field .mono {
+  font-family: var(--font-mono);
+}
+.s-drawer-body .s-check {
+  margin-top: var(--space-4);
+  font-size: var(--font-14);
+}
+.s-drawer-help {
+  margin: var(--space-3) 0;
+  color: var(--text-muted);
+  font-size: var(--font-12);
+  line-height: 1.7;
+}
+.s-drawer-note {
+  margin-top: var(--space-5);
+  padding: var(--space-3);
+  border-radius: var(--radius-4);
+  background: var(--blue-fill-1);
+  color: var(--link);
+  font-size: var(--font-12);
+  line-height: 1.7;
+}
+.s-drawer-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+}
+.s-drawer-foot > span {
+  margin-right: auto;
+  color: var(--text-muted);
+  font-size: var(--font-12);
+}
+.s-drawer-foot button {
+  font-size: var(--font-14);
+}

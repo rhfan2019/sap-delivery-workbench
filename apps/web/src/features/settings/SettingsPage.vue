@@ -2,19 +2,22 @@
 import AppIcon from '../../components/AppIcon.vue';
 // A settings page (docs/specs/project-access-admin.md 4.4, after Plain): an optional back link,
 // a 24px title with one sentence, actions on the right; then the content. Detail and form pages
-// keep a readable column; list pages may use the panel's full width.
+// keep a readable column; list pages may use the panel's full width. A list of records edited in
+// a drawer (`list`, DESIGN.md 6.2) is as wide as 大模型 and makes room while the drawer is open.
 withDefaults(
   defineProps<{
     title: string;
     description?: string;
     back?: { to: string; label: string };
     wide?: boolean;
+    list?: boolean;
+    drawer?: boolean;
   }>(),
-  { wide: false },
+  { wide: false, list: false, drawer: false },
 );
 </script>
 <template>
-  <div class="settings-page" :class="{ wide }">
+  <div class="settings-page" :class="{ wide, list, drawer }">
     <RouterLink v-if="back" :to="back.to" class="settings-back"
       ><AppIcon name="back" :size="14" />{{ back.label }}</RouterLink
     >
@@ -40,6 +43,26 @@ withDefaults(
 }
 .settings-page.wide {
   max-width: 1120px;
+}
+.settings-page.list {
+  max-width: 1600px;
+  padding-top: 0;
+}
+/* The spacing of 大模型: 24 above the summary and the toolbar, 20 above the table. */
+.settings-page.list > :deep(.s-summary),
+.settings-page.list > :deep(.s-table-toolbar) {
+  margin-top: var(--space-2);
+}
+.settings-page.list > :deep(.s-table-surface) {
+  margin-top: var(--space-1);
+}
+@media (min-width: 1100px) {
+  .settings-page.drawer {
+    padding-right: calc(var(--space-2) + var(--layout-drawer));
+  }
+}
+:global(.shell-body:has(.settings-page.list)) {
+  overflow-anchor: none;
 }
 .settings-back {
   display: inline-flex;
