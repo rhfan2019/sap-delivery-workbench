@@ -12,6 +12,7 @@ coverage/
 Thumbs.db
 .idea/
 .claude/
+.workbuddy/
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json

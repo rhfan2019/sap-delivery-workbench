@@ -366,6 +366,8 @@ export async function checkRepository(directory = root) {
     '.vscode',
     // Contract 1.11: Claude desktop preview configuration, kept out of Git.
     '.claude',
+    // Contract 1.20: WorkBuddy assistant memory, kept out of Git.
+    '.workbuddy',
     'node_modules',
   ]);
   const allowedRootFiles = new Set([

@@ -1,6 +1,8 @@
 # 仓库目录与依赖契约
 
-版本：1.19。日期：2026-10-18。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.20。日期：2026-10-28。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.20 变更：根目录登记 `.workbuddy`（WorkBuddy 助手在本机写入的记忆，与 `.claude` 同类，整体不入库）。此前它未登记，`npm start` 第一步的架构检查失败，API 与前端均未启动，浏览器打不开 `http://127.0.0.1:5173/home`。
 
 1.19 变更：用户 2026-10-18 要求本项目有独立的 pgAdmin 查看开发库与表关系图。根 `compose.yaml` 新增 `pgadmin` 服务（`tools` profile，不随 `npm start` 启动，只监听 127.0.0.1:5051），命令 `npm run db:admin` / `db:admin:stop`；本机开发用的 Docker 配置文件放 `infra/dev/`（首个文件 `pgadmin-servers.json`），与 `infra/production/` 并列。登录账号取 `.env` 的 `PGADMIN_DEFAULT_EMAIL`、`PGADMIN_DEFAULT_PASSWORD`，数据库密码在容器启动时写入容器内 pgpass，不入库。说明见 [查看开发数据库与表关系图](../guides/database-browsing.md)。
 
@@ -71,7 +73,7 @@
 | docs               | 与代码版本对应的架构、规格、计划、运维与验收资料                                 | 产品运行时数据来源、个人助手记忆                   |
 | .runtime           | 本机私有状态、附件、凭据、日志及隔离测试环境（忽略提交）                         | 应提交的业务源码                                   |
 
-根目录只保留统一入口及工具要求的配置：README、AGENTS、package.json、单一锁文件、start.cmd、stop.cmd、compose.yaml、编辑器/格式/Git 配置及测试配置。本机工具配置目录 `.vscode`、`.claude` 允许存在，其中 `.claude` 整体不入库。不新增 frontend/backend、src、common 等与上述结构重叠的根目录。
+根目录只保留统一入口及工具要求的配置：README、AGENTS、package.json、单一锁文件、start.cmd、stop.cmd、compose.yaml、编辑器/格式/Git 配置及测试配置。本机工具配置目录 `.vscode`、`.claude`、`.workbuddy` 允许存在，其中 `.claude`、`.workbuddy` 整体不入库。不新增 frontend/backend、src、common 等与上述结构重叠的根目录。
 
 ## 3. 应用内部边界
 

@@ -71,16 +71,25 @@ async function start() {
     });
     closeSync(log);
     let startupError;
-    child.once('error', (error) => { startupError = error; });
+    child.once('error', (error) => {
+      startupError = error;
+    });
     child.unref();
-    for (let attempt = 0; attempt < 40; attempt++) {
-      if (await control('status')) break;
+    // The first launch after boot reads node_modules from a cold disk cache (and antivirus
+    // scans every file), so loading the API can take over 30s; wait while the process lives.
+    console.log(
+      'Waiting for API and Vue to start; the first launch after boot can take a minute...',
+    );
+    const deadline = Date.now() + 180_000;
+    while (!(await control('status'))) {
       if (startupError) throw startupError;
       if (child.exitCode !== null)
-        throw new Error(`API/web process exited with code ${child.exitCode}. Check .runtime/web.log.`);
-      if (attempt === 39)
         throw new Error(
-          'Frontend did not become ready. Check .runtime/web.log; database may remain running.',
+          `API/web process exited with code ${child.exitCode}. Check .runtime/web.log.`,
+        );
+      if (Date.now() > deadline)
+        throw new Error(
+          'Frontend did not become ready within 3 minutes. Check .runtime/web.log; database may remain running.',
         );
       await delay(250);
     }
