@@ -11,7 +11,7 @@
 3. **只授予、不禁止**。有效权限是全部有效分配的并集，没有“拒绝”规则；拒绝规则会让“为什么我没有权限”难以解释。
 4. **权限点由代码定义，角色由管理员组合**。权限点是程序能检查的东西（`资源:动作`），管理员不能凭空新增；角色、复合角色、职位可以自由组合。
 5. **最小权限，不能越权授予**。任何人都不能把自己没有的权限授予别人，也不能给自己加权限。
-6. **有时限的访问**。分配带有效期，到期即失效（每次检查时按日期判断，不依赖定时任务）；分包人员必须设结束日期。
+6. **有时限的访问**。分配带有效期，到期即失效（每次检查时按日期判断，不依赖定时任务）；分包与外部人员必须设结束日期。
 7. **可解释、可审计**。任何人对任何操作都能查到“哪个角色、哪次分配给了这项权限”，被拒绝时知道缺的是哪一项；所有授权变更写入审计日志。
 8. **凭据只属于本人**。SAP 用户和密码由用户本人输入，只用于本人的请求，管理员也不能代用。
 
@@ -168,6 +168,8 @@
 | 项目成员      | `project.member:view`、`project.member:manage`（增删成员、分配项目内角色；敏感角色的限制见 2.7）                                                                                                                                                                                                                 |
 | 项目 SAP 系统 | `project.sap:view`、`project.sap:manage`（增删改系统、设默认）                                                                                                                                                                                                                                                   |
 | 开发清单      | `delivery.item:view` / `:create` / `:edit` / `:delete` / `:import` / `:export`、`delivery.config:manage`（自定义列、标签）                                                                                                                                                                                       |
+| 开发概览      | `delivery.overview:view`（菜单，按模块范围与仅本人负责收窄）、`delivery.overview.team:view`（看他人的负载与姓名）；见[开发概览设计](development-overview.md)                                                                                                                                                     |
+| 开发排期      | `delivery.load:view`（不按范围过滤）；见[开发排期设计](development-load.md)                                                                                                                                                                                                                                      |
 | FSD 设计助手  | `agent.fsd:view` 在开发项抽屉查看功能说明书（成果）、`agent.fsd:run` 进入设计助手（对话、上传、批注）、`agent.fsd:finalize` 定稿                                                                                                                                                                                 |
 | ABAP 开发助手 | `agent.dev:view` 在开发项抽屉查看开发方案与代码、`agent.dev:run` 进入开发助手（含代码上传与 SAP 同步）、`agent.dev:finalize`                                                                                                                                                                                     |
 | SAP 访问      | `sap.development:read`（读取开发系统）、`sap.test:read`（读取测试系统）、`sap.test_data:create`（在测试系统创建测试数据，平台定位决策第 5 节的例外）                                                                                                                                                             |
@@ -183,6 +185,7 @@
 | 智能体     | `model:view` / `:manage`                                                                |
 | SAP        | `sap.directory:view`（全企业 SAP 系统一览）                                             |
 | 审计与运维 | `audit:view`、`audit:comment`、`ops.diagnostics:run`（SAP 连接诊断）                    |
+| 开发管理   | `delivery.portfolio:view`（跨项目的项目组合）                                           |
 
 企业级分配带**项目范围**（全部项目 / 指定客户的项目 / 指定项目 / 不含项目）。角色中的项目级权限点在该范围内的每个项目生效，用于交付总监、PMO、项目管理员这类跨项目岗位，不必把他们加进每个项目。
 
@@ -202,45 +205,48 @@
 
 **企业级单一角色**：
 
-| 编码                | 名称       | 权限点                                                                                                                                                                                                                                                                                                        |
-| ------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SYS_SUPER_ADMIN`   | 超级管理员 | 全部；企业至少保留一名有效的超级管理员                                                                                                                                                                                                                                                                        |
-| `SYS_USER_ADMIN`    | 用户管理员 | `org.profile:view`、`user:*`、`user.password:reset`、`position:manage`、`role:view`                                                                                                                                                                                                                           |
-| `SYS_ROLE_ADMIN`    | 权限管理员 | `user:view`、`role:view`、`role:manage`、`assignment:manage`                                                                                                                                                                                                                                                  |
-| `SYS_PROJECT_ADMIN` | 项目管理员 | `customer:*`、`project.directory:view`、`project:create`、`user:view`，以及项目级 `project:view` / `:edit` / `:archive`、`project.plan:edit`、`project.team:edit`、`project.contact:view`、`project.commercial:*`、`project.member:*`、`project.sap:*`（建项目时要能指定项目经理，`C_PM` 含商务权限，见 2.7） |
-| `SYS_PLATFORM`      | 平台配置员 | `org.profile:*`、`org.security:manage`、`model:*`、`sap.directory:view`、`ops.diagnostics:run`                                                                                                                                                                                                                |
-| `SYS_AUDITOR`       | 审计员     | `audit:view`、`audit:comment`、`user:view`、`role:view`                                                                                                                                                                                                                                                       |
+| 编码                | 名称         | 权限点                                                                                                                                                                                                                                                                                                        |
+| ------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SYS_SUPER_ADMIN`   | 超级管理员   | 全部；企业至少保留一名有效的超级管理员                                                                                                                                                                                                                                                                        |
+| `SYS_USER_ADMIN`    | 用户管理员   | `org.profile:view`、`user:*`、`user.password:reset`、`position:manage`、`role:view`                                                                                                                                                                                                                           |
+| `SYS_ROLE_ADMIN`    | 权限管理员   | `user:view`、`role:view`、`role:manage`、`assignment:manage`                                                                                                                                                                                                                                                  |
+| `SYS_PROJECT_ADMIN` | 项目管理员   | `customer:*`、`project.directory:view`、`project:create`、`user:view`，以及项目级 `project:view` / `:edit` / `:archive`、`project.plan:edit`、`project.team:edit`、`project.contact:view`、`project.commercial:*`、`project.member:*`、`project.sap:*`（建项目时要能指定项目经理，`C_PM` 含商务权限，见 2.7） |
+| `SYS_PLATFORM`      | 平台配置员   | `org.profile:*`、`org.security:manage`、`model:*`、`sap.directory:view`、`ops.diagnostics:run`                                                                                                                                                                                                                |
+| `PF_VIEW`           | 项目组合查看 | `delivery.portfolio:view`                                                                                                                                                                                                                                                                                     |
+| `SYS_AUDITOR`       | 审计员       | `audit:view`、`audit:comment`、`user:view`、`role:view`                                                                                                                                                                                                                                                       |
 
 **项目级单一角色**：
 
-| 编码             | 名称         | 权限点                                                                                                                      |
-| ---------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| `PRJ_VIEW`       | 项目查看     | `project:view`、`project.member:view`、`project.sap:view`、`delivery.item:view`、`agent.fsd:view`、`agent.dev:view`         |
-| `PRJ_MANAGE`     | 项目管理     | `project:edit`、`project.plan:edit`、`project.health:edit`、`project.team:edit`、`project.member:manage`、`project:archive` |
-| `PRJ_CONTACT`    | 客户联系人   | `project.contact:view`                                                                                                      |
-| `PRJ_COMMERCIAL` | 项目商务     | `project.commercial:view` / `:edit`                                                                                         |
-| `PRJ_SAP`        | 项目系统管理 | `project.sap:manage`                                                                                                        |
-| `DL_EDIT`        | 开发清单维护 | `delivery.item:create` / `:edit` / `:export`                                                                                |
-| `DL_ADMIN`       | 开发清单管理 | `delivery.item:delete` / `:import`、`delivery.config:manage`                                                                |
-| `AG_FSD`         | FSD 设计     | `agent.fsd:run` / `:finalize`、`sap.development:read`、`sap.test:read`                                                      |
-| `AG_DEV`         | ABAP 开发    | `agent.dev:run` / `:finalize`、`sap.development:read`、`sap.test:read`                                                      |
-| `AG_TEST`        | 测试         | `sap.test:read`、`sap.test_data:create`                                                                                     |
+| 编码             | 名称         | 权限点                                                                                                                                        |
+| ---------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PRJ_VIEW`       | 项目查看     | `project:view`、`project.member:view`、`project.sap:view`、`delivery.item:view`、`delivery.overview:view`、`agent.fsd:view`、`agent.dev:view` |
+| `PRJ_MANAGE`     | 项目管理     | `project:edit`、`project.plan:edit`、`project.health:edit`、`project.team:edit`、`project.member:manage`、`project:archive`                   |
+| `PRJ_CONTACT`    | 客户联系人   | `project.contact:view`                                                                                                                        |
+| `PRJ_COMMERCIAL` | 项目商务     | `project.commercial:view` / `:edit`                                                                                                           |
+| `PRJ_SAP`        | 项目系统管理 | `project.sap:manage`                                                                                                                          |
+| `DL_EDIT`        | 开发清单维护 | `delivery.item:create` / `:edit` / `:export`                                                                                                  |
+| `DL_ADMIN`       | 开发清单管理 | `delivery.item:delete` / `:import`、`delivery.config:manage`                                                                                  |
+| `DL_TEAM`        | 开发团队视图 | `delivery.overview.team:view`                                                                                                                 |
+| `DL_LOAD`        | 开发排期查看 | `delivery.load:view`                                                                                                                          |
+| `AG_FSD`         | FSD 设计     | `agent.fsd:run` / `:finalize`、`sap.development:read`、`sap.test:read`                                                                        |
+| `AG_DEV`         | ABAP 开发    | `agent.dev:run` / `:finalize`、`sap.development:read`、`sap.test:read`                                                                        |
+| `AG_TEST`        | 测试         | `sap.test:read`、`sap.test_data:create`                                                                                                       |
 
 **项目级复合角色**（对应 SAP 项目的实际岗位）：
 
-| 编码           | 名称       | 包含                                                                       | 常配数据范围         |
-| -------------- | ---------- | -------------------------------------------------------------------------- | -------------------- |
-| `C_PM`         | 项目经理   | 项目查看、项目管理、客户联系人、项目商务、项目系统管理、清单维护、清单管理 | 全部模块             |
-| `C_ARCHITECT`  | 方案架构师 | 项目查看、客户联系人、清单维护、清单管理、FSD 设计、ABAP 开发              | 全部模块             |
-| `C_FUNC`       | 业务顾问   | 项目查看、客户联系人、清单维护、FSD 设计、测试                             | 负责的模块           |
-| `C_DEV_LEAD`   | 开发组长   | 项目查看、清单维护、清单管理、ABAP 开发、项目系统管理                      | 全部模块             |
-| `C_DEV`        | 开发顾问   | 项目查看、清单维护、ABAP 开发                                              | 全部或负责的模块     |
-| `C_BASIS`      | Basis 顾问 | 项目查看、项目系统管理                                                     | —                    |
-| `C_TESTER`     | 测试人员   | 项目查看、测试                                                             | 负责的模块           |
-| `C_SUBCON_DEV` | 分包开发   | 项目查看、ABAP 开发                                                        | 仅本人负责，设有效期 |
-| `C_OBSERVER`   | 观察者     | 项目查看                                                                   | —                    |
+| 编码           | 名称       | 包含                                                                                                   | 常配数据范围         |
+| -------------- | ---------- | ------------------------------------------------------------------------------------------------------ | -------------------- |
+| `C_PM`         | 项目经理   | 项目查看、项目管理、客户联系人、项目商务、项目系统管理、清单维护、清单管理、开发团队视图、开发排期查看 | 全部模块             |
+| `C_ARCHITECT`  | 方案架构师 | 项目查看、客户联系人、清单维护、清单管理、FSD 设计、ABAP 开发                                          | 全部模块             |
+| `C_FUNC`       | 业务顾问   | 项目查看、客户联系人、清单维护、FSD 设计、测试                                                         | 负责的模块           |
+| `C_DEV_LEAD`   | 开发组长   | 项目查看、清单维护、清单管理、开发团队视图、开发排期查看、ABAP 开发、项目系统管理                      | 全部模块             |
+| `C_DEV`        | 开发顾问   | 项目查看、清单维护、开发排期查看、ABAP 开发                                                            | 全部或负责的模块     |
+| `C_BASIS`      | Basis 顾问 | 项目查看、项目系统管理                                                                                 | —                    |
+| `C_TESTER`     | 测试人员   | 项目查看、测试                                                                                         | 负责的模块           |
+| `C_SUBCON_DEV` | 分包开发   | 项目查看、ABAP 开发                                                                                    | 仅本人负责，设有效期 |
+| `C_OBSERVER`   | 观察者     | 项目查看                                                                                               | —                    |
 
-**企业级复合角色**：`C_DELIVERY_DIRECTOR` 交付总监（项目查看、客户联系人、项目商务；范围为全部或指定客户的项目）、`C_PMO` PMO（项目查看、客户联系人；范围为全部项目）。
+**企业级复合角色**：`C_DELIVERY_DIRECTOR` 交付总监（项目查看、客户联系人、项目商务、项目组合查看；范围为全部或指定客户的项目）、`C_PMO` PMO（项目查看、客户联系人、项目组合查看；范围为全部项目）。
 
 ### 2.6 职位
 
@@ -261,7 +267,7 @@
 
 - 用户有一个主职位，另记“擅长模块”（多选）。加入项目时，默认角色取职位的项目内角色，默认模块范围取擅长模块与项目实施模块的交集（可修改）。
 - 职位的默认角色只在**分配时**带出，之后各自独立：修改职位的默认角色不会回溯改动已有分配，避免一次修改悄悄改变几十人的权限。给用户设置或更换职位时，可选择“同时授予职位的企业级默认角色”（只增不减）。
-- 用户有“人员类型”：员工、分包、外部（为将来的客户用户预留，暂不开放）。分包人员的任何分配都必须设结束日期。
+- 用户有“人员类型”：员工、分包、外部（为将来的客户用户预留，暂不开放）。分包与外部人员（非员工）的任何分配都必须设结束日期。
 
 ### 2.7 授权规则
 
@@ -477,7 +483,7 @@ Plain 的设置区（`/settings`）：
 - **列表页**（用户、角色、项目、成员、职位、SAP 系统、大模型）：按 [DESIGN.md](DESIGN.md) 第 6.2 节统一为“一行概要 → 搜索、筛选下拉与右侧主按钮 → 两行内容的表格 → 说明”，新增与编辑在右侧抽屉里进行（2026-10-29 用户确认，以“大模型”为准）。所有列表的新建、查看与修改都在右侧抽屉里（用户、角色用宽抽屉），不再另开详情页；停用、归档与删除在行尾 ⋯ 菜单。各对象的生命周期操作见[项目开发纪律](../guides/development-discipline.md)第 5 节。
 - **详情页**：2026-10-29 起设置区的记录不再另开详情页，改在列表的抽屉里查看与修改（用户、角色原详情页删除）；项目的各设置页（基本信息、计划与健康等）仍是卡片页：按卡片分组，每张卡片底部右下角“保存”，只保存本卡片。
 - **角色编辑**：权限点树（分组 → 权限点，带类型标签与说明，可搜索）；复合角色编辑为单一角色的勾选列表，实时显示合并后的权限点数。
-- **成员与权限**：概要一行为成员数、项目经理、限定模块与即将到期人数；筛选下拉为“全部成员 / 即将到期 / 分包与外部”。表格列为成员（头像、姓名，下一行职位 · 账号 · 人员类型）、项目内角色标签、范围（模块 · 仅本人负责）、有效期（即将到期显示黄色标签）与操作（编辑、⋯ 里的“移出项目”）；自己那一行不可编辑。添加与调整在右侧抽屉里：先选成员（添加时），再选角色（卡片，附一句说明，同 Plain），最后是模块范围、仅本人负责与有效期。
+- **成员与权限**：概要一行为成员数、项目经理、限定模块与即将到期人数；筛选下拉为“全部成员 / 即将到期 / 分包与外部”。表格列为成员（头像、姓名，下一行职位 · 账号 · 人员类型）、项目内角色标签、范围（模块 · 仅本人负责）、有效期（即将到期显示黄色标签）、排序码（开发排期中的人员顺序，0–9999 可留空，持“管理成员”者在行内直接修改，含自己）与操作（编辑、⋯ 里的“移出项目”）；自己那一行不能编辑角色与范围、不能移出。添加与调整在右侧抽屉里：先选成员（添加时），再选角色（卡片，附一句说明，同 Plain），最后是模块范围、仅本人负责与有效期。条件不全时点“保存”，抽屉内说明缺什么：未选成员、企业内没有可添加的用户（先到“设置 → 企业 → 用户”新建）、未选角色、分包与外部人员未填截止日期。
 - **SAP 系统**：概要一行为默认开发系统与默认测试系统；筛选下拉为“全部用途 / 开发系统 / 测试系统”，工具行右侧为“从其他项目复制”与“登记系统”。表格列为默认（星标，每种用途一个）、系统（名称，下一行 SID · Client · 语言）、用途（下一行 ADT 地址）、我的登录、最近测试与操作（编辑、登录 / 退出、测试、⋯ 里的“设为默认”“删除”）。登记与编辑在右侧抽屉里，分“基本信息”“接入配置”两组；登录 SAP 与从其他项目复制仍是对话框。
 - **用户权限视图**：用户抽屉的“有效权限”分组，按项目分组展示权限点及来源。
 

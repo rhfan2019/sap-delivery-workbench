@@ -1,6 +1,8 @@
 # 仓库目录与依赖契约
 
-版本：1.22。日期：2026-10-31。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.23。日期：2026-10-31。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.23 变更：文档核对。第 4 节末“重构完成条件”中“停用设计接口保持 410”是 2026-10-08 的条件，已按 1.3 与 3.1 清除，改为历史说明；规则与检查器不变。
 
 1.22 变更：依据[开发排期设计](../specs/development-load.md)（用户 2026-10-31 确认），development-overview 模块增加“开发管理 → 开发排期”的接口 `GET /api/projects/:projectId/development-load`（见 3.6），新增前端 feature `development-load`；按人按周的统计口径放 `packages/contracts/delivery/load.mjs`（浏览器可用），下钻筛选键仍在 `delivery/overview.mjs`。`app.project_member` 新增 `sort_code`（排序码），由 access 维护（`PUT /api/projects/:projectId/members/:userId/sort-code`）。没有新增依赖边。
 
@@ -233,6 +235,6 @@ npm run check:architecture 必须检查：受控根目录、workspace 清单、�
 
 1.3 新增检查（与历史助手清除在同一变更中启用，因为清除完成前现有代码必然违反）：abap-fsd-agent 的后端模块、前端 feature、共享契约与提示词目录中不得出现版本目录段（`/v<数字>/`）；`apps`、`packages`、`scripts`、`tools`、`infra` 中不得出现已清除的模块目录（design-assistant、agent-runtime、fs-workspace、fs-assistant-test），现行源码不得引用历史助手标识（`fsd_v1_`、`/work/design/fsd`、`gem-fsd-v2`、`work/design/agent`、`/api/admin/abap-fsd-agent`、`DESIGN_ASSISTANT_REMOVED`、`fsd_checkpoint`），已执行的历史迁移文件除外。前端可用契约清单随契约导出同步更新。
 
-重构完成条件：架构检查通过；生成契约一致；类型检查与生产构建通过；单元与隔离集成测试通过；start.cmd 启动后 /home 与 /api/health 可访问；停用设计接口保持 410；Docker 构建路径与 npm workspace 一致；迁移清单可追溯。受外部条件影响未验证的项目必须明确标记，不得宣称已验证。
+重构完成条件：架构检查通过；生成契约一致；类型检查与生产构建通过；单元与隔离集成测试通过；start.cmd 启动后 /home 与 /api/health 可访问；停用设计接口保持 410（2026-10-08 的条件；该边界已按 1.3 与 3.1 清除，不再适用）；Docker 构建路径与 npm workspace 一致；迁移清单可追溯。受外部条件影响未验证的项目必须明确标记，不得宣称已验证。
 
 契约变更必须更新版本、原因和检查器。AGENTS.md 要求后续所有目录/依赖变更先读本文件。自动检查与代码评审共同执行本契约；文档本身不等于已经具备自动约束。

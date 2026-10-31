@@ -1,6 +1,6 @@
 # 审计日志与优化建议
 
-状态：已实现（2026-10-12）。页面：后台管理 → 审计日志（`/workspace/audit`），仅企业管理员可见。归属见[目录与依赖契约](../architecture/repository-contract.md) 3.2 节。
+状态：已实现（2026-10-12）。页面：设置 → 审计与运维 → 审计日志（`/settings/audit`），需要 `audit:view`（预置角色 `SYS_AUDITOR` 与超级管理员持有）。归属见[目录与依赖契约](../architecture/repository-contract.md) 3.2 节。
 
 页面基于另一会话开发的“智能助手日志”页面（未提交、准备阶段被删除，从其编辑历史恢复）改造，保留布局与交互，按 abap-fsd-agent 的新数据重写接口与详情内容。
 
@@ -13,7 +13,7 @@
 | 操作审计 | `app.audit_event`：时间、操作人、操作、结果、对象、详情                                                                                              |
 | 优化建议 | Claude Code 发布的建议方案列表与正文                                                                                                                 |
 
-单轮详情（`/workspace/audit/runs/:id`）：结论（状态、结束原因、错误）、评论、本轮对话（用户输入、助手回复、提出的问题）、产出文档（版本、改动章节、未声明修改）、工具调用时间线（参数与结果、两次调用之间的模型思考间隔，超过 30 秒、120 秒分级提示）。会话趋势（`/workspace/audit/sessions/:id`）：同一会话逐轮耗时、Token、工具调用及增长提示。
+单轮详情（`/settings/audit/runs/:id`）：结论（状态、结束原因、错误）、评论、本轮对话（用户输入、助手回复、提出的问题）、产出文档（版本、改动章节、未声明修改）、工具调用时间线（参数与结果、两次调用之间的模型思考间隔，超过 30 秒、120 秒分级提示）。会话趋势（`/settings/audit/sessions/:id`）：同一会话逐轮耗时、Token、工具调用及增长提示。
 
 ## 口径
 
@@ -32,5 +32,5 @@
 
 ## 权限与安全
 
-- 接口 `/api/audit/*` 均要求企业管理员。评论只能删除自己的（软删除，记录保留）。
+- 接口 `/api/audit/*` 需要 `audit:view`，发表与删除评论需要 `audit:comment`。评论只能删除自己的（软删除，记录保留）。
 - 运行时数据库账号对 `app.audit_event` 由“只写”调整为“读 + 写”，仍不能修改或删除（`provision.mjs`，并由 `tests/integration/database/runtime.test.mjs` 断言）。

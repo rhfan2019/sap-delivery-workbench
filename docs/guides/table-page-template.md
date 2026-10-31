@@ -1,6 +1,6 @@
 # 表格页面模板：开发清单
 
-2026-10-06 首版，2026-10-13 按[开发清单重构设计](../specs/development-list.md)改版。开发清单是本平台基于 vxe-table 的 List Report 页面，新的表格页面照此接入。
+2026-10-06 首版，2026-10-13 按[开发清单重构设计](../specs/development-list.md)改版。开发清单是本平台基于 `@tanstack/vue-table` 共用组件 `WorkbenchTable` 的 List Report 页面，新的表格页面照此接入。
 
 ## 文件与职责
 
@@ -67,7 +67,7 @@ Excel 由后端生成（`exceljs`），导出列按个人列设置的顺序，�
 ## 验证
 
 ```sh
-node --test tests/e2e/delivery-table-ui.test.mjs tests/e2e/pending-items-ui.test.mjs
+node --test tests/e2e/delivery-table-ui.test.mjs
 npm run test:integration
 npm run build
 ```

@@ -1,5 +1,7 @@
 # ABAP FSD backend implementation plan
 
+> 状态：历史 / 已废弃（LangGraph 版设计助手已删除），不代表当前状态；现状以[待办与问题清单](backlog.md)为准。
+
 > Execute inline with executing-plans and test-driven-development. User explicitly authorizes continuous implementation, no commit/push. Evidence and execution ledger: `.runtime/artifacts/abap-backend-2026-10-08`.
 
 **Goal:** Implement the report FSD workflow with durable execution, auditable recovery and executable evaluation.

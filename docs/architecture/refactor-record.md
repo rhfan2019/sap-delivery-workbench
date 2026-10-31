@@ -1,5 +1,7 @@
 # 2026-10-08 目录审计与重构记录
 
+> 状态：历史记录（2026-10-08）。文中的 410 边界已按[目录与依赖契约](repository-contract.md) 1.3 与 3.1 清除；现行目录规则以契约为准。
+
 ## 初始事实
 
 审计基线提交：1306091。Git 跟踪文件计数：web 391、api 114、packages 1（仅 .gitkeep）、database 23、scripts 26、tests 106、docs 177、infra 8、tools 20、vendor 81。
@@ -16,7 +18,7 @@
 
 ## 保留的能力边界
 
-依据现行路由与 docs/design-assistant-cleanup.md：旧设计生成接口维持 410；开发助手、历史读取、独立 FS 工作区、模型和 SAP 配置保留。恢复数据契约不等于恢复旧设计引擎。
+依据当时的路由与 [design-assistant-cleanup.md](../archive/design-assistant-cleanup.md)：旧设计生成接口维持 410；开发助手、历史读取、独立 FS 工作区、模型和 SAP 配置保留。恢复数据契约不等于恢复旧设计引擎。
 
 ## 方案选择
 

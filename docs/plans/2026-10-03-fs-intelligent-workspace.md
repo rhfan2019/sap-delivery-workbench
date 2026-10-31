@@ -1,5 +1,7 @@
 # FS 智能工作区实施计划
 
+> 状态：历史 / 已废弃（FS 智能工作区已按 FSD 设计助手方向决策清除），不代表当前状态；现状以[待办与问题清单](backlog.md)为准。
+
 > **For agentic workers:** Use `superpowers:executing-plans` to implement this plan task-by-task in the current session. Use subagent-driven-development only if the user separately authorizes that execution method. Track the checkboxes below; a checked task requires verification evidence.
 
 **Goal:** 在现有SAP智能交付平台中实现材料→对话→结构化FS→关联修订→评审审批→发布开发依据→Word/PDF交付的持久闭环。

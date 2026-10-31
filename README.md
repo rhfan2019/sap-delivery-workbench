@@ -33,6 +33,7 @@ apps/
       admin/                 企业资料、客户、账号、项目与项目主数据
       access/                权限内核：权限点检查、角色、复合角色、职位、企业级与项目内分配
       delivery/              开发清单：开发项、四个阶段、开发对象、标签、自定义列、Excel
+      development-overview/  开发概览与开发排期的只读统计
       item-workspace/        开发项工作区的访问上下文
       agent-core/            智能体公共运行层：循环、事件推送、附件解析、SAP 只读工具
       abap-fsd-agent/        FSD 设计助手：文档工具、版本与批注；prompts/system.md 为系统指令
@@ -44,6 +45,9 @@ apps/
 packages/
   contracts/                 前后端共享的数据结构、校验和协议
     abap-fsd-agent/          FSD 设计助手的共享协议与类型
+    abap-dev-agent/          ABAP 开发助手的共享类型
+    agent-core/              两个助手共用的流事件协议
+    delivery/                开发清单字段目录；开发概览与开发排期的统计口径
     access/                  权限点目录、预置角色与职位（前后端共用）
     projects/                项目主数据的选项（类型、状态、SAP 产品、模块、里程碑等）
 database/migrations/         版本化数据库变更
@@ -71,9 +75,11 @@ docs/                        架构、规格、计划、使用指南和历史报
 - **项目 SAP 系统**：每个项目登记自己的开发与测试系统（不含生产、不存账号）；每个人用本人的 SAP 用户登录，可“本次登录有效”或按企业策略加密保存。
 - **设置**：图标栏“设置”按个人、项目、企业、智能体、审计与运维分组，全量列出菜单（未实现的标“规划中”），按权限显示。
 
+工作台外壳是浏览器式多标签页，设置下的页面共用一个“设置”标签（[工作台多标签页](docs/specs/workbench-tabs.md)）。“开发管理”下有[开发概览](docs/specs/development-overview.md)（按角色的开发驾驶舱）、开发清单与[开发排期](docs/specs/development-load.md)（开发人员按周的排期与负载）。
+
 开发清单按[重构设计](docs/specs/development-list.md)组织：基本信息与 FSD、开发、顾问测试、IT/用户测试四个阶段，开发对象（TADIR 主键）、标签、项目级自定义列、批量修改 / 复制 / 删除、Excel 导入导出；行内的“设计”进入 FSD 设计助手，“开发”进入 ABAP 开发助手（报表、功能类），顾问测试、IT/用户测试 Agent 尚未开放。旧的手工 FS 台账已删除。
 
-FSD 设计助手已按[方向决策](docs/architecture/2026-10-11-fsd-assistant-direction-decision.md)重构为模型主导的智能体 `abap-fsd-agent`（开发项工作区“设计”阶段），目前处于批量测试与优化阶段：进度见[重构实施计划](docs/plans/2026-10-11-abap-fsd-agent-refactor.md)，端到端测试结论见[测试记录](docs/plans/2026-10-12-abap-fsd-agent-e2e-test.md)，待处理问题见[待办与问题清单](docs/plans/backlog.md)，接手说明见[交接文档](docs/plans/2026-10-12-abap-fsd-agent-handover.md)。助手运行可在“设置 → 审计日志”复核。历史各代助手（LangGraph 版设计助手、FS 智能工作区、旧开发助手、FS助手测试）及其数据已删除。
+FSD 设计助手已按[方向决策](docs/architecture/2026-10-11-fsd-assistant-direction-decision.md)重构为模型主导的智能体 `abap-fsd-agent`（开发项工作区“设计”阶段），目前处于批量测试与优化阶段：进度见[重构实施计划](docs/plans/2026-10-11-abap-fsd-agent-refactor.md)，端到端测试结论见[测试记录](docs/plans/2026-10-12-abap-fsd-agent-e2e-test.md)，待处理问题见[待办与问题清单](docs/plans/backlog.md)，接手说明见[交接文档](docs/plans/2026-10-12-abap-fsd-agent-handover.md)。助手运行可在“设置 → 审计与运维 → 审计日志”复核。历史各代助手（LangGraph 版设计助手、FS 智能工作区、旧开发助手、FS助手测试）及其数据已删除。
 
 ABAP 开发助手 `abap-dev-agent`（开发项工作区“开发”阶段）首版已实现：按[方向决策](docs/architecture/2026-10-13-abap-dev-agent-direction-decision.md)，它与设计助手同构，输入可以是设计助手的 FSD、上传的资料，也可以只是自然语言需求，产出开发方案和一份继承 `YCL_FRH_REPORT` 的完整可执行程序，支持批注修订、版本差异、上传或从 SAP 同步交回代码；首版只做报表与功能类，开发清单中其他类型的“开发”按钮仍提示即将开放。后端在 `apps/api/src/modules/abap-dev-agent/`（系统指令在 `prompts/`，框架类内置副本在 `frameworks/`），两个助手共用的循环、事件、附件解析和 SAP 只读工具在 `agent-core`，共用的前端工作台在 `features/agent-workbench`。进度见[实施计划](docs/plans/2026-10-14-abap-dev-agent-implementation.md)，测试结论与问题见[端到端测试](docs/plans/2026-10-14-abap-dev-agent-e2e-test.md)。
 

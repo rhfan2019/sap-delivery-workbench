@@ -1,5 +1,7 @@
 # 模型配置及待实施事项 Implementation Plan
 
+> 状态：历史 / 已废弃（已执行；文中 TODO 编号属于旧待办体系），不代表当前状态；现状以[待办与问题清单](backlog.md)为准。
+
 > **For agentic workers:** Use superpowers:executing-plans; independent UI and deployment domains use superpowers:dispatching-parallel-agents. 用户已明确执行构建、待实施条目修改与全量测试，本计划直接执行。
 
 **Goal:** 构建已选第三套模型配置并完成 TODO-009/010/011/014/015/016。

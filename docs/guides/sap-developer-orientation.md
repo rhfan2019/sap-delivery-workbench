@@ -41,17 +41,18 @@ database/migrations/             所有表结构变更
 
 ## 3. 业务模块
 
-| 模块           | 做什么                                  | 前端                       | 后端                     |
-| -------------- | --------------------------------------- | -------------------------- | ------------------------ |
-| delivery       | 开发清单：开发项、四个阶段、标签、Excel | `features/delivery`        | `modules/delivery`       |
-| admin          | 组织、用户、项目管理                    | `features/admin`           | `modules/admin`          |
-| access         | 权限点、角色、职位与分配                | （在 admin 页面中）        | `modules/access`         |
-| sap            | SAP 系统连接与 MCP                      | `features/sap`             | `modules/sap`            |
-| models         | 大模型配置与调用                        | `features/models`          | `modules/models`         |
-| audit          | 审计日志与助手运行评论                  | `features/audit`           | `modules/audit`          |
-| abap-fsd-agent | FSD 设计助手                            | `features/abap-fsd-agent`  | `modules/abap-fsd-agent` |
-| abap-dev-agent | ABAP 开发助手                           | `features/abap-dev-agent`  | `modules/abap-dev-agent` |
-| agent-core     | 两个助手共用的智能体运行层              | `features/agent-workbench` | `modules/agent-core`     |
+| 模块                 | 做什么                                  | 前端                                                         | 后端                           |
+| -------------------- | --------------------------------------- | ------------------------------------------------------------ | ------------------------------ |
+| delivery             | 开发清单：开发项、四个阶段、标签、Excel | `features/delivery`                                          | `modules/delivery`             |
+| admin                | 组织、用户、项目管理                    | `features/admin`、`features/projects`、`features/settings`   | `modules/admin`                |
+| development-overview | 开发概览与开发排期（只读统计）          | `features/development-overview`、`features/development-load` | `modules/development-overview` |
+| access               | 权限点、角色、职位与分配                | `features/access`                                            | `modules/access`               |
+| sap                  | SAP 系统连接与 MCP                      | `features/sap`                                               | `modules/sap`                  |
+| models               | 大模型配置与调用                        | `features/models`                                            | `modules/models`               |
+| audit                | 审计日志与助手运行评论                  | `features/audit`                                             | `modules/audit`                |
+| abap-fsd-agent       | FSD 设计助手                            | `features/abap-fsd-agent`                                    | `modules/abap-fsd-agent`       |
+| abap-dev-agent       | ABAP 开发助手                           | `features/abap-dev-agent`                                    | `modules/abap-dev-agent`       |
+| agent-core           | 两个助手共用的智能体运行层              | `features/agent-workbench`                                   | `modules/agent-core`           |
 
 可以把每个模块当作一个开发包：一次只看当前关心的那一个。助手的系统指令（提示词）放在各自模块的 `prompts/` 下。
 

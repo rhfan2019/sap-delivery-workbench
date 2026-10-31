@@ -4,7 +4,7 @@ Source: https://github.com/vuepont/ai-elements-vue/tree/86c90df1b27cfd7ca05bd7f6
 
 `upstream.json` records imported files and upstream SHA-256 values. Root upstream LICENSE is retained. This is source vendoring, not an npm runtime wrapper. Relevant conversation, message, input, model, attachment, plan/task, artifact, citation, tool and confirmation families are available locally; business questions use Plan plus platform form semantics, not fake tool approvals.
 
-Platform adapters live in `src/features/abap-fsd-agent`. No legacy switch exists. Backend SSE, authorization, item selection, revisions, file IDs and conversation persistence remain authoritative.
+Platform adapters live in `src/features/agent-workbench`, the workbench shared by both assistants. No legacy switch exists. Backend SSE, authorization, item selection, revisions, file IDs and conversation persistence remain authoritative.
 
 Local upstream patches:
 

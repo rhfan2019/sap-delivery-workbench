@@ -1,6 +1,6 @@
 # abap-fsd-agent 重构实施计划
 
-> 2026-10-11。状态：已确认（第 9 节五项均按建议执行）。准备阶段、阶段 A、阶段 B、阶段 C 已完成；修订闭环、定稿与导出已在 2026-10-12 的 DEV-0031 端到端测试中验证（结论“有条件通过”，见第 10 节）。下一步：阶段 D 剩余项、DEV-0024 验收、批量测试。依据：[方向决策](../architecture/2026-10-11-fsd-assistant-direction-decision.md)、[目录与依赖契约 1.3](../architecture/repository-contract.md) 第 3.1 节、系统指令（已迁入 `apps/api/src/modules/abap-fsd-agent/prompts/system.md`）。计划确认前不改代码。
+> 2026-10-11。状态：已确认（第 9 节五项均按建议执行）。准备阶段、阶段 A、阶段 B、阶段 C 已完成；修订闭环、定稿与导出已在 2026-10-12 的 DEV-0031 端到端测试中验证（结论“有条件通过”，见第 10 节）。剩余事项见[待办与问题清单](backlog.md)（TEST-001、DOC-001、DOC-002 等）。依据：[方向决策](../architecture/2026-10-11-fsd-assistant-direction-decision.md)、[目录与依赖契约 1.3](../architecture/repository-contract.md) 第 3.1 节、系统指令（已迁入 `apps/api/src/modules/abap-fsd-agent/prompts/system.md`）。计划确认前不改代码。
 
 ## 1. 目标与完成标准
 
@@ -242,5 +242,5 @@ apps/api/src/modules/abap-fsd-agent/
   - 阶段 C 第 3 项“版本差异”未实现，只有改动章节列表（E2E-02）。
   - 4.6 节只计划“导出 Markdown”，而系统指令声称封面、变更记录、SAP 核实记录由程序生成，三项未实现（E2E-01，待用户选择方案）。
   - 4.3 节 `reply_comment` 的工具说明不足以约束只回复批注（E2E-03）。
-- 阶段 C “待改进”中“第 1 版不应显示本版改动章节”并入 E2E-02；其余两项（执行步骤过长与原始错误、较早轮次工具结果压缩）仍待处理。
-- 补记阶段 A 偏差（2026-10-12 文档核对发现）：3.5 节所列需移入 `docs/archive/` 的文档中，guides 与 specs 已移动，`plans/2026-10-08-abap-fsd-backend.md`、`plans/2026-10-09-langgraph-chat-adapter.md` 及 2026-10-03～06 的旧助手计划仍在 `docs/plans/`（`docs/README.md` 只标注了前者为历史）。是否补做移动待用户决定；移动时须同步 `docs/README.md` 的链接。
+- 阶段 C “待改进”中“第 1 版不应显示本版改动章节”并入 E2E-02；其余两项（执行步骤过长与原始错误、较早轮次工具结果压缩）2026-10-28 核对已改善 / 已修复，见[已完成清单](../archive/backlog-done.md)；更激进的压缩归 DEV-E2E-04。
+- 补记阶段 A 偏差（2026-10-12 文档核对发现）：3.5 节所列需移入 `docs/archive/` 的文档中，guides 与 specs 已移动，`plans/2026-10-08-abap-fsd-backend.md`、`plans/2026-10-09-langgraph-chat-adapter.md` 及 2026-10-03～06 的旧助手计划仍在 `docs/plans/`（`docs/README.md` 只标注了前者为历史）。是否补做移动待用户决定（已登记 DOC-002）；移动时须同步 `docs/README.md` 的链接。

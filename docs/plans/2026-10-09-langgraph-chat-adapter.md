@@ -1,5 +1,7 @@
 # LangGraph 原聊天协议适配计划
 
+> 状态：历史 / 已废弃（LangGraph 版设计助手已删除），不代表当前状态；现状以[待办与问题清单](backlog.md)为准。
+
 按 executing-plans / test-driven-development 在当前已有分支实施，不提交或推送。用户已确认：前端界面严格不动，保留多轮交互和真实流式输出。
 
 架构：新 `work/design/fsd/v1/chat` 返回现有 AgentWorkbench 的会话、运行、SSE、澄清和阶段协议。只更改前端数据入口与必要的连接恢复逻辑，模板和样式保持。旧 `/agent` 保持 410。复用 LangGraph、PostgreSQL saver、task/run/operation/租约预算与公开 model-stream 传输，不启动旧引擎。

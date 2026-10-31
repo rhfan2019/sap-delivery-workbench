@@ -1,5 +1,7 @@
 # Assistant feedback execution ledger
 
+> 状态：历史 / 已废弃（所述旧设计助手已清除），不代表当前状态；现状以[待办与问题清单](backlog.md)为准。
+
 Approved scope: runs/20261005-212831-647 运行测试实例报告.MD, plus user correction: reset removes BOTH design/development conversations, drafts and artifacts. Preserve development-item master data only. No legacy switch.
 
 Ruling: workspace has no Git repository; edit in place, no fabricated worktree/commit. Execute inline using executing-plans and TDD; final fresh-context reviewer.

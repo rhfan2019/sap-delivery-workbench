@@ -98,7 +98,7 @@
 
 ### 4.3 上下文选择器（SAP 系统与模型）
 
-两个触发按钮使用同一个组件 `ContextPicker`：图标、名称、下拉箭头，字号统一用 `--text-xs`，颜色统一用 `muted-foreground`，并删除原生 `<select>`。
+两个触发按钮使用同一个组件 `ContextPicker`：图标、名称、下拉箭头，字号统一用 `--font-12`，颜色统一用 `--text-muted`，并删除原生 `<select>`。
 
 **SAP 系统**
 

@@ -1,5 +1,7 @@
 # 仓库结构重构实施计划
 
+> 状态：已完成（历史）。结果见[目录重构记录](../architecture/refactor-record.md)；目录规则以[契约](../architecture/repository-contract.md)为准。
+
 目标：落实 docs/architecture/repository-contract.md，保留现有业务和数据，恢复误删依赖，消除应用/契约/工具边界混乱。
 
 执行：在用户指定的当前项目内依次实施，保留用户备份，不自动提交或推送。用户已要求先立契约再系统重构并明确要求继续执行。

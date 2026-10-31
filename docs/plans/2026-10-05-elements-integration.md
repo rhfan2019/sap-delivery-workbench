@@ -1,5 +1,7 @@
 # Elements assistant integration
 
+> 状态：历史 / 已废弃（已执行；之后的设计助手已重构为 abap-fsd-agent），不代表当前状态；现状以[待办与问题清单](backlog.md)为准。
+
 Goal: Replace the assistant presentation system with upstream AI Elements Vue, without a legacy switch; preserve development-item integration and verify the full flow.
 
 Architecture: Vendor relevant upstream Elements components at 86c90df1b27cfd7ca05bd7f6c312c46f89c11603 with their shadcn primitives. Keep useAssistantRun and server contracts authoritative. Platform adapters own attachments, submission eligibility, business questions, artifact revision and item events.

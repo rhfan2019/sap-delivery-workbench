@@ -113,7 +113,7 @@ const missing = computed(() =>
     : !chosen.value.length
       ? '请至少选择一个角色。'
       : needsEnd.value
-        ? '外部人员须填写有效期的截止日期。'
+        ? '分包与外部人员须填写有效期的截止日期。'
         : '',
 );
 watch(missing, (_, was) => {
