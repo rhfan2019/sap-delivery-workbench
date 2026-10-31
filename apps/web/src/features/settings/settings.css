@@ -554,7 +554,8 @@ button.s-list-row:hover {
   padding: 0 var(--space-6) var(--space-6);
   overflow-y: auto;
 }
-.s-drawer-body > section {
+.s-drawer-body > section,
+.s-drawer-body > .s-fields > section {
   padding: var(--space-6) 0;
   border-bottom: 1px solid var(--blue-fill-1);
 }
@@ -628,6 +629,42 @@ button.s-list-row:hover {
 .s-drawer-body .s-check {
   margin-top: var(--space-4);
   font-size: var(--font-14);
+}
+/* The fields of a record (development-discipline.md 4.1): disabled together while reading, when
+   each control shows its value as text in the place it is edited, and empty ones say 未填写. */
+.s-fields {
+  display: contents;
+}
+.s-fields.reading .s-field :is(input:not([type='checkbox']), select, textarea) {
+  border-color: transparent;
+  background: none;
+  color: var(--text);
+  opacity: 1;
+  appearance: none;
+  resize: none;
+}
+.s-fields.reading .s-field textarea {
+  min-height: 40px;
+  field-sizing: content;
+}
+.s-fields.reading .s-field ::placeholder {
+  color: transparent;
+}
+.s-fields.reading .s-field > :is(input, select, textarea) {
+  grid-area: 1 / 2;
+}
+.s-fields.reading .s-field:has(> :is(input, textarea):placeholder-shown)::after {
+  content: '未填写';
+  grid-area: 1 / 2;
+  padding: 0 var(--space-2-5);
+  color: var(--text-subtle);
+  pointer-events: none;
+}
+.s-fields.reading .s-field.top:has(> textarea:placeholder-shown)::after {
+  padding-top: var(--space-2-5);
+}
+.s-fields.reading :is(.s-field b, .s-drawer-help, .s-edit-only) {
+  display: none;
 }
 .s-drawer-help {
   margin: var(--space-3) 0;

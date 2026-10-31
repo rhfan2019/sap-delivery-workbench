@@ -320,6 +320,17 @@ test('settings: menu by permission, customers, models, project SAP login and lis
     await page.getByRole('button', { name: '测试模型2', exact: true }).click();
     await page.locator('.s-drawer input').first().waitFor();
     assert.equal(await page.locator('.s-drawer input').first().inputValue(), '测试模型2');
+    // A row opens the record to read; 编辑 switches the same drawer, 取消 goes back
+    // (development-discipline.md 4.1).
+    const foot = page.locator('.s-drawer-foot');
+    assert.ok(await page.locator('.s-drawer input').first().isDisabled());
+    assert.equal(await foot.getByRole('button', { name: '保存', exact: true }).count(), 0);
+    await foot.getByRole('button', { name: '编辑', exact: true }).click();
+    await page.locator('.s-drawer input').first().fill('未保存');
+    await foot.getByRole('button', { name: '取消', exact: true }).click();
+    assert.equal(await page.locator('.s-drawer input').first().inputValue(), '测试模型2');
+    assert.ok(await page.locator('.s-drawer input').first().isDisabled());
+    await foot.getByRole('button', { name: '编辑', exact: true }).click();
     await page.locator('.s-drawer input').first().fill('未保存');
     await page.getByRole('button', { name: '测试模型1', exact: true }).click();
     await page.getByRole('button', { name: '取消，保留当前内容' }).click();

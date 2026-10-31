@@ -57,18 +57,25 @@ const inactive = computed(() => all.value.filter((p) => p.status === 'inactive')
 const holders = computed(() => all.value.reduce((n, p) => n + p.userCount, 0));
 
 // The drawer: one position at a time; another row or “新建职位” asks before dropping changes.
+// A row opens it to read, its 编辑 straight to edit (development-discipline.md 4.1).
 const open = ref(false);
 const editing = ref<Position | null>(null);
+const editNow = ref(false);
+const revision = ref(0);
 const drawer = ref<InstanceType<typeof PositionDrawer> | null>(null);
 async function canLeave() {
   if (drawer.value?.busy) return false;
   return !drawer.value?.dirty || (await askConfirmation('放弃尚未保存的职位修改？'));
 }
-async function edit(p: Position | null) {
-  if (!manage.value) return;
-  if (open.value && p && editing.value?.id === p.id) return;
+async function edit(p: Position | null, now = !p) {
+  if (now && !manage.value) return;
+  if (open.value && p && editing.value?.id === p.id) {
+    if (now) drawer.value?.startEdit();
+    return;
+  }
   if (open.value && !(await canLeave())) return;
   editing.value = p;
+  editNow.value = now;
   open.value = true;
 }
 async function close() {
@@ -78,10 +85,15 @@ async function close() {
   }
 }
 useDrawerLeave(canLeave, () => !!drawer.value?.dirty);
+// After saving, the drawer reads the saved position (a new one is the id the list did not have).
 async function saved() {
-  open.value = false;
-  editing.value = null;
+  const before = new Set(all.value.map((p) => p.id));
+  const id = editing.value?.id;
   await reload();
+  editing.value = all.value.find((p) => (id ? p.id === id : !before.has(p.id))) ?? null;
+  editNow.value = false;
+  revision.value++;
+  if (!editing.value) open.value = false;
   toast('职位已保存。', 'green');
 }
 
@@ -183,11 +195,12 @@ const rowMenu = (p: Position) => [
             <tr
               v-for="p in rows"
               :key="p.id"
-              :class="{ clickable: manage, selected: open && editing?.id === p.id }"
+              class="clickable"
+              :class="{ selected: open && editing?.id === p.id }"
               @click="edit(p)"
             >
               <td>
-                <button class="s-table-name" :disabled="!manage" @click.stop="edit(p)">
+                <button class="s-table-name" @click.stop="edit(p)">
                   {{ p.name }}</button
                 ><span v-if="p.status === 'inactive'" class="s-badge muted">停用</span>
                 <small class="mono">{{ p.code }}</small>
@@ -209,7 +222,7 @@ const rowMenu = (p: Position) => [
               <td>{{ p.userCount }} 人</td>
               <td v-if="manage">
                 <div class="s-row-actions" @click.stop>
-                  <button class="text-button" @click="edit(p)">编辑</button>
+                  <button class="text-button" @click="edit(p, true)">编辑</button>
                   <SettingsRowMenu :label="p.name + '的更多操作'" :items="rowMenu(p)" />
                 </div>
               </td>
@@ -240,8 +253,10 @@ const rowMenu = (p: Position) => [
     <PositionDrawer
       v-if="open"
       ref="drawer"
-      :key="editing?.id ?? 'new'"
+      :key="(editing?.id ?? 'new') + '/' + revision"
       :position="editing"
+      :editable="manage"
+      :edit="editNow"
       :roles="roles"
       @saved="saved"
       @close="close"

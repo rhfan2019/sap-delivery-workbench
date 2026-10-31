@@ -11,8 +11,9 @@ import { accessApi, day, type Role } from './api';
 
 // One role in the list's wide drawer (docs/specs/project-access-admin.md 2.5, 2.8; DESIGN.md 5
 // “抽屉”): its basic information, its permissions or member roles, who holds it and which
-// composites contain it. System roles are read-only and may be copied.
-const props = defineProps<{ roleId: string; roles: Role[]; manage: boolean }>();
+// composites contain it. System roles are read-only and may be copied. A custom role opens to read
+// unless its 编辑 was clicked (development-discipline.md 4.1).
+const props = defineProps<{ roleId: string; roles: Role[]; manage: boolean; edit?: boolean }>();
 const emit = defineEmits<{
   saved: [role: Role];
   close: [];
@@ -25,8 +26,7 @@ const name = ref(''),
   status = ref<'active' | 'inactive'>('active'),
   permissions = ref<string[]>([]),
   members = ref<string[]>([]);
-onMounted(async () => {
-  await reload();
+function fill() {
   const r = role.value;
   if (!r) return;
   name.value = r.name;
@@ -34,8 +34,23 @@ onMounted(async () => {
   status.value = r.status;
   permissions.value = [...r.permissions];
   members.value = r.members.map((m) => m.id);
+}
+onMounted(async () => {
+  await reload();
+  fill();
 });
 const editable = computed(() => !!role.value && !role.value.builtIn && props.manage);
+const reading = ref(!props.edit);
+// Fields are locked while reading and for a role the user cannot change.
+const locked = computed(() => reading.value || !editable.value);
+function startEdit() {
+  if (editable.value) reading.value = false;
+}
+function cancel() {
+  fill();
+  save.error.value = '';
+  reading.value = true;
+}
 const singles = computed(() =>
   props.roles.filter(
     (r) => r.kind === 'single' && (role.value?.scope === 'organization' || r.scope === 'project'),
@@ -99,7 +114,7 @@ const usage = computed(() => {
   if (r.positionCount) parts.push(`${r.positionCount} 个职位把它设为默认角色`);
   return parts.join('；') + '。';
 });
-defineExpose({ dirty, busy: save.busy });
+defineExpose({ dirty, busy: save.busy, startEdit });
 </script>
 <template>
   <SettingsDrawer
@@ -108,9 +123,12 @@ defineExpose({ dirty, busy: save.busy });
     close-label="关闭角色抽屉"
     :note="editable ? '保存后立即生效' : role?.builtIn ? '系统角色只读' : '只读'"
     :busy="save.busy.value"
+    :reading="locked"
+    :editable="editable"
     wide
     @close="emit('close')"
     @submit="submit"
+    @edit="startEdit"
   >
     <p v-if="error || save.error.value" class="error-note" role="alert">
       {{ error || save.error.value }}
@@ -120,75 +138,75 @@ defineExpose({ dirty, busy: save.busy });
       <p v-if="role.builtIn" class="s-drawer-note">
         系统角色随版本更新，不能修改；需要调整时复制为新角色。
       </p>
-      <section>
-        <h3>基本信息</h3>
-        <label class="s-field"
-          ><span>编码</span><input :value="role.code" class="mono" disabled
-        /></label>
-        <label class="s-field"><span>类型</span><input :value="typeText" disabled /></label>
-        <label class="s-field"
-          ><span>名称 <b v-if="editable">*</b></span
-          ><input v-model="name" maxlength="60" required :disabled="!editable || save.busy.value"
-        /></label>
-        <label class="s-field top"
-          ><span>说明</span
-          ><textarea
-            v-model="description"
-            maxlength="300"
-            :disabled="!editable || save.busy.value"
-          />
-        </label>
-        <div class="s-field">
-          <span>状态</span>
-          <label class="s-check state"
-            ><input
-              type="checkbox"
-              :checked="status === 'active'"
-              :disabled="!editable || save.busy.value"
-              @change="status = status === 'active' ? 'inactive' : 'active'"
-            />启用</label
-          >
-        </div>
-        <p class="s-drawer-help">停用后，持有这个角色的人立即失去它带来的权限。</p>
-      </section>
-
-      <section v-if="role.kind === 'composite'">
-        <h3>包含的单一角色</h3>
-        <p class="s-drawer-help">合并后共 {{ merged.length }} 个权限点。</p>
-        <div class="member-grid">
-          <label v-for="s in singles" :key="s.id" class="s-check member">
-            <input
-              v-model="members"
-              type="checkbox"
-              :value="s.id"
+      <fieldset class="s-fields" :class="{ reading: locked }" :disabled="locked">
+        <section>
+          <h3>基本信息</h3>
+          <label class="s-field"
+            ><span>编码</span><input :value="role.code" class="mono" disabled
+          /></label>
+          <label class="s-field"><span>类型</span><input :value="typeText" disabled /></label>
+          <label class="s-field"
+            ><span>名称 <b v-if="editable">*</b></span
+            ><input v-model="name" maxlength="60" required :disabled="!editable || save.busy.value"
+          /></label>
+          <label class="s-field top"
+            ><span>说明</span
+            ><textarea
+              v-model="description"
+              maxlength="300"
+              placeholder="这个角色负责什么"
               :disabled="!editable || save.busy.value"
             />
-            <span
-              ><strong
-                >{{ s.name
-                }}<span v-if="s.status === 'inactive'" class="s-badge muted">停用</span></strong
-              ><small>{{ s.description }}</small></span
-            >
           </label>
-        </div>
-        <p v-if="editable && !members.length" class="s-drawer-help">
-          复合角色至少包含一个单一角色。
-        </p>
-      </section>
+          <div class="s-field">
+            <span>状态</span>
+            <label class="s-check state"
+              ><input
+                type="checkbox"
+                :checked="status === 'active'"
+                :disabled="!editable || save.busy.value"
+                @change="status = status === 'active' ? 'inactive' : 'active'"
+              />启用</label
+            >
+          </div>
+          <p class="s-drawer-help">停用后，持有这个角色的人立即失去它带来的权限。</p>
+        </section>
+
+        <section v-if="role.kind === 'composite'">
+          <h3>包含的单一角色</h3>
+          <p class="s-drawer-help">合并后共 {{ merged.length }} 个权限点。</p>
+          <div class="member-grid">
+            <label v-for="s in singles" :key="s.id" class="s-check member">
+              <input
+                v-model="members"
+                type="checkbox"
+                :value="s.id"
+                :disabled="!editable || save.busy.value"
+              />
+              <span
+                ><strong
+                  >{{ s.name
+                  }}<span v-if="s.status === 'inactive'" class="s-badge muted">停用</span></strong
+                ><small>{{ s.description }}</small></span
+              >
+            </label>
+          </div>
+          <p v-if="!locked && !members.length" class="s-drawer-help">
+            复合角色至少包含一个单一角色。
+          </p>
+        </section>
+      </fieldset>
       <section>
         <h3>{{ role.kind === 'composite' ? '合并后的权限点' : '权限点' }}</h3>
-        <p class="s-drawer-help">
-          {{
-            role.kind === 'composite'
-              ? '由包含的单一角色决定，只读。'
-              : '勾选操作或字段权限时会同时勾选所在分组的查看权限。'
-          }}
+        <p v-if="role.kind === 'composite'" class="s-drawer-help">由包含的单一角色决定，只读。</p>
+        <p v-else-if="!locked" class="s-drawer-help">
+          勾选操作或字段权限时会同时勾选所在分组的查看权限。
         </p>
         <PermissionTree
           v-if="role.kind === 'single'"
           v-model="permissions"
           :scope="role.scope"
-          :readonly="!editable || save.busy.value"
+          :readonly="locked || save.busy.value"
         />
         <PermissionTree v-else :model-value="merged" :scope="role.scope" readonly />
       </section>
@@ -241,23 +259,20 @@ defineExpose({ dirty, busy: save.busy });
         </template>
       </section>
     </template>
-    <template #actions>
+    <template #read-actions>
       <button
         v-if="role && manage"
         type="button"
         class="secondary-button"
-        :disabled="save.busy.value"
         @click="emit('copy', role)"
       >
-        复制为新角色</button
-      ><button
-        type="button"
-        class="secondary-button"
-        :disabled="save.busy.value"
-        @click="emit('close')"
-      >
-        {{ editable ? '取消' : '关闭' }}</button
-      ><button v-if="editable" class="primary-button" :disabled="save.busy.value || !ready">
+        复制为新角色
+      </button>
+    </template>
+    <template #actions>
+      <button type="button" class="secondary-button" :disabled="save.busy.value" @click="cancel">
+        取消</button
+      ><button class="primary-button" :disabled="save.busy.value || !ready">
         {{ save.busy.value ? '正在保存…' : '保存' }}
       </button>
     </template>

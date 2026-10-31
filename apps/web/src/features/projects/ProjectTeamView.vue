@@ -107,18 +107,25 @@ watch([query, role], () => (page.value = 1));
 watch(pages, (n) => (page.value = Math.min(n, page.value)));
 
 // The drawer: one contact at a time; another row or “新增联系人” asks before dropping changes.
+// A row opens it to read, its 编辑 straight to edit (development-discipline.md 4.1).
 const open = ref(false);
 const editing = ref<Contact | null>(null);
+const editNow = ref(false);
+const revision = ref(0);
 const drawer = ref<InstanceType<typeof ContactDrawer> | null>(null);
 async function canLeave() {
   if (drawer.value?.busy) return false;
   return !drawer.value?.dirty || (await askConfirmation('放弃尚未保存的联系人修改？'));
 }
-async function openContact(c: Contact | null) {
-  if (!editable.value) return;
-  if (open.value && c && editing.value?.id === c.id) return;
+async function openContact(c: Contact | null, now = !c) {
+  if (now && !editable.value) return;
+  if (open.value && c && editing.value?.id === c.id) {
+    if (now) drawer.value?.startEdit();
+    return;
+  }
   if (open.value && !(await canLeave())) return;
   editing.value = c;
+  editNow.value = now;
   open.value = true;
 }
 async function close() {
@@ -128,10 +135,16 @@ async function close() {
   }
 }
 useDrawerLeave(canLeave, () => !!drawer.value?.dirty);
+// After saving, the drawer reads the saved contact.
 function saved(result: ProjectDetail) {
+  const before = new Set(contacts.value.map((c) => c.id));
   replace(result);
-  open.value = false;
-  editing.value = null;
+  editing.value =
+    contacts.value.find((c) => (editing.value ? c.id === editing.value.id : !before.has(c.id))) ??
+    null;
+  editNow.value = false;
+  revision.value++;
+  if (!editing.value) open.value = false;
   toast('联系人已保存。', 'green');
 }
 const removal = useSave();
@@ -284,18 +297,15 @@ const roleTone = {
                 <tr
                   v-for="c in rows"
                   :key="c.id"
-                  :class="{ clickable: editable, selected: open && editing?.id === c.id }"
+                  class="clickable"
+                  :class="{ selected: open && editing?.id === c.id }"
                   @click="openContact(c)"
                 >
                   <td>
                     <div class="s-table-person">
                       <BaseAvatar :name="c.name" :size="32" />
                       <div>
-                        <button
-                          class="s-table-name"
-                          :disabled="!editable"
-                          @click.stop="openContact(c)"
-                        >
+                        <button class="s-table-name" @click.stop="openContact(c)">
                           {{ c.name }}
                         </button>
                         <small>{{
@@ -324,7 +334,7 @@ const roleTone = {
                   </td>
                   <td v-if="editable">
                     <div class="s-row-actions" @click.stop>
-                      <button class="text-button" @click="openContact(c)">编辑</button>
+                      <button class="text-button" @click="openContact(c, true)">编辑</button>
                       <SettingsRowMenu :label="c.name + '的更多操作'" :items="rowMenu(c)" />
                     </div>
                   </td>
@@ -360,9 +370,11 @@ const roleTone = {
     <ContactDrawer
       v-if="project && open"
       ref="drawer"
-      :key="editing?.id ?? 'new'"
+      :key="(editing?.id ?? 'new') + '/' + revision"
       :project-id="project.id"
       :contact="editing"
+      :editable="editable"
+      :edit="editNow"
       :modules="moduleOptions"
       @saved="saved"
       @close="close"

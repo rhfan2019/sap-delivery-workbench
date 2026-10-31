@@ -10,11 +10,14 @@ import SettingsDrawer from '../settings/SettingsDrawer.vue';
 import { useSave } from '../settings/useLoad';
 import { accessApi, day, type Candidate, type Member, type Role } from './api';
 
-// Adding a member or changing a member's project roles in the list's drawer
-// (docs/specs/project-access-admin.md 2.4, 4.4; DESIGN.md 5 “抽屉”): pick roles as cards (Plain's
-// role picker), then the module scope, “own items only” and the validity they share.
+// A member and their project roles in the list's drawer (docs/specs/project-access-admin.md 2.4,
+// 4.4; DESIGN.md 5 “抽屉”): pick roles as cards (Plain's role picker), then the module scope,
+// “own items only” and the validity they share. A member opens to read, showing only the roles
+// they hold, unless their 编辑 was clicked (development-discipline.md 4.1).
 const props = defineProps<{
   projectId: string;
+  editable: boolean;
+  edit?: boolean;
   roles: Role[];
   modules: string[];
   member: Member | null;
@@ -59,6 +62,30 @@ const snapshot = () =>
   ]);
 const initial = snapshot();
 const dirty = computed(() => snapshot() !== initial);
+const reading = ref(!!props.member && !props.edit);
+function startEdit() {
+  if (props.editable) reading.value = false;
+}
+function cancel() {
+  const m = props.member;
+  if (!m) return emit('close');
+  chosen.value = m.roles.map((r) => r.roleId);
+  modules.value = first?.modules ?? [];
+  ownOnly.value = first?.ownOnly ?? false;
+  validFrom.value = day(first?.validFrom);
+  validTo.value = day(first?.validTo);
+  save.error.value = '';
+  reading.value = true;
+}
+// While reading, the roles held, inactive ones included.
+const held = computed(() =>
+  (props.member?.roles ?? []).map((r) => ({
+    id: r.roleId,
+    name: r.roleName,
+    active: r.active,
+    description: props.roles.find((x) => x.id === r.roleId)?.description ?? '',
+  })),
+);
 // A new member starts from their position's default roles and their skill modules.
 watch(userId, () => {
   const c = candidate.value;
@@ -96,136 +123,159 @@ async function submit() {
   if (members) emit('saved', members);
 }
 const moduleOptions = computed(() => props.modules.map((m) => ({ value: m, label: m })));
-defineExpose({ dirty, busy: save.busy });
+defineExpose({ dirty, busy: save.busy, startEdit });
 </script>
 <template>
   <SettingsDrawer
-    :title="member ? '调整项目角色' : '添加成员'"
-    description="角色决定能做什么；模块范围与“仅本人负责”决定在哪些开发项上做。"
+    :title="member?.displayName ?? '添加成员'"
+    :description="
+      member
+        ? `${member.positionName ?? '未设职位'} · ${member.loginName}`
+        : '角色决定能做什么；模块范围与“仅本人负责”决定在哪些开发项上做。'
+    "
     close-label="关闭成员抽屉"
-    note="保存后立即生效"
+    :note="reading ? '' : '保存后立即生效'"
     :busy="save.busy.value"
+    :reading="reading"
+    :editable="editable"
     @close="emit('close')"
     @submit="submit"
+    @edit="startEdit"
   >
     <p v-if="save.error.value" class="error-note" role="alert">{{ save.error.value }}</p>
-    <section>
-      <h3>成员</h3>
-      <label v-if="!member" class="s-field"
-        ><span>成员 <b>*</b></span
-        ><select v-model="userId" required>
-          <option value="" disabled>选择企业内的用户</option>
-          <option v-for="c in candidates" :key="c.id" :value="c.id">
-            {{ c.displayName }}（{{ c.loginName }}）{{ c.positionName ? ' · ' + c.positionName : ''
-            }}{{
-              c.personType !== 'employee' ? ' · ' + PERSON_TYPES[c.personType as 'employee'] : ''
-            }}
-          </option>
-        </select></label
-      >
-      <p v-if="!member && !candidates.length" class="s-drawer-help">
-        企业内所有有效用户都已是项目成员。
-      </p>
-      <div v-if="member" class="s-field">
-        <span>成员</span>
-        <span
-          >{{ member.displayName }}
-          <small class="member-sub"
-            >{{ member.positionName ?? '未设职位' }} · {{ member.loginName
-            }}<template v-if="member.personType !== 'employee'">
-              · {{ PERSON_TYPES[member.personType as 'employee'] }}</template
-            ></small
-          ></span
+    <fieldset class="s-fields" :class="{ reading }" :disabled="reading">
+      <section>
+        <h3>成员</h3>
+        <label v-if="!member" class="s-field"
+          ><span>成员 <b>*</b></span
+          ><select v-model="userId" required>
+            <option value="" disabled>选择企业内的用户</option>
+            <option v-for="c in candidates" :key="c.id" :value="c.id">
+              {{ c.displayName }}（{{ c.loginName }}）{{
+                c.positionName ? ' · ' + c.positionName : ''
+              }}{{
+                c.personType !== 'employee' ? ' · ' + PERSON_TYPES[c.personType as 'employee'] : ''
+              }}
+            </option>
+          </select></label
         >
-      </div>
-    </section>
-
-    <section>
-      <h3>角色 <b class="required">*</b></h3>
-      <div class="role-cards" role="group" aria-label="项目角色">
-        <button
-          v-for="r in composites"
-          :key="r.id"
-          type="button"
-          class="role-card"
-          :aria-pressed="chosen.includes(r.id)"
-          :disabled="blocked(r) && !chosen.includes(r.id)"
-          @click="toggle(r.id)"
-        >
-          <strong
-            >{{ r.name }}<BaseTag v-if="!r.builtIn" tone="purple">自定义</BaseTag
-            ><BaseTag v-if="blocked(r)" tone="yellow">含敏感权限</BaseTag></strong
+        <p v-if="!member && !candidates.length" class="s-drawer-help">
+          企业内所有有效用户都已是项目成员。
+        </p>
+        <div v-if="member" class="s-field">
+          <span>成员</span>
+          <span
+            >{{ member.displayName }}
+            <small class="member-sub"
+              >{{ member.positionName ?? '未设职位' }} · {{ member.loginName
+              }}<template v-if="member.personType !== 'employee'">
+                · {{ PERSON_TYPES[member.personType as 'employee'] }}</template
+              ></small
+            ></span
           >
-          <small>{{ r.description || r.members.map((m) => m.name).join('、') }}</small>
-        </button>
-      </div>
-      <button type="button" class="text-button more" @click="showSingles = !showSingles">
-        {{ showSingles ? '收起单一角色' : '补充单一角色（' + singles.length + '）' }}
-      </button>
-      <div v-if="showSingles" class="role-cards compact">
-        <button
-          v-for="r in singles"
-          :key="r.id"
-          type="button"
-          class="role-card"
-          :aria-pressed="chosen.includes(r.id)"
-          :disabled="blocked(r) && !chosen.includes(r.id)"
-          @click="toggle(r.id)"
-        >
-          <strong>{{ r.name }}</strong>
-          <small>{{ r.description }}</small>
-        </button>
-      </div>
-      <p class="s-drawer-help">
-        含敏感权限（成员管理、商务、归档）的角色，只有自己在本项目持有这些权限的人才能分配。
-      </p>
-    </section>
+        </div>
+      </section>
 
-    <section>
-      <h3>范围与期限</h3>
-      <div class="s-field top">
-        <span>模块范围</span>
-        <ChoiceChips
-          v-if="moduleOptions.length"
-          v-model="modules"
-          :options="moduleOptions"
-          label="模块范围"
-        />
-        <span v-else class="member-sub">全部模块</span>
-      </div>
-      <p class="s-drawer-help">
-        {{
-          moduleOptions.length
-            ? '不选即全部模块。选定后，其他模块的开发项可看不可改。'
-            : '项目还没有登记实施模块，范围为全部模块。'
-        }}
-      </p>
-      <label class="s-check"
-        ><input
-          v-model="ownOnly"
-          type="checkbox"
-        />仅本人负责：只能修改自己负责的开发项，只能在自己负责的阶段使用助手</label
-      >
-      <label class="s-field"><span>开始日期</span><input v-model="validFrom" type="date" /></label>
-      <label class="s-field"
-        ><span
-          >结束日期<template v-if="person !== 'employee'"> <b>*</b></template></span
-        ><input v-model="validTo" type="date" :required="person !== 'employee'"
-      /></label>
-      <p v-if="needsEnd" class="s-drawer-help">
-        分包与外部人员的角色必须设结束日期，到期自动失效。
-      </p>
-      <p v-if="differing" class="s-drawer-help">
-        该成员各角色的范围不同；保存后所有角色使用这里的范围。
-      </p>
-    </section>
+      <section>
+        <h3>角色 <b v-if="!reading" class="required">*</b></h3>
+        <div v-if="reading" class="role-cards" role="list" aria-label="项目角色">
+          <div v-for="r in held" :key="r.id" class="role-card" role="listitem" aria-pressed="true">
+            <strong>{{ r.name }}<BaseTag v-if="!r.active" tone="neutral">已停用</BaseTag></strong>
+            <small>{{ r.description }}</small>
+          </div>
+        </div>
+        <template v-else>
+          <div class="role-cards" role="group" aria-label="项目角色">
+            <button
+              v-for="r in composites"
+              :key="r.id"
+              type="button"
+              class="role-card"
+              :aria-pressed="chosen.includes(r.id)"
+              :disabled="blocked(r) && !chosen.includes(r.id)"
+              @click="toggle(r.id)"
+            >
+              <strong
+                >{{ r.name }}<BaseTag v-if="!r.builtIn" tone="purple">自定义</BaseTag
+                ><BaseTag v-if="blocked(r)" tone="yellow">含敏感权限</BaseTag></strong
+              >
+              <small>{{ r.description || r.members.map((m) => m.name).join('、') }}</small>
+            </button>
+          </div>
+          <button type="button" class="text-button more" @click="showSingles = !showSingles">
+            {{ showSingles ? '收起单一角色' : '补充单一角色（' + singles.length + '）' }}
+          </button>
+          <div v-if="showSingles" class="role-cards compact">
+            <button
+              v-for="r in singles"
+              :key="r.id"
+              type="button"
+              class="role-card"
+              :aria-pressed="chosen.includes(r.id)"
+              :disabled="blocked(r) && !chosen.includes(r.id)"
+              @click="toggle(r.id)"
+            >
+              <strong>{{ r.name }}</strong>
+              <small>{{ r.description }}</small>
+            </button>
+          </div>
+        </template>
+        <p class="s-drawer-help">
+          含敏感权限（成员管理、商务、归档）的角色，只有自己在本项目持有这些权限的人才能分配。
+        </p>
+      </section>
+
+      <section>
+        <h3>范围与期限</h3>
+        <div class="s-field top">
+          <span>模块范围</span>
+          <span v-if="reading" class="module-read">{{
+            modules.length ? modules.join('、') : '全部模块'
+          }}</span>
+          <ChoiceChips
+            v-else-if="moduleOptions.length"
+            v-model="modules"
+            :options="moduleOptions"
+            label="模块范围"
+          />
+          <span v-else class="member-sub">全部模块</span>
+        </div>
+        <p class="s-drawer-help">
+          {{
+            moduleOptions.length
+              ? '不选即全部模块。选定后，其他模块的开发项可看不可改。'
+              : '项目还没有登记实施模块，范围为全部模块。'
+          }}
+        </p>
+        <label class="s-check"
+          ><input
+            v-model="ownOnly"
+            type="checkbox"
+          />仅本人负责：只能修改自己负责的开发项，只能在自己负责的阶段使用助手</label
+        >
+        <label class="s-field"
+          ><span>开始日期</span
+          ><input v-model="validFrom" :type="reading ? 'text' : 'date'" placeholder="未填写"
+        /></label>
+        <label class="s-field"
+          ><span
+            >结束日期<template v-if="person !== 'employee'"> <b>*</b></template></span
+          ><input
+            v-model="validTo"
+            :type="reading ? 'text' : 'date'"
+            placeholder="长期"
+            :required="person !== 'employee'"
+        /></label>
+        <p v-if="needsEnd" class="s-drawer-help">
+          分包与外部人员的角色必须设结束日期，到期自动失效。
+        </p>
+        <p v-if="differing" class="s-drawer-help">
+          该成员各角色的范围不同；保存后所有角色使用这里的范围。
+        </p>
+      </section>
+    </fieldset>
     <template #actions>
-      <button
-        type="button"
-        class="secondary-button"
-        :disabled="save.busy.value"
-        @click="emit('close')"
-      >
+      <button type="button" class="secondary-button" :disabled="save.busy.value" @click="cancel">
         取消</button
       ><button class="primary-button" :disabled="save.busy.value || !ready">
         {{ save.busy.value ? '正在处理…' : member ? '保存' : '添加' }}
@@ -274,6 +324,12 @@ defineExpose({ dirty, busy: save.busy });
 .role-card:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+.reading .role-card {
+  cursor: default;
+}
+.module-read {
+  padding: var(--space-2-5) var(--space-2-5) 0;
 }
 .role-card:focus-visible {
   outline: none;

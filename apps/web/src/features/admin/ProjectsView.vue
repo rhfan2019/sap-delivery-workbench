@@ -88,8 +88,10 @@ const planned = (p: DirectoryProject) =>
     ? `计划 ${p.plannedStartDate ?? '—'} 至 ${p.plannedEndDate ?? '—'}`
     : '';
 // The drawer: a project's main data, or a new project; another row asks before dropping changes.
+// A row opens the project to read; its 编辑 switches the drawer (development-discipline.md 4.1).
 const open = ref(false);
 const editing = ref<DirectoryProject | null>(null);
+const revision = ref(0);
 const drawer = ref<{ dirty: boolean; busy: boolean } | null>(null);
 async function canLeave() {
   if (drawer.value?.busy) return false;
@@ -116,11 +118,14 @@ async function created() {
   toast('项目已创建，已生成 SAP Activate 阶段与预置里程碑。', 'green');
   await Promise.all([reload(), loadProjects()]);
 }
+// After saving, the drawer reads the saved project.
 async function saved() {
-  open.value = false;
-  editing.value = null;
   toast('项目信息已保存。', 'green');
   await Promise.all([reload(), loadProjects()]);
+  const id = editing.value?.id;
+  editing.value = all.value.find((p) => p.id === id) ?? null;
+  revision.value++;
+  if (!editing.value) open.value = false;
 }
 // What a row click did before the drawer: switch to the project and open its settings.
 async function openSettings(p: DirectoryProject) {
@@ -307,7 +312,7 @@ const rowMenu = (p: DirectoryProject) => [
     <ProjectEditDrawer
       v-if="open && editing"
       ref="drawer"
-      :key="editing.id"
+      :key="editing.id + '/' + revision"
       :project="editing"
       @saved="saved"
       @settings="openSettings(editing)"

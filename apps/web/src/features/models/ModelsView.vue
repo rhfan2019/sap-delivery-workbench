@@ -36,7 +36,9 @@ const search = ref(''),
   status = ref(''),
   page = ref(1),
   open = ref(false),
-  selected = ref<ModelRecord | null>(null);
+  selected = ref<ModelRecord | null>(null),
+  editNow = ref(false),
+  revision = ref(0);
 const drawer = ref<InstanceType<typeof ModelDrawer> | null>(null),
   testing = ref('');
 const filtered = computed(() =>
@@ -80,11 +82,17 @@ async function close() {
   }
 }
 const drawerScroll = ref({ left: 0, top: 0 });
-async function edit(m: ModelRecord | null) {
-  if (busy.value || (open.value && selected.value?.id === m?.id)) return;
+// A row opens the drawer to read, its 编辑 straight to edit (development-discipline.md 4.1).
+async function edit(m: ModelRecord | null, now = !m) {
+  if (busy.value) return;
+  if (open.value && selected.value?.id === m?.id) {
+    if (now) drawer.value?.startEdit();
+    return;
+  }
   if (open.value && !(await canLeave())) return;
   drawerScroll.value = { left: window.scrollX, top: window.scrollY };
   selected.value = m;
+  editNow.value = now;
   saveError.value = '';
   open.value = true;
 }
@@ -97,10 +105,15 @@ async function save(body: ModelConfig & { apiKey: string; rowVersion?: string })
       body,
       selected.value ? 'PATCH' : 'POST',
     );
-    open.value = false;
-    selected.value = null;
+    // The drawer then reads the saved model (a new one is the id the list did not have).
+    const before = new Set(data.value.items.map((m) => m.id));
+    const id = selected.value?.id;
     notice.value = '配置已保存。请测试后设置为默认；已有默认版本保持不变。';
     await load();
+    selected.value = data.value.items.find((m) => (id ? m.id === id : !before.has(m.id))) ?? null;
+    editNow.value = false;
+    revision.value++;
+    if (!selected.value) open.value = false;
   } catch (e) {
     saveError.value = (e as Error).message;
   } finally {
@@ -344,7 +357,7 @@ const rowMenu = (m: ModelRecord) => [
                 </td>
                 <td>
                   <div class="s-row-actions" @click.stop>
-                    <button class="text-button" :disabled="busy" @click="edit(m)">编辑</button
+                    <button class="text-button" :disabled="busy" @click="edit(m, true)">编辑</button
                     ><button class="text-button" :disabled="busy" @click="test(m)">
                       {{ testing === m.id ? '测试中' : '测试' }}
                     </button>
@@ -388,8 +401,9 @@ const rowMenu = (m: ModelRecord) => [
     <ModelDrawer
       v-if="open"
       ref="drawer"
-      :key="selected?.id ?? 'new'"
+      :key="(selected?.id ?? 'new') + '/' + revision"
       :record="selected"
+      :edit="editNow"
       :page-position="drawerScroll"
       :busy="busy"
       :error="saveError"

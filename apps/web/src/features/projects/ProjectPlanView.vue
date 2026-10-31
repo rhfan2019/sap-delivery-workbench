@@ -113,9 +113,12 @@ watch([query, stateFilter], () => (page.value = 1));
 watch(pages, (n) => (page.value = Math.min(n, page.value)));
 
 // The drawer holds one milestone or a health report at a time; opening another asks before
-// dropping changes.
+// dropping changes. A row opens its milestone to read, its 编辑 straight to edit
+// (development-discipline.md 4.1).
 const panel = ref<'milestone' | 'health' | null>(null);
 const editing = ref<Milestone | null>(null);
+const editNow = ref(false);
+const revision = ref(0);
 const drawer = ref<InstanceType<typeof MilestoneDrawer> | InstanceType<typeof HealthDrawer> | null>(
   null,
 );
@@ -128,11 +131,15 @@ async function canLeave() {
     ))
   );
 }
-async function openMilestone(m: Milestone | null) {
-  if (!planEditable.value) return;
-  if (panel.value === 'milestone' && m && editing.value?.id === m.id) return;
+async function openMilestone(m: Milestone | null, now = !m) {
+  if (now && !planEditable.value) return;
+  if (panel.value === 'milestone' && m && editing.value?.id === m.id) {
+    if (now) (drawer.value as InstanceType<typeof MilestoneDrawer> | null)?.startEdit();
+    return;
+  }
   if (panel.value && !(await canLeave())) return;
   editing.value = m;
+  editNow.value = now;
   panel.value = 'milestone';
 }
 async function openReport() {
@@ -148,11 +155,20 @@ async function close() {
   }
 }
 useDrawerLeave(canLeave, () => !!drawer.value?.dirty);
+// After saving, a milestone's drawer reads the saved milestone; a health report closes.
 function saved(result: ProjectDetail) {
   const kind = panel.value;
+  const before = new Set((project.value?.milestones ?? []).map((m) => m.id));
   replace(result);
-  panel.value = null;
-  editing.value = null;
+  editing.value =
+    kind === 'milestone'
+      ? ((project.value?.milestones ?? []).find((m) =>
+          editing.value ? m.id === editing.value.id : !before.has(m.id),
+        ) ?? null)
+      : null;
+  editNow.value = false;
+  revision.value++;
+  if (!editing.value) panel.value = null;
   toast(kind === 'health' ? '健康度已更新。' : '里程碑已保存。', 'green');
 }
 const removal = useSave();
@@ -353,18 +369,12 @@ const latest = computed(() => project.value?.health[0]);
                 <tr
                   v-for="m in rows"
                   :key="m.id"
-                  :class="{
-                    clickable: planEditable,
-                    selected: panel === 'milestone' && editing?.id === m.id,
-                  }"
+                  class="clickable"
+                  :class="{ selected: panel === 'milestone' && editing?.id === m.id }"
                   @click="openMilestone(m)"
                 >
                   <td>
-                    <button
-                      class="s-table-name"
-                      :disabled="!planEditable"
-                      @click.stop="openMilestone(m)"
-                    >
+                    <button class="s-table-name" @click.stop="openMilestone(m)">
                       {{ m.name }}</button
                     ><span v-if="m.key" class="s-badge muted">预置</span>
                     <small>{{ m.notes || '—' }}</small>
@@ -383,7 +393,7 @@ const latest = computed(() => project.value?.health[0]);
                   </td>
                   <td v-if="planEditable">
                     <div class="s-row-actions" @click.stop>
-                      <button class="text-button" @click="openMilestone(m)">编辑</button>
+                      <button class="text-button" @click="openMilestone(m, true)">编辑</button>
                       <SettingsRowMenu :label="m.name + '的更多操作'" :items="rowMenu(m)" />
                     </div>
                   </td>
@@ -419,9 +429,11 @@ const latest = computed(() => project.value?.health[0]);
     <MilestoneDrawer
       v-if="project && panel === 'milestone'"
       ref="drawer"
-      :key="editing?.id ?? 'new'"
+      :key="(editing?.id ?? 'new') + '/' + revision"
       :project-id="project.id"
       :milestone="editing"
+      :editable="planEditable"
+      :edit="editNow"
       :phases="phases"
       @saved="saved"
       @close="close"

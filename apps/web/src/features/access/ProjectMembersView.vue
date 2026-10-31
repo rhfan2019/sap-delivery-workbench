@@ -78,19 +78,27 @@ const limited = computed(
 const expiring = computed(() => members.value.filter(soon).length);
 
 // The drawer: one member at a time; another row or “添加成员” asks before dropping changes.
+// A row opens it to read, its 编辑 straight to edit (development-discipline.md 4.1); nobody
+// edits their own roles.
 const open = ref(false);
 const editing = ref<Member | null>(null);
+const editNow = ref(false);
+const revision = ref(0);
 const drawer = ref<InstanceType<typeof MemberDrawer> | null>(null);
 const self = (m: Member) => m.id === identity.value?.user.id;
 async function canLeave() {
   if (drawer.value?.busy) return false;
   return !drawer.value?.dirty || (await askConfirmation('放弃尚未保存的成员修改？'));
 }
-async function edit(m: Member | null) {
-  if (!manage.value || (m && self(m))) return;
-  if (open.value && editing.value?.id === m?.id && m) return;
+async function edit(m: Member | null, now = !m) {
+  if (now && (!manage.value || (m && self(m)))) return;
+  if (open.value && m && editing.value?.id === m.id) {
+    if (now) drawer.value?.startEdit();
+    return;
+  }
   if (open.value && !(await canLeave())) return;
   editing.value = m;
+  editNow.value = now;
   open.value = true;
 }
 async function close() {
@@ -100,10 +108,15 @@ async function close() {
   }
 }
 useDrawerLeave(canLeave, () => !!drawer.value?.dirty);
+// After saving, the drawer reads the saved member.
 async function saved(next: Member[]) {
+  const before = new Set(members.value.map((m) => m.id));
   members.value = next;
-  open.value = false;
-  editing.value = null;
+  editing.value =
+    next.find((m) => (editing.value ? m.id === editing.value.id : !before.has(m.id))) ?? null;
+  editNow.value = false;
+  revision.value++;
+  if (!editing.value) open.value = false;
   toast('成员与角色已保存。', 'green');
   candidates.value = await accessApi.candidates(currentProject.value);
   void loadProjectAccess();
@@ -210,7 +223,8 @@ const scopeText = (m: Member) => {
             <tr
               v-for="m in rows"
               :key="m.id"
-              :class="{ clickable: manage && !self(m), selected: open && editing?.id === m.id }"
+              class="clickable"
+              :class="{ selected: open && editing?.id === m.id }"
               @click="edit(m)"
             >
               <td>
@@ -219,7 +233,6 @@ const scopeText = (m: Member) => {
                   <div>
                     <button
                       class="s-table-name"
-                      :disabled="!manage || self(m)"
                       :title="self(m) ? '不能修改自己的项目角色' : undefined"
                       @click.stop="edit(m)"
                     >
@@ -258,7 +271,7 @@ const scopeText = (m: Member) => {
               </td>
               <td v-if="manage">
                 <div v-if="!self(m)" class="s-row-actions" @click.stop>
-                  <button class="text-button" @click="edit(m)">编辑</button>
+                  <button class="text-button" @click="edit(m, true)">编辑</button>
                   <SettingsRowMenu :label="m.displayName + '的更多操作'" :items="rowMenu(m)" />
                 </div>
               </td>
@@ -290,8 +303,10 @@ const scopeText = (m: Member) => {
     <MemberDrawer
       v-if="project && open"
       ref="drawer"
-      :key="editing?.id ?? 'new'"
+      :key="(editing?.id ?? 'new') + '/' + revision"
       :project-id="project.id"
+      :editable="manage && !(editing && self(editing))"
+      :edit="editNow"
       :roles="roles"
       :modules="project.modules"
       :member="editing"

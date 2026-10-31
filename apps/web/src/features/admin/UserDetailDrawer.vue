@@ -31,8 +31,10 @@ import { adminApi, type AdminUser, type Customer, type DirectoryProject } from '
 // One account in the users list's wide drawer (docs/specs/project-access-admin.md 2.6–2.8;
 // DESIGN.md 5 “抽屉”): the account and its position, its organization roles with their project
 // scope, its project roles, and every effective permission with where it comes from. The footer
-// saves the account; role assignments take effect one by one.
-const props = defineProps<{ userId: string }>();
+// saves the account; role assignments take effect one by one. The account opens to read unless
+// its 编辑 was clicked (development-discipline.md 4.1); roles, the password and SAP credentials
+// keep their own actions either way.
+const props = defineProps<{ userId: string; edit?: boolean }>();
 const emit = defineEmits<{ changed: []; close: [] }>();
 const user = ref<AdminUser | null>(null);
 const access = ref<UserAccess | null>(null);
@@ -97,6 +99,15 @@ async function refresh() {
 
 const self = computed(() => user.value?.id === identity.value?.user.id);
 const editable = computed(() => can('user:manage'));
+const reading = ref(!props.edit);
+function startEdit() {
+  if (editable.value) reading.value = false;
+}
+function cancel() {
+  if (user.value) reset(user.value);
+  save.error.value = '';
+  reading.value = true;
+}
 const accountDirty = computed(() => {
   const u = user.value;
   if (!u) return false;
@@ -127,6 +138,7 @@ async function saveAccount() {
   if (result) {
     user.value = result.user;
     reset(result.user);
+    reading.value = true;
     access.value = await accessApi.userAccess(u.id);
     emit('changed');
     toast(
@@ -267,7 +279,7 @@ const busy = computed(
   () => save.busy.value || assign.busy.value || reset1.busy.value || purge.busy.value,
 );
 const dirty = computed(() => accountDirty.value || assignmentDirty.value);
-defineExpose({ dirty, busy, refresh });
+defineExpose({ dirty, busy, refresh, startEdit });
 </script>
 <template>
   <SettingsDrawer
@@ -276,9 +288,12 @@ defineExpose({ dirty, busy, refresh });
     close-label="关闭用户抽屉"
     :note="editable ? '保存只保存账号与职位；企业级角色逐条立即生效' : ''"
     :busy="busy"
+    :reading="reading"
+    :editable="editable && !!user"
     wide
     @close="emit('close')"
     @submit="saveAccount"
+    @edit="startEdit"
   >
     <p v-if="error || reset1.error.value || save.error.value" class="error-note" role="alert">
       {{ error || reset1.error.value || save.error.value }}
@@ -287,49 +302,61 @@ defineExpose({ dirty, busy, refresh });
     <template v-if="user">
       <section>
         <h3>账号</h3>
-        <div class="s-field">
-          <span>登录账号</span><span class="mono">{{ user.loginName }}</span>
-        </div>
-        <label class="s-field"
-          ><span>姓名 <b v-if="editable">*</b></span
-          ><input
-            v-model="form.displayName"
-            maxlength="100"
-            required
-            :disabled="!editable || save.busy.value"
-        /></label>
-        <label class="s-field"
-          ><span>邮箱</span
-          ><input
-            v-model="form.email"
-            type="email"
-            maxlength="254"
-            :disabled="!editable || save.busy.value"
-        /></label>
-        <label class="s-field"
-          ><span>人员类型</span
-          ><select v-model="form.personType" :disabled="!editable || save.busy.value">
-            <option v-for="(text, key) in PERSON_TYPES" :key="key" :value="key">{{ text }}</option>
-          </select></label
-        >
-        <p class="s-drawer-help">分包与外部人员的角色必须设结束日期。</p>
-        <div class="s-field">
-          <span>账号状态</span>
-          <label class="s-check"
+        <fieldset class="s-fields" :class="{ reading }" :disabled="reading">
+          <div class="s-field">
+            <span>登录账号</span><span class="mono">{{ user.loginName }}</span>
+          </div>
+          <label class="s-field"
+            ><span>姓名 <b v-if="editable">*</b></span
             ><input
-              type="checkbox"
-              :checked="form.status === 'active'"
-              :disabled="!editable || self || save.busy.value"
-              @change="form.status = form.status === 'active' ? 'disabled' : 'active'"
-            />启用</label
+              v-model="form.displayName"
+              maxlength="100"
+              required
+              :disabled="!editable || save.busy.value"
+          /></label>
+          <label class="s-field"
+            ><span>邮箱</span
+            ><input
+              v-model="form.email"
+              type="email"
+              maxlength="254"
+              placeholder="如 name@example.com"
+              :disabled="!editable || save.busy.value"
+          /></label>
+          <label class="s-field"
+            ><span>人员类型</span
+            ><select v-model="form.personType" :disabled="!editable || save.busy.value">
+              <option v-for="(text, key) in PERSON_TYPES" :key="key" :value="key">
+                {{ text }}
+              </option>
+            </select></label
           >
+          <p class="s-drawer-help">分包与外部人员的角色必须设结束日期。</p>
+          <div class="s-field">
+            <span>账号状态</span>
+            <label class="s-check"
+              ><input
+                type="checkbox"
+                :checked="form.status === 'active'"
+                :disabled="!editable || self || save.busy.value"
+                @change="form.status = form.status === 'active' ? 'disabled' : 'active'"
+              />启用</label
+            >
+          </div>
+          <p class="s-drawer-help">
+            {{
+              self
+                ? '不能停用当前登录的账号。'
+                : '停用后立即退出所有登录，并清除其保存的 SAP 凭据。'
+            }}
+          </p>
+        </fieldset>
+        <div class="s-field">
+          <span>最近登录</span
+          ><span :class="{ muted: !user.lastLoginAt }">{{
+            user.lastLoginAt ? day(user.lastLoginAt) : '从未登录'
+          }}</span>
         </div>
-        <p class="s-drawer-help">
-          {{
-            self ? '不能停用当前登录的账号。' : '停用后立即退出所有登录，并清除其保存的 SAP 凭据。'
-          }}
-          {{ user.lastLoginAt ? '最近登录 ' + day(user.lastLoginAt) + '。' : '从未登录。' }}
-        </p>
         <div v-if="can('user.password:reset') && !self" class="s-field">
           <span>密码</span>
           <div>
@@ -342,44 +369,47 @@ defineExpose({ dirty, busy, refresh });
 
       <section>
         <h3>职位与模块</h3>
-        <label class="s-field"
-          ><span>职位</span
-          ><select v-model="form.positionId" :disabled="!editable || save.busy.value">
-            <option value="">未设置</option>
-            <option
-              v-for="p in positions"
-              :key="p.id"
-              :value="p.id"
-              :disabled="p.status !== 'active'"
-            >
-              {{ p.name }}
-            </option>
-          </select></label
-        >
-        <label
-          v-if="
-            editable &&
-            position &&
-            position.roles.some((r) => r.scope === 'organization') &&
-            form.personType === 'employee'
-          "
-          class="s-check"
-          ><input
-            v-model="form.grantPositionRoles"
-            type="checkbox"
-            :disabled="save.busy.value"
-          />同时授予职位的企业级角色（只增不减）</label
-        >
-        <div class="s-field top">
-          <span>擅长模块</span>
-          <ChoiceChips
-            v-model="form.skillModules"
-            :options="moduleOptions"
-            label="擅长模块"
-            :disabled="!editable || save.busy.value"
-          />
-        </div>
-        <p class="s-drawer-help">加入项目时用作默认的模块范围。</p>
+        <fieldset class="s-fields" :class="{ reading }" :disabled="reading">
+          <label class="s-field"
+            ><span>职位</span
+            ><select v-model="form.positionId" :disabled="!editable || save.busy.value">
+              <option value="">未设置</option>
+              <option
+                v-for="p in positions"
+                :key="p.id"
+                :value="p.id"
+                :disabled="p.status !== 'active'"
+              >
+                {{ p.name }}
+              </option>
+            </select></label
+          >
+          <label
+            v-if="
+              editable &&
+              !reading &&
+              position &&
+              position.roles.some((r) => r.scope === 'organization') &&
+              form.personType === 'employee'
+            "
+            class="s-check"
+            ><input
+              v-model="form.grantPositionRoles"
+              type="checkbox"
+              :disabled="save.busy.value"
+            />同时授予职位的企业级角色（只增不减）</label
+          >
+          <div class="s-field top">
+            <span>擅长模块</span>
+            <ChoiceChips
+              v-model="form.skillModules"
+              :options="moduleOptions"
+              label="擅长模块"
+              :disabled="!editable || save.busy.value"
+            />
+          </div>
+          <p class="s-drawer-help">加入项目时用作默认的模块范围。</p>
+        </fieldset>
       </section>
 
       <section>
@@ -560,13 +590,8 @@ defineExpose({ dirty, busy, refresh });
       </section>
     </template>
     <template #actions>
-      <button type="button" class="secondary-button" :disabled="busy" @click="emit('close')">
-        {{ editable ? '取消' : '关闭' }}</button
-      ><button
-        v-if="editable && user"
-        class="primary-button"
-        :disabled="busy || !accountDirty || !form.displayName"
-      >
+      <button type="button" class="secondary-button" :disabled="busy" @click="cancel">取消</button
+      ><button class="primary-button" :disabled="busy || !accountDirty || !form.displayName">
         {{ save.busy.value ? '正在处理…' : '保存' }}
       </button>
     </template>

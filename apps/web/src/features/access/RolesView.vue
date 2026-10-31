@@ -135,8 +135,9 @@ const permissionGroups = PERMISSION_GROUPS.map((g) => ({
 const chosen = computed(() => PERMISSIONS.find((p) => p.code === reportCode.value));
 
 // The drawer holds one role, or a new role (blank or copied); another row asks before dropping
-// changes. An open role is in the address as `?role=<id>`.
-type Mode = { kind: 'role'; id: string } | { kind: 'create'; copy: Role | null };
+// changes. An open role is in the address as `?role=<id>`. A row opens the role to read, its
+// 编辑 straight to edit (development-discipline.md 4.1).
+type Mode = { kind: 'role'; id: string; edit?: boolean } | { kind: 'create'; copy: Role | null };
 const initial = typeof route.query.role === 'string' ? route.query.role : '';
 const mode = ref<Mode | null>(initial ? { kind: 'role', id: initial } : null);
 const revision = ref(0);
@@ -174,6 +175,10 @@ async function show(next: Mode | null) {
   return true;
 }
 const openRole = (id: string) => void show({ kind: 'role', id });
+function editRole(id: string) {
+  if (openId.value === id) roleDrawer.value?.startEdit();
+  else void show({ kind: 'role', id, edit: true });
+}
 function openCreate(copy?: Role) {
   if (manage.value) void show({ kind: 'create', copy: copy ?? null });
 }
@@ -194,14 +199,15 @@ watch(
 );
 useDrawerLeave(canLeave, drawerDirty);
 async function onCreated(role: Role) {
-  mode.value = { kind: 'role', id: role.id };
+  mode.value = { kind: 'role', id: role.id, edit: true };
   sync();
   toast('角色已创建，可以继续勾选权限点。', 'green');
   await reload();
 }
+// After saving, the drawer reads the saved role.
 async function onSaved() {
-  mode.value = null;
-  sync();
+  if (mode.value?.kind === 'role') mode.value = { kind: 'role', id: mode.value.id };
+  revision.value++;
   toast('角色已保存。', 'green');
   await reload();
 }
@@ -385,7 +391,10 @@ const rowMenu = (r: Role) => [
                 </td>
                 <td>
                   <div class="s-row-actions" @click.stop>
-                    <button class="text-button" @click="openRole(r.id)">查看</button>
+                    <button v-if="manage && !r.builtIn" class="text-button" @click="editRole(r.id)">
+                      编辑
+                    </button>
+                    <button v-else class="text-button" @click="openRole(r.id)">查看</button>
                     <SettingsRowMenu
                       v-if="manage"
                       :label="r.name + '的更多操作'"
@@ -486,6 +495,7 @@ const rowMenu = (r: Role) => [
       ref="roleDrawer"
       :key="mode.id + '/' + revision"
       :role-id="mode.id"
+      :edit="mode.edit"
       :roles="roles"
       :manage="manage"
       @saved="onSaved"

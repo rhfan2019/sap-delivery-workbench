@@ -73,18 +73,25 @@ watch([query, purpose], () => (page.value = 1));
 watch(pages, (n) => (page.value = Math.min(n, page.value)));
 
 // The drawer: one system at a time; another row or “登记系统” asks before dropping changes.
+// A row opens it to read, its 编辑 straight to edit (development-discipline.md 4.1).
 const open = ref(false);
 const editing = ref<SapSystem | null>(null);
+const editNow = ref(false);
+const revision = ref(0);
 const drawer = ref<InstanceType<typeof SapSystemDrawer> | null>(null);
 async function canLeave() {
   if (drawer.value?.busy) return false;
   return !drawer.value?.dirty || (await askConfirmation('放弃尚未保存的 SAP 系统修改？'));
 }
-async function edit(s: SapSystem | null) {
-  if (!manage.value) return;
-  if (open.value && s && editing.value?.id === s.id) return;
+async function edit(s: SapSystem | null, now = !s) {
+  if (now && !manage.value) return;
+  if (open.value && s && editing.value?.id === s.id) {
+    if (now) drawer.value?.startEdit();
+    return;
+  }
   if (open.value && !(await canLeave())) return;
   editing.value = s;
+  editNow.value = now;
   open.value = true;
 }
 async function close() {
@@ -94,10 +101,16 @@ async function close() {
   }
 }
 useDrawerLeave(canLeave, () => !!drawer.value?.dirty);
+// After saving, the drawer reads the saved system.
 function saved(next: ProjectSystems) {
+  const before = new Set(systems.value.map((s) => s.id));
   view.value = next;
-  open.value = false;
-  editing.value = null;
+  editing.value =
+    systems.value.find((s) => (editing.value ? s.id === editing.value.id : !before.has(s.id))) ??
+    null;
+  editNow.value = false;
+  revision.value++;
+  if (!editing.value) open.value = false;
   toast('SAP 系统已保存。', 'green');
 }
 
@@ -265,7 +278,8 @@ const rowMenu = (s: SapSystem) => [
             <tr
               v-for="s in rows"
               :key="s.id"
-              :class="{ clickable: manage, selected: open && editing?.id === s.id }"
+              class="clickable"
+              :class="{ selected: open && editing?.id === s.id }"
               @click="edit(s)"
             >
               <td @click.stop>
@@ -292,7 +306,7 @@ const rowMenu = (s: SapSystem) => [
                 </button>
               </td>
               <td>
-                <button class="s-table-name" :disabled="!manage" @click.stop="edit(s)">
+                <button class="s-table-name" @click.stop="edit(s)">
                   {{ s.name }}</button
                 ><span v-if="s.isDefault" class="s-badge">默认</span
                 ><span v-if="s.status === 'inactive'" class="s-badge muted">停用</span>
@@ -331,7 +345,9 @@ const rowMenu = (s: SapSystem) => [
               </td>
               <td>
                 <div class="s-row-actions" @click.stop>
-                  <button v-if="manage" class="text-button" @click="edit(s)">编辑</button>
+                  <button v-if="manage" class="text-button" @click.stop="edit(s, true)">
+                    编辑
+                  </button>
                   <template v-if="usable(s)">
                     <button
                       v-if="signedIn(s)"
@@ -385,9 +401,11 @@ const rowMenu = (s: SapSystem) => [
     <SapSystemDrawer
       v-if="project && open"
       ref="drawer"
-      :key="editing?.id ?? 'new'"
+      :key="(editing?.id ?? 'new') + '/' + revision"
       :project-id="project.id"
       :system="editing"
+      :editable="manage"
+      :edit="editNow"
       :purpose="purpose === 'test' ? 'test' : 'development'"
       :language="project.language ?? 'ZH'"
       @saved="saved"

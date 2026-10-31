@@ -88,6 +88,8 @@ const route = useRoute();
 const here = route.path;
 const creating = ref(false);
 const openId = ref<string | null>(null);
+// A row opens the account to read; its 编辑 straight to edit (development-discipline.md 4.1).
+const editNow = ref(false);
 const createDrawer = ref<InstanceType<typeof UserDrawer> | null>(null);
 const userDrawer = ref<InstanceType<typeof UserDetailDrawer> | null>(null);
 const created = ref<{ user: AdminUser; temporaryPassword: string; granted: string[] } | null>(null);
@@ -106,10 +108,14 @@ function follow(id: string | null) {
   else delete query.user;
   void router.replace({ query }).catch(() => {});
 }
-async function openUser(id: string) {
-  if (openId.value === id) return;
+async function openUser(id: string, now = false) {
+  if (openId.value === id) {
+    if (now) userDrawer.value?.startEdit();
+    return;
+  }
   if ((creating.value || openId.value) && !(await canLeave())) return;
   creating.value = false;
+  editNow.value = now;
   openId.value = id;
   follow(id);
 }
@@ -312,7 +318,7 @@ const rowMenu = (u: AdminUser) =>
               </td>
               <td>
                 <div class="s-row-actions" @click.stop>
-                  <button class="text-button" @click="openUser(u.id)">
+                  <button class="text-button" @click="openUser(u.id, can('user:manage'))">
                     {{ can('user:manage') ? '编辑' : '查看' }}
                   </button>
                   <SettingsRowMenu
@@ -361,6 +367,7 @@ const rowMenu = (u: AdminUser) =>
       ref="userDrawer"
       :key="openId"
       :user-id="openId"
+      :edit="editNow"
       @changed="reload"
       @close="close"
     />

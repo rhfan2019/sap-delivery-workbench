@@ -47,18 +47,25 @@ watch(pages, (n) => (page.value = Math.min(n, page.value)));
 const count = (f: (c: Customer) => boolean) => all.value.filter(f).length;
 
 // The drawer: one customer at a time; another row or “新建客户” asks before dropping changes.
+// A row opens it to read, its 编辑 straight to edit (development-discipline.md 4.1).
 const open = ref(false);
 const editing = ref<Customer | null>(null);
+const editNow = ref(false);
+const revision = ref(0);
 const drawer = ref<InstanceType<typeof CustomerDrawer> | null>(null);
 async function canLeave() {
   if (drawer.value?.busy) return false;
   return !drawer.value?.dirty || (await askConfirmation('放弃尚未保存的客户修改？'));
 }
-async function edit(c: Customer | null) {
-  if (!manage.value) return;
-  if (open.value && c && editing.value?.id === c.id) return;
+async function edit(c: Customer | null, now = !c) {
+  if (now && !manage.value) return;
+  if (open.value && c && editing.value?.id === c.id) {
+    if (now) drawer.value?.startEdit();
+    return;
+  }
   if (open.value && !(await canLeave())) return;
   editing.value = c;
+  editNow.value = now;
   open.value = true;
 }
 async function close() {
@@ -68,10 +75,15 @@ async function close() {
   }
 }
 useDrawerLeave(canLeave, () => !!drawer.value?.dirty);
+// After saving, the drawer reads the saved customer (a new one is the id the list did not have).
 async function saved() {
-  open.value = false;
-  editing.value = null;
+  const before = new Set(all.value.map((c) => c.id));
+  const id = editing.value?.id;
   await reload();
+  editing.value = all.value.find((c) => (id ? c.id === id : !before.has(c.id))) ?? null;
+  editNow.value = false;
+  revision.value++;
+  if (!editing.value) open.value = false;
   toast('客户已保存。', 'green');
 }
 
@@ -174,11 +186,12 @@ const rowMenu = (c: Customer) => [
             <tr
               v-for="c in rows"
               :key="c.id"
-              :class="{ clickable: manage, selected: open && editing?.id === c.id }"
+              class="clickable"
+              :class="{ selected: open && editing?.id === c.id }"
               @click="edit(c)"
             >
               <td>
-                <button class="s-table-name" :disabled="!manage" @click.stop="edit(c)">
+                <button class="s-table-name" @click.stop="edit(c)">
                   {{ c.name }}</button
                 ><span v-if="c.status === 'inactive'" class="s-badge muted">停用</span>
                 <small class="mono">{{ c.code }}</small>
@@ -193,7 +206,7 @@ const rowMenu = (c: Customer) => [
               <td>{{ c.projectCount }} 个项目</td>
               <td v-if="manage">
                 <div class="s-row-actions" @click.stop>
-                  <button class="text-button" @click="edit(c)">编辑</button>
+                  <button class="text-button" @click="edit(c, true)">编辑</button>
                   <SettingsRowMenu :label="c.name + '的更多操作'" :items="rowMenu(c)" />
                 </div>
               </td>
@@ -225,8 +238,10 @@ const rowMenu = (c: Customer) => [
     <CustomerDrawer
       v-if="open"
       ref="drawer"
-      :key="editing?.id ?? 'new'"
+      :key="(editing?.id ?? 'new') + '/' + revision"
       :customer="editing"
+      :editable="manage"
+      :edit="editNow"
       @saved="saved"
       @close="close"
     />
