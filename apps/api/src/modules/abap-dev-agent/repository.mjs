@@ -226,10 +226,15 @@ export async function saveVersion(
   return rows[0].version;
 }
 
-export async function setLabels(db, sessionId, version, labels) {
+// Labelling a version 定稿 records when and by whom (overview spec section 6, D3); removing
+// the label clears both, relabelling keeps the first time.
+export async function setLabels(db, sessionId, version, labels, actorId) {
   const { rowCount } = await db.query(
-    `UPDATE ${T}version SET labels=$3 WHERE session_id=$1 AND version=$2`,
-    [sessionId, version, labels],
+    `UPDATE ${T}version SET labels=$3,
+       finalized_at=CASE WHEN '定稿'=ANY($3::text[]) THEN COALESCE(finalized_at,now()) END,
+       finalized_by=CASE WHEN '定稿'=ANY($3::text[]) THEN COALESCE(finalized_by,$4) END
+     WHERE session_id=$1 AND version=$2`,
+    [sessionId, version, labels, actorId],
   );
   return rowCount > 0;
 }
@@ -387,6 +392,33 @@ export async function lastTurns(db, organizationId, projectId) {
       `SELECT s.item_id AS "itemId",max(t.started_at) AS at FROM ${T}session s
        JOIN ${T}turn t ON t.session_id=s.id WHERE s.organization_id=$1 AND s.project_id=$2
        GROUP BY s.item_id`,
+      [organizationId, projectId],
+    )
+  ).rows;
+}
+
+// Comments on the item's plan and code in conversations that are not archived, for the development
+// overview (contract 3.6): open ones nag, resolved ones tell how long answers take.
+export async function itemComments(db, organizationId, projectId) {
+  return (
+    await db.query(
+      `SELECT s.item_id AS "itemId",c.status,c.created_at AS "createdAt",c.resolved_at AS "resolvedAt"
+       FROM ${T}comment c JOIN ${T}session s ON s.id=c.session_id
+       WHERE s.organization_id=$1 AND s.project_id=$2 AND s.archived_at IS NULL`,
+      [organizationId, projectId],
+    )
+  ).rows;
+}
+
+// What the development assistant has produced per item (M14): a conversation, a version
+// labelled 定稿, a version read back from SAP.
+export async function itemCoverage(db, organizationId, projectId) {
+  return (
+    await db.query(
+      `SELECT s.item_id AS "itemId",bool_or('定稿'=ANY(COALESCE(v.labels,'{}'))) AS final,
+         bool_or(v.source='sap') IS TRUE AS sap
+       FROM ${T}session s LEFT JOIN ${T}version v ON v.session_id=s.id
+       WHERE s.organization_id=$1 AND s.project_id=$2 GROUP BY s.item_id`,
       [organizationId, projectId],
     )
   ).rows;

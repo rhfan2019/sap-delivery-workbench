@@ -98,6 +98,7 @@ function phaseFields(phase) {
     ...(phase.effort ? [field('effortDays', '人天预估', 'effort')] : []),
     field('plannedStart', '计划开始日期', 'date'),
     field('plannedEnd', '计划完成日期', 'date'),
+    field('actualStart', '实际开始日期', 'date'),
     field('actualEnd', '实际完成日期', 'date'),
     field('progress', '完成百分比', 'percent'),
     field('status', '状态', 'select', { options: OPTIONS.status }),

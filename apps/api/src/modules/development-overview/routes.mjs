@@ -16,11 +16,29 @@ import {
   reverseHandover,
   scopeRemoved,
 } from '@sap-delivery-workbench/contracts/delivery/overview';
-import { finalizedItems, lastTurns as fsdLastTurns } from '../abap-fsd-agent/public.mjs';
-import { lastTurns as devLastTurns } from '../abap-dev-agent/public.mjs';
+import {
+  finalizedItems,
+  itemComments as fsdComments,
+  lastTurns as fsdLastTurns,
+} from '../abap-fsd-agent/public.mjs';
+import {
+  itemComments as devComments,
+  itemCoverage,
+  lastTurns as devLastTurns,
+} from '../abap-dev-agent/public.mjs';
 import { keyedMilestones } from '../admin/projects.mjs';
 import { dateText } from '../delivery/store.mjs';
 import { deliveryContext } from '../delivery/context.mjs';
+import {
+  aging,
+  commentStats,
+  consultant,
+  coverage,
+  fsdBacklog,
+  mine,
+  readiness,
+  rework,
+} from './views.mjs';
 
 // Development overview, phase 1 (docs/specs/development-overview.md, plan 2026-10-30): the
 // project and development-team views. Numbers are computed here with the shared judgments the
@@ -43,6 +61,7 @@ const owners = (item) => [
   item.createdBy,
   ...PHASE_KEYS.map((k) => item.phases[k].assigneeId).filter(Boolean),
 ];
+const objectKey = (o) => [o.pgmid, o.objectType, o.objectName].join(' ');
 const brief = (item) => ({ id: item.id, code: item.code, name: item.name, module: item.module });
 const monday = (date) => addDays(date, -((new Date(date + 'T00:00:00Z').getUTCDay() + 6) % 7));
 
@@ -61,14 +80,19 @@ function visibleScope(grant, userId) {
 // Everything besides the items, each read through its owner's facade (contract 3.6).
 async function facts(c, projectId, budgetDays) {
   const db = c.pool;
-  const [milestones, finals, events, fsdTurns, devTurns, drift] = await Promise.all([
-    keyedMilestones(db, c.organizationId, projectId),
-    finalizedItems(db, c.organizationId, projectId),
-    c.overview.activity(db, projectId),
-    fsdLastTurns(db, c.organizationId, projectId),
-    devLastTurns(db, c.organizationId, projectId),
-    c.overview.plannedEndPushes(db, projectId, DRIFT_DAYS),
-  ]);
+  const org = c.organizationId;
+  const [milestones, finals, events, fsdTurns, devTurns, drift, fsdNotes, devNotes, devCover] =
+    await Promise.all([
+      keyedMilestones(db, org, projectId),
+      finalizedItems(db, org, projectId),
+      c.overview.activity(db, projectId),
+      fsdLastTurns(db, org, projectId),
+      devLastTurns(db, org, projectId),
+      c.overview.plannedEndPushes(db, projectId, DRIFT_DAYS),
+      fsdComments(db, org, projectId),
+      devComments(db, org, projectId),
+      itemCoverage(db, org, projectId),
+    ]);
   // The last thing that happened to an item: its own change, or a turn of either assistant.
   const activity = new Map();
   for (const r of [...events, ...fsdTurns, ...devTurns])
@@ -76,9 +100,14 @@ async function facts(c, projectId, budgetDays) {
   return {
     milestones,
     budgetDays,
-    finals: new Map(finals.map((r) => [r.itemId, r.finalAt])),
+    finals: new Map(finals.map((r) => [r.itemId, r])),
     activity,
     drift,
+    comments: [
+      ...fsdNotes.map((n) => ({ ...n, source: 'fsd' })),
+      ...devNotes.map((n) => ({ ...n, source: 'dev' })),
+    ],
+    devCoverage: new Map(devCover.map((r) => [r.itemId, r])),
   };
 }
 
@@ -192,11 +221,12 @@ export function buildOverview({ items, people, facts: f, today, grant, userId })
   const conflicts = new Map();
   for (const i of live.filter((x) => !deliveryDone(x)))
     for (const o of i.objects) {
-      const key = [o.pgmid, o.objectType, o.objectName].join(' ');
+      const key = objectKey(o);
       if (!conflicts.has(key)) conflicts.set(key, { ...o, items: [] });
       conflicts.get(key).items.push(brief(i));
     }
   const finalCount = (list) => list.filter((i) => f.finals.has(i.id)).length;
+  const sharedBy = new Map([...conflicts.entries()].map(([k, v]) => [k, v.items]));
 
   const result = {
     today,
@@ -260,11 +290,20 @@ export function buildOverview({ items, people, facts: f, today, grant, userId })
     development: {
       handover: live
         .filter((i) => handoverReady(i, f.finals.has(i.id)))
-        .map((i) => ({
-          ...brief(i),
-          finalOn: dateText(new Date(f.finals.get(i.id))),
-          waitDays: daysBetween(dateText(new Date(f.finals.get(i.id))), today),
-        }))
+        .map((i) => {
+          const final = f.finals.get(i.id);
+          const finalOn = dateText(new Date(final.finalAt));
+          return {
+            ...brief(i),
+            finalOn,
+            estimated: final.estimated,
+            waitDays: daysBetween(finalOn, today),
+            objects: i.objects.map((o) => ({
+              ...o,
+              shared: (sharedBy.get(objectKey(o)) ?? []).filter((x) => x.id !== i.id),
+            })),
+          };
+        })
         .sort((a, b) => b.waitDays - a.waitDays),
       reverse: live.filter((i) => reverseHandover(i, f.finals.has(i.id))).map(brief),
       conflicts: [...conflicts.values()].filter((c) => c.items.length > 1),
@@ -291,7 +330,25 @@ export function buildOverview({ items, people, facts: f, today, grant, userId })
       gates: Object.fromEntries(
         Object.keys(PHASE_GATES).map((k) => [k, count((i) => pastGate(i, k, milestoneDates))]),
       ),
+      aging: aging(live, today),
+      coverage: coverage(live, f.devCoverage),
+      rework: rework(live, f.finals),
+      comments: commentStats(live, f.comments, today),
     },
+    fsdBacklog: fsdBacklog(live, today),
+    readiness: readiness(live, modules),
+    mine: mine(live, {
+      userId,
+      today,
+      finals: f.finals,
+      comments: f.comments,
+      objectsShared: (o) => sharedBy.get(objectKey(o)) ?? [],
+    }),
+    consultant: consultant(live, { userId, today, comments: f.comments }),
+    // Who the development lead can hand an item to (交接雷达); only with the team permission.
+    people: team
+      ? people.filter((m) => m.active).map((m) => ({ id: m.id, name: m.displayName }))
+      : [],
   };
   if (commercial) {
     const effort = (test) =>

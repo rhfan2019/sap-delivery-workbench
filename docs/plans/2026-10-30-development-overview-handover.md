@@ -4,28 +4,29 @@
 
 ## 1. 现状一句话
 
-开发概览一期已上线：项目视角与开发组视角可用，数字可下钻到开发清单且条数一致；“我的”、顾问、测试视角显示“二期开放”。
+开发概览一期、二期已上线：五个视角（项目、开发组、我的、顾问、测试）都可用，阶段状态流水、实际开始日期与定稿时间自动记录；三期（趋势、预测、项目组合）进行中。
 
 ## 2. 下一步
 
-二期（FEAT-010）：先做补记数据 D1–D3（阶段状态流水、`actual_start` 自动写入、定稿时间与定稿人，含回填），再做“我的”、顾问、测试视角与 M12、M14、M16、M18、M19、M21、交接雷达。见[开发概览设计](../specs/development-overview.md)第 6、10 节。
+三期（FEAT-011）：见[开发概览设计](../specs/development-overview.md)第 10 节。
 
 ## 3. 已知问题
 
-FEAT-010、FEAT-011、TEST-002。
+FEAT-011、TEST-002。
 
 ## 4. 架构速览
 
 - 设计：[开发概览设计](../specs/development-overview.md)，口径第 3 节，指标第 4 节，接口第 7 节，已确认的决定第 11 节；一期执行记录见[一期实施计划](2026-10-30-development-overview-implementation.md)第 4 节。
+- 补记数据（二期）：`app.development_phase_transition`（阶段状态流水）、`development_item_phase.actual_start`、FSD 文档与代码版本的 `finalized_at` / `finalized_by`，见设计第 10.1 节。
 - 共享判定：`packages/contracts/delivery/overview.mjs`（风险、两档完成、到期、计划缺口、里程碑越线、交接、下钻筛选 `matchesFilter`），后端统计与开发清单前端共用。
-- 后端：独立模块 `apps/api/src/modules/development-overview/routes.mjs`（契约 3.6），只经 delivery `context.mjs` 的 `overview`、两个助手的 `public.mjs`（`finalizedItems`、`lastTurns`）、admin 的 `keyedMilestones` 读取。
-- 前端：`apps/web/src/features/development-overview/`（页面、里程碑时间轴、项目视角、开发组视角、`model.ts` 的类型与下钻链接）；开发清单 `DeliveryView.vue` 读取 `?from=overview` 的筛选。
+- 后端：独立模块 `apps/api/src/modules/development-overview/`（`routes.mjs` 一期统计与接口，`views.mjs` 二期视图；契约 3.6），只经 delivery `context.mjs` 的 `overview`、两个助手的 `public.mjs`（`finalizedItems`、`lastTurns`、`itemComments`、`itemCoverage`）、admin 的 `keyedMilestones` 读取。
+- 前端：`apps/web/src/features/development-overview/`（页面、里程碑时间轴，项目 / 开发组 / 我的 / 顾问 / 测试五个视角组件，`model.ts` 的类型与下钻链接）；开发清单 `DeliveryView.vue` 读取 `?from=overview` 的筛选。
 - 权限点：`delivery.overview:view`（`PRJ_VIEW`，受模块范围与“仅本人负责”限制）、`delivery.overview.team:view`（`DL_TEAM`：C_PM、C_DEV_LEAD）、`delivery.portfolio:view`（`PF_VIEW`：C_DELIVERY_DIRECTOR、C_PMO，三期才有页面）。
 
 ## 5. 测试资产
 
 - 单元：`tests/unit/contracts/delivery-overview.test.mjs`（共享判定边界）。
-- 集成：`tests/integration/api/development-overview.test.mjs`（401/403/404、`own_only`、隐藏商务与他人姓名、卡片数字 = 清单按同一筛选过滤的条数）。
+- 集成：`tests/integration/api/development-overview.test.mjs`（401/403/404、`own_only`、隐藏商务与他人姓名、卡片数字 = 清单按同一筛选过滤的条数；二期的状态流水、实际开始、定稿时间与各视图）。
 - 端到端：尚无（TEST-002）。
 
 ## 6. 本工作线注意事项

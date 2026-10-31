@@ -128,9 +128,10 @@ const LEADING: Record<string, number> = {
 };
 const READING: Record<string, number> = {
   plannedStart: 0,
-  actualEnd: 1,
-  effortDays: 2,
-  progress: 3,
+  actualStart: 1,
+  actualEnd: 2,
+  effortDays: 3,
+  progress: 4,
 };
 const shown = computed(() => (editing.value ? draft.value : (props.item ?? draft.value)));
 const filled = (f: FieldDef) => displayText(shown.value, f, props.ctx) !== '';

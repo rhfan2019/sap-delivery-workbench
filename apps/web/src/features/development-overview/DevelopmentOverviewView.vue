@@ -11,8 +11,11 @@ import BaseTabs from '../../components/base/BaseTabs.vue';
 import { api, ApiError } from '../../services/session';
 import { currentProject } from '../../services/projectContext';
 import MilestoneLine from './MilestoneLine.vue';
+import ConsultantView from './ConsultantView.vue';
+import MineView from './MineView.vue';
 import ProjectView from './ProjectView.vue';
 import TeamView from './TeamView.vue';
+import TesterView from './TesterView.vue';
 import { VIEWS, drillLink, type Overview, type ViewId } from './model';
 import './overview.css';
 
@@ -34,8 +37,7 @@ async function load() {
     const result = await api<Overview>('/projects/' + project + '/development-overview');
     if (request !== generation) return;
     data.value = result;
-    // Views not built yet (phase 2) fall back to the project view.
-    if (!chosen) view.value = VIEWS.find((v) => v.id === result.view && v.ready)?.id ?? 'project';
+    if (!chosen) view.value = result.view;
   } catch (e) {
     if (request !== generation) return;
     data.value = null;
@@ -57,7 +59,6 @@ watch(
   { immediate: true },
 );
 const tabs = computed(() => VIEWS.map((v) => ({ id: v.id, label: v.label })));
-const current = computed(() => VIEWS.find((v) => v.id === view.value)!);
 function pick(id: string) {
   chosen = true;
   view.value = id as ViewId;
@@ -155,20 +156,14 @@ const scoped = computed(() => !!(data.value?.scope.owner || data.value?.scope.mo
         }}。</BaseBanner
       >
       <BaseEmptyState
-        v-if="!current.ready"
-        title="此视角在二期开放"
-        text="二期补齐阶段开始时间、定稿时间后开放“我的”、顾问与测试视角。现在可以使用项目与开发组视角。"
-        ><template #icon><LayoutGrid /></template
-      ></BaseEmptyState>
-      <BaseEmptyState
-        v-else-if="!data.counts.items"
+        v-if="!data.counts.items"
         title="还没有开发项"
         text="在开发清单中登记开发项后，这里会按阶段、风险与里程碑汇总。"
         ><template #icon><LayoutGrid /></template
       ></BaseEmptyState>
       <template v-else>
         <MilestoneLine :milestones="data.milestones" :today="data.today" />
-        <section class="ov-section" aria-label="关键数字">
+        <section v-if="view !== 'mine'" class="ov-section" aria-label="关键数字">
           <div class="ov-stats">
             <button
               v-for="c in cards"
@@ -184,7 +179,10 @@ const scoped = computed(() => !!(data.value?.scope.owner || data.value?.scope.mo
           </div>
         </section>
         <ProjectView v-if="view === 'project'" :data="data" :drill="drill" />
-        <TeamView v-else :data="data" :drill="drill" />
+        <TeamView v-else-if="view === 'team'" :data="data" :drill="drill" :reload="load" />
+        <MineView v-else-if="view === 'mine'" :data="data" :drill="drill" />
+        <ConsultantView v-else-if="view === 'consultant'" :data="data" :drill="drill" />
+        <TesterView v-else :data="data" :drill="drill" />
       </template>
     </template>
   </div>

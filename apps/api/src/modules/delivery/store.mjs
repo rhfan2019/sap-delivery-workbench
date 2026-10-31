@@ -22,6 +22,7 @@ const emptyPhase = {
   effortDays: null,
   plannedStart: null,
   plannedEnd: null,
+  actualStart: null,
   actualEnd: null,
   progress: 0,
   status: 'not_started',
@@ -34,6 +35,7 @@ function presentPhase(row) {
     effortDays: row.effort_days === null ? null : Number(row.effort_days),
     plannedStart: dateText(row.planned_start),
     plannedEnd: dateText(row.planned_end),
+    actualStart: dateText(row.actual_start),
     actualEnd: dateText(row.actual_end),
     progress: row.progress,
     status: row.status,
@@ -218,8 +220,20 @@ export async function applyChanges(db, ctx, before, normalized) {
       after: historyValue(key, after),
     });
   for (const [phase, changes] of Object.entries(normalized.phases)) {
+    const moved = 'status' in changes && changes.status !== before.phases[phase].status;
+    // A phase that first goes in progress (or is marked delayed) records when it started
+    // (docs/specs/development-overview.md 6, D2); a date typed by hand wins.
+    if (
+      moved &&
+      ['in_progress', 'delayed'].includes(changes.status) &&
+      !before.phases[phase].actualStart &&
+      !('actualStart' in changes)
+    )
+      changes.actualStart = dateText(new Date());
     settlePhase(phase, before.phases[phase], changes);
     await writePhase(db, ctx, before.id, phase, changes);
+    if (moved)
+      await addTransition(db, ctx, before.id, phase, before.phases[phase].status, changes.status);
     for (const [name, value] of Object.entries(changes)) record(phase + '.' + name, value);
   }
   if (normalized.objects) {
@@ -262,14 +276,26 @@ export async function insertItem(db, ctx, itemNo, normalized) {
      VALUES($1,$2,$3,$4,$5,$5${keys.map((_, i) => ',$' + (i + 6)).join('')})`,
     [id, ctx.org, ctx.project, itemNo, ctx.actor, ...keys.map((k) => base[k])],
   );
-  for (const phase of PHASE_KEYS)
+  for (const phase of PHASE_KEYS) {
     await db.query(
       'INSERT INTO app.development_item_phase(organization_id,project_id,item_id,phase,updated_by) VALUES($1,$2,$3,$4,$5)',
       [ctx.org, ctx.project, id, phase, ctx.actor],
     );
+    await addTransition(db, ctx, id, phase, null, 'not_started');
+  }
   const created = await loadItem(db, ctx.org, ctx.project, id);
   await applyChanges(db, ctx, created, { ...normalized, item: {} });
   return id;
+}
+
+// One row per change of a phase status (overview spec section 6, D1); the first row of a phase
+// has no `from` status.
+async function addTransition(db, ctx, itemId, phase, from, to) {
+  await db.query(
+    `INSERT INTO app.development_phase_transition(organization_id,project_id,item_id,phase,from_status,to_status,actor_id)
+     VALUES($1,$2,$3,$4,$5,$6,$7)`,
+    [ctx.org, ctx.project, itemId, phase, from, to, ctx.actor],
+  );
 }
 
 export async function addEvent(db, ctx, itemId, action, changes = {}) {

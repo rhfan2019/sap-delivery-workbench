@@ -21,6 +21,16 @@ export type Reason =
     }
   | { type: 'idle'; days: number }
   | { type: 'drift'; phase: PhaseKey; days: number };
+export interface SapObject {
+  pgmid: string;
+  objectType: string;
+  objectName: string;
+}
+export interface Readiness {
+  total: number;
+  ready: number;
+  notReady: string[];
+}
 export interface Milestone {
   key: string;
   name: string;
@@ -63,7 +73,12 @@ export interface Overview {
     rows: { userId: string | null; name: string; open: number; days: number[] }[];
   };
   development: {
-    handover: (Brief & { finalOn: string; waitDays: number })[];
+    handover: (Brief & {
+      finalOn: string;
+      estimated: boolean;
+      waitDays: number;
+      objects: (SapObject & { shared: Brief[] })[];
+    })[];
     reverse: Brief[];
     conflicts: { pgmid: string; objectType: string; objectName: string; items: Brief[] }[];
     awaitingTest: (Brief & { waitDays: number | null; tester: string | null })[];
@@ -73,17 +88,55 @@ export interface Overview {
       byModule: Record<string, { total: number; final: number }>;
     };
     gates: Partial<Record<PhaseKey, number>>;
+    aging: Record<
+      PhaseKey,
+      {
+        points: (Brief & { days: number; estimated: boolean })[];
+        p50: number | null;
+        p85: number | null;
+      }
+    >;
+    coverage: { started: number; session: number; final: number; sap: number; missing: Brief[] };
+    rework: (Brief & { laterVersions: number; retest: boolean })[];
+    comments: {
+      open: number;
+      ages: { within3: number; within7: number; older: number };
+      oldest: (Brief & { source: 'fsd' | 'dev'; days: number })[];
+      resolvedMedian: number | null;
+      itemIds: string[];
+    };
   };
+  fsdBacklog: { overdue: string[]; week: string[]; later: string[]; unplanned: string[] };
+  readiness: {
+    all: Readiness;
+    byModule: Record<string, Readiness>;
+    noTester: string[];
+  };
+  mine: {
+    today: (Brief & {
+      phase: PhaseKey;
+      status: string;
+      plannedEnd: string | null;
+      risk: RiskSource | null;
+      stage: 'design' | 'development' | null;
+    })[];
+    todoTotal: number;
+    todoIds: string[];
+    respond: (Brief & { type: 'comment' | 'final'; source?: 'fsd' | 'dev'; days: number })[];
+    objects: (SapObject & { item: Brief; shared: Brief[] })[];
+  };
+  consultant: { fsdRisk: string[]; comments: string[]; awaiting: string[] };
+  people: { id: string; name: string }[];
   budget?: { budgetDays: number | null; plannedDays: number; doneDays: number };
 }
 
 export type ViewId = 'project' | 'team' | 'mine' | 'consultant' | 'tester';
-export const VIEWS: { id: ViewId; label: string; ready: boolean }[] = [
-  { id: 'project', label: '项目', ready: true },
-  { id: 'team', label: '开发组', ready: true },
-  { id: 'mine', label: '我的', ready: false },
-  { id: 'consultant', label: '顾问', ready: false },
-  { id: 'tester', label: '测试', ready: false },
+export const VIEWS: { id: ViewId; label: string }[] = [
+  { id: 'project', label: '项目' },
+  { id: 'team', label: '开发组' },
+  { id: 'mine', label: '我的' },
+  { id: 'consultant', label: '顾问' },
+  { id: 'tester', label: '测试' },
 ];
 
 // The list address for a drill-down (spec section 8): the viewer's scope is added, so the
@@ -103,4 +156,7 @@ export function drillLink(
 }
 export const itemLink = (project: string, id: string) =>
   `/workspace/development-items?project=${project}&item=${id}`;
+export const assistantLink = (project: string, id: string, stage: 'design' | 'development') =>
+  `/projects/${project}/development-items/${id}/${stage}`;
+export const pct = (part: number, whole: number) => (whole ? Math.round((part / whole) * 100) : 0);
 export const shortDate = (date: string) => date.slice(5).replace('-', '/');

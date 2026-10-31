@@ -217,3 +217,20 @@
 .ov-bar .fill.red {
   background: var(--red-solid-1);
 }
+.ov-person {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  white-space: nowrap;
+}
+.ov-muted {
+  color: var(--text-subtle);
+}
+.ov-object {
+  margin-left: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--font-12);
+}
+.ov-more {
+  padding-top: var(--space-2);
+}

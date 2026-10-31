@@ -96,22 +96,23 @@ project ─┬─< development_item ─┬─< development_item_phase   (固定 
 
 每个开发项固定 4 行，随开发项一起创建：`fsd`、`development`、`consultant_test`、`user_test`。
 
-| 列                | 类型         | 约束 / 默认值                                                                           | 对应字段                                         |
-| ----------------- | ------------ | --------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| `organization_id` | uuid         | 非空                                                                                    | —                                                |
-| `project_id`      | uuid         | 非空                                                                                    | —                                                |
-| `item_id`         | uuid         | 非空，复合外键 → `development_item`                                                     | —                                                |
-| `phase`           | varchar(20)  | 非空，`fsd / development / consultant_test / user_test`；主键 `(item_id, phase)`        | 分组                                             |
-| `assignee_id`     | uuid         | 可空，复合外键 → `project_member(organization_id, project_id, user_id)`                 | 业务顾问 / 开发人员 / 顾问测试人 / IT/用户测试人 |
-| `effort_days`     | numeric(5,1) | 可空，`>= 0`；仅 `fsd`、`development` 允许有值                                          | 人天预估                                         |
-| `planned_start`   | date         | 可空                                                                                    | 计划开始日期                                     |
-| `planned_end`     | date         | 可空，`>= planned_start`                                                                | 计划完成日期                                     |
-| `actual_end`      | date         | 可空                                                                                    | 实际完成日期                                     |
-| `progress`        | smallint     | 非空，默认 0，`0..100`                                                                  | 完成百分比                                       |
-| `status`          | varchar(20)  | 非空，默认 `not_started`；`not_started / in_progress / completed / delayed / cancelled` | 状态                                             |
-| `notes`           | text         | 非空，默认 `''`；HTML 富文本                                                            | 备注                                             |
-| `updated_by`      | uuid         | 外键 `app_user`                                                                         | —                                                |
-| `updated_at`      | timestamptz  | 非空，`now()`                                                                           | —                                                |
+| 列                | 类型         | 约束 / 默认值                                                                                                   | 对应字段                                         |
+| ----------------- | ------------ | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `organization_id` | uuid         | 非空                                                                                                            | —                                                |
+| `project_id`      | uuid         | 非空                                                                                                            | —                                                |
+| `item_id`         | uuid         | 非空，复合外键 → `development_item`                                                                             | —                                                |
+| `phase`           | varchar(20)  | 非空，`fsd / development / consultant_test / user_test`；主键 `(item_id, phase)`                                | 分组                                             |
+| `assignee_id`     | uuid         | 可空，复合外键 → `project_member(organization_id, project_id, user_id)`                                         | 业务顾问 / 开发人员 / 顾问测试人 / IT/用户测试人 |
+| `effort_days`     | numeric(5,1) | 可空，`>= 0`；仅 `fsd`、`development` 允许有值                                                                  | 人天预估                                         |
+| `planned_start`   | date         | 可空                                                                                                            | 计划开始日期                                     |
+| `planned_end`     | date         | 可空，`>= planned_start`                                                                                        | 计划完成日期                                     |
+| `actual_start`    | date         | 可空；第一次变为“进行中”或“已延误”时自动写当天（2026-10-30，[开发概览设计](development-overview.md)第 6 节 D2） | 实际开始日期                                     |
+| `actual_end`      | date         | 可空                                                                                                            | 实际完成日期                                     |
+| `progress`        | smallint     | 非空，默认 0，`0..100`                                                                                          | 完成百分比                                       |
+| `status`          | varchar(20)  | 非空，默认 `not_started`；`not_started / in_progress / completed / delayed / cancelled`                         | 状态                                             |
+| `notes`           | text         | 非空，默认 `''`；HTML 富文本                                                                                    | 备注                                             |
+| `updated_by`      | uuid         | 外键 `app_user`                                                                                                 | —                                                |
+| `updated_at`      | timestamptz  | 非空，`now()`                                                                                                   | —                                                |
 
 约束：`CHECK(status <> 'completed' OR progress = 100)`，保证“已完成即 100%”。应用层在状态改为“已完成”时自动写入 100。
 

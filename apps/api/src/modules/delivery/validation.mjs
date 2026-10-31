@@ -31,6 +31,7 @@ export const phaseColumns = {
   effortDays: 'effort_days',
   plannedStart: 'planned_start',
   plannedEnd: 'planned_end',
+  actualStart: 'actual_start',
   actualEnd: 'actual_end',
   progress: 'progress',
   status: 'status',
@@ -237,6 +238,8 @@ export function settlePhase(phaseKey, before, changes) {
   }
   if (merged.plannedStart && merged.plannedEnd && merged.plannedEnd < merged.plannedStart)
     throw failure(400, `${label}阶段的计划完成日期不能早于计划开始日期。`);
+  if (merged.actualStart && merged.actualEnd && merged.actualEnd < merged.actualStart)
+    throw failure(400, `${label}阶段的实际完成日期不能早于实际开始日期。`);
   return changes;
 }
 

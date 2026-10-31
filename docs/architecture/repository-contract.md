@@ -2,7 +2,7 @@
 
 版本：1.21。日期：2026-10-30。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
 
-1.21 变更：依据[开发概览设计](../specs/development-overview.md)（用户 2026-10-30 确认），新增后端模块 `development-overview`（开发概览统计，见 3.6）与前端 feature `development-overview`。统计需要开发清单、变更历史、两个助手的定稿与轮次、项目里程碑，而助手模块经 item-workspace 依赖 delivery，统计放进 delivery 会形成循环，所以单独成模块，只经各模块的公开入口读取：delivery 的 `context.mjs`（新增只读的 `overview`）、abap-fsd-agent 与 abap-dev-agent 的 `public.mjs`（新增 `finalizedItems`、`lastTurns`）、admin 的 `keyedMilestones`。前后端共用的统计口径放 `packages/contracts/delivery/overview.mjs`（浏览器可用）。新增依赖边登记见 module-dependencies.json。
+1.21 变更：依据[开发概览设计](../specs/development-overview.md)（用户 2026-10-30 确认），新增后端模块 `development-overview`（开发概览统计，见 3.6）与前端 feature `development-overview`。统计需要开发清单、变更历史、两个助手的定稿与轮次、项目里程碑，而助手模块经 item-workspace 依赖 delivery，统计放进 delivery 会形成循环，所以单独成模块，只经各模块的公开入口读取：delivery 的 `context.mjs`（新增只读的 `overview`）、abap-fsd-agent 与 abap-dev-agent 的 `public.mjs`（新增 `finalizedItems`、`lastTurns`、`itemComments`，开发助手另有 `itemCoverage`）、admin 的 `keyedMilestones`。前后端共用的统计口径放 `packages/contracts/delivery/overview.mjs`（浏览器可用）。新增依赖边登记见 module-dependencies.json。
 
 1.20 变更：根目录登记 `.workbuddy`（WorkBuddy 助手在本机写入的记忆，与 `.claude` 同类，整体不入库）。此前它未登记，`npm start` 第一步的架构检查失败，API 与前端均未启动，浏览器打不开 `http://127.0.0.1:5173/home`。架构检查是提交前的门槛，不是本机启动的前提：启动器（`start.cmd` / `npm start`）遇到检查不通过只告警、继续启动；并在 PostgreSQL、API（含数据库连接）、Vue 页面与依赖预构建、前端到 API 的代理都确认可用后，才报告启动成功。
 
@@ -128,7 +128,7 @@ fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3
 ### 3.3 开发清单（delivery）
 
 - **职责**：项目开发清单：开发项（基本信息与四个阶段）、开发对象、标签、项目级自定义列、批量操作、Excel 导入导出、附件与变更历史。表结构以[开发清单重构设计](../specs/development-list.md)为准。
-- **数据归属**：`app.development_item`、`app.development_item_phase`、`app.development_item_object`、`app.development_tag`、`app.development_item_tag`、`app.development_field`、`app.development_event`、`app.development_file` 归 delivery。其他模块只读开发项，经 delivery 的 `context.mjs`（登记于 module-dependencies.json）取得。
+- **数据归属**：`app.development_item`、`app.development_item_phase`、`app.development_item_object`、`app.development_tag`、`app.development_item_tag`、`app.development_field`、`app.development_event`、`app.development_file`、`app.development_phase_transition`（阶段状态流水，开发概览二期起由保存开发项时写入）归 delivery。其他模块只读开发项，经 delivery 的 `context.mjs`（登记于 module-dependencies.json）取得。
 - **阶段负责人**：助手与开发项的修改权限由 access 判断（`agent.fsd:run`、`agent.dev:run`、`delivery.item:edit` 等）；分配限定“仅本人负责”时，设计助手看 `fsd` 阶段负责人，开发助手看 `development` 阶段负责人，开发项修改看任一阶段负责人或创建人。
 - **目标开发系统**：`development_item.sap_system_id` 引用项目 SAP 系统（开发用途），为空时取项目默认开发系统。
 - **共享契约**：`packages/contracts/delivery` 只放字段目录、选项和纯函数（浏览器可用），不放校验副作用、数据库查询或权限决策。

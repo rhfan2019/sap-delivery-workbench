@@ -37,6 +37,7 @@ const expectedTables = [
   'development_item',
   'development_item_object',
   'development_item_phase',
+  'development_phase_transition',
   'development_item_tag',
   'development_tag',
   'llm_credential',

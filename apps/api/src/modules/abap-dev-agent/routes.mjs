@@ -352,7 +352,15 @@ export function registerAbapDevAgent(app, pool, organizationId, requireSession, 
       ? [...new Set(req.body.labels.map((l) => String(l).trim()).filter(Boolean))].slice(0, 10)
       : null;
     if (!labels || labels.some((l) => l.length > 30)) throw failure(400, '标签无效。');
-    if (!(await repo.setLabels(pool, s.id, Number(req.params.version), labels)))
+    if (
+      !(await repo.setLabels(
+        pool,
+        s.id,
+        Number(req.params.version),
+        labels,
+        req.work.scope.actorId,
+      ))
+    )
       throw failure(404, '版本不存在。');
     return { labels };
   });

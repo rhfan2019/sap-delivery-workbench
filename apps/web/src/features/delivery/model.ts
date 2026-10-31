@@ -20,6 +20,7 @@ export interface Phase {
   effortDays: number | null;
   plannedStart: string | null;
   plannedEnd: string | null;
+  actualStart: string | null;
   actualEnd: string | null;
   progress: number;
   status: string;
@@ -177,6 +178,7 @@ export function emptyItem(): Item {
     effortDays: null,
     plannedStart: null,
     plannedEnd: null,
+    actualStart: null,
     actualEnd: null,
     progress: 0,
     status: 'not_started',

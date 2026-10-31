@@ -212,10 +212,15 @@ export async function saveDocument(
   return rows[0].version;
 }
 
-export async function setLabels(db, sessionId, version, labels) {
+// Labelling a version 定稿 records when and by whom (overview spec section 6, D3); removing
+// the label clears both, relabelling keeps the first time.
+export async function setLabels(db, sessionId, version, labels, actorId) {
   const { rowCount } = await db.query(
-    `UPDATE ${T}document SET labels=$3 WHERE session_id=$1 AND version=$2`,
-    [sessionId, version, labels],
+    `UPDATE ${T}document SET labels=$3,
+       finalized_at=CASE WHEN '定稿'=ANY($3::text[]) THEN COALESCE(finalized_at,now()) END,
+       finalized_by=CASE WHEN '定稿'=ANY($3::text[]) THEN COALESCE(finalized_by,$4) END
+     WHERE session_id=$1 AND version=$2`,
+    [sessionId, version, labels, actorId],
   );
   return rowCount > 0;
 }
@@ -351,14 +356,22 @@ export async function findReferenced(db, sessionId, storageKey) {
   ).rows[0];
 }
 
-// For the development overview (contract 3.6): the first FSD version labelled 定稿 per item, and
-// each item's latest turn. The finalization time itself is not recorded yet (overview spec D3).
+// For the development overview (contract 3.6): per item, when its FSD was first finalized
+// (versions finalized before that was recorded fall back to their creation time, `estimated`),
+// how many versions came after it, and each item's latest turn.
 export async function finalizedItems(db, organizationId, projectId) {
   return (
     await db.query(
-      `SELECT s.item_id AS "itemId",min(d.created_at) AS "finalAt"
-       FROM ${T}session s JOIN ${T}document d ON d.session_id=s.id
-       WHERE s.organization_id=$1 AND s.project_id=$2 AND '定稿'=ANY(d.labels) GROUP BY s.item_id`,
+      `SELECT f."itemId",f."finalAt",f.estimated,
+         (SELECT count(*)::int FROM ${T}session s2 JOIN ${T}document d2 ON d2.session_id=s2.id
+          WHERE s2.item_id=f."itemId" AND d2.created_at>f."createdAt") AS "laterVersions"
+       FROM (
+         SELECT DISTINCT ON (s.item_id) s.item_id AS "itemId",COALESCE(d.finalized_at,d.created_at) AS "finalAt",
+           d.finalized_at IS NULL AS estimated,d.created_at AS "createdAt"
+         FROM ${T}session s JOIN ${T}document d ON d.session_id=s.id
+         WHERE s.organization_id=$1 AND s.project_id=$2 AND '定稿'=ANY(d.labels)
+         ORDER BY s.item_id,COALESCE(d.finalized_at,d.created_at)
+       ) f`,
       [organizationId, projectId],
     )
   ).rows;
@@ -369,6 +382,19 @@ export async function lastTurns(db, organizationId, projectId) {
       `SELECT s.item_id AS "itemId",max(t.started_at) AS at FROM ${T}session s
        JOIN ${T}turn t ON t.session_id=s.id WHERE s.organization_id=$1 AND s.project_id=$2
        GROUP BY s.item_id`,
+      [organizationId, projectId],
+    )
+  ).rows;
+}
+
+// Comments on the item's FSD in conversations that are not archived, for the development
+// overview (contract 3.6): open ones nag, resolved ones tell how long answers take.
+export async function itemComments(db, organizationId, projectId) {
+  return (
+    await db.query(
+      `SELECT s.item_id AS "itemId",c.status,c.created_at AS "createdAt",c.resolved_at AS "resolvedAt"
+       FROM ${T}comment c JOIN ${T}session s ON s.id=c.session_id
+       WHERE s.organization_id=$1 AND s.project_id=$2 AND s.archived_at IS NULL`,
       [organizationId, projectId],
     )
   ).rows;

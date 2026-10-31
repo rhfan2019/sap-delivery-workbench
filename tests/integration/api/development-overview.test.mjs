@@ -5,6 +5,7 @@ import { connectDatabase } from '../../../apps/api/src/platform/database.mjs';
 import { digest } from '../../../apps/api/src/platform/auth.mjs';
 import { createApp } from '../../../apps/api/src/app.mjs';
 import { addDays, matchesFilter } from '@sap-delivery-workbench/contracts/delivery/overview';
+import { setLabels } from '../../../apps/api/src/modules/abap-fsd-agent/repository.mjs';
 import { grantRole, dropOrganizations } from '../../fixtures/access.mjs';
 
 const localToday = () => {
@@ -155,6 +156,29 @@ test('development overview: permissions, scope, judgments and drill-down counts'
       "INSERT INTO app.abap_fsd_agent_document(id,session_id,version,markdown,labels,created_by) VALUES($1,$2,1,'# FSD','{定稿}',$3)",
       [randomUUID(), session, people.pm],
     );
+    // A's FSD changed after it was finalized, and has an open comment.
+    await db.query(
+      "INSERT INTO app.abap_fsd_agent_document(id,session_id,version,markdown,created_by,created_at) VALUES($1,$2,2,'# FSD v2',$3,now()+interval '1 second')",
+      [randomUUID(), session, people.pm],
+    );
+    await db.query(
+      "INSERT INTO app.abap_fsd_agent_comment(id,session_id,anchor_text,anchor_version,body,created_by) VALUES($1,$2,'范围',1,'请补充',$3)",
+      [randomUUID(), session, people.pm],
+    );
+
+    // Recorded automatically (spec section 6): the status history and the actual start.
+    assert.equal(b.phases.development.actualStart, today);
+    const { rows: moves } = await db.query(
+      "SELECT from_status,to_status FROM app.development_phase_transition WHERE item_id=$1 AND phase='development' ORDER BY id",
+      [b.id],
+    );
+    assert.deepEqual(
+      moves.map((m) => [m.from_status, m.to_status]),
+      [
+        [null, 'not_started'],
+        ['not_started', 'in_progress'],
+      ],
+    );
 
     // Access: sign-in, project scope, permission.
     assert.equal((await app.inject({ method: 'GET', url: overview })).statusCode, 401);
@@ -202,6 +226,50 @@ test('development overview: permissions, scope, judgments and drill-down counts'
     assert.deepEqual(reasons.C, ['drift']);
     assert.ok(o.load.rows.some((r) => r.userId === people.sub && r.name === '成员sub'));
 
+    // Phase 2: handover radar, age, coverage, rework, comments, FSD backlog, readiness.
+    const [handover] = o.development.handover;
+    assert.equal(handover.estimated, true);
+    assert.deepEqual(
+      handover.objects.map((x) => x.shared.map((s) => s.name)),
+      [['B']],
+    );
+    assert.deepEqual(o.people.map((m) => m.name).sort(), [
+      '成员dev',
+      '成员pm',
+      '成员sub',
+      '成员viewer',
+    ]);
+    assert.deepEqual(
+      o.development.aging.development.points.map((x) => [x.name, x.days, x.estimated]),
+      [['B', 0, false]],
+    );
+    assert.deepEqual(
+      {
+        ...o.development.coverage,
+        missing: o.development.coverage.missing.map((x) => x.name).sort(),
+      },
+      { started: 2, session: 0, final: 0, sap: 0, missing: ['B', 'C'] },
+    );
+    assert.deepEqual(
+      o.development.rework.map((x) => [x.name, x.laterVersions, x.retest]),
+      [['A', 1, false]],
+    );
+    assert.equal(o.development.comments.open, 1);
+    assert.deepEqual(o.fsdBacklog, {
+      overdue: [a.id],
+      week: [],
+      later: [c.id],
+      unplanned: [b.id],
+    });
+    assert.deepEqual(
+      { total: o.readiness.all.total, ready: o.readiness.all.ready },
+      { total: 3, ready: 0 },
+    );
+
+    // Labelling a version 定稿 now records when, so the date is no longer an estimate.
+    await setLabels(db, session, 1, ['定稿'], people.pm);
+    assert.equal((await pm('GET', overview)).development.handover[0].estimated, false);
+
     // Each card's drill-down filter selects exactly as many list items as the card counts.
     const { items } = await pm('GET', list);
     const ctx = { today, milestones: { code_freeze: addDays(today, 5) } };
@@ -227,12 +295,27 @@ test('development overview: permissions, scope, judgments and drill-down counts'
         .flatMap((x) => x.reasons)
         .every((r) => !r.assignee || r.assignee === '成员dev'),
     );
+    assert.deepEqual(mine.people, []);
+    // The FSD owner sees the risk and the open comment as their own to-dos.
+    assert.deepEqual(mine.consultant, { fsdRisk: [a.id], comments: [a.id], awaiting: [] });
+    assert.deepEqual(
+      mine.mine.respond.map((r) => [r.name, r.type, r.source]),
+      [['A', 'comment', 'fsd']],
+    );
+    assert.deepEqual(
+      mine.mine.today.map((t) => [t.name, t.phase]),
+      [['A', 'fsd']],
+    );
 
     // Subcontractor limited to own items: only B, and the drill-down scope says so.
     const own = await as('sub')('GET', overview);
     assert.deepEqual(own.scope, { owner: people.sub });
     assert.equal(own.counts.items, 1);
     assert.equal(own.cards.risk.count, 1);
+    assert.deepEqual(
+      own.mine.today.map((t) => [t.name, t.phase, t.risk, t.stage]),
+      [['B', 'development', 'stale', 'development']],
+    );
     assert.deepEqual(
       items.filter((i) => matchesFilter(i, { ...own.cards.risk.filter, ...own.scope }, ctx)).length,
       1,
@@ -241,6 +324,10 @@ test('development overview: permissions, scope, judgments and drill-down counts'
     if (app) await app.close();
     await db.query(
       'DELETE FROM app.abap_fsd_agent_document WHERE session_id IN (SELECT id FROM app.abap_fsd_agent_session WHERE organization_id=$1)',
+      [org],
+    );
+    await db.query(
+      'DELETE FROM app.abap_fsd_agent_comment WHERE session_id IN (SELECT id FROM app.abap_fsd_agent_session WHERE organization_id=$1)',
       [org],
     );
     await db.query('DELETE FROM app.abap_fsd_agent_session WHERE organization_id=$1', [org]);
