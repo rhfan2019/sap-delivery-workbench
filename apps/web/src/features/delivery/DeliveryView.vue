@@ -46,7 +46,13 @@ import {
   stageOwner,
   type AgentStage,
 } from '@sap-delivery-workbench/contracts/delivery/fields';
-import { atRisk, pastGate } from '@sap-delivery-workbench/contracts/delivery/overview';
+import {
+  FILTER_KEYS,
+  atRisk,
+  matchesFilter,
+  pastGate,
+  type OverviewFilter,
+} from '@sap-delivery-workbench/contracts/delivery/overview';
 import { currentProject, projects, leaveDelivery } from '../../services/projectContext';
 import { askConfirmation } from '../../services/confirmation';
 import {
@@ -151,15 +157,23 @@ const checkedItems = computed(() => items.value.filter((i) => checked.value.incl
 // The code freeze milestone (docs/specs/project-access-admin.md 1.3): a countdown in the header,
 // and how many items plan their development after it.
 const codeFreeze = ref<{ plannedOn: string | null; achievedOn: string | null } | null>(null);
+// Keyed milestone dates (achieved, else planned) for drill-down filters on phase gates.
+const milestoneDates = ref<Record<string, string>>({});
 async function loadFreeze(projectId: string) {
   try {
     const p = await api<{
       milestones: { key: string | null; plannedOn: string | null; achievedOn: string | null }[];
     }>('/projects/' + projectId);
-    if (projectId === currentProject.value)
-      codeFreeze.value = p.milestones.find((m) => m.key === 'code_freeze') ?? null;
+    if (projectId !== currentProject.value) return;
+    codeFreeze.value = p.milestones.find((m) => m.key === 'code_freeze') ?? null;
+    milestoneDates.value = Object.fromEntries(
+      p.milestones
+        .filter((m) => m.key && (m.achievedOn || m.plannedOn))
+        .map((m) => [m.key, (m.achievedOn ?? m.plannedOn)!]),
+    );
   } catch {
     codeFreeze.value = null;
+    milestoneDates.value = {};
   }
 }
 const freeze = computed(() => {
@@ -197,6 +211,8 @@ const search = ref(''),
   priorityFilter = ref(''),
   difficultyFilter = ref(''),
   personFilter = ref('');
+// A drill-down from the development overview: applied on top of the filters, not saved.
+const overview = ref<{ filter: OverviewFilter; label: string } | null>(null);
 const sortField = ref(''),
   sortOrder = ref<'asc' | 'desc' | null>(null);
 const page = ref(1),
@@ -267,6 +283,7 @@ function restoreFilters() {
   restoring = false;
 }
 function clearFilters() {
+  overview.value = null;
   restoring = true;
   for (const key of Object.keys(filterState))
     if (!['sortField', 'sortOrder', 'pageSize', 'scope'].includes(key))
@@ -297,8 +314,11 @@ const scopes = computed(() => {
 });
 const matching = computed(() => {
   const q = search.value.trim().toLowerCase();
+  const drill = overview.value;
+  const context = { today: today(), milestones: milestoneDates.value };
   return items.value.filter(
     (i) =>
+      (!drill || matchesFilter(i, drill.filter, context)) &&
       (!q ||
         [i.code, i.name, i.module, i.transactionCode, ...i.objects.map((o) => o.objectName)]
           .join(' ')
@@ -342,6 +362,12 @@ const activeFilters = computed(() => {
   const list: { key: string; label: string; clear: () => void }[] = [];
   const add = (key: string, label: string, state: { value: string }) =>
     state.value && list.push({ key, label, clear: () => (state.value = '') });
+  if (overview.value)
+    list.push({
+      key: 'overview',
+      label: '来自开发概览：' + overview.value.label,
+      clear: () => (overview.value = null),
+    });
   add('search', '搜索：' + search.value, search);
   add('module', '模块：' + moduleFilter.value, moduleFilter);
   add('kind', '类型：' + (OPTIONS.kind[kindFilter.value] ?? ''), kindFilter);
@@ -409,6 +435,54 @@ function followLink() {
   }
 }
 
+// --- drill-down from the development overview -------------------------------------------
+// ?project=&from=overview&label=&<filter keys> (docs/specs/development-overview.md 8): the
+// address wins over the filters saved for this project, which are cleared while it applies.
+let pendingDrill: { project: string; filter: OverviewFilter; label: string } | null = null;
+function readDrill(query: typeof route.query) {
+  if (query.from !== 'overview') return null;
+  const text = (key: string) => (typeof query[key] === 'string' ? (query[key] as string) : '');
+  const filter: Record<string, unknown> = {};
+  for (const key of FILTER_KEYS) {
+    const value = text(key);
+    if (!value) continue;
+    filter[key] = ['ids', 'modules'].includes(key)
+      ? value.split(',')
+      : ['due', 'gap', 'gate', 'awaiting'].includes(key)
+        ? value === '1'
+        : value;
+  }
+  return {
+    project: text('project'),
+    filter: filter as OverviewFilter,
+    label: text('label') || '筛选',
+  };
+}
+function applyDrill() {
+  const drill = pendingDrill;
+  if (!drill || (drill.project && currentProject.value !== drill.project)) return;
+  pendingDrill = null;
+  clearFilters();
+  scope.value = 'all';
+  overview.value = { filter: drill.filter, label: drill.label };
+}
+watch(
+  () => route.query,
+  (query) => {
+    const drill = readDrill(query);
+    if (!drill) return;
+    pendingDrill = drill;
+    if (
+      drill.project &&
+      currentProject.value !== drill.project &&
+      projects.value.some((p) => p.id === drill.project)
+    )
+      currentProject.value = drill.project;
+    else applyDrill();
+  },
+  { immediate: true },
+);
+
 // --- loading -----------------------------------------------------------------------------
 let generation = 0;
 async function load(reset = false) {
@@ -459,6 +533,7 @@ watch(
   [currentProject, () => identity.value?.user.id],
   () => {
     restoreFilters();
+    applyDrill();
     void load(true);
   },
   { immediate: true, flush: 'sync' },
