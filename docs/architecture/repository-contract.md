@@ -1,6 +1,8 @@
 # 仓库目录与依赖契约
 
-版本：1.20。日期：2026-10-28。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.21。日期：2026-10-30。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.21 变更：依据[开发概览设计](../specs/development-overview.md)（用户 2026-10-30 确认），新增后端模块 `development-overview`（开发概览统计，见 3.6）与前端 feature `development-overview`。统计需要开发清单、变更历史、两个助手的定稿与轮次、项目里程碑，而助手模块经 item-workspace 依赖 delivery，统计放进 delivery 会形成循环，所以单独成模块，只经各模块的公开入口读取：delivery 的 `context.mjs`（新增只读的 `overview`）、abap-fsd-agent 与 abap-dev-agent 的 `public.mjs`（新增 `finalizedItems`、`lastTurns`）、admin 的 `keyedMilestones`。前后端共用的统计口径放 `packages/contracts/delivery/overview.mjs`（浏览器可用）。新增依赖边登记见 module-dependencies.json。
 
 1.20 变更：根目录登记 `.workbuddy`（WorkBuddy 助手在本机写入的记忆，与 `.claude` 同类，整体不入库）。此前它未登记，`npm start` 第一步的架构检查失败，API 与前端均未启动，浏览器打不开 `http://127.0.0.1:5173/home`。架构检查是提交前的门槛，不是本机启动的前提：启动器（`start.cmd` / `npm start`）遇到检查不通过只告警、继续启动；并在 PostgreSQL、API（含数据库连接）、Vue 页面与依赖预构建、前端到 API 的代理都确认可用后，才报告启动成功。
 
@@ -97,7 +99,7 @@ apps/
       modules/<business>/    # 业务模块与其自有运行资源
 ```
 
-后端现有模块：admin（组织/用户/客户/项目与项目主数据）、access（权限内核，见 3.5）、delivery（交付台账）、item-workspace（开发项工作区）、models（模型配置与调用）、sap（SAP 连接）、technical（技术验证）、abap-fsd-agent（FSD 设计助手，见 3.1）、abap-dev-agent（ABAP 开发助手，见 3.1）、agent-core（智能体公共运行层，见 3.1）、audit（平台审计与日志分析，见 3.2）。各模块在第一次放入真实文件时创建，不创建空目录。
+后端现有模块：admin（组织/用户/客户/项目与项目主数据）、access（权限内核，见 3.5）、delivery（交付台账）、item-workspace（开发项工作区）、models（模型配置与调用）、sap（SAP 连接）、technical（技术验证）、abap-fsd-agent（FSD 设计助手，见 3.1）、abap-dev-agent（ABAP 开发助手，见 3.1）、agent-core（智能体公共运行层，见 3.1）、audit（平台审计与日志分析，见 3.2）、development-overview（开发概览统计，见 3.6）。各模块在第一次放入真实文件时创建，不创建空目录。
 
 fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3.1 授权的设计助手重构外，URL、数据库表名和历史协议字段不因内部目录改名而改变。
 
@@ -148,6 +150,13 @@ fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3
 - **公开入口**：`access/public.mjs`。其他模块用它取得企业级权限、项目权限与可见项目，或在不满足时抛出 403（附缺少的权限点）/ 404（范围外项目）。
 - **共享契约**：`packages/contracts/access/catalog.mjs` 只放权限点目录、预置角色、预置职位与选项（纯数据与纯函数，浏览器可用），不放权限决策。
 - **跨模块调用**：admin、delivery、sap、models、audit、technical、item-workspace、abap-fsd-agent、abap-dev-agent → access，登记见 module-dependencies.json；access 不导入其他业务模块。
+
+### 3.6 开发概览统计（development-overview）
+
+- **职责**：“开发管理 → 开发概览”的接口 `GET /api/projects/:projectId/development-overview`：按[开发概览设计](../specs/development-overview.md)的口径汇总开发项、风险、里程碑、负载、预算与开发组视图。需要 `delivery.overview:view`，按分配的模块范围与“仅本人负责”过滤；他人负载与姓名需要 `delivery.overview.team:view`，预算需要 `project.commercial:view`。
+- **数据归属**：本模块没有自己的表，只读。开发项与变更历史经 delivery 的 `context.mjs`（`overview`），助手的定稿与轮次经 abap-fsd-agent、abap-dev-agent 的 `public.mjs`，里程碑经 admin 的 `keyedMilestones`；不直接查询其他模块的表。
+- **共享契约**：风险、完成、到期、计划缺口、里程碑越线、交接与下钻筛选等判定只写在 `packages/contracts/delivery/overview.mjs`，本模块与开发清单前端共用，保证概览数字与下钻后的清单条数一致。
+- **跨模块调用**：development-overview → delivery、abap-fsd-agent、abap-dev-agent、admin，登记见 module-dependencies.json。
 
 认证和连接配置属于 platform；只供一个业务使用的提示词、模板和资源放该业务模块内。禁止为单一消费者新增 packages/agents。
 

@@ -1,2 +1,2 @@
-// Run records for other modules (audit); the first release exposes recent turns only.
-export { recentTurns } from './repository.mjs';
+// Run records for other modules: recent turns (audit), latest turn per item (development overview).
+export { recentTurns, lastTurns } from './repository.mjs';

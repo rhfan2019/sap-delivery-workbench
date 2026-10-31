@@ -73,6 +73,10 @@ export const router = createRouter({
           // ?project=&item= names the open drawer (kept in sync); &section= is read once.
           meta: { keepOnQuery: true },
         },
+        {
+          path: 'workspace/development-overview',
+          component: () => import('../features/development-overview/DevelopmentOverviewView.vue'),
+        },
         { path: 'workspace/:module', component: WorkspaceView },
         // Settings (docs/specs/project-access-admin.md 4.3). Planned entries have no route here:
         // they fall through to WorkspaceView, which shows the shared “规划中” page.

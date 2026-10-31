@@ -7,6 +7,7 @@ import { registerAbapFsdAgent } from './modules/abap-fsd-agent/routes.mjs';
 import { registerAbapDevAgent } from './modules/abap-dev-agent/routes.mjs';
 import { registerAuditRoutes } from './modules/audit/routes.mjs';
 import { registerDeliveryRoutes } from './modules/delivery/routes.mjs';
+import { registerDevelopmentOverviewRoutes } from './modules/development-overview/routes.mjs';
 import { registerTechnicalRoutes } from './modules/technical/routes.mjs';
 import { registerSapRoutes } from './modules/sap/routes.mjs';
 import { registerModelRoutes } from './modules/models/routes.mjs';
@@ -136,6 +137,7 @@ export async function createApp({
   registerAdminRoutes(app, pool, organizationId, requireSession);
   registerAccessRoutes(app, access);
   registerDeliveryRoutes(app, pool, organizationId, requireSession);
+  registerDevelopmentOverviewRoutes(app, pool, organizationId, requireSession);
   registerAbapFsdAgent(app, pool, organizationId, requireSession, abapFsdAgent);
   registerAbapDevAgent(app, pool, organizationId, requireSession, abapDevAgent);
   registerAuditRoutes(app, pool, organizationId, requireSession);

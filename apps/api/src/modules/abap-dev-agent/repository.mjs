@@ -379,3 +379,15 @@ export async function findReferenced(db, sessionId, storageKey) {
     ])
   ).rows[0];
 }
+
+// For the development overview (contract 3.6): each item's latest turn.
+export async function lastTurns(db, organizationId, projectId) {
+  return (
+    await db.query(
+      `SELECT s.item_id AS "itemId",max(t.started_at) AS at FROM ${T}session s
+       JOIN ${T}turn t ON t.session_id=s.id WHERE s.organization_id=$1 AND s.project_id=$2
+       GROUP BY s.item_id`,
+      [organizationId, projectId],
+    )
+  ).rows;
+}

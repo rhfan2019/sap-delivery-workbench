@@ -1,0 +1,219 @@
+/* Development overview (docs/specs/development-overview.md 2, 8): sections of white cards on the
+   panel, numbers that open the list, tables in the list style. Tokens only (DESIGN.md 9). */
+.ov {
+  display: grid;
+  gap: var(--space-8);
+  max-width: 1600px;
+}
+.ov-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.ov-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.ov-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-12);
+  line-height: var(--leading-16);
+}
+.ov-section {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.ov-section > h2 {
+  margin: 0;
+  font-size: var(--font-16);
+  font-weight: var(--weight-550);
+  line-height: var(--leading-24);
+}
+.ov-section > h2 small {
+  margin-left: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--font-12);
+  font-weight: var(--weight-400);
+}
+.ov-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-12);
+  background: var(--panel);
+  padding: var(--space-4);
+  min-width: 0;
+}
+.ov-card.scroll {
+  overflow-x: auto;
+}
+.ov-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: var(--space-5);
+  align-items: start;
+}
+
+/* Number cards. */
+.ov-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: var(--space-3);
+}
+.ov-stat {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: background var(--motion-fast);
+}
+.ov-stat:hover {
+  background: var(--hover);
+}
+.ov-stat:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.ov-stat .label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  color: var(--text-muted);
+  font-size: var(--font-12);
+}
+.ov-stat .label svg {
+  width: 14px;
+  height: 14px;
+}
+.ov-stat .value {
+  font-size: var(--font-24);
+  line-height: var(--leading-32);
+  font-variant-numeric: tabular-nums;
+}
+.ov-stat .value.red {
+  color: var(--red-text-2);
+}
+.ov-stat .value.yellow {
+  color: var(--yellow-text-2);
+}
+.ov-stat .sub {
+  color: var(--text-muted);
+  font-size: var(--font-12);
+  line-height: var(--leading-16);
+}
+
+/* Tables in the list style (DESIGN.md 5). */
+.ov-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-14);
+}
+.ov-table th {
+  height: var(--control-table-head);
+  padding: 0 var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--font-12);
+  font-weight: var(--weight-550);
+  text-align: left;
+  white-space: nowrap;
+}
+.ov-table td {
+  height: var(--control-table-row);
+  padding: 0 var(--space-2);
+  border-top: 1px solid var(--border);
+  vertical-align: middle;
+}
+.ov-table tbody tr.link {
+  cursor: pointer;
+}
+.ov-table tbody tr.link:hover {
+  background: var(--hover);
+}
+.ov-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.ov-table .code {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-12);
+}
+.ov-table .main {
+  font-weight: var(--weight-550);
+}
+.ov-cell-button {
+  border: 0;
+  border-radius: var(--radius-4);
+  background: none;
+  padding: var(--space-0-5) var(--space-1-5);
+  color: inherit;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.ov-cell-button:hover {
+  background: var(--selected);
+}
+.ov-cell-button:focus-visible {
+  outline: 2px solid var(--focus);
+}
+.ov-cell-button:disabled {
+  color: var(--text-subtle);
+  cursor: default;
+  background: none;
+}
+.ov-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.ov-empty {
+  margin: 0;
+  padding: var(--space-3) 0;
+  color: var(--text-muted);
+  font-size: var(--font-14);
+}
+
+/* Progress bars: a neutral track and a coloured fill. */
+.ov-bar {
+  display: grid;
+  gap: var(--space-1);
+}
+.ov-bar .line {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--font-12);
+  color: var(--text-muted);
+}
+.ov-bar .line strong {
+  color: var(--text);
+  font-weight: var(--weight-475);
+  font-variant-numeric: tabular-nums;
+}
+.ov-bar .track {
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--neutral-fill-2);
+  overflow: hidden;
+}
+.ov-bar .fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--blue-solid-1);
+}
+.ov-bar .fill.green {
+  background: var(--green-solid-1);
+}
+.ov-bar .fill.red {
+  background: var(--red-solid-1);
+}

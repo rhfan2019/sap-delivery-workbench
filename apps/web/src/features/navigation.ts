@@ -54,7 +54,10 @@ export const home: MenuItem = {
   path: '/home',
 };
 const delivery: MenuItem[] = [
-  item('development-overview', '开发概览', 'grid', '按项目角色展示开发驾驶舱。', { planned: true }),
+  item('development-overview', '开发概览', 'grid', '按项目角色展示开发驾驶舱。', {
+    scope: 'project',
+    permission: 'delivery.overview:view',
+  }),
   item('development-items', '开发清单', 'file', '维护开发台账，从开发项进入设计与开发助手。'),
 ];
 const knowledge: MenuItem[] = [

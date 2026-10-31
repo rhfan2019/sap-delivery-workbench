@@ -3,6 +3,18 @@ import { failure } from '../../platform/auth.mjs';
 import { changed } from './context.mjs';
 import * as v from './validation.mjs';
 
+// Keyed milestones of a project (code freeze, SIT, UAT, go-live), for the development overview.
+export async function keyedMilestones(db, organizationId, projectId) {
+  return (
+    await db.query(
+      `SELECT milestone_key AS key,name,planned_on::text AS "plannedOn",achieved_on::text AS "achievedOn"
+       FROM app.project_milestone WHERE organization_id=$1 AND project_id=$2 AND milestone_key IS NOT NULL
+       ORDER BY planned_on NULLS LAST,sort`,
+      [organizationId, projectId],
+    )
+  ).rows;
+}
+
 // The projects a user may enter and their master data (docs/specs/project-access-admin.md 1).
 // Reads need project:view; each group of fields has its own edit permission.
 

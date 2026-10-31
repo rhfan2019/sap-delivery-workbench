@@ -1,6 +1,6 @@
 # 开发概览设计
 
-> 2026-10-30 设计，同日用户确认（第 11 节全部按建议）。状态：待实施，一期计划见 [开发概览一期实施计划](../plans/2026-10-30-development-overview-implementation.md)。由项目经理、交付总监/PMO、开发组长、一线开发、业务顾问、测试负责人、指标口径设计、可视化与数据架构八个角色分别提出问题与指标后汇总。数据现状见[开发清单重构设计](development-list.md)，权限见[项目主数据、权限与设置菜单设计](project-access-admin.md)，界面取值只用 [DESIGN.md](DESIGN.md) 的令牌。
+> 2026-10-30 设计，同日用户确认（第 11 节全部按建议）。状态：一期已实施（2026-10-30），二期、三期待实施；一期计划见 [开发概览一期实施计划](../plans/2026-10-30-development-overview-implementation.md)。由项目经理、交付总监/PMO、开发组长、一线开发、业务顾问、测试负责人、指标口径设计、可视化与数据架构八个角色分别提出问题与指标后汇总。数据现状见[开发清单重构设计](development-list.md)，权限见[项目主数据、权限与设置菜单设计](project-access-admin.md)，界面取值只用 [DESIGN.md](DESIGN.md) 的令牌。
 
 ## 1. 定位与原则
 
@@ -89,11 +89,12 @@
 
 ## 7. 接口与权限
 
-- 新建 `apps/api/src/modules/delivery/overview.mjs`，聚合在 SQL 完成，请求时实时计算，响应带 ETag（取开发项与事件的最新时间）。共享判定（风险、两档完成、就绪等）放 `packages/contracts/delivery/overview.mjs`，经 `@sap-delivery-workbench/contracts/delivery/overview` 导出，前后端共用。
-- 接口（均在 `/api/projects/:projectId/development-overview/` 下）：`summary`（KPI，每个数字附下钻 `filter`）、`risks`（风险清单与原因码）、`aging`、`load`、`flow`（快照序列 + 里程碑）。跨项目组合视图另设 `/api/development-portfolio`。
-- 权限点（先在 `packages/contracts/access/catalog.mjs` 登记，见第 11 节）：`delivery.overview:view`、`delivery.overview.team:view`、`delivery.portfolio:view`。`delivery.overview:view` 加入 `SCOPED_PERMISSIONS`，按分配的模块范围与“仅本人负责”过滤统计范围。人天与预算字段另需 `project.commercial:view`，缺权限时**不返回字段**而非返回 0。
-- 个人数据：持 `own_only` 分配的用户（如分包）在 `load`、`risks` 中只看到自己的行；没有 `delivery.overview.team:view` 的人看不到他人姓名与负载，其他人合并为“其他成员”。
-- 集成测试：缺权限 403、范围外项目 404、`own_only` 与模块范围过滤、商务字段隐藏、概览数字与清单筛选条数一致。
+- 后端是独立模块 `development-overview`（契约 3.6），只经 delivery、两个助手与 admin 的公开入口读取。**一期实施时的调整**：统计在应用层用共享判定 `packages/contracts/delivery/overview.mjs` 计算，而不是在 SQL 里另写一遍——每项目几百到几千个开发项，开销可忽略，换来概览数字与开发清单下钻条数由同一份代码决定；一期是一个接口，暂不做 ETag。
+- 接口 `GET /api/projects/:projectId/development-overview` 返回：默认视角、可见范围（`scope`，下钻时并入筛选）、里程碑、计数（两档完成、移出范围）、四张卡片（各带下钻 `filter`）、阶段 × 状态、模块 × 阶段、本周关注、负载、开发组视图，有商务权限时另有预算。二期起按需拆出 `aging`、`flow`（快照序列）；跨项目组合视图另设 `/api/development-portfolio`。
+- 权限点（已在 `packages/contracts/access/catalog.mjs` 登记，见第 11 节）：`delivery.overview:view`、`delivery.overview.team:view`、`delivery.portfolio:view`。`delivery.overview:view` 在 `SCOPED_PERMISSIONS` 中，按分配的模块范围与“仅本人负责”过滤统计范围。人天与预算字段另需 `project.commercial:view`，缺权限时**不返回字段**而非返回 0。
+- 个人数据：持 `own_only` 分配的用户（如分包）只统计自己是创建人或阶段负责人的开发项；没有 `delivery.overview.team:view` 的人看不到他人姓名，负载中其他人合并为“其他成员”，页面不显示团队负载。
+- 可见范围同时有多条分配、且限制不同（如 A 模块全部 + B 模块仅本人）时，`scope` 只能近似表达，下钻后的清单可能多出几项；一期接受此差异。
+- 集成测试（`tests/integration/api/development-overview.test.mjs`）：未登录 401、缺权限 403、范围外项目 404、`own_only` 过滤、商务字段与他人姓名隐藏、每张卡片的数字与清单按同一筛选过滤后的条数一致。
 
 ## 8. 可视化与下钻约定
 

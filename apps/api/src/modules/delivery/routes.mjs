@@ -4,7 +4,6 @@ import { batchRoutes } from './batch.mjs';
 import { catalogRoutes } from './catalog.mjs';
 import { excelRoutes } from './excel.mjs';
 import { fileRoutes } from './files.mjs';
-import { overviewRoutes } from './overview.mjs';
 import { transaction } from '../../platform/auth.mjs';
 import { createAccess } from '../access/public.mjs';
 export function registerDeliveryRoutes(app, pool, organizationId, requireSession) {
@@ -15,7 +14,6 @@ export function registerDeliveryRoutes(app, pool, organizationId, requireSession
   catalogRoutes(app, c);
   excelRoutes(app, c);
   fileRoutes(app, c);
-  overviewRoutes(app, c);
   app.get('/api/project-preference', async (req) => {
     const current = await requireSession(req, true);
     const { rows } = await pool.query(

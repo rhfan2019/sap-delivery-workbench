@@ -3,6 +3,7 @@ import { join, isAbsolute } from 'node:path';
 import { failure, transaction } from '../../platform/auth.mjs';
 import { uuid } from '../admin/validation.mjs';
 import { createAccess, deniedError } from '../access/public.mjs';
+import { itemActivity, loadItems, members, plannedEndPushes } from './store.mjs';
 
 // Where uploaded item files are stored; the file id is the file name.
 export function deliveryFilesFolder() {
@@ -116,6 +117,14 @@ export function deliveryContext(pool, organizationId, requireSession) {
       )
     ).rows.map((f) => ({ ...f, path: join(folder, f.id) }));
   }
+  // Read-only views for the development overview (contract 3.6).
+  const overview = {
+    items: (db, projectId) => loadItems(db, organizationId, projectId),
+    members: (db, projectId) => members(db, organizationId, projectId),
+    activity: (db, projectId) => itemActivity(db, organizationId, projectId),
+    plannedEndPushes: (db, projectId, days) =>
+      plannedEndPushes(db, organizationId, projectId, days),
+  };
   return {
     pool,
     organizationId,
@@ -130,5 +139,6 @@ export function deliveryContext(pool, organizationId, requireSession) {
     event,
     objects,
     files,
+    overview,
   };
 }

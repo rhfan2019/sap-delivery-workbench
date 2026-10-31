@@ -16,7 +16,11 @@ import {
   reverseHandover,
   scopeRemoved,
 } from '@sap-delivery-workbench/contracts/delivery/overview';
-import { dateText, loadItems, members } from './store.mjs';
+import { finalizedItems, lastTurns as fsdLastTurns } from '../abap-fsd-agent/public.mjs';
+import { lastTurns as devLastTurns } from '../abap-dev-agent/public.mjs';
+import { keyedMilestones } from '../admin/projects.mjs';
+import { dateText } from '../delivery/store.mjs';
+import { deliveryContext } from '../delivery/context.mjs';
 
 // Development overview, phase 1 (docs/specs/development-overview.md, plan 2026-10-30): the
 // project and development-team views. Numbers are computed here with the shared judgments the
@@ -54,55 +58,27 @@ function visibleScope(grant, userId) {
   return scope;
 }
 
-async function facts(db, org, projectId) {
-  const [milestones, budget, finals, activity, drift] = await Promise.all([
-    db.query(
-      `SELECT milestone_key AS key,name,planned_on::text AS "plannedOn",achieved_on::text AS "achievedOn"
-       FROM app.project_milestone WHERE organization_id=$1 AND project_id=$2 AND milestone_key IS NOT NULL
-       ORDER BY planned_on NULLS LAST,sort`,
-      [org, projectId],
-    ),
-    db.query(
-      'SELECT dev_budget_days::float8 AS "budgetDays" FROM app.project WHERE organization_id=$1 AND id=$2',
-      [org, projectId],
-    ),
-    // The first FSD version labelled final per item; its creation time stands in for the
-    // finalization time until that is recorded (spec section 6, D3).
-    db.query(
-      `SELECT s.item_id AS "itemId",min(d.created_at) AS "finalAt"
-       FROM app.abap_fsd_agent_session s JOIN app.abap_fsd_agent_document d ON d.session_id=s.id
-       WHERE s.organization_id=$1 AND s.project_id=$2 AND '定稿'=ANY(d.labels) GROUP BY s.item_id`,
-      [org, projectId],
-    ),
-    // The last thing that happened to an item: its own change, or a turn of either assistant.
-    db.query(
-      `SELECT item_id AS "itemId",max(at) AS at FROM (
-         SELECT item_id,created_at AS at FROM app.development_event WHERE organization_id=$1 AND project_id=$2
-         UNION ALL SELECT s.item_id,t.started_at FROM app.abap_fsd_agent_session s
-           JOIN app.abap_fsd_agent_turn t ON t.session_id=s.id WHERE s.organization_id=$1 AND s.project_id=$2
-         UNION ALL SELECT s.item_id,t.started_at FROM app.abap_dev_agent_session s
-           JOIN app.abap_dev_agent_turn t ON t.session_id=s.id WHERE s.organization_id=$1 AND s.project_id=$2
-       ) a GROUP BY item_id`,
-      [org, projectId],
-    ),
-    // Planned ends pushed later in the recent days (M09), from the change history.
-    db.query(
-      `SELECT e.item_id AS "itemId",k.phase,(e.changes->(k.phase||'.plannedEnd')->>'before') AS before,
-              (e.changes->(k.phase||'.plannedEnd')->>'after') AS after
-       FROM app.development_event e CROSS JOIN unnest($3::text[]) AS k(phase)
-       WHERE e.organization_id=$1 AND e.project_id=$2 AND e.created_at>=now()-make_interval(days=>$4)
-         AND (e.changes->(k.phase||'.plannedEnd')->>'before') IS NOT NULL
-         AND (e.changes->(k.phase||'.plannedEnd')->>'after')>(e.changes->(k.phase||'.plannedEnd')->>'before')
-       ORDER BY e.created_at`,
-      [org, projectId, PHASE_KEYS, DRIFT_DAYS],
-    ),
+// Everything besides the items, each read through its owner's facade (contract 3.6).
+async function facts(c, projectId, budgetDays) {
+  const db = c.pool;
+  const [milestones, finals, events, fsdTurns, devTurns, drift] = await Promise.all([
+    keyedMilestones(db, c.organizationId, projectId),
+    finalizedItems(db, c.organizationId, projectId),
+    c.overview.activity(db, projectId),
+    fsdLastTurns(db, c.organizationId, projectId),
+    devLastTurns(db, c.organizationId, projectId),
+    c.overview.plannedEndPushes(db, projectId, DRIFT_DAYS),
   ]);
+  // The last thing that happened to an item: its own change, or a turn of either assistant.
+  const activity = new Map();
+  for (const r of [...events, ...fsdTurns, ...devTurns])
+    if (!activity.has(r.itemId) || activity.get(r.itemId) < r.at) activity.set(r.itemId, r.at);
   return {
-    milestones: milestones.rows,
-    budgetDays: budget.rows[0]?.budgetDays ?? null,
-    finals: new Map(finals.rows.map((r) => [r.itemId, r.finalAt])),
-    activity: new Map(activity.rows.map((r) => [r.itemId, r.at])),
-    drift: drift.rows,
+    milestones,
+    budgetDays,
+    finals: new Map(finals.map((r) => [r.itemId, r.finalAt])),
+    activity,
+    drift,
   };
 }
 
@@ -341,20 +317,21 @@ const roleCodes = (grant) => [
   ...new Set(grant.sources().flatMap((s) => s.sources.map((x) => x.roleCode))),
 ];
 
-export function overviewRoutes(app, c) {
+export function registerDevelopmentOverviewRoutes(app, pool, organizationId, requireSession) {
+  const c = deliveryContext(pool, organizationId, requireSession);
   app.get('/api/projects/:projectId/development-overview', async (req) => {
     const { project, current } = await c.read(req, 'delivery.overview:view');
+    const budgetDays = project.dev_budget_days === null ? null : Number(project.dev_budget_days);
     const [items, people, f] = await Promise.all([
-      loadItems(c.pool, c.organizationId, project.id),
-      members(c.pool, c.organizationId, project.id),
-      facts(c.pool, c.organizationId, project.id),
+      c.overview.items(pool, project.id),
+      c.overview.members(pool, project.id),
+      facts(c, project.id, budgetDays),
     ]);
-    const today = dateText(new Date());
     return buildOverview({
       items,
       people,
       facts: f,
-      today,
+      today: dateText(new Date()),
       grant: project.grant,
       userId: current.user.id,
     });

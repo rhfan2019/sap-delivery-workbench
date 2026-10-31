@@ -350,3 +350,26 @@ export async function findReferenced(db, sessionId, storageKey) {
     ])
   ).rows[0];
 }
+
+// For the development overview (contract 3.6): the first FSD version labelled 定稿 per item, and
+// each item's latest turn. The finalization time itself is not recorded yet (overview spec D3).
+export async function finalizedItems(db, organizationId, projectId) {
+  return (
+    await db.query(
+      `SELECT s.item_id AS "itemId",min(d.created_at) AS "finalAt"
+       FROM ${T}session s JOIN ${T}document d ON d.session_id=s.id
+       WHERE s.organization_id=$1 AND s.project_id=$2 AND '定稿'=ANY(d.labels) GROUP BY s.item_id`,
+      [organizationId, projectId],
+    )
+  ).rows;
+}
+export async function lastTurns(db, organizationId, projectId) {
+  return (
+    await db.query(
+      `SELECT s.item_id AS "itemId",max(t.started_at) AS at FROM ${T}session s
+       JOIN ${T}turn t ON t.session_id=s.id WHERE s.organization_id=$1 AND s.project_id=$2
+       GROUP BY s.item_id`,
+      [organizationId, projectId],
+    )
+  ).rows;
+}

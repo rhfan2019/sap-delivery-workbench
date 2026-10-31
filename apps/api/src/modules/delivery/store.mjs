@@ -299,3 +299,29 @@ export async function tags(db, org, project) {
   );
   return rows;
 }
+
+// For the development overview (contract 3.6): when each item last changed, and planned ends
+// pushed later in the recent days, from the change history.
+export async function itemActivity(db, org, project) {
+  return (
+    await db.query(
+      `SELECT item_id AS "itemId",max(created_at) AS at FROM app.development_event
+       WHERE organization_id=$1 AND project_id=$2 GROUP BY item_id`,
+      [org, project],
+    )
+  ).rows;
+}
+export async function plannedEndPushes(db, org, project, days) {
+  return (
+    await db.query(
+      `SELECT e.item_id AS "itemId",k.phase,e.changes->(k.phase||'.plannedEnd')->>'before' AS before,
+              e.changes->(k.phase||'.plannedEnd')->>'after' AS after
+       FROM app.development_event e CROSS JOIN unnest($3::text[]) AS k(phase)
+       WHERE e.organization_id=$1 AND e.project_id=$2 AND e.created_at>=now()-make_interval(days=>$4)
+         AND e.changes->(k.phase||'.plannedEnd')->>'before' IS NOT NULL
+         AND e.changes->(k.phase||'.plannedEnd')->>'after'>e.changes->(k.phase||'.plannedEnd')->>'before'
+       ORDER BY e.created_at`,
+      [org, project, PHASE_KEYS, days],
+    )
+  ).rows;
+}
