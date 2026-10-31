@@ -49,6 +49,7 @@
 
 - 点未安排、计划、实际、预计人天的数字，在**当前标签**打开开发清单，地址 `?from=load&project=&label=&phase=development&<筛选键>`，清单显示“来自开发排期：…”的筛选条，条数与数字一致。筛选键：`assignee` / `unassigned`、`active`、`unplanned`、`status`、`planned` / `actual`（`起~止`，可空一端），判定在 `packages/contracts/delivery/overview.mjs` 的 `matchesFilter`。
 - 浏览器后退回到开发排期时，页面是原来那个实例：不重新请求、不出现骨架屏，基准日期、页面与表格的横纵滚动位置都不变。实现是工作台标签在标签内跳转时保留上一页（[工作台多标签页](workbench-tabs.md)第 4 节）。
+- 下钻打开的开发清单与已开着的开发清单互不影响：它只响应自己标签的地址，筛选条件不保存，也不读取、覆盖开发清单记住的筛选。
 - 切换基准日期不发请求：接口返回每人每周的分组，页面在本地排出九周。
 
 ## 5. 实现

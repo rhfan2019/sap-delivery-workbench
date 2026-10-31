@@ -144,7 +144,15 @@ test('development load: drill-down and back keep the page as it was', async (t) 
     await route.fulfill({ json: data });
   });
 
-  await page.goto('http://127.0.0.1:5195/workspace/development-load');
+  // The reader keeps a development list open in one tab and the load table in another.
+  await page.goto('http://127.0.0.1:5195/workspace/development-items');
+  const count = page.getByText(/ 共 \d+ 项$/);
+  await page.getByText(/ 共 [1-9]\d* 项$/).waitFor();
+  const full = await count.innerText();
+  await page.locator('.shell-sidebar, nav').getByRole('link', { name: '开发排期' }).first().click();
+  await page.waitForURL(/development-load/);
+  const tabs = page.locator('.tab-bar .tab');
+  assert.equal(await tabs.count(), 2);
   const table = page.locator('.ld-table');
   await table.waitFor();
   assert.match(
@@ -185,6 +193,19 @@ test('development load: drill-down and back keep the page as it was', async (t) 
     .waitFor();
   await page.getByText(new RegExp(` 共 ${base.planned} 项$`)).waitFor();
   await page.screenshot({ path: '.runtime/artifacts/development-load/drill-down.png' });
+
+  // The list kept in the other tab is not touched by the drill-down.
+  await tabs.first().locator('.tab-main').click();
+  await page.waitForURL(/development-items$/);
+  assert.equal(await count.innerText(), full);
+  assert.equal(await page.getByRole('button', { name: /^移除筛选 来自/ }).count(), 0);
+  // Back walks the history shared by the tabs: it brings the drill-down's tab forward, without
+  // turning the kept list into a second copy of it.
+  await page.goBack();
+  await page.waitForURL(/from=load/);
+  await page.locator('.tab-bar .tab:nth-child(2).active').waitFor();
+  assert.equal(await tabs.count(), 2);
+  assert.match(await tabs.first().getAttribute('title'), /开发清单/);
 
   // Back: the same page instance, scrolled as before, nothing loaded again.
   await page.goBack();

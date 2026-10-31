@@ -35,7 +35,7 @@ import BasePopover from '../../components/base/BasePopover.vue';
 import BaseTabs from '../../components/base/BaseTabs.vue';
 import { toast as notify } from '../../components/base/toast';
 import { detailOpen } from '../../services/shell';
-import { switchingTab, useTabLeave } from '../../services/tabs';
+import { activeTabId, switchingTab, useTabLeave } from '../../services/tabs';
 import { useShortcut } from '../../services/shortcuts';
 import WorkbenchTable from '../../components/workbench-table/WorkbenchTable.vue';
 import { api, ApiError, identity, type ProjectAccess } from '../../services/session';
@@ -236,12 +236,15 @@ const filterState = {
 const filterKey = () =>
   `delivery-filters:v2:${identity.value?.organization.id}:${identity.value?.user.id}:${currentProject.value}`;
 let restoring = false;
+// Set by a drill-down (below): this list's filters then stay its own.
+let drilled = false;
 watch(
   Object.values(filterState),
   () => {
     if (restoring) return;
     page.value = 1;
     if (checked.value.length) checked.value = [];
+    if (drilled) return;
     try {
       sessionStorage.setItem(
         filterKey(),
@@ -256,6 +259,7 @@ watch(
   { flush: 'sync' },
 );
 function restoreFilters() {
+  if (drilled) return;
   restoring = true;
   let saved: Record<string, unknown> = {};
   try {
@@ -441,6 +445,10 @@ function followLink() {
 // development-load.md): the address wins over the filters saved for this project, which are
 // cleared while it applies.
 const DRILL_SOURCES: Record<string, string> = { overview: '开发概览', load: '开发排期' };
+// A list opened by a drill-down stands apart: its filters are not saved over the ones of the
+// list the reader keeps, and only its own tab's address applies to it (another tab's list, kept
+// alive behind, sees the same route change).
+const ownTab = activeTabId.value;
 let pendingDrill: {
   project: string;
   filter: OverviewFilter;
@@ -472,6 +480,7 @@ function applyDrill() {
   const drill = pendingDrill;
   if (!drill || (drill.project && currentProject.value !== drill.project)) return;
   pendingDrill = null;
+  drilled = true;
   clearFilters();
   scope.value = 'all';
   overview.value = { filter: drill.filter, label: drill.label, source: drill.source };
@@ -479,6 +488,7 @@ function applyDrill() {
 watch(
   () => route.query,
   (query) => {
+    if (activeTabId.value !== ownTab) return;
     const drill = readDrill(query);
     if (!drill) return;
     pendingDrill = drill;

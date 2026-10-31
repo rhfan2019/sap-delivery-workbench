@@ -94,7 +94,9 @@ export function startTabs(r: Router, userId: string) {
   }
   stopHook = r.afterEach((to, _from, failure) => {
     const action = pending;
+    const popped = popping;
     pending = null;
+    popping = false;
     if (failure || !inShell(to)) return;
     if (action?.open !== undefined) {
       tabs.value.splice(action.open, 0, { id: action.id, path: to.fullPath });
@@ -104,15 +106,30 @@ export function startTabs(r: Router, userId: string) {
     if (action) activeTabId.value = action.id;
     const tab = activeTab.value;
     if (!tab) return;
+    // The browser's back and forward walk one history shared by all tabs: an address another
+    // tab shows, not this tab's previous page, belongs to that tab, which comes to the front
+    // (workbench-tabs.md 4).
+    if (popped && tab.back !== to.fullPath && tab.path !== to.fullPath) {
+      const other = tabs.value.find((t) => t.path === to.fullPath);
+      if (other) {
+        activeTabId.value = other.id;
+        return;
+      }
+    }
     if (!action && pageKey(r.resolve(tab.path)) !== pageKey(to)) tab.back = tab.path;
     tab.path = to.fullPath;
   });
+  stopPop = r.options.history.listen(() => (popping = true));
   stopSave = watch([tabs, activeTabId], save, { deep: true, immediate: true });
 }
+// Set by the browser's back and forward, read by the navigation it starts.
+let popping = false;
+let stopPop: (() => void) | null = null;
 export function stopTabs() {
   stopHook?.();
   stopSave?.();
-  stopHook = stopSave = null;
+  stopPop?.();
+  stopHook = stopSave = stopPop = null;
 }
 
 // A navigation that only brings another tab to the front: the page being left stays alive in
