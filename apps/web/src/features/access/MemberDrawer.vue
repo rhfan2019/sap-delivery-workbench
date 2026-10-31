@@ -8,6 +8,7 @@ import BaseTag from '../../components/base/BaseTag.vue';
 import ChoiceChips from '../settings/ChoiceChips.vue';
 import SettingsDrawer from '../settings/SettingsDrawer.vue';
 import { useSave } from '../settings/useLoad';
+import { can } from '../../services/session';
 import { accessApi, day, type Candidate, type Member, type Role } from './api';
 
 // A member and their project roles in the list's drawer (docs/specs/project-access-admin.md 2.4,
@@ -103,11 +104,27 @@ function toggle(id: string) {
 const blocked = (role: Role) =>
   role.permissions.some((c) => SENSITIVE_PERMISSIONS.includes(c) && !props.canSensitive(c));
 const needsEnd = computed(() => person.value !== 'employee' && !validTo.value);
-const ready = computed(
-  () => (props.member || userId.value) && chosen.value.length > 0 && !needsEnd.value,
+// Why saving cannot go ahead yet, said when 保存 is clicked rather than doing nothing.
+const missing = computed(() =>
+  !props.member && !userId.value
+    ? props.candidates.length
+      ? '请选择成员。'
+      : '没有可添加的用户：请先在“设置 → 企业 → 用户”中新建用户。'
+    : !chosen.value.length
+      ? '请至少选择一个角色。'
+      : needsEnd.value
+        ? '外部人员须填写有效期的截止日期。'
+        : '',
 );
+watch(missing, (_, was) => {
+  if (save.error.value === was) save.error.value = '';
+});
 async function submit() {
-  if (!ready.value || save.busy.value) return;
+  if (save.busy.value) return;
+  if (missing.value) {
+    save.error.value = missing.value;
+    return;
+  }
   const roles = chosen.value.map((roleId) => ({
     roleId,
     modules: modules.value,
@@ -148,7 +165,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
         <h3>成员</h3>
         <label v-if="!member" class="s-field"
           ><span>成员 <b>*</b></span
-          ><select v-model="userId" required>
+          ><select v-model="userId">
             <option value="" disabled>选择企业内的用户</option>
             <option v-for="c in candidates" :key="c.id" :value="c.id">
               {{ c.displayName }}（{{ c.loginName }}）{{
@@ -160,7 +177,12 @@ defineExpose({ dirty, busy: save.busy, startEdit });
           </select></label
         >
         <p v-if="!member && !candidates.length" class="s-drawer-help">
-          企业内所有有效用户都已是项目成员。
+          企业内所有有效用户都已是项目成员。要添加新人，先在<RouterLink
+            v-if="can('user:manage')"
+            to="/settings/users"
+            >“企业 → 用户”</RouterLink
+          ><template v-else>“企业 → 用户”（需用户管理员）</template
+          >中新建用户，职位选“开发顾问”等，再回到这里添加。
         </p>
         <div v-if="member" class="s-field">
           <span>成员</span>
@@ -277,7 +299,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
     <template #actions>
       <button type="button" class="secondary-button" :disabled="save.busy.value" @click="cancel">
         取消</button
-      ><button class="primary-button" :disabled="save.busy.value || !ready">
+      ><button class="primary-button" :disabled="save.busy.value">
         {{ save.busy.value ? '正在处理…' : member ? '保存' : '添加' }}
       </button>
     </template>
