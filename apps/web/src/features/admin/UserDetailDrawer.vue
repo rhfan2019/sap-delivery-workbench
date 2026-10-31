@@ -304,7 +304,7 @@ defineExpose({ dirty, busy, refresh, startEdit });
         <h3>账号</h3>
         <fieldset class="s-fields" :class="{ reading }" :disabled="reading">
           <div class="s-field">
-            <span>登录账号</span><span class="mono">{{ user.loginName }}</span>
+            <span>登录账号</span><span class="s-value mono">{{ user.loginName }}</span>
           </div>
           <label class="s-field"
             ><span>姓名 <b v-if="editable">*</b></span
@@ -353,7 +353,7 @@ defineExpose({ dirty, busy, refresh, startEdit });
         </fieldset>
         <div class="s-field">
           <span>最近登录</span
-          ><span :class="{ muted: !user.lastLoginAt }">{{
+          ><span class="s-value" :class="{ muted: !user.lastLoginAt }">{{
             user.lastLoginAt ? day(user.lastLoginAt) : '从未登录'
           }}</span>
         </div>

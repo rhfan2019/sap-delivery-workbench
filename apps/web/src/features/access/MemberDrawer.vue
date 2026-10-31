@@ -164,7 +164,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
         </p>
         <div v-if="member" class="s-field">
           <span>成员</span>
-          <span
+          <span class="s-value"
             >{{ member.displayName }}
             <small class="member-sub"
               >{{ member.positionName ?? '未设职位' }} · {{ member.loginName
@@ -229,7 +229,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
         <h3>范围与期限</h3>
         <div class="s-field top">
           <span>模块范围</span>
-          <span v-if="reading" class="module-read">{{
+          <span v-if="reading" class="s-value">{{
             modules.length ? modules.join('、') : '全部模块'
           }}</span>
           <ChoiceChips
@@ -327,9 +327,6 @@ defineExpose({ dirty, busy: save.busy, startEdit });
 }
 .reading .role-card {
   cursor: default;
-}
-.module-read {
-  padding: var(--space-2-5) var(--space-2-5) 0;
 }
 .role-card:focus-visible {
   outline: none;

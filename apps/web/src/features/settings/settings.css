@@ -571,6 +571,29 @@ button.s-list-row:hover {
   margin-top: var(--space-4);
   font-size: var(--font-14);
 }
+/* One weight for labels and values (DESIGN.md 5 “抽屉” 字体): the label column is text-2, a value
+   shown as text (`.s-value`) starts where an input's text does; only titles are semibold. This
+   also keeps the sign-in form's `form label` out of a drawer. */
+.s-field,
+.s-drawer-body .s-check {
+  margin-bottom: 0;
+  font-weight: var(--weight-400);
+}
+.s-field > :first-child {
+  color: var(--text-muted);
+}
+.s-value {
+  min-width: 0;
+  padding: 0 var(--space-2-5);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.s-value.muted {
+  color: var(--text-subtle);
+}
+.s-field.top > .s-value {
+  padding-top: var(--space-2-5);
+}
 .s-field.top {
   align-items: start;
 }

@@ -193,13 +193,15 @@ defineExpose({ dirty, busy: save.busy, startEdit });
           <h3>负责人与计划</h3>
           <div class="s-field">
             <span>项目经理</span
-            ><span :class="{ muted: !detail.keyRoles.manager }">{{
+            ><span class="s-value" :class="{ muted: !detail.keyRoles.manager }">{{
               detail.keyRoles.manager?.displayName ?? '未指定'
             }}</span>
           </div>
           <div class="s-field">
             <span>当前阶段</span
-            ><span :class="{ muted: !detail.currentPhase }">{{ detail.currentPhase ?? '—' }}</span>
+            ><span class="s-value" :class="{ muted: !detail.currentPhase }">{{
+              detail.currentPhase ?? '—'
+            }}</span>
           </div>
           <p class="s-drawer-help">项目经理与关键岗位在项目设置的“团队与干系人”中调整。</p>
           <label class="s-field"
@@ -227,26 +229,30 @@ defineExpose({ dirty, busy: save.busy, startEdit });
       <section>
         <h3>基本信息</h3>
         <div class="s-field">
-          <span>客户</span><span>{{ project.customerName }}</span>
+          <span>客户</span><span class="s-value">{{ project.customerName }}</span>
         </div>
         <div class="s-field">
-          <span>项目编号</span><span class="mono">{{ project.code }}</span>
+          <span>项目编号</span><span class="s-value mono">{{ project.code }}</span>
         </div>
         <div class="s-field">
-          <span>项目类型</span><span>{{ PROJECT_TYPES[project.projectType as 'other'] }}</span>
+          <span>项目类型</span
+          ><span class="s-value">{{ PROJECT_TYPES[project.projectType as 'other'] }}</span>
         </div>
         <div class="s-field">
-          <span>项目状态</span><span>{{ PROJECT_STATUSES[project.status as 'active'] }}</span>
+          <span>项目状态</span
+          ><span class="s-value">{{ PROJECT_STATUSES[project.status as 'active'] }}</span>
         </div>
       </section>
       <section>
         <h3>负责人与计划</h3>
         <div class="s-field">
-          <span>项目经理</span><span>{{ project.managerName ?? '未指定' }}</span>
+          <span>项目经理</span><span class="s-value">{{ project.managerName ?? '未指定' }}</span>
         </div>
         <div class="s-field">
           <span>计划起止</span
-          ><span>{{ project.plannedStartDate ?? '—' }} 至 {{ project.plannedEndDate ?? '—' }}</span>
+          ><span class="s-value"
+            >{{ project.plannedStartDate ?? '—' }} 至 {{ project.plannedEndDate ?? '—' }}</span
+          >
         </div>
       </section>
     </template>
