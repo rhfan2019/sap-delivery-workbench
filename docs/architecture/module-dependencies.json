@@ -20,6 +20,7 @@
     "delivery->admin",
     "development-overview->abap-dev-agent",
     "development-overview->abap-fsd-agent",
+    "development-overview->access",
     "development-overview->admin",
     "development-overview->delivery",
     "item-workspace->access",

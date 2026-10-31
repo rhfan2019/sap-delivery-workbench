@@ -9,7 +9,7 @@ import { toast } from '../../components/base/toast';
 import { api } from '../../services/session';
 import { currentProject } from '../../services/projectContext';
 import AwaitingTest from './AwaitingTest.vue';
-import { itemLink, pct, shortDate, type Brief, type Overview } from './model';
+import { openFrom, itemLink, pct, shortDate, type Brief, type Overview } from './model';
 
 // The development team view (spec section 2, development lead): the handover radar (final FSDs
 // waiting for a developer, with their objects), work in progress age (M12), developed items
@@ -21,7 +21,7 @@ const props = defineProps<{
   reload: () => void;
 }>();
 const router = useRouter();
-const open = (id: string) => void router.push(itemLink(currentProject.value, id));
+const open = (id: string) => void openFrom(router, itemLink(currentProject.value, id));
 const ids = (list: Brief[]) => ({ ids: list.map((i) => i.id) });
 const dev = computed(() => props.data.development);
 const cards = computed(() => [
@@ -350,6 +350,22 @@ const coverageRows = computed(() => [
           </button>
         </p>
       </template>
+    </div>
+  </section>
+  <section v-if="data.development.rework.some((r) => r.retest)" class="ov-section">
+    <h2>需重测<small>FSD 定稿后又修改，而开发或测试已经开始的开发项</small></h2>
+    <div class="ov-card">
+      <span class="ov-tags">
+        <button
+          v-for="r in data.development.rework.filter((x) => x.retest)"
+          :key="r.id"
+          type="button"
+          class="ov-cell-button"
+          @click="open(r.id)"
+        >
+          {{ r.code }} {{ r.name }}（定稿后 {{ r.laterVersions }} 个新版本）
+        </button>
+      </span>
     </div>
   </section>
 </template>

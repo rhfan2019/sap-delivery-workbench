@@ -26,9 +26,19 @@ import {
   itemCoverage,
   lastTurns as devLastTurns,
 } from '../abap-dev-agent/public.mjs';
-import { keyedMilestones } from '../admin/projects.mjs';
+import { keyedMilestones, latestHealth } from '../admin/projects.mjs';
 import { dateText } from '../delivery/store.mjs';
 import { deliveryContext } from '../delivery/context.mjs';
+import { createAccess } from '../access/public.mjs';
+import {
+  flow,
+  freezeLateCount,
+  guards,
+  healthSignal,
+  planDrift,
+  sitForecast,
+  weekReport,
+} from './trends.mjs';
 import {
   aging,
   commentStats,
@@ -81,18 +91,29 @@ function visibleScope(grant, userId) {
 async function facts(c, projectId, budgetDays) {
   const db = c.pool;
   const org = c.organizationId;
-  const [milestones, finals, events, fsdTurns, devTurns, drift, fsdNotes, devNotes, devCover] =
-    await Promise.all([
-      keyedMilestones(db, org, projectId),
-      finalizedItems(db, org, projectId),
-      c.overview.activity(db, projectId),
-      fsdLastTurns(db, org, projectId),
-      devLastTurns(db, org, projectId),
-      c.overview.plannedEndPushes(db, projectId, DRIFT_DAYS),
-      fsdComments(db, org, projectId),
-      devComments(db, org, projectId),
-      itemCoverage(db, org, projectId),
-    ]);
+  const [
+    milestones,
+    finals,
+    events,
+    fsdTurns,
+    devTurns,
+    drift,
+    fsdNotes,
+    devNotes,
+    devCover,
+    transitions,
+  ] = await Promise.all([
+    keyedMilestones(db, org, projectId),
+    finalizedItems(db, org, projectId),
+    c.overview.activity(db, projectId),
+    fsdLastTurns(db, org, projectId),
+    devLastTurns(db, org, projectId),
+    c.overview.plannedEndPushes(db, projectId, DRIFT_DAYS),
+    fsdComments(db, org, projectId),
+    devComments(db, org, projectId),
+    itemCoverage(db, org, projectId),
+    c.overview.transitions(db, projectId),
+  ]);
   // The last thing that happened to an item: its own change, or a turn of either assistant.
   const activity = new Map();
   for (const r of [...events, ...fsdTurns, ...devTurns])
@@ -108,6 +129,7 @@ async function facts(c, projectId, budgetDays) {
       ...devNotes.map((n) => ({ ...n, source: 'dev' })),
     ],
     devCoverage: new Map(devCover.map((r) => [r.itemId, r])),
+    transitions,
   };
 }
 
@@ -349,6 +371,13 @@ export function buildOverview({ items, people, facts: f, today, grant, userId })
     people: team
       ? people.filter((m) => m.active).map((m) => ({ id: m.id, name: m.displayName }))
       : [],
+    // Phase 3: trends, forecast, the weekly report, drift against the baseline, freshness.
+    flow: flow(live, f.transitions, ctx),
+    sitForecast: sitForecast(live, ctx),
+    week: weekReport(live, f.transitions, f.drift, today),
+    planDrift: planDrift(live),
+    guards: guards(live, f.transitions, today),
+    freshness: { lastOn: lastActivity(live, f.activity) },
   };
   if (commercial) {
     const effort = (test) =>
@@ -367,7 +396,28 @@ export function buildOverview({ items, people, facts: f, today, grant, userId })
       doneDays: Math.round(effort((p) => p.status === 'completed') * 10) / 10,
     };
   }
+  const lastOn = result.freshness.lastOn;
+  result.freshness.days = lastOn ? daysBetween(lastOn, today) : null;
+  result.signal = healthSignal({
+    items: live.length,
+    risk: result.cards.risk.count,
+    freezeLate: result.cards.freeze.count,
+    freezeDays: result.cards.freeze.daysLeft,
+    budgetRatio: result.budget?.budgetDays
+      ? result.budget.plannedDays / result.budget.budgetDays
+      : null,
+    staleDays: result.freshness.days,
+  });
   return result;
+}
+
+// M24: when the list or an assistant last touched any of these items.
+function lastActivity(items, activity) {
+  const last = items
+    .flatMap((i) => [activity.get(i.id), i.updatedAt])
+    .filter(Boolean)
+    .map((d) => new Date(d).getTime());
+  return last.length ? dateText(new Date(Math.max(...last))) : null;
 }
 
 const roleCodes = (grant) => [
@@ -376,6 +426,96 @@ const roleCodes = (grant) => [
 
 export function registerDevelopmentOverviewRoutes(app, pool, organizationId, requireSession) {
   const c = deliveryContext(pool, organizationId, requireSession);
+  const access = createAccess(pool, organizationId);
+
+  // The portfolio view (spec section 2, delivery director and PMO): one row per project the
+  // user may see, the reported health beside the computed one (M23) and data freshness (M24).
+  app.get('/api/development-portfolio', async (req) => {
+    const current = await requireSession(req, true);
+    await access.requireOrganization(pool, current, 'delivery.portfolio:view');
+    const grants = (await access.projects(pool, current.user.id)).filter(
+      (g) => g.project.status !== 'archived' && g.has('delivery.overview:view'),
+    );
+    const today = dateText(new Date());
+    const reported = await latestHealth(
+      pool,
+      organizationId,
+      grants.map((g) => g.project.id),
+    );
+    const health = new Map(reported.map((h) => [h.projectId, h]));
+    const rows = [];
+    for (const grant of grants) {
+      const p = grant.project;
+      const [items, milestones, activity] = await Promise.all([
+        c.overview.items(pool, p.id),
+        keyedMilestones(pool, organizationId, p.id),
+        c.overview.activity(pool, p.id),
+      ]);
+      const live = items.filter(
+        (i) =>
+          !scopeRemoved(i) &&
+          grant.has('delivery.overview:view', { module: i.module, owners: owners(i) }),
+      );
+      const dates = Object.fromEntries(
+        milestones.map((m) => [m.key, m.achievedOn ?? m.plannedOn]).filter(([, d]) => d),
+      );
+      const freeze = milestones.find((m) => m.key === 'code_freeze');
+      const freezeDays =
+        freeze?.plannedOn && !freeze.achievedOn ? daysBetween(today, freeze.plannedOn) : null;
+      const risk = live.filter((i) => atRisk(i, today)).length;
+      const stale = live.filter((i) =>
+        PHASE_KEYS.some((k) => phaseRisk(i.phases[k], today) === 'stale'),
+      ).length;
+      const commercial = grant.has('project.commercial:view');
+      const planned = live.reduce(
+        (n, i) =>
+          n +
+          ['fsd', 'development'].reduce(
+            (m, k) => m + (i.phases[k].status !== 'cancelled' ? (i.phases[k].effortDays ?? 0) : 0),
+            0,
+          ),
+        0,
+      );
+      const budgetDays = p.dev_budget_days === null ? null : Number(p.dev_budget_days);
+      const budgetRatio = commercial && budgetDays ? planned / budgetDays : null;
+      const activityMap = new Map(activity.map((a) => [a.itemId, a.at]));
+      const lastOn = lastActivity(live, activityMap);
+      const staleDays = lastOn ? daysBetween(lastOn, today) : null;
+      const freezeLate = freezeLateCount(live, dates);
+      rows.push({
+        id: p.id,
+        code: p.code,
+        name: p.name,
+        items: live.length,
+        risk,
+        stale,
+        developmentDone: live.filter(developmentDone).length,
+        freeze: {
+          date: freeze?.plannedOn ?? null,
+          achieved: !!freeze?.achievedOn,
+          days: freezeDays,
+        },
+        freezeLate,
+        goLive: milestones.find((m) => m.key === 'go_live')?.plannedOn ?? null,
+        budget: commercial ? { budgetDays, plannedDays: Math.round(planned * 10) / 10 } : null,
+        lastOn,
+        staleDays,
+        reported: health.get(p.id) ?? null,
+        signal: healthSignal({
+          items: live.length,
+          risk,
+          freezeLate,
+          freezeDays,
+          budgetRatio,
+          staleDays,
+        }),
+      });
+    }
+    const rank = { red: 0, yellow: 1, green: 2 };
+    rows.sort((a, b) => rank[a.signal.color] - rank[b.signal.color] || b.risk - a.risk);
+    return { today, projects: rows };
+  });
+
   app.get('/api/projects/:projectId/development-overview', async (req) => {
     const { project, current } = await c.read(req, 'delivery.overview:view');
     const budgetDays = project.dev_budget_days === null ? null : Number(project.dev_budget_days);

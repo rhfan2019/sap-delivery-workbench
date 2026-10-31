@@ -21,7 +21,13 @@ test('development overview: permissions, scope, judgments and drill-down counts'
     customer = randomUUID(),
     project = randomUUID(),
     hidden = randomUUID();
-  const people = { pm: randomUUID(), dev: randomUUID(), sub: randomUUID(), viewer: randomUUID() };
+  const people = {
+    pm: randomUUID(),
+    dev: randomUUID(),
+    sub: randomUUID(),
+    viewer: randomUUID(),
+    director: randomUUID(),
+  };
   const tokens = Object.fromEntries(
     Object.keys(people).map((k) => [k, randomBytes(32).toString('hex')]),
   );
@@ -65,9 +71,15 @@ test('development overview: permissions, scope, judgments and drill-down counts'
       "INSERT INTO app.project_milestone(organization_id,project_id,milestone_key,name,planned_on) VALUES($1,$2,'code_freeze','开发冻结',$3)",
       [org, project, addDays(today, 5)],
     );
+    await db.query(
+      "INSERT INTO app.project_milestone(organization_id,project_id,milestone_key,name,planned_on) VALUES($1,$2,'sit_start','SIT 开始',$3)",
+      [org, project, addDays(today, 20)],
+    );
     await grantRole(db, org, people.pm, 'C_PM', { projectId: project });
     await grantRole(db, org, people.dev, 'C_DEV', { projectId: project });
     await grantRole(db, org, people.sub, 'C_SUBCON_DEV', { projectId: project, ownOnly: true });
+    // An organization-wide delivery director reaches every project, and the portfolio.
+    await grantRole(db, org, people.director, 'C_DELIVERY_DIRECTOR');
     // A member who may enter the project but not see the overview.
     const viewOnly = (
       await db.query(
@@ -266,9 +278,56 @@ test('development overview: permissions, scope, judgments and drill-down counts'
       { total: 3, ready: 0 },
     );
 
+    // Phase 3: baseline drift, replayed flow and pace, weekly report, SIT forecast, signal.
+    assert.deepEqual(
+      o.planDrift.top.map((x) => [x.name, x.phase, x.baselineEnd, x.days]),
+      [['C', 'fsd', addDays(today, 3), 5]],
+    );
+    const last = o.flow.days.length - 1;
+    assert.equal(o.flow.days[last], today);
+    assert.deepEqual(
+      ['not_started', 'in_progress', 'completed'].map((st) => o.flow.status.development[st][last]),
+      [1, 1, 1],
+    );
+    assert.equal(o.flow.remaining[last], 4);
+    assert.equal(o.flow.pace.recentPerWeek, 0.8);
+    assert.equal(o.flow.freeze, addDays(today, 5));
+    assert.deepEqual(o.week.created.map((x) => x.name).sort(), ['A', 'B', 'C']);
+    assert.deepEqual(
+      o.week.completed.map((x) => [x.name, x.phase]),
+      [['C', 'development']],
+    );
+    assert.deepEqual(
+      o.week.pushed.map((x) => [x.name, x.phase, x.days]),
+      [['C', 'fsd', 5]],
+    );
+    assert.equal(o.sitForecast.sit, addDays(today, 20));
+    assert.deepEqual(
+      { total: o.sitForecast.all.total, readyNow: o.sitForecast.all.readyNow },
+      { total: 3, readyNow: 0 },
+    );
+    assert.equal(o.signal.color, 'red');
+    assert.equal(o.freshness.days, 0);
+    assert.deepEqual(o.guards.reopened, 0);
+    assert.deepEqual(o.guards.effortMedian, { recent: 3, earlier: null });
+
+    // The portfolio needs the organization-level permission.
+    await pm('GET', '/api/development-portfolio', undefined, 403);
+    const portfolio = await as('director')('GET', '/api/development-portfolio');
+    const row = portfolio.projects.find((x) => x.id === project);
+    assert.equal(portfolio.projects.length, 2);
+    assert.deepEqual(
+      { items: row.items, risk: row.risk, freezeLate: row.freezeLate, color: row.signal.color },
+      { items: 3, risk: 2, freezeLate: 1, color: 'red' },
+    );
+    assert.deepEqual(row.budget, { budgetDays: 20, plannedDays: 7 });
+
     // Labelling a version 定稿 now records when, so the date is no longer an estimate.
     await setLabels(db, session, 1, ['定稿'], people.pm);
     assert.equal((await pm('GET', overview)).development.handover[0].estimated, false);
+    // Reopening a completed phase is counted beside the completions (spec section 9).
+    c = await change(c, { 'development.status': 'in_progress' });
+    assert.deepEqual((await pm('GET', overview)).guards.reopenedIds, [c.id]);
 
     // Each card's drill-down filter selects exactly as many list items as the card counts.
     const { items } = await pm('GET', list);

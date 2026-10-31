@@ -6,7 +6,7 @@ import BaseTag from '../../components/base/BaseTag.vue';
 import { moduleHue } from '../../components/base/identity';
 import { currentProject } from '../../services/projectContext';
 import AwaitingTest from './AwaitingTest.vue';
-import { itemLink, pct, type Overview } from './model';
+import { openFrom, itemLink, pct, shortDate, type Overview } from './model';
 
 // The tester view (spec section 2, test lead): readiness for SIT by module (M21), testing
 // planned past its milestone (M20), testers still to assign, developed items waiting for a test.
@@ -15,7 +15,7 @@ const props = defineProps<{
   drill: (filter: OverviewFilter, label: string) => void;
 }>();
 const router = useRouter();
-const open = (id: string) => void router.push(itemLink(currentProject.value, id));
+const open = (id: string) => void openFrom(router, itemLink(currentProject.value, id));
 const r = computed(() => props.data.readiness);
 const cards = computed(() => [
   {
@@ -91,6 +91,70 @@ const cards = computed(() => [
       <AwaitingTest :rows="data.development.awaitingTest" @open="open" />
     </section>
   </div>
+  <section class="ov-section">
+    <h2>
+      SIT 进场预测<small v-if="data.sitForecast"
+        >SIT 开始 {{ shortDate(data.sitForecast.sit) }}；未完成的计划按本项目平均滞后
+        {{ data.sitForecast.slip.days }} 天顺延（{{
+          data.sitForecast.slip.samples
+            ? `依据 ${data.sitForecast.slip.samples} 个已完成阶段`
+            : '还没有已完成阶段，按 0 天'
+        }}）</small
+      >
+    </h2>
+    <div class="ov-card">
+      <p v-if="!data.sitForecast" class="ov-empty">
+        项目未设 SIT 开始日期。在“设置 → 项目 → 计划与健康”中维护后即可预测。
+      </p>
+      <table v-else class="ov-table">
+        <thead>
+          <tr>
+            <th>模块</th>
+            <th class="num">现在已就绪</th>
+            <th class="num">预计 SIT 时就绪</th>
+            <th class="num">仍需测试</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(row, m) in data.sitForecast.byModule" :key="m">
+            <td>
+              <BaseTag :tone="moduleHue(String(m))">{{ m }}</BaseTag>
+            </td>
+            <td class="num">{{ row.readyNow }}</td>
+            <td class="num">{{ row.predicted }}</td>
+            <td class="num">{{ row.total }}</td>
+            <td>
+              <button
+                v-if="row.missing.length"
+                type="button"
+                class="ov-cell-button"
+                @click="drill({ ids: row.missing }, m + ' 预计赶不上 SIT')"
+              >
+                {{ row.missing.length }} 项赶不上
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <section v-if="data.development.rework.some((r) => r.retest)" class="ov-section">
+    <h2>需重测<small>FSD 定稿后又修改，而开发或测试已经开始的开发项</small></h2>
+    <div class="ov-card">
+      <span class="ov-tags">
+        <button
+          v-for="r in data.development.rework.filter((x) => x.retest)"
+          :key="r.id"
+          type="button"
+          class="ov-cell-button"
+          @click="open(r.id)"
+        >
+          {{ r.code }} {{ r.name }}（定稿后 {{ r.laterVersions }} 个新版本）
+        </button>
+      </span>
+    </div>
+  </section>
 </template>
 <style scoped>
 .rates {

@@ -24,6 +24,7 @@ const emptyPhase = {
   plannedEnd: null,
   actualStart: null,
   actualEnd: null,
+  baselineEnd: null,
   progress: 0,
   status: 'not_started',
   notes: '',
@@ -36,6 +37,7 @@ function presentPhase(row) {
     plannedStart: dateText(row.planned_start),
     plannedEnd: dateText(row.planned_end),
     actualStart: dateText(row.actual_start),
+    baselineEnd: dateText(row.baseline_end),
     actualEnd: dateText(row.actual_end),
     progress: row.progress,
     status: row.status,
@@ -222,16 +224,26 @@ export async function applyChanges(db, ctx, before, normalized) {
   for (const [phase, changes] of Object.entries(normalized.phases)) {
     const moved = 'status' in changes && changes.status !== before.phases[phase].status;
     // A phase that first goes in progress (or is marked delayed) records when it started
-    // (docs/specs/development-overview.md 6, D2); a date typed by hand wins.
+    // (docs/specs/development-overview.md 6, D2); a date typed by hand wins, and a reopened
+    // phase whose actual end lies earlier keeps no start rather than an impossible one.
+    const started = dateText(new Date());
+    const ended = 'actualEnd' in changes ? changes.actualEnd : before.phases[phase].actualEnd;
     if (
       moved &&
       ['in_progress', 'delayed'].includes(changes.status) &&
       !before.phases[phase].actualStart &&
-      !('actualStart' in changes)
+      !('actualStart' in changes) &&
+      (!ended || ended >= started)
     )
-      changes.actualStart = dateText(new Date());
+      changes.actualStart = started;
     settlePhase(phase, before.phases[phase], changes);
     await writePhase(db, ctx, before.id, phase, changes);
+    // The first planned end is the phase's baseline (overview spec section 6, D5).
+    if (changes.plannedEnd && !before.phases[phase].baselineEnd)
+      await db.query(
+        'UPDATE app.development_item_phase SET baseline_end=planned_end WHERE item_id=$1 AND phase=$2 AND baseline_end IS NULL',
+        [before.id, phase],
+      );
     if (moved)
       await addTransition(db, ctx, before.id, phase, before.phases[phase].status, changes.status);
     for (const [name, value] of Object.entries(changes)) record(phase + '.' + name, value);
@@ -348,6 +360,17 @@ export async function plannedEndPushes(db, org, project, days) {
          AND e.changes->(k.phase||'.plannedEnd')->>'after'>e.changes->(k.phase||'.plannedEnd')->>'before'
        ORDER BY e.created_at`,
       [org, project, PHASE_KEYS, days],
+    )
+  ).rows;
+}
+
+// Every phase status change of the project's items (overview spec section 6, D1), oldest first.
+export async function phaseTransitions(db, org, project) {
+  return (
+    await db.query(
+      `SELECT item_id AS "itemId",phase,from_status AS "from",to_status AS status,at FROM app.development_phase_transition
+       WHERE organization_id=$1 AND project_id=$2 ORDER BY at,id`,
+      [org, project],
     )
   ).rows;
 }

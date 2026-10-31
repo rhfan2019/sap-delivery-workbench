@@ -3,7 +3,7 @@ import { join, isAbsolute } from 'node:path';
 import { failure, transaction } from '../../platform/auth.mjs';
 import { uuid } from '../admin/validation.mjs';
 import { createAccess, deniedError } from '../access/public.mjs';
-import { itemActivity, loadItems, members, plannedEndPushes } from './store.mjs';
+import { itemActivity, loadItems, members, phaseTransitions, plannedEndPushes } from './store.mjs';
 
 // Where uploaded item files are stored; the file id is the file name.
 export function deliveryFilesFolder() {
@@ -124,6 +124,7 @@ export function deliveryContext(pool, organizationId, requireSession) {
     activity: (db, projectId) => itemActivity(db, organizationId, projectId),
     plannedEndPushes: (db, projectId, days) =>
       plannedEndPushes(db, organizationId, projectId, days),
+    transitions: (db, projectId) => phaseTransitions(db, organizationId, projectId),
   };
   return {
     pool,

@@ -9,7 +9,7 @@ import {
 import BaseButton from '../../components/base/BaseButton.vue';
 import BaseTag from '../../components/base/BaseTag.vue';
 import { currentProject } from '../../services/projectContext';
-import { assistantLink, itemLink, shortDate, type Overview } from './model';
+import { openFrom, assistantLink, itemLink, shortDate, type Overview } from './model';
 
 // The personal view (spec section 2, developer and subcontractor): what to do first, what waits
 // for me, my SAP objects. No personal statistics and no comparison with others.
@@ -18,9 +18,9 @@ const props = defineProps<{
   drill: (filter: OverviewFilter, label: string) => void;
 }>();
 const router = useRouter();
-const open = (id: string) => void router.push(itemLink(currentProject.value, id));
+const open = (id: string) => void openFrom(router, itemLink(currentProject.value, id));
 const assist = (id: string, stage: 'design' | 'development') =>
-  void router.push(assistantLink(currentProject.value, id, stage));
+  void openFrom(router, assistantLink(currentProject.value, id, stage));
 const phaseLabel = (key: PhaseKey) => PHASES.find((p) => p.key === key)?.label ?? key;
 const statusTone = (status: string) =>
   status === 'in_progress' ? 'blue' : status === 'delayed' ? 'red' : 'neutral';

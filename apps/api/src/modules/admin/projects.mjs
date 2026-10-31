@@ -15,6 +15,18 @@ export async function keyedMilestones(db, organizationId, projectId) {
   ).rows;
 }
 
+// The latest self-reported health of projects, for the development portfolio view.
+export async function latestHealth(db, organizationId, projectIds) {
+  return (
+    await db.query(
+      `SELECT DISTINCT ON (project_id) project_id AS "projectId",overall,reported_on::text AS "reportedOn"
+       FROM app.project_health WHERE organization_id=$1 AND project_id=ANY($2::uuid[])
+       ORDER BY project_id,reported_on DESC,created_at DESC`,
+      [organizationId, projectIds],
+    )
+  ).rows;
+}
+
 // The projects a user may enter and their master data (docs/specs/project-access-admin.md 1).
 // Reads need project:view; each group of fields has its own edit permission.
 

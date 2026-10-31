@@ -5,7 +5,7 @@ import type { OverviewFilter } from '@sap-delivery-workbench/contracts/delivery/
 import BaseTag from '../../components/base/BaseTag.vue';
 import { moduleHue } from '../../components/base/identity';
 import { currentProject } from '../../services/projectContext';
-import { assistantLink, itemLink, type Overview } from './model';
+import { openFrom, assistantLink, itemLink, type Overview } from './model';
 
 // The consultant view (spec section 2): my FSD to-dos, the FSD backlog by due date (M16),
 // FSD rework after finalization (M19) and how comments are answered (M18).
@@ -14,8 +14,9 @@ const props = defineProps<{
   drill: (filter: OverviewFilter, label: string) => void;
 }>();
 const router = useRouter();
-const open = (id: string) => void router.push(itemLink(currentProject.value, id));
-const design = (id: string) => void router.push(assistantLink(currentProject.value, id, 'design'));
+const open = (id: string) => void openFrom(router, itemLink(currentProject.value, id));
+const design = (id: string) =>
+  void openFrom(router, assistantLink(currentProject.value, id, 'design'));
 const mine = computed(() => [
   {
     id: 'risk',

@@ -153,10 +153,10 @@ fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3
 
 ### 3.6 开发概览统计（development-overview）
 
-- **职责**：“开发管理 → 开发概览”的接口 `GET /api/projects/:projectId/development-overview`：按[开发概览设计](../specs/development-overview.md)的口径汇总开发项、风险、里程碑、负载、预算与开发组视图。需要 `delivery.overview:view`，按分配的模块范围与“仅本人负责”过滤；他人负载与姓名需要 `delivery.overview.team:view`，预算需要 `project.commercial:view`。
-- **数据归属**：本模块没有自己的表，只读。开发项与变更历史经 delivery 的 `context.mjs`（`overview`），助手的定稿与轮次经 abap-fsd-agent、abap-dev-agent 的 `public.mjs`，里程碑经 admin 的 `keyedMilestones`；不直接查询其他模块的表。
+- **职责**：“开发管理 → 开发概览”的接口 `GET /api/projects/:projectId/development-overview` 与跨项目的 `GET /api/development-portfolio`（企业级 `delivery.portfolio:view`）：按[开发概览设计](../specs/development-overview.md)的口径汇总开发项、风险、里程碑、负载、预算与开发组视图。需要 `delivery.overview:view`，按分配的模块范围与“仅本人负责”过滤；他人负载与姓名需要 `delivery.overview.team:view`，预算需要 `project.commercial:view`。
+- **数据归属**：本模块没有自己的表，只读。开发项与变更历史经 delivery 的 `context.mjs`（`overview`），助手的定稿与轮次经 abap-fsd-agent、abap-dev-agent 的 `public.mjs`，里程碑与自报健康度经 admin 的 `keyedMilestones`、`latestHealth`，可见项目与企业级权限经 access 的 `public.mjs`；不直接查询其他模块的表。
 - **共享契约**：风险、完成、到期、计划缺口、里程碑越线、交接与下钻筛选等判定只写在 `packages/contracts/delivery/overview.mjs`，本模块与开发清单前端共用，保证概览数字与下钻后的清单条数一致。
-- **跨模块调用**：development-overview → delivery、abap-fsd-agent、abap-dev-agent、admin，登记见 module-dependencies.json。
+- **跨模块调用**：development-overview → delivery、abap-fsd-agent、abap-dev-agent、admin、access，登记见 module-dependencies.json。
 
 认证和连接配置属于 platform；只供一个业务使用的提示词、模板和资源放该业务模块内。禁止为单一消费者新增 packages/agents。
 

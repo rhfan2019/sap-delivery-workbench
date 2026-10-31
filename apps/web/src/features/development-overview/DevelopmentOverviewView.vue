@@ -1,22 +1,33 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { AlertTriangle, CalendarClock, Lock, ListX, RefreshCw, LayoutGrid } from '@lucide/vue';
+import {
+  AlertTriangle,
+  CalendarClock,
+  FileText,
+  Lock,
+  ListX,
+  RefreshCw,
+  LayoutGrid,
+} from '@lucide/vue';
 import type { OverviewFilter } from '@sap-delivery-workbench/contracts/delivery/overview';
 import BaseBanner from '../../components/base/BaseBanner.vue';
 import BaseEmptyState from '../../components/base/BaseEmptyState.vue';
 import BaseIconButton from '../../components/base/BaseIconButton.vue';
 import BaseSkeleton from '../../components/base/BaseSkeleton.vue';
 import BaseTabs from '../../components/base/BaseTabs.vue';
-import { api, ApiError } from '../../services/session';
+import BaseButton from '../../components/base/BaseButton.vue';
+import { api, ApiError, can } from '../../services/session';
 import { currentProject } from '../../services/projectContext';
 import MilestoneLine from './MilestoneLine.vue';
 import ConsultantView from './ConsultantView.vue';
 import MineView from './MineView.vue';
+import PortfolioView from './PortfolioView.vue';
 import ProjectView from './ProjectView.vue';
 import TeamView from './TeamView.vue';
 import TesterView from './TesterView.vue';
-import { VIEWS, drillLink, type Overview, type ViewId } from './model';
+import WeekReport from './WeekReport.vue';
+import { openFrom, VIEWS, drillLink, type Overview, type ViewId } from './model';
 import './overview.css';
 
 // 开发管理 → 开发概览 (docs/specs/development-overview.md): one page, several views; the
@@ -58,7 +69,19 @@ watch(
   },
   { immediate: true },
 );
-const tabs = computed(() => VIEWS.map((v) => ({ id: v.id, label: v.label })));
+// The portfolio is organization-wide: only with delivery.portfolio:view (spec section 11).
+const tabs = computed(() =>
+  VIEWS.filter((v) => v.id !== 'portfolio' || can('delivery.portfolio:view')).map((v) => ({
+    id: v.id,
+    label: v.label,
+  })),
+);
+const report = ref(false);
+function openProject(id: string) {
+  chosen = true;
+  view.value = 'project';
+  currentProject.value = id;
+}
 function pick(id: string) {
   chosen = true;
   view.value = id as ViewId;
@@ -67,7 +90,7 @@ function pick(id: string) {
 const router = useRouter();
 function drill(filter: OverviewFilter, label: string) {
   if (!data.value) return;
-  void router.push(drillLink(currentProject.value, filter, label, data.value.scope));
+  void openFrom(router, drillLink(currentProject.value, filter, label, data.value.scope));
 }
 
 const cards = computed(() => {
@@ -122,7 +145,9 @@ const done = computed(() => {
   const d = data.value;
   if (!d || !d.counts.items) return '';
   const pct = (n: number) => Math.round((n / d.counts.items) * 100) + '%';
-  return `共 ${d.counts.items} 项 · 开发完成 ${d.counts.developmentDone}（${pct(d.counts.developmentDone)}）· 交付完成 ${d.counts.deliveryDone}（${pct(d.counts.deliveryDone)}）${d.counts.removed ? ` · 已移出范围 ${d.counts.removed}` : ''}`;
+  // Completion is shown with the phases reopened after completion (spec section 9).
+  const reopened = d.guards.reopened ? ` · 近 30 天完成后改回 ${d.guards.reopened} 次` : '';
+  return `共 ${d.counts.items} 项 · 开发完成 ${d.counts.developmentDone}（${pct(d.counts.developmentDone)}）· 交付完成 ${d.counts.deliveryDone}（${pct(d.counts.deliveryDone)}）${d.counts.removed ? ` · 已移出范围 ${d.counts.removed}` : ''}${reopened}`;
 });
 const scoped = computed(() => !!(data.value?.scope.owner || data.value?.scope.modules));
 </script>
@@ -132,14 +157,21 @@ const scoped = computed(() => !!(data.value?.scope.owner || data.value?.scope.mo
     <div class="ov-head">
       <BaseTabs :model-value="view" :tabs="tabs" label="视角" @update:model-value="pick" />
       <span class="ov-head-right">
-        <span v-if="data" class="ov-note">{{ done }}</span>
+        <span v-if="data && view !== 'portfolio'" class="ov-note">{{ done }}</span>
+        <BaseButton
+          v-if="data && view !== 'portfolio' && data.counts.items"
+          size="sm"
+          @click="report = true"
+          ><FileText />周报草稿</BaseButton
+        >
         <BaseIconButton label="刷新" size="sm" :disabled="loading" @click="load()"
           ><RefreshCw
         /></BaseIconButton>
       </span>
     </div>
 
-    <BaseBanner v-if="error" tone="red">{{ error }}</BaseBanner>
+    <PortfolioView v-if="view === 'portfolio'" @open="openProject" />
+    <BaseBanner v-else-if="error" tone="red">{{ error }}</BaseBanner>
     <div v-else-if="!data" class="ov-loading" aria-busy="true">
       <BaseSkeleton height="64px" />
       <div class="ov-stats">
@@ -185,6 +217,7 @@ const scoped = computed(() => !!(data.value?.scope.owner || data.value?.scope.mo
         <TesterView v-else :data="data" :drill="drill" />
       </template>
     </template>
+    <WeekReport v-if="data" v-model:open="report" :data="data" />
   </div>
 </template>
 <style scoped>

@@ -10,7 +10,9 @@ import BaseAvatar from '../../components/base/BaseAvatar.vue';
 import BaseTag from '../../components/base/BaseTag.vue';
 import { moduleHue } from '../../components/base/identity';
 import { currentProject } from '../../services/projectContext';
-import { itemLink, shortDate, type Overview, type Reason } from './model';
+import BurnChart from './BurnChart.vue';
+import FlowChart from './FlowChart.vue';
+import { openFrom, HEALTH, itemLink, shortDate, type Overview, type Reason } from './model';
 
 // The project view (spec section 2, project manager): phase × status, this week's attention
 // list, team load and the budget.
@@ -21,7 +23,7 @@ const props = defineProps<{
 const router = useRouter();
 const STATUSES = Object.entries(OPTIONS.status) as [string, string][];
 const phaseLabel = (key: PhaseKey) => PHASES.find((p) => p.key === key)?.label ?? key;
-const open = (id: string) => void router.push(itemLink(currentProject.value, id));
+const open = (id: string) => void openFrom(router, itemLink(currentProject.value, id));
 
 function reasonText(r: Reason) {
   if (r.type === 'idle') return { tone: 'yellow' as const, text: `${r.days} 天无动静` };
@@ -134,6 +136,17 @@ const modules = computed(() => props.data.modules);
     </section>
   </div>
 
+  <div class="ov-cols">
+    <section class="ov-section">
+      <h2>累积流<small>每天各状态的开发项数，由阶段状态流水回放</small></h2>
+      <FlowChart :flow="data.flow" />
+    </section>
+    <section class="ov-section">
+      <h2>燃尽与冻结倒推<small>FSD 与开发阶段未完成的人天（按当前预估）</small></h2>
+      <BurnChart :flow="data.flow" />
+    </section>
+  </div>
+
   <section class="ov-section">
     <h2>
       本周关注<small
@@ -226,6 +239,44 @@ const modules = computed(() => props.data.modules);
         </table>
       </div>
     </section>
+  </div>
+  <div class="ov-cols">
+    <section class="ov-section">
+      <h2>
+        计划漂移<small
+          >与基线（第一次填写的计划完成日）相比后推的阶段：{{ data.planDrift.drifted }} /
+          {{ data.planDrift.planned }}，累计 {{ data.planDrift.totalDays }} 天</small
+        >
+      </h2>
+      <div class="ov-card">
+        <p v-if="!data.planDrift.top.length" class="ov-empty">没有比基线后推的计划。</p>
+        <table v-else class="ov-table">
+          <thead>
+            <tr>
+              <th>编号</th>
+              <th>开发名称</th>
+              <th>阶段</th>
+              <th>基线 → 现在</th>
+              <th class="num">后推</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="d in data.planDrift.top"
+              :key="d.id + d.phase"
+              class="link"
+              @click="open(d.id)"
+            >
+              <td class="code">{{ d.code }}</td>
+              <td class="main">{{ d.name }}</td>
+              <td>{{ phaseLabel(d.phase) }}</td>
+              <td>{{ shortDate(d.baselineEnd) }} → {{ shortDate(d.plannedEnd) }}</td>
+              <td class="num">{{ d.days }} 天</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
     <section v-if="data.commercial" class="ov-section">
       <h2>人天预算<small>FSD 与开发阶段的预估人天，不是实际工时</small></h2>
@@ -261,6 +312,38 @@ const modules = computed(() => props.data.modules);
             ></span>
           </div>
         </template>
+        <p v-if="data.guards.effortMedian.recent !== null" class="ov-note">
+          单项人天中位数：近 30 天新增 {{ data.guards.effortMedian.recent }} 天，此前
+          {{ data.guards.effortMedian.earlier ?? '—' }} 天{{
+            data.guards.effortMedian.earlier !== null &&
+            data.guards.effortMedian.recent < data.guards.effortMedian.earlier / 2
+              ? '（新增项明显变小，留意是否拆项）'
+              : ''
+          }}
+        </p>
+      </div>
+    </section>
+
+    <section class="ov-section">
+      <h2>数据信号<small>由风险占比、开发冻结、预算与更新频率算出，可与自报健康度对照</small></h2>
+      <div class="ov-card signal">
+        <span class="ov-tags"
+          ><BaseTag :tone="data.signal.color">{{ HEALTH[data.signal.color] }}</BaseTag
+          ><span class="ov-note">{{
+            data.freshness.days === null
+              ? '开发清单还没有更新记录'
+              : data.freshness.days === 0
+                ? '开发清单今天有更新'
+                : `开发清单 ${data.freshness.days} 天前更新`
+          }}</span></span
+        >
+        <ul v-if="data.signal.reasons.length" class="reasons">
+          <li v-for="r in data.signal.reasons" :key="r.text">
+            <BaseTag :tone="r.level">{{ r.level === 'red' ? '风险' : '关注' }}</BaseTag
+            >{{ r.text }}
+          </li>
+        </ul>
+        <p v-else class="ov-note">没有触发任何信号规则。</p>
       </div>
     </section>
   </div>
@@ -283,6 +366,22 @@ const modules = computed(() => props.data.modules);
 }
 .wide {
   grid-column: 1 / -1;
+}
+.signal {
+  display: grid;
+  gap: var(--space-3);
+}
+.reasons {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.reasons li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 .budget {
   display: grid;
