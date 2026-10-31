@@ -1,10 +1,10 @@
 # 开发排期交接文档
 
-> 状态：现行，持续更新。最后更新：2026-10-31（main `77f8276`，设置合并为一个标签、全部标签下拉）。
+> 状态：现行，持续更新。最后更新：2026-10-31（main `075409b`，展望周数与“以后”一组）。
 
 ## 1. 现状一句话
 
-“开发管理 → 开发排期”的开发人员周排期与负载表已上线（FEAT-012）：按人按周的预计人天、计划、实际与累计差异，基准日期可选，数字下钻到开发清单、后退原样恢复。
+“开发管理 → 开发排期”的开发人员周排期与负载表已上线（FEAT-012）：按人按周的预计人天、计划、实际与累计差异，基准日期与展望周数可选，之后的合计在“以后”一组，数字下钻到开发清单、后退原样恢复。
 
 ## 2. 下一步
 
@@ -12,12 +12,12 @@
 
 ## 3. 已知问题
 
-无。后续需求：FEAT-013、FEAT-014。UI-010、UI-011、UI-012（设置合并为一个标签、“全部标签”下拉）已修复。
+无。后续需求：FEAT-013、FEAT-014。UI-010、UI-011、UI-012（设置合并为一个标签、“全部标签”下拉）、FEAT-015（展望周数）已修复。
 
 ## 4. 架构速览
 
 - 设计：[开发排期设计](../specs/development-load.md)，口径第 3 节，下钻与后退第 4 节，实现位置第 5 节。
-- 口径：`packages/contracts/delivery/load.mjs`（周一、ISO 周号、基准日期选项、`loadRows` 分组、`loadWindow` 九周与累计差异），下钻筛选键在 `delivery/overview.mjs` 的 `matchesFilter`。
+- 口径：`packages/contracts/delivery/load.mjs`（周一、ISO 周号、基准日期选项、`loadRows` 分组、`loadWindow` 各周、“以后”与累计差异，`aheadOf` 展望周数），下钻筛选键在 `delivery/overview.mjs` 的 `matchesFilter`。
 - 后端：`apps/api/src/modules/development-overview/load.mjs`（契约 3.6），人员与排序码经 access 的 `projectMembers`；排序码接口在 `access/members.mjs`。
 - 前端：`apps/web/src/features/development-load/`；开发清单 `DeliveryView.vue` 读取 `?from=load`。
 - 后退无感：`services/tabs.ts` 的 `Tab.back` 与 `AppLayout.vue` 按页面记住滚动位置（[工作台多标签页](../specs/workbench-tabs.md)第 4 节），对所有标签内跳转生效。
@@ -27,7 +27,7 @@
 
 - 单元：`tests/unit/contracts/delivery-load.test.mjs`。
 - 集成：`tests/integration/api/development-load.test.mjs`（权限、人员与顺序、口径、排序码、每个数字等于下钻条数）。
-- 端到端：`tests/e2e/development-load-ui.test.mjs`（下钻条数；后退为同一页面实例、滚动不变、不再请求；`?week=`）。
+- 端到端：`tests/e2e/development-load-ui.test.mjs`（下钻条数；后退为同一页面实例、滚动不变、不再请求；`?week=`、`?ahead=`）。
 
 ## 6. 本工作线注意事项
 
