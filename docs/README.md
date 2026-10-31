@@ -15,7 +15,8 @@
 - [项目主数据、权限与后台管理设计](specs/project-access-admin.md)：项目主数据扩展、职位 / 角色 / 复合角色 / 数据权限、项目 SAP 系统与个人凭据安全策略、对照 Plain 的设置菜单体系（已实施，执行记录见第 8 节）。
 - [权限测试](plans/2026-10-18-permission-test.md)：虚拟测试项目中模块组长、项目经理、开发组长的测试账号、预期权限矩阵、自动验证结果（71/71）与手工测试清单。
 - [开发清单重构设计](specs/development-list.md)：字段口径、数据库表设计、标签与自定义列、接口与实施结果（已实施）。
-- [开发概览设计](specs/development-overview.md)：按角色的开发驾驶舱，24 个指标的口径、首屏、补记数据、接口与权限、分期（草案，待确认）。
+- [开发概览设计](specs/development-overview.md)：按角色的开发驾驶舱，24 个指标的口径、首屏、补记数据、接口与权限、分期（已确认，待实施）。
+- [开发概览一期实施计划](plans/2026-10-30-development-overview-implementation.md)与[交接文档](plans/2026-10-30-development-overview-handover.md)：一期步骤、涉及位置与验证方式。
 - [abap-fsd-agent 端到端测试](plans/2026-10-12-abap-fsd-agent-e2e-test.md)：DEV-0031 测试脚本、结果、结论与问题的原始分析（E2E-01～06；现状以待办清单为准）。
 - [设计助手交接文档](plans/2026-10-12-abap-fsd-agent-handover.md)：设计助手工作线的新会话入口（现行，持续更新）。
 - [ABAP 开发助手方向决策](architecture/2026-10-13-abap-dev-agent-direction-decision.md)：abap-dev-agent 的工作模式、产物、框架加载、工具、校验与模块拆分（已确认）。

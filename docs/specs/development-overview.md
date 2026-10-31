@@ -1,6 +1,6 @@
-# 开发概览设计（指标字典草案）
+# 开发概览设计
 
-> 2026-10-30 草案，状态：**待用户确认**（第 11 节）。由项目经理、交付总监/PMO、开发组长、一线开发、业务顾问、测试负责人、指标口径设计、可视化与数据架构八个角色分别提出问题与指标后汇总。数据现状见[开发清单重构设计](development-list.md)，权限见[项目主数据、权限与设置菜单设计](project-access-admin.md)，界面取值只用 [DESIGN.md](DESIGN.md) 的令牌。
+> 2026-10-30 设计，同日用户确认（第 11 节全部按建议）。状态：待实施，一期计划见 [开发概览一期实施计划](../plans/2026-10-30-development-overview-implementation.md)。由项目经理、交付总监/PMO、开发组长、一线开发、业务顾问、测试负责人、指标口径设计、可视化与数据架构八个角色分别提出问题与指标后汇总。数据现状见[开发清单重构设计](development-list.md)，权限见[项目主数据、权限与设置菜单设计](project-access-admin.md)，界面取值只用 [DESIGN.md](DESIGN.md) 的令牌。
 
 ## 1. 定位与原则
 
@@ -89,11 +89,11 @@
 
 ## 7. 接口与权限
 
-- 新建 `apps/api/src/modules/delivery/overview`，聚合在 SQL 完成，请求时实时计算，响应带 ETag（取开发项与事件的最新时间）。
-- 接口（均在 `/projects/:id/development-overview/` 下）：`summary`（KPI，每个数字附下钻 `filter`）、`risks`（风险清单与原因码）、`aging`、`load`、`flow`（快照序列 + 里程碑）。跨项目组合视图另设 `/development-portfolio`。
-- 权限点（先在 `packages/contracts/access/catalog.mjs` 登记）：`delivery.overview:view`（项目内概览）、`delivery.portfolio:view`（跨项目组合）。人天与预算字段另需 `project.commercial:view`，缺权限时**不返回字段**而非返回 0。
-- 个人数据：持 `own_only` 分配的用户（如分包）在 `load`、`risks` 中只看到自己的行，其他人合并为“其他成员”；负载热力只对 PM、开发组长开放。
-- 集成测试：缺权限 403、范围外项目 404、`own_only` 过滤、商务字段隐藏。
+- 新建 `apps/api/src/modules/delivery/overview.mjs`，聚合在 SQL 完成，请求时实时计算，响应带 ETag（取开发项与事件的最新时间）。共享判定（风险、两档完成、就绪等）放 `packages/contracts/delivery/overview.mjs`，经 `@sap-delivery-workbench/contracts/delivery/overview` 导出，前后端共用。
+- 接口（均在 `/api/projects/:projectId/development-overview/` 下）：`summary`（KPI，每个数字附下钻 `filter`）、`risks`（风险清单与原因码）、`aging`、`load`、`flow`（快照序列 + 里程碑）。跨项目组合视图另设 `/api/development-portfolio`。
+- 权限点（先在 `packages/contracts/access/catalog.mjs` 登记，见第 11 节）：`delivery.overview:view`、`delivery.overview.team:view`、`delivery.portfolio:view`。`delivery.overview:view` 加入 `SCOPED_PERMISSIONS`，按分配的模块范围与“仅本人负责”过滤统计范围。人天与预算字段另需 `project.commercial:view`，缺权限时**不返回字段**而非返回 0。
+- 个人数据：持 `own_only` 分配的用户（如分包）在 `load`、`risks` 中只看到自己的行；没有 `delivery.overview.team:view` 的人看不到他人姓名与负载，其他人合并为“其他成员”。
+- 集成测试：缺权限 403、范围外项目 404、`own_only` 与模块范围过滤、商务字段隐藏、概览数字与清单筛选条数一致。
 
 ## 8. 可视化与下钻约定
 
@@ -107,7 +107,7 @@
 | 组合视图      | 一行一个项目的表格                           | 仪表盘、饼图                 |
 
 - 颜色只用 `theme.css` 令牌，语义色表达状态，色阶最多三档；每张图配一句文字结论；无数据时写明原因与起算日期。
-- **下钻**：跳转开发清单并带条件，如 `/delivery?project=…&risk=1&phase=development&module=FI&assignee=…`；开发清单改为 URL 参数优先于 sessionStorage 中保存的筛选，顶部显示“来自开发概览：<条件> · 清除”。现有字段表达不了的集合（如年龄 ≥ 30 天）用 `ids=` 传入。
+- **下钻**：跳转开发清单并带条件，如 `/workspace/development-items?project=…&risk=1&phase=development&module=FICO&assignee=…`；开发清单改为 URL 参数优先于 sessionStorage 中保存的筛选，顶部显示“来自开发概览：<条件> · 清除”。现有字段表达不了的集合（如年龄 ≥ 30 天）用 `ids=` 传入。
 
 ## 9. 反指标配对与不做清单
 
@@ -129,11 +129,17 @@
 | 二期 | D1、D2、D3 补记与回填；“我的”、顾问、测试首屏；M12、M14、M16、M18、M19、M21；交接雷达                                                                          | 一期         |
 | 三期 | D4 快照与 M22 累积流/燃尽、冻结倒推线、SIT 进场预测；组合视图 M23、M24 与健康度对账；周报草稿；D5 与 M09 精确版                                                | 二期         |
 
-## 11. 待确认问题
+## 11. 已确认的决定
 
-1. **完成口径**：是否同意“开发完成 / 交付完成”两档，开发项不设总状态字段？
-2. **风险口径**：是否同意把手工“已延误”与“计划已过未完成”合并为“风险”，并让开发清单的“计划逾期”页签同步改口径？
-3. **权限点**：新增 `delivery.overview:view`、`delivery.portfolio:view`，还是一期先复用 `delivery.item:view`？分包开发是否开放概览？
-4. **负载热力可见范围**：只给 PM 与开发组长，是否同意？
-5. **补记数据**：D1–D3 是否进入二期（需要数据库迁移与回填）？
-6. **组合视图**：交付总监/PMO 的跨项目视图放在开发概览内切换，还是另设菜单？
+2026-10-30 用户确认，全部按建议执行：
+
+| 问题     | 决定                                                                                                                                                                                                                                                                  |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 完成口径 | 分“开发完成 / 交付完成”两档，开发项不设总状态字段                                                                                                                                                                                                                     |
+| 风险口径 | 手工“已延误”与“计划已过未完成”合并为“风险”，分两个子标签；开发清单“计划逾期”页签同步改用共享判定（取代开发清单规格第 8 节 Q3 中“已延误不算逾期提醒”的约定）                                                                                                           |
+| 权限点   | 新增 `delivery.overview:view`（项目级，菜单，挂 `PRJ_VIEW`）、`delivery.overview.team:view`（项目级，字段，看他人负载与姓名，挂 C_PM、C_DEV_LEAD）、`delivery.portfolio:view`（企业级，挂 C_DELIVERY_DIRECTOR、C_PMO）。分包开发可看概览，`own_only` 分配只看自己的行 |
+| 负载热力 | 只给持 `delivery.overview.team:view` 的人（项目经理、开发组长）                                                                                                                                                                                                       |
+| 补记数据 | D1–D3 进入二期（迁移 + 回填）；D4、D5 在三期                                                                                                                                                                                                                          |
+| 组合视图 | 放在开发概览内：持 `delivery.portfolio:view` 时页头多一个“项目组合”视角，不另设菜单                                                                                                                                                                                   |
+
+首屏视角按用户在当前项目的预置角色决定默认值（C_PM → 项目，C_DEV_LEAD → 开发组，C_FUNC → 顾问，C_TESTER → 测试，其余 → 我的），页头可切换；视角只决定展示顺序，能看到什么由权限点决定。
