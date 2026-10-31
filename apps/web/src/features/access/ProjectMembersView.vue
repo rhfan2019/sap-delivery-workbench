@@ -152,6 +152,25 @@ const rowMenu = (m: Member) => [
   },
 ];
 const canSensitive = (code: string) => can(code);
+// The sort code orders people in 开发排期 (docs/specs/development-load.md); saved on change,
+// the member's own included.
+const sorting = useSave();
+async function saveSortCode(m: Member, event: Event) {
+  const input = event.target as HTMLInputElement;
+  const text = input.value.trim();
+  const value = text === '' ? null : Number(text);
+  if (value === m.sortCode) return;
+  if (value !== null && !(Number.isInteger(value) && value >= 0 && value <= 9999)) {
+    input.value = m.sortCode === null ? '' : String(m.sortCode);
+    toast('排序码须为 0 到 9999 的整数，或留空。', 'red');
+    return;
+  }
+  const next = await sorting.run(() => accessApi.setSortCode(currentProject.value, m.id, value));
+  if (next) {
+    members.value = next;
+    toast('排序码已保存。', 'green');
+  } else input.value = m.sortCode === null ? '' : String(m.sortCode);
+}
 const scopeText = (m: Member) => {
   const r = m.roles[0];
   if (!r) return '—';
@@ -178,6 +197,7 @@ const scopeText = (m: Member) => {
     <ProjectGate :loading="loading" :error="error" :ready="!!project" :archived="readOnly">
       <p v-if="listError" class="s-error" role="alert">{{ listError }}</p>
       <p v-if="removal.error.value" class="s-error" role="alert">{{ removal.error.value }}</p>
+      <p v-if="sorting.error.value" class="s-error" role="alert">{{ sorting.error.value }}</p>
       <p class="s-summary">
         成员：<strong>{{ members.length }} 人</strong
         ><span>· 项目经理 {{ managers }} · 限定模块 {{ limited }} · 即将到期 {{ expiring }}</span>
@@ -216,6 +236,7 @@ const scopeText = (m: Member) => {
               <th>项目角色</th>
               <th class="hide-narrow">范围</th>
               <th>有效期</th>
+              <th class="sort-col" title="开发排期中的人员顺序，小的在前；留空排在最后">排序码</th>
               <th v-if="manage" class="actions-col">操作</th>
             </tr>
           </thead>
@@ -269,6 +290,21 @@ const scopeText = (m: Member) => {
                 }}</span
                 ><small>自 {{ day(m.roles[0]?.validFrom) || day(m.joinedAt) }}</small>
               </td>
+              <td class="sort-col" @click.stop>
+                <input
+                  v-if="manage"
+                  class="sort-code"
+                  type="number"
+                  min="0"
+                  max="9999"
+                  step="1"
+                  :value="m.sortCode ?? ''"
+                  :aria-label="m.displayName + '的排序码'"
+                  :disabled="sorting.busy.value"
+                  @change="saveSortCode(m, $event)"
+                  @keydown.enter="($event.target as HTMLInputElement).blur()"
+                /><span v-else>{{ m.sortCode ?? '—' }}</span>
+              </td>
               <td v-if="manage">
                 <div v-if="!self(m)" class="s-row-actions" @click.stop>
                   <button class="text-button" @click="edit(m, true)">编辑</button>
@@ -320,5 +356,23 @@ const scopeText = (m: Member) => {
 <style scoped>
 .s-badge.warning {
   margin-left: 0;
+}
+.sort-col {
+  width: 88px;
+}
+.sort-code {
+  width: 72px;
+  height: var(--control-input);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-6);
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+.sort-code:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
 }
 </style>

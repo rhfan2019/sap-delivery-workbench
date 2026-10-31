@@ -8,6 +8,9 @@ import { entryOf, moduleOf } from '../features/navigation';
 export interface Tab {
   id: string;
   path: string;
+  // The page this tab showed before a link opened another page in it: kept alive, so the back
+  // button returns to it as it was (workbench-tabs.md 4).
+  back?: string;
 }
 export const tabs = ref<Tab[]>([]);
 export const activeTabId = ref('');
@@ -48,9 +51,12 @@ function load(): { tabs: Tab[]; active: string } | null {
   try {
     const data = JSON.parse(localStorage.getItem(storageKey) ?? 'null');
     if (!Array.isArray(data?.tabs)) return null;
-    const list = (data.tabs as Tab[]).filter(
-      (t) => typeof t?.id === 'string' && typeof t?.path === 'string' && t.path.startsWith('/'),
-    );
+    // A page left behind is not remembered: after a reload nothing of it is alive any more.
+    const list = (data.tabs as Tab[])
+      .filter(
+        (t) => typeof t?.id === 'string' && typeof t?.path === 'string' && t.path.startsWith('/'),
+      )
+      .map((t) => ({ id: t.id, path: t.path }));
     return { tabs: list, active: String(data.active ?? '') };
   } catch {
     return null;
@@ -97,7 +103,9 @@ export function startTabs(r: Router, userId: string) {
     }
     if (action) activeTabId.value = action.id;
     const tab = activeTab.value;
-    if (tab) tab.path = to.fullPath;
+    if (!tab) return;
+    if (!action && pageKey(r.resolve(tab.path)) !== pageKey(to)) tab.back = tab.path;
+    tab.path = to.fullPath;
   });
   stopSave = watch([tabs, activeTabId], save, { deep: true, immediate: true });
 }

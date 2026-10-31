@@ -180,9 +180,11 @@ onBeforeUnmount(stopTabs);
 const pageId = (tabId: string, key: string) => `${tabId}|${key}`;
 const currentPage = computed(() => pageId(activeTabId.value, pageKey(route)));
 const keptPages = computed(() =>
-  tabs.value
-    .filter((t) => !isRecord(t.path.split(/[?#]/)[0]!))
-    .map((t) => pageId(t.id, pageKey(router.resolve(t.path)))),
+  tabs.value.flatMap((t) =>
+    [t.path, t.back]
+      .filter((path): path is string => !!path && !isRecord(path.split(/[?#]/)[0]!))
+      .map((path) => pageId(t.id, pageKey(router.resolve(path)))),
+  ),
 );
 const wrappers = new Map<string, Component>();
 function wrapperOf(id: string) {
@@ -201,13 +203,14 @@ function wrapperOf(id: string) {
     if (key !== id && !keptPages.value.includes(key)) wrappers.delete(key);
   return wrapper;
 }
-// A kept page comes back where it was scrolled: the content body and anything scrolled inside it.
+// A kept page comes back where it was scrolled: the content body and anything scrolled inside it,
+// whether another tab was in front or the back button returned to it.
 const body = ref<HTMLElement | null>(null);
 const scrolls = new Map<string, [Element, number, number][]>();
 watch(
-  activeTabId,
+  currentPage,
   (_id, old) => {
-    for (const id of scrolls.keys()) if (!tabs.value.some((t) => t.id === id)) scrolls.delete(id);
+    for (const id of scrolls.keys()) if (!keptPages.value.includes(id)) scrolls.delete(id);
     if (!old || !body.value) return;
     const all = [body.value, ...body.value.querySelectorAll('*')];
     scrolls.set(
@@ -218,7 +221,7 @@ watch(
   { flush: 'pre' },
 );
 watch(
-  activeTabId,
+  currentPage,
   (id) => {
     const saved = scrolls.get(id);
     if (!saved && body.value) body.value.scrollTop = 0;

@@ -10,6 +10,7 @@ export const PERMISSION_GROUPS = [
   { key: 'project.sap', label: '项目 SAP 系统', scope: 'project' },
   { key: 'delivery', label: '开发清单', scope: 'project' },
   { key: 'delivery.overview', label: '开发概览', scope: 'project' },
+  { key: 'delivery.load', label: '开发排期', scope: 'project' },
   { key: 'agent.fsd', label: 'FSD 设计助手', scope: 'project' },
   { key: 'agent.dev', label: 'ABAP 开发助手', scope: 'project' },
   { key: 'sap', label: 'SAP 访问', scope: 'project' },
@@ -76,6 +77,14 @@ export const PERMISSIONS = [
     'field',
     '查看团队负载',
     '在开发概览中查看他人的负载与姓名。',
+  ),
+
+  p(
+    'delivery.load:view',
+    'delivery.load',
+    'menu',
+    '查看开发排期',
+    '查看全部开发人员的周排期与负载。',
   ),
 
   p('agent.fsd:view', 'agent.fsd', 'menu', '查看设计', '在开发项中查看功能说明书（成果）。'),
@@ -286,6 +295,9 @@ export const BUILT_IN_ROLES = [
   single('DL_TEAM', 'project', '开发团队视图', '在开发概览中查看他人的负载与姓名。', [
     'delivery.overview.team:view',
   ]),
+  single('DL_LOAD', 'project', '开发排期查看', '查看全部开发人员的周排期与负载。', [
+    'delivery.load:view',
+  ]),
   single('DL_ADMIN', 'project', '开发清单管理', '删除、导入开发项，维护自定义列与标签。', [
     'delivery.item:delete',
     'delivery.item:import',
@@ -319,6 +331,7 @@ export const BUILT_IN_ROLES = [
     'DL_EDIT',
     'DL_ADMIN',
     'DL_TEAM',
+    'DL_LOAD',
   ]),
   composite('C_ARCHITECT', 'project', '方案架构师', '维护开发清单，使用设计与开发助手。', [
     'PRJ_VIEW',
@@ -340,12 +353,14 @@ export const BUILT_IN_ROLES = [
     'DL_EDIT',
     'DL_ADMIN',
     'DL_TEAM',
+    'DL_LOAD',
     'AG_DEV',
     'PRJ_SAP',
   ]),
   composite('C_DEV', 'project', '开发顾问', '维护开发清单，使用开发助手。', [
     'PRJ_VIEW',
     'DL_EDIT',
+    'DL_LOAD',
     'AG_DEV',
   ]),
   composite('C_BASIS', 'project', 'Basis 顾问', '维护项目的 SAP 系统。', ['PRJ_VIEW', 'PRJ_SAP']),

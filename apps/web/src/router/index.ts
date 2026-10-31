@@ -77,6 +77,12 @@ export const router = createRouter({
           path: 'workspace/development-overview',
           component: () => import('../features/development-overview/DevelopmentOverviewView.vue'),
         },
+        {
+          path: 'workspace/development-load',
+          component: () => import('../features/development-load/DevelopmentLoadView.vue'),
+          // ?week= is the base Monday, switched inside the page.
+          meta: { keepOnQuery: true },
+        },
         { path: 'workspace/:module', component: WorkspaceView },
         // Settings (docs/specs/project-access-admin.md 4.3). Planned entries have no route here:
         // they fall through to WorkspaceView, which shows the shared “规划中” page.

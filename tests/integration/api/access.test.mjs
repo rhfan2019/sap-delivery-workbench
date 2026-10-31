@@ -99,7 +99,7 @@ test('roles, assignments and project data scope decide what each person can do',
         role('C_DEV')
           .members.map((m) => m.code)
           .sort(),
-        ['AG_DEV', 'DL_EDIT', 'PRJ_VIEW'],
+        ['AG_DEV', 'DL_EDIT', 'DL_LOAD', 'PRJ_VIEW'],
       );
       const r = await req(
         'PATCH',

@@ -13,6 +13,7 @@ const browserContracts = new Set([
   'agent-core/types',
   'delivery/fields',
   'delivery/overview',
+  'delivery/load',
   'access/catalog',
   'projects/options',
 ]);

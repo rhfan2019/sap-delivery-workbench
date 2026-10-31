@@ -59,6 +59,10 @@ const delivery: MenuItem[] = [
     permission: 'delivery.overview:view',
   }),
   item('development-items', '开发清单', 'file', '维护开发台账，从开发项进入设计与开发助手。'),
+  item('development-load', '开发排期', 'calendar', '按周查看每位开发人员的计划、完成与负载。', {
+    scope: 'project',
+    permission: 'delivery.load:view',
+  }),
 ];
 const knowledge: MenuItem[] = [
   item('qa', '知识问答', 'message', '在授权的知识范围内提问，查看答案依据与来源。', {

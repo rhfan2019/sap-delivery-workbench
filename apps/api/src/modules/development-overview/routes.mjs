@@ -30,6 +30,7 @@ import { keyedMilestones, latestHealth } from '../admin/projects.mjs';
 import { dateText } from '../delivery/store.mjs';
 import { deliveryContext } from '../delivery/context.mjs';
 import { createAccess } from '../access/public.mjs';
+import { registerLoadRoutes } from './load.mjs';
 import {
   flow,
   freezeLateCount,
@@ -427,6 +428,7 @@ const roleCodes = (grant) => [
 export function registerDevelopmentOverviewRoutes(app, pool, organizationId, requireSession) {
   const c = deliveryContext(pool, organizationId, requireSession);
   const access = createAccess(pool, organizationId);
+  registerLoadRoutes(app, c, pool, organizationId);
 
   // The portfolio view (spec section 2, delivery director and PMO): one row per project the
   // user may see, the reported health beside the computed one (M23) and data freshness (M24).

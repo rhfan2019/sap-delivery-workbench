@@ -70,6 +70,8 @@ export interface Member {
   skillModules: string[];
   positionName: string | null;
   joinedAt: string;
+  // Order in the development load table (docs/specs/development-load.md).
+  sortCode: number | null;
   rowVersion: string;
   roles: ProjectRole[];
 }
@@ -153,6 +155,8 @@ export const accessApi = {
     api<Member[]>(`/projects/${projectId}/members`, body),
   setRoles: (projectId: string, userId: string, roles: unknown) =>
     api<Member[]>(`/projects/${projectId}/members/${userId}/roles`, { roles }, 'PUT'),
+  setSortCode: (projectId: string, userId: string, sortCode: number | null) =>
+    api<Member[]>(`/projects/${projectId}/members/${userId}/sort-code`, { sortCode }, 'PUT'),
   removeMember: (projectId: string, userId: string, rowVersion: string) =>
     api<Member[]>(`/projects/${projectId}/members/${userId}`, { rowVersion }, 'DELETE'),
 };

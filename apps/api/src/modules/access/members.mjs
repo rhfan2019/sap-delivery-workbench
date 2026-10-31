@@ -14,7 +14,8 @@ export async function projectMembers(db, org, projectId) {
     await db.query(
       `SELECT u.id,u.display_name AS "displayName",u.login_name AS "loginName",u.email,u.status AS "accountStatus",
         u.person_type AS "personType",u.skill_modules AS "skillModules",pos.name AS "positionName",
-        m.status AS "organizationStatus",pm.joined_at AS "joinedAt",pm.row_version AS "rowVersion"
+        m.status AS "organizationStatus",pm.joined_at AS "joinedAt",pm.sort_code AS "sortCode",
+        pm.row_version AS "rowVersion"
       FROM app.project_member pm JOIN app.app_user u ON u.id=pm.user_id
       JOIN app.organization_member m ON m.organization_id=pm.organization_id AND m.user_id=pm.user_id
       LEFT JOIN app.access_position pos ON pos.id=u.position_id
@@ -237,6 +238,33 @@ export function memberRoutes(app, ctx) {
           subjectId: grant.project.id,
           data: await projectMembers(db, org, grant.project.id),
           details: { userId, roles: rows },
+        };
+      },
+    );
+  });
+  // The order of people in the development load table (docs/specs/development-load.md); anyone
+  // managing members may set it, their own included.
+  app.put(base + '/:userId/sort-code', async (req) => {
+    const userId = v.uuid(req.params.userId, '用户');
+    const value = req.body?.sortCode;
+    if (value !== null && !(Number.isInteger(value) && value >= 0 && value <= 9999))
+      throw failure(400, '排序码须为 0 到 9999 的整数，或留空。');
+    return writeProject(
+      req,
+      'project.member:manage',
+      'access.project_member.sort_code',
+      'project',
+      async (db, _current, grant) => {
+        const { rowCount } = await db.query(
+          `UPDATE app.project_member SET sort_code=$4,updated_at=now() WHERE organization_id=$1 AND project_id=$2
+          AND user_id=$3 AND status='active'`,
+          [org, grant.project.id, userId, value],
+        );
+        if (!rowCount) throw failure(404, '成员不存在。');
+        return {
+          subjectId: grant.project.id,
+          data: await projectMembers(db, org, grant.project.id),
+          details: { userId, sortCode: value },
         };
       },
     );

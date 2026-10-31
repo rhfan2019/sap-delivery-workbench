@@ -211,8 +211,9 @@ const search = ref(''),
   priorityFilter = ref(''),
   difficultyFilter = ref(''),
   personFilter = ref('');
-// A drill-down from the development overview: applied on top of the filters, not saved.
-const overview = ref<{ filter: OverviewFilter; label: string } | null>(null);
+// A drill-down from the development overview or the load table: applied on top of the
+// filters, not saved.
+const overview = ref<{ filter: OverviewFilter; label: string; source: string } | null>(null);
 const sortField = ref(''),
   sortOrder = ref<'asc' | 'desc' | null>(null);
 const page = ref(1),
@@ -365,7 +366,7 @@ const activeFilters = computed(() => {
   if (overview.value)
     list.push({
       key: 'overview',
-      label: '来自开发概览：' + overview.value.label,
+      label: `来自${overview.value.source}：${overview.value.label}`,
       clear: () => (overview.value = null),
     });
   add('search', '搜索：' + search.value, search);
@@ -435,12 +436,20 @@ function followLink() {
   }
 }
 
-// --- drill-down from the development overview -------------------------------------------
-// ?project=&from=overview&label=&<filter keys> (docs/specs/development-overview.md 8): the
-// address wins over the filters saved for this project, which are cleared while it applies.
-let pendingDrill: { project: string; filter: OverviewFilter; label: string } | null = null;
+// --- drill-down from the development overview and the load table ------------------------
+// ?project=&from=overview|load&label=&<filter keys> (docs/specs/development-overview.md 8,
+// development-load.md): the address wins over the filters saved for this project, which are
+// cleared while it applies.
+const DRILL_SOURCES: Record<string, string> = { overview: '开发概览', load: '开发排期' };
+let pendingDrill: {
+  project: string;
+  filter: OverviewFilter;
+  label: string;
+  source: string;
+} | null = null;
 function readDrill(query: typeof route.query) {
-  if (query.from !== 'overview') return null;
+  const source = DRILL_SOURCES[String(query.from)];
+  if (!source) return null;
   const text = (key: string) => (typeof query[key] === 'string' ? (query[key] as string) : '');
   const filter: Record<string, unknown> = {};
   for (const key of FILTER_KEYS) {
@@ -448,7 +457,7 @@ function readDrill(query: typeof route.query) {
     if (!value) continue;
     filter[key] = ['ids', 'modules'].includes(key)
       ? value.split(',')
-      : ['due', 'gap', 'gate', 'awaiting'].includes(key)
+      : ['due', 'gap', 'gate', 'awaiting', 'unassigned', 'active', 'unplanned'].includes(key)
         ? value === '1'
         : value;
   }
@@ -456,6 +465,7 @@ function readDrill(query: typeof route.query) {
     project: text('project'),
     filter: filter as OverviewFilter,
     label: text('label') || '筛选',
+    source,
   };
 }
 function applyDrill() {
@@ -464,7 +474,7 @@ function applyDrill() {
   pendingDrill = null;
   clearFilters();
   scope.value = 'all';
-  overview.value = { filter: drill.filter, label: drill.label };
+  overview.value = { filter: drill.filter, label: drill.label, source: drill.source };
 }
 watch(
   () => route.query,

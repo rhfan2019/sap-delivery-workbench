@@ -30,6 +30,11 @@ export interface OverviewFilter {
   due?: boolean;
   gap?: boolean;
   gate?: boolean;
+  unassigned?: boolean;
+  active?: boolean;
+  unplanned?: boolean;
+  planned?: string;
+  actual?: string;
 }
 
 export const RISK_SOURCES: Record<RiskSource, string>;
@@ -52,6 +57,8 @@ export function freezeRisk(item: ItemLike, today: string, milestones: Milestones
 export function awaitingTest(item: ItemLike): boolean;
 export function handoverReady(item: ItemLike, fsdFinal: boolean): boolean;
 export function reverseHandover(item: ItemLike, fsdFinal: boolean): boolean;
+export function inRange(date: string | null, range: string): boolean;
+export function unplanned(phase: PhaseLike): boolean;
 export function matchesFilter(
   item: ItemLike,
   filter: OverviewFilter,

@@ -86,7 +86,10 @@ export const reverseHandover = (item, fsdFinal) =>
 
 // Drill-down filters an overview number links to; the list applies the same test. Item-level
 // keys: ids, module, modules and owner (what the viewer's grant covers), awaiting. Phase-level keys must all hold on one phase (`phase` narrows which):
-// assignee, status, risk (any | declared | stale), due, gap, gate.
+// assignee, status, risk (any | declared | stale), due, gap, gate; and for the development
+// load table (docs/specs/development-load.md): unassigned, active (not cancelled), unplanned
+// (open without a planned end), planned (`from~to`, either end may be empty) and actual
+// (completed, with its actual end in `from~to`).
 export const FILTER_KEYS = [
   'ids',
   'module',
@@ -100,7 +103,20 @@ export const FILTER_KEYS = [
   'due',
   'gap',
   'gate',
+  'unassigned',
+  'active',
+  'unplanned',
+  'planned',
+  'actual',
 ];
+// Is a date inside a `from~to` range (either end may be empty)?
+export function inRange(date, range) {
+  if (!date) return false;
+  const [from, to] = range.split('~');
+  return (!from || date >= from) && (!to || date <= to);
+}
+export const unplanned = (phase) =>
+  !phase.plannedEnd && !['completed', 'cancelled'].includes(phase.status);
 export function matchesFilter(item, filter, { today, milestones } = {}) {
   if (filter.ids && !filter.ids.includes(item.id)) return false;
   if (filter.module && item.module !== filter.module) return false;
@@ -122,7 +138,12 @@ export function matchesFilter(item, filter, { today, milestones } = {}) {
       (!filter.risk || (filter.risk === 'any' ? !!risk : risk === filter.risk)) &&
       (!filter.due || dueSoon(p, today)) &&
       (!filter.gap || gaps.some((g) => g.phase === key)) &&
-      (!filter.gate || pastGate(item, key, milestones))
+      (!filter.gate || pastGate(item, key, milestones)) &&
+      (!filter.unassigned || !p.assigneeId) &&
+      (!filter.active || p.status !== 'cancelled') &&
+      (!filter.unplanned || unplanned(p)) &&
+      (!filter.planned || (p.status !== 'cancelled' && inRange(p.plannedEnd, filter.planned))) &&
+      (!filter.actual || (p.status === 'completed' && inRange(p.actualEnd, filter.actual)))
     );
   });
 }

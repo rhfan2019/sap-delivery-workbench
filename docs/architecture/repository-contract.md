@@ -1,6 +1,8 @@
 # 仓库目录与依赖契约
 
-版本：1.21。日期：2026-10-30。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.22。日期：2026-10-31。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.22 变更：依据[开发排期设计](../specs/development-load.md)（用户 2026-10-31 确认），development-overview 模块增加“开发管理 → 开发排期”的接口 `GET /api/projects/:projectId/development-load`（见 3.6），新增前端 feature `development-load`；按人按周的统计口径放 `packages/contracts/delivery/load.mjs`（浏览器可用），下钻筛选键仍在 `delivery/overview.mjs`。`app.project_member` 新增 `sort_code`（排序码），由 access 维护（`PUT /api/projects/:projectId/members/:userId/sort-code`）。没有新增依赖边。
 
 1.21 变更：依据[开发概览设计](../specs/development-overview.md)（用户 2026-10-30 确认），新增后端模块 `development-overview`（开发概览统计，见 3.6）与前端 feature `development-overview`。统计需要开发清单、变更历史、两个助手的定稿与轮次、项目里程碑，而助手模块经 item-workspace 依赖 delivery，统计放进 delivery 会形成循环，所以单独成模块，只经各模块的公开入口读取：delivery 的 `context.mjs`（新增只读的 `overview`）、abap-fsd-agent 与 abap-dev-agent 的 `public.mjs`（新增 `finalizedItems`、`lastTurns`、`itemComments`，开发助手另有 `itemCoverage`）、admin 的 `keyedMilestones`。前后端共用的统计口径放 `packages/contracts/delivery/overview.mjs`（浏览器可用）。新增依赖边登记见 module-dependencies.json。
 
@@ -153,9 +155,9 @@ fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3
 
 ### 3.6 开发概览统计（development-overview）
 
-- **职责**：“开发管理 → 开发概览”的接口 `GET /api/projects/:projectId/development-overview` 与跨项目的 `GET /api/development-portfolio`（企业级 `delivery.portfolio:view`）：按[开发概览设计](../specs/development-overview.md)的口径汇总开发项、风险、里程碑、负载、预算与开发组视图。需要 `delivery.overview:view`，按分配的模块范围与“仅本人负责”过滤；他人负载与姓名需要 `delivery.overview.team:view`，预算需要 `project.commercial:view`。
-- **数据归属**：本模块没有自己的表，只读。开发项与变更历史经 delivery 的 `context.mjs`（`overview`），助手的定稿与轮次经 abap-fsd-agent、abap-dev-agent 的 `public.mjs`，里程碑与自报健康度经 admin 的 `keyedMilestones`、`latestHealth`，可见项目与企业级权限经 access 的 `public.mjs`；不直接查询其他模块的表。
-- **共享契约**：风险、完成、到期、计划缺口、里程碑越线、交接与下钻筛选等判定只写在 `packages/contracts/delivery/overview.mjs`，本模块与开发清单前端共用，保证概览数字与下钻后的清单条数一致。
+- **职责**：“开发管理 → 开发概览”的接口 `GET /api/projects/:projectId/development-overview` 与跨项目的 `GET /api/development-portfolio`（企业级 `delivery.portfolio:view`）：按[开发概览设计](../specs/development-overview.md)的口径汇总开发项、风险、里程碑、负载、预算与开发组视图。需要 `delivery.overview:view`，按分配的模块范围与“仅本人负责”过滤；他人负载与姓名需要 `delivery.overview.team:view`，预算需要 `project.commercial:view`。另有“开发管理 → 开发排期”的 `GET /api/projects/:projectId/development-load`（`load.mjs`，需要 `delivery.load:view`，不按范围过滤，见[开发排期设计](../specs/development-load.md)）。
+- **数据归属**：本模块没有自己的表，只读。开发项与变更历史经 delivery 的 `context.mjs`（`overview`），助手的定稿与轮次经 abap-fsd-agent、abap-dev-agent 的 `public.mjs`，里程碑与自报健康度经 admin 的 `keyedMilestones`、`latestHealth`，可见项目、企业级权限与项目成员（含排序码）经 access 的 `public.mjs`；不直接查询其他模块的表。
+- **共享契约**：风险、完成、到期、计划缺口、里程碑越线、交接与下钻筛选等判定只写在 `packages/contracts/delivery/overview.mjs`，按人按周的排期统计只写在 `packages/contracts/delivery/load.mjs`；本模块与前端共用，保证概览、排期的数字与下钻后的清单条数一致。
 - **跨模块调用**：development-overview → delivery、abap-fsd-agent、abap-dev-agent、admin、access，登记见 module-dependencies.json。
 
 认证和连接配置属于 platform；只供一个业务使用的提示词、模板和资源放该业务模块内。禁止为单一消费者新增 packages/agents。
