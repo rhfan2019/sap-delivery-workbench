@@ -11,6 +11,7 @@ interface PhaseLike {
 interface ItemLike {
   id: string;
   module: string;
+  createdBy?: string;
   phases: Record<PhaseKey, PhaseLike>;
 }
 export type RiskSource = 'declared' | 'stale';
@@ -19,6 +20,8 @@ export type Milestones = Partial<Record<string, string>>;
 export interface OverviewFilter {
   ids?: string[];
   module?: string;
+  modules?: string[];
+  owner?: string;
   awaiting?: boolean;
   phase?: PhaseKey;
   assignee?: string;

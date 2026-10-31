@@ -85,11 +85,13 @@ export const reverseHandover = (item, fsdFinal) =>
   !fsdFinal && ['in_progress', 'delayed'].includes(item.phases.development.status);
 
 // Drill-down filters an overview number links to; the list applies the same test. Item-level
-// keys: ids, module, awaiting. Phase-level keys must all hold on one phase (`phase` narrows which):
+// keys: ids, module, modules and owner (what the viewer's grant covers), awaiting. Phase-level keys must all hold on one phase (`phase` narrows which):
 // assignee, status, risk (any | declared | stale), due, gap, gate.
 export const FILTER_KEYS = [
   'ids',
   'module',
+  'modules',
+  'owner',
   'awaiting',
   'phase',
   'assignee',
@@ -102,6 +104,13 @@ export const FILTER_KEYS = [
 export function matchesFilter(item, filter, { today, milestones } = {}) {
   if (filter.ids && !filter.ids.includes(item.id)) return false;
   if (filter.module && item.module !== filter.module) return false;
+  if (filter.modules && !filter.modules.includes(item.module)) return false;
+  if (
+    filter.owner &&
+    item.createdBy !== filter.owner &&
+    !PHASE_KEYS.some((key) => item.phases[key].assigneeId === filter.owner)
+  )
+    return false;
   if (filter.awaiting && !awaitingTest(item)) return false;
   const gaps = filter.gap ? planGaps(item) : [];
   return (filter.phase ? [filter.phase] : PHASE_KEYS).some((key) => {

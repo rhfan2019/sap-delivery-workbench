@@ -9,11 +9,13 @@ export const PERMISSION_GROUPS = [
   { key: 'project.member', label: '项目成员', scope: 'project' },
   { key: 'project.sap', label: '项目 SAP 系统', scope: 'project' },
   { key: 'delivery', label: '开发清单', scope: 'project' },
+  { key: 'delivery.overview', label: '开发概览', scope: 'project' },
   { key: 'agent.fsd', label: 'FSD 设计助手', scope: 'project' },
   { key: 'agent.dev', label: 'ABAP 开发助手', scope: 'project' },
   { key: 'sap', label: 'SAP 访问', scope: 'project' },
   { key: 'org', label: '企业', scope: 'organization' },
   { key: 'customer', label: '客户与项目', scope: 'organization' },
+  { key: 'delivery.portfolio', label: '项目组合', scope: 'organization' },
   { key: 'user', label: '用户与职位', scope: 'organization' },
   { key: 'role', label: '角色与权限', scope: 'organization' },
   { key: 'model', label: '智能体', scope: 'organization' },
@@ -61,6 +63,21 @@ export const PERMISSIONS = [
   p('delivery.item:export', 'delivery', 'action', '导出开发项', '把开发清单导出为 Excel。'),
   p('delivery.config:manage', 'delivery', 'action', '维护清单设置', '自定义列与标签。'),
 
+  p(
+    'delivery.overview:view',
+    'delivery.overview',
+    'menu',
+    '查看开发概览',
+    '查看开发驾驶舱的统计与风险清单。',
+  ),
+  p(
+    'delivery.overview.team:view',
+    'delivery.overview',
+    'field',
+    '查看团队负载',
+    '在开发概览中查看他人的负载与姓名。',
+  ),
+
   p('agent.fsd:view', 'agent.fsd', 'menu', '查看设计', '在开发项中查看功能说明书（成果）。'),
   p('agent.fsd:run', 'agent.fsd', 'action', '使用设计助手', '进入设计助手：对话、上传资料、批注。'),
   p('agent.fsd:finalize', 'agent.fsd', 'action', '定稿功能说明书', '给功能说明书版本打定稿标签。'),
@@ -96,6 +113,14 @@ export const PERMISSIONS = [
   p('role:view', 'role', 'menu', '查看角色与权限', '查看角色、权限点与权限报表。'),
   p('role:manage', 'role', 'action', '管理角色', '新建、修改、停用自定义角色。'),
   p('assignment:manage', 'role', 'action', '分配企业级角色', '为用户分配或撤销企业级角色。'),
+
+  p(
+    'delivery.portfolio:view',
+    'delivery.portfolio',
+    'menu',
+    '查看项目组合',
+    '在开发概览中跨项目查看风险、冻结与预算。',
+  ),
 
   p('model:view', 'model', 'menu', '查看大模型', '查看模型接入与测试结果。'),
   p('model:manage', 'model', 'action', '管理大模型', '接入、修改、测试模型，设企业默认模型。'),
@@ -136,6 +161,7 @@ export const SENSITIVE_PERMISSIONS = [
 ];
 // Permissions narrowed by an assignment's module scope and "own items only" (section 2.4).
 export const SCOPED_PERMISSIONS = [
+  'delivery.overview:view',
   'delivery.item:create',
   'delivery.item:edit',
   'delivery.item:delete',
@@ -227,6 +253,7 @@ export const BUILT_IN_ROLES = [
     'project.member:view',
     'project.sap:view',
     'delivery.item:view',
+    'delivery.overview:view',
     'agent.fsd:view',
     'agent.dev:view',
   ]),
@@ -256,10 +283,16 @@ export const BUILT_IN_ROLES = [
     'delivery.item:edit',
     'delivery.item:export',
   ]),
+  single('DL_TEAM', 'project', '开发团队视图', '在开发概览中查看他人的负载与姓名。', [
+    'delivery.overview.team:view',
+  ]),
   single('DL_ADMIN', 'project', '开发清单管理', '删除、导入开发项，维护自定义列与标签。', [
     'delivery.item:delete',
     'delivery.item:import',
     'delivery.config:manage',
+  ]),
+  single('PF_VIEW', 'organization', '项目组合查看', '跨项目查看开发风险、冻结与预算。', [
+    'delivery.portfolio:view',
   ]),
   single('AG_FSD', 'project', 'FSD 设计', '使用设计助手写功能说明书并定稿。', [
     'agent.fsd:run',
@@ -285,6 +318,7 @@ export const BUILT_IN_ROLES = [
     'PRJ_SAP',
     'DL_EDIT',
     'DL_ADMIN',
+    'DL_TEAM',
   ]),
   composite('C_ARCHITECT', 'project', '方案架构师', '维护开发清单，使用设计与开发助手。', [
     'PRJ_VIEW',
@@ -305,6 +339,7 @@ export const BUILT_IN_ROLES = [
     'PRJ_VIEW',
     'DL_EDIT',
     'DL_ADMIN',
+    'DL_TEAM',
     'AG_DEV',
     'PRJ_SAP',
   ]),
@@ -327,10 +362,12 @@ export const BUILT_IN_ROLES = [
     'PRJ_VIEW',
     'PRJ_CONTACT',
     'PRJ_COMMERCIAL',
+    'PF_VIEW',
   ]),
   composite('C_PMO', 'organization', 'PMO', '跨项目查看项目与联系人。', [
     'PRJ_VIEW',
     'PRJ_CONTACT',
+    'PF_VIEW',
   ]),
 ];
 export const builtInRole = (code) => BUILT_IN_ROLES.find((r) => r.code === code);
