@@ -25,16 +25,29 @@ export const pageKey = (
   route: Pick<RouteLocationNormalizedLoaded, 'meta' | 'path' | 'fullPath'>,
 ) => (route.meta.keepOnQuery ? route.path : route.fullPath);
 
+const pathOf = (fullPath: string) => fullPath.split(/[?#]/)[0]!;
+// The settings pages share one tab, “设置”: they have a menu of their own (workbench-tabs.md 3).
+export const isSettings = (fullPath: string) => {
+  const path = pathOf(fullPath);
+  return path === '/settings' || path.startsWith('/settings/');
+};
+
 export function tabLabel(fullPath: string) {
-  const path = fullPath.split(/[?#]/)[0]!;
+  const path = pathOf(fullPath);
   if (isRecord(path)) return path.endsWith('/development') ? '开发助手' : '设计助手';
-  if (path === '/settings') return '设置';
+  if (isSettings(path)) return '设置';
   return entryOf(path)?.label ?? moduleOf(path).label;
 }
 export function tabIcon(fullPath: string) {
-  const path = fullPath.split(/[?#]/)[0]!;
+  const path = pathOf(fullPath);
   if (isRecord(path)) return path.endsWith('/development') ? 'code' : 'file';
+  if (isSettings(path)) return moduleOf(path).icon;
   return entryOf(path)?.icon ?? moduleOf(path).icon;
+}
+// The page a tab shows, where its label does not say it: the settings page in “设置”.
+export function tabNote(fullPath: string) {
+  const path = pathOf(fullPath);
+  return isSettings(path) && path !== '/settings' ? (entryOf(path)?.label ?? '') : '';
 }
 
 let router: Router | null = null;
@@ -57,7 +70,15 @@ function load(): { tabs: Tab[]; active: string } | null {
         (t) => typeof t?.id === 'string' && typeof t?.path === 'string' && t.path.startsWith('/'),
       )
       .map((t) => ({ id: t.id, path: t.path }));
-    return { tabs: list, active: String(data.active ?? '') };
+    // Settings pages remembered in several tabs (before they shared one): the current one stays.
+    const active = String(data.active ?? '');
+    const settings =
+      list.find((t) => t.id === active && isSettings(t.path)) ??
+      list.find((t) => isSettings(t.path));
+    return {
+      tabs: list.filter((t) => t === settings || !isSettings(t.path)),
+      active,
+    };
   } catch {
     return null;
   }
@@ -84,9 +105,12 @@ export function startTabs(r: Router, userId: string) {
   const current = r.currentRoute.value.fullPath;
   const same =
     tabs.value.find((t) => t.id === stored?.active && t.path === current) ??
-    tabs.value.find((t) => t.path === current);
-  if (same) activeTabId.value = same.id;
-  else {
+    tabs.value.find((t) => t.path === current) ??
+    (isSettings(current) ? tabs.value.find((t) => isSettings(t.path)) : undefined);
+  if (same) {
+    same.path = current;
+    activeTabId.value = same.id;
+  } else {
     const tab = { id: newId(), path: current };
     const at = tabs.value.findIndex((t) => t.id === stored?.active);
     tabs.value.splice(at < 0 ? tabs.value.length : at + 1, 0, tab);
@@ -115,6 +139,14 @@ export function startTabs(r: Router, userId: string) {
         activeTabId.value = other.id;
         return;
       }
+    }
+    // A link from another page into settings goes to the settings tab; this tab keeps its page.
+    const settings = tabs.value.find((t) => t !== tab && isSettings(t.path));
+    if (!action && settings && isSettings(to.fullPath) && !isSettings(tab.path)) {
+      if (settings.path !== to.fullPath) settings.back = undefined;
+      settings.path = to.fullPath;
+      activeTabId.value = settings.id;
+      return;
     }
     if (!action && pageKey(r.resolve(tab.path)) !== pageKey(to)) tab.back = tab.path;
     tab.path = to.fullPath;
@@ -162,8 +194,9 @@ export async function activateTab(id: string) {
 }
 
 // Opens an address in a new tab right of the current one and brings it to the front.
-export async function openInNewTab(path: string) {
+export async function openInNewTab(path: string): Promise<boolean> {
   if (!router) return false;
+  if (isSettings(path) && tabs.value.some((t) => isSettings(t.path))) return openPage(path);
   const at = tabs.value.findIndex((t) => t.id === activeTabId.value) + 1;
   const id = newId();
   const target = router.resolve(path).fullPath;
@@ -178,11 +211,16 @@ export async function openInNewTab(path: string) {
 // A menu entry has one tab (workbench-tabs.md 2, 3): opening it from the menu, a module, the
 // command palette or the settings search brings its tab forward, the one on exactly its address
 // first, else one on a page of it (a user's details belong to “用户”); only without one does a
-// tab open.
-const pathOf = (fullPath: string) => fullPath.split(/[?#]/)[0]!;
-export async function openPage(path: string) {
+// tab open. A settings page opens in the settings tab.
+export async function openPage(path: string): Promise<boolean> {
   if (!router) return false;
   const target = pathOf(router.resolve(path).fullPath);
+  const settings = isSettings(target) && tabs.value.find((t) => isSettings(t.path));
+  if (settings) {
+    if (pathOf(settings.path) === target) return activateTab(settings.id);
+    if (settings.id === activeTabId.value) return !(await router.push(path).catch(() => true));
+    return go(router.resolve(path).fullPath, { id: settings.id });
+  }
   const entry = entryOf(target)?.id;
   const tab =
     tabs.value.find((t) => pathOf(t.path) === target) ??

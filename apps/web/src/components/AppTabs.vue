@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue';
-import { ArrowRightToLine, CopyX, Plus, X } from '@lucide/vue';
+import { ArrowRightToLine, ChevronDown, CopyX, Plus, X } from '@lucide/vue';
 import AppIcon from './AppIcon.vue';
 import AppContextMenu, { type ContextItem } from './AppContextMenu.vue';
 import BaseIconButton from './base/BaseIconButton.vue';
+import BaseMenu from './base/BaseMenu.vue';
+import BaseMenuItem from './base/BaseMenuItem.vue';
+import BaseMenuSeparator from './base/BaseMenuSeparator.vue';
 import {
   activateTab,
   activeTabId,
@@ -13,6 +16,7 @@ import {
   openInNewTab,
   tabIcon,
   tabLabel,
+  tabNote,
   tabs,
 } from '../services/tabs';
 
@@ -64,7 +68,7 @@ function resolve(target: EventTarget | null): ContextItem[] | null {
           class="tab"
           :class="{ active: tab.id === activeTabId }"
           :data-tab-id="tab.id"
-          :title="tabLabel(tab.path)"
+          :title="[tabLabel(tab.path), tabNote(tab.path)].filter(Boolean).join(' · ')"
           @mousedown.middle.prevent
           @auxclick="aux($event, tab.id)"
         >
@@ -91,6 +95,32 @@ function resolve(target: EventTarget | null): ContextItem[] | null {
     <BaseIconButton label="新标签页" size="sm" @click="openInNewTab('/home')"
       ><Plus
     /></BaseIconButton>
+    <!-- Every tab in one list, for when the strip has more than it can show. -->
+    <BaseMenu align="end">
+      <template #trigger>
+        <button type="button" class="all-tabs" :aria-label="`全部标签（${tabs.length}）`">
+          {{ tabs.length }}<ChevronDown />
+        </button>
+      </template>
+      <div class="all-tabs-list">
+        <BaseMenuItem
+          v-for="tab in tabs"
+          :key="tab.id"
+          :tone="tab.id === activeTabId ? 'blue' : 'neutral'"
+          :note="tabNote(tab.path)"
+          :class="{ current: tab.id === activeTabId }"
+          @select="activateTab(tab.id)"
+          ><template #icon><AppIcon :name="tabIcon(tab.path)" :size="14" /></template
+          >{{ tabLabel(tab.path) }}</BaseMenuItem
+        >
+      </div>
+      <template v-if="tabs.length > 1">
+        <BaseMenuSeparator />
+        <BaseMenuItem @select="closeOtherTabs(activeTabId)"
+          ><template #icon><CopyX /></template>关闭其他标签</BaseMenuItem
+        >
+      </template>
+    </BaseMenu>
   </nav>
 </template>
 <style scoped>
@@ -104,6 +134,44 @@ function resolve(target: EventTarget | null): ContextItem[] | null {
 }
 .tab-bar > :deep(.base-icon-button) {
   align-self: center;
+}
+.all-tabs {
+  display: inline-flex;
+  margin-left: auto;
+  align-self: center;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-0-5);
+  height: var(--control-tab);
+  padding: 0 var(--space-1) 0 var(--space-1-5);
+  border: 0;
+  border-radius: var(--radius-6);
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--font-12);
+  cursor: pointer;
+}
+.all-tabs svg {
+  width: 14px;
+  height: 14px;
+}
+.all-tabs:hover,
+.all-tabs[data-state='open'] {
+  background: var(--hover);
+  color: var(--text);
+}
+.all-tabs:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+.all-tabs-list {
+  max-height: 60vh;
+  min-width: calc(var(--layout-tab-max) * 1.25);
+  overflow-y: auto;
+}
+.current {
+  font-weight: var(--weight-550);
 }
 .tab-strip {
   display: flex;

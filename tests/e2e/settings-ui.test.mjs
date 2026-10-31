@@ -313,6 +313,10 @@ test('settings: menu by permission, customers, models, project SAP login and lis
     await page.getByRole('heading', { name: '通知', exact: true, level: 1 }).waitFor();
     await menu.getByRole('button', { name: '智能体', exact: true }).click();
     await menu.getByRole('link', { name: '大模型', exact: true }).click();
+    // Every settings page opened so far shares the one settings tab (workbench-tabs.md 3).
+    const tabBar = page.locator('.tab-bar .tab');
+    await page.locator('.tab-bar .tab[title="设置 · 大模型"]').waitFor();
+    assert.equal(await tabBar.count(), 1);
     await page.getByRole('button', { name: '测试模型1', exact: true }).click();
     await page.locator('.s-drawer[open]').waitFor();
     assert.equal(await page.getByRole('heading', { name: '默认调用参数', exact: true }).count(), 0);
@@ -396,6 +400,16 @@ test('settings: menu by permission, customers, models, project SAP login and lis
     await page.getByRole('button', { name: '确认继续' }).click();
     await page.getByRole('status').filter({ hasText: '已删除 1 项' }).waitFor();
     assert.equal(deleted, 1);
+
+    // The list of all tabs brings the settings tab back, on the page it showed.
+    assert.equal(await tabBar.count(), 2);
+    await page.getByRole('button', { name: '全部标签（2）' }).click();
+    await page.getByRole('menu').waitFor();
+    await page.waitForTimeout(400); // the menu fades in
+    await page.screenshot({ path: '.runtime/artifacts/settings-ui/all-tabs.png' });
+    await page.getByRole('menuitem', { name: /^设置/ }).click();
+    await page.waitForURL(/\/settings\/project\/sap$/);
+    await page.getByText('S/4 开发 100').first().waitFor();
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();
