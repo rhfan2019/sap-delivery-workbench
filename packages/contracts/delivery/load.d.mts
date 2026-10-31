@@ -29,11 +29,15 @@ export interface LoadCell extends LoadBucket {
 export interface LoadColumns {
   before: LoadCell;
   weeks: (LoadCell & { monday: string })[];
+  // From this Monday on.
+  after: LoadCell & { from: string };
   total: LoadCell;
 }
 
 export const WEEKS_BEFORE: number;
-export const WEEKS_AFTER: number;
+export const AHEAD_DEFAULT: number;
+export const AHEAD_MAX: number;
+export function aheadOf(value: unknown): number;
 export function mondayOf(date: string): string;
 export function isoWeek(monday: string): string;
 export function baseOptions(start: string | null, end: string | null, today: string): string[];
@@ -42,5 +46,5 @@ export function loadRows(items: ItemLike[]): {
   totals: { items: number; developed: number; tested: number };
   rows: LoadRow[];
 };
-export function loadWindow(row: LoadRow, base: string): LoadColumns;
+export function loadWindow(row: LoadRow, base: string, ahead?: number): LoadColumns;
 export function sumRows(rows: LoadRow[]): LoadRow;

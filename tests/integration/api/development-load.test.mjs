@@ -169,6 +169,7 @@ test('development load: permissions, rows, counts and sort code', async () => {
       ],
     );
     assert.equal(cols.total.diff, -1);
+    assert.equal(loadWindow(row(people.pm), monday, 1).after.planned, 1);
 
     // Every number equals the length of the list it opens (the same test as the list).
     const { items } = await pm('GET', list);
@@ -187,6 +188,12 @@ test('development load: permissions, rows, counts and sort code', async () => {
       for (const w of c.weeks) {
         assert.equal(count({ ...who, planned: range(w.monday) }), w.planned);
         assert.equal(count({ ...who, actual: range(w.monday) }), w.actual);
+      }
+      // One week ahead puts E (two weeks after the base) into “以后”.
+      for (const ahead of [1, 3]) {
+        const { after } = loadWindow(r, monday, ahead);
+        assert.equal(count({ ...who, planned: after.from + '~' }), after.planned);
+        assert.equal(count({ ...who, actual: after.from + '~' }), after.actual);
       }
     }
   } finally {

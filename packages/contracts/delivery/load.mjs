@@ -1,11 +1,18 @@
 // Development load table (docs/specs/development-load.md), shared by the API, which groups the
-// items per developer and week, and the web, which lays out the nine weeks around the chosen
-// base Monday. Only the development phase counts; a cancelled development phase (and so an item
+// items per developer and week, and the web, which lays out the weeks around the chosen base
+// Monday. Only the development phase counts; a cancelled development phase (and so an item
 // removed from scope) is left out. Dates are `YYYY-MM-DD` strings.
 import { addDays, unplanned } from './overview.mjs';
 
 export const WEEKS_BEFORE = 1;
-export const WEEKS_AFTER = 7;
+// Weeks shown after the base week (展望周数), chosen on the page.
+export const AHEAD_DEFAULT = 3;
+export const AHEAD_MAX = 12;
+// The look-ahead from the address: a whole number 1..AHEAD_MAX, else the default.
+export function aheadOf(value) {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= 1 && n <= AHEAD_MAX ? n : AHEAD_DEFAULT;
+}
 
 const weekday = (date) => (new Date(date + 'T00:00:00Z').getUTCDay() + 6) % 7;
 // The Monday of the week a date falls in.
@@ -73,21 +80,22 @@ export function loadRows(items) {
   return { totals, rows: [...rows.values()] };
 }
 
-// The columns of one row for a base Monday: everything before the first week, the nine weeks
-// (one before the base, the base, seven after) and the row total. `diff` is cumulative from the
-// left: actual minus planned up to and including that column.
-export function loadWindow(row, base) {
+// The columns of one row for a base Monday: everything before the first week, the weeks (one
+// before the base, the base, `ahead` after), everything after the last week and the row total.
+// `diff` is cumulative from the left: actual minus planned up to and including that column.
+export function loadWindow(row, base, ahead = AHEAD_DEFAULT) {
   const first = addDays(base, -7 * WEEKS_BEFORE);
-  const mondays = Array.from({ length: WEEKS_BEFORE + 1 + WEEKS_AFTER }, (_, n) =>
-    addDays(first, 7 * n),
-  );
+  const mondays = Array.from({ length: WEEKS_BEFORE + 1 + ahead }, (_, n) => addDays(first, 7 * n));
+  const next = addDays(base, 7 * (ahead + 1));
   const before = bucket();
-  for (const [monday, w] of Object.entries(row.weeks))
-    if (monday < first) {
-      before.effort += w.effort;
-      before.planned += w.planned;
-      before.actual += w.actual;
-    }
+  const after = bucket();
+  for (const [monday, w] of Object.entries(row.weeks)) {
+    const into = monday < first ? before : monday >= next ? after : null;
+    if (!into) continue;
+    into.effort += w.effort;
+    into.planned += w.planned;
+    into.actual += w.actual;
+  }
   let diff = before.actual - before.planned;
   const weeks = mondays.map((monday) => {
     const w = row.weeks[monday] ?? bucket();
@@ -97,6 +105,7 @@ export function loadWindow(row, base) {
   return {
     before: { ...before, diff: before.actual - before.planned },
     weeks,
+    after: { ...after, from: next, diff: diff + after.actual - after.planned },
     total: { effort: row.effort, planned: row.items, actual: row.done, diff: row.done - row.items },
   };
 }

@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  aheadOf,
   baseOptions,
   defaultBase,
   isoWeek,
@@ -67,7 +68,8 @@ test('load rows: development phase only, cancelled left out, cumulative differen
 
   // Base 2026-10-19: the first column is the week of 10-12; 09-28 falls before it.
   const cols = loadWindow(u, '2026-10-19');
-  assert.equal(cols.weeks.length, 9);
+  // The default look-ahead: one week before the base, the base and three after.
+  assert.equal(cols.weeks.length, 5);
   assert.equal(cols.weeks[0].monday, '2026-10-12');
   assert.deepEqual(cols.before, { effort: 2, planned: 1, actual: 1, diff: 0 });
   assert.deepEqual(
@@ -78,7 +80,21 @@ test('load rows: development phase only, cancelled left out, cumulative differen
     ],
   );
   assert.equal(cols.weeks.at(-1).diff, -1);
+  assert.deepEqual(cols.after, { effort: 0, planned: 0, actual: 0, diff: -1, from: '2026-11-16' });
   assert.deepEqual(cols.total, { effort: 10, planned: 4, actual: 2, diff: -2 });
+
+  // One week ahead of 09-28: 10-12 on adds up after the weeks shown, the difference carried on.
+  const short = loadWindow(u, '2026-09-28', 1);
+  assert.deepEqual(
+    short.weeks.map((w) => w.monday),
+    ['2026-09-21', '2026-09-28', '2026-10-05'],
+  );
+  assert.deepEqual(short.after, { effort: 4, planned: 2, actual: 1, diff: -1, from: '2026-10-12' });
+  assert.equal(loadWindow(u, '2026-10-19', 12).weeks.length, 14);
+  assert.deepEqual(
+    ['3', '1', '12', '0', '13', '2.5', 'x', undefined].map(aheadOf),
+    [3, 1, 12, 3, 3, 3, 3, 3],
+  );
 
   const sum = sumRows(rows);
   assert.deepEqual([sum.items, sum.unplanned, sum.effort], [5, 2, 11]);

@@ -216,7 +216,8 @@ test('development load: drill-down and back keep the page as it was', async (t) 
   assert.equal(loads, 1);
   assert.equal(await page.locator('[aria-busy="true"]').count(), 0);
 
-  // The base date is in the address: another Monday moves the nine weeks without a request.
+  // The base date and the look-ahead are in the address: another Monday moves the weeks, and
+  // the last group adds up everything after them, without a request.
   const next = addDays(load.base, 14);
   await page.goto(`http://127.0.0.1:5195/workspace/development-load?week=${next}`);
   await table.waitFor();
@@ -224,5 +225,18 @@ test('development load: drill-down and back keep the page as it was', async (t) 
     await page.locator('.ld-table thead tr').first().innerText(),
     new RegExp(addDays(next, -7)),
   );
+  await page.goto(`http://127.0.0.1:5195/workspace/development-load?week=${next}&ahead=5`);
+  await table.waitFor();
+  const head = await page.locator('.ld-table thead tr').first().innerText();
+  assert.match(head, new RegExp(addDays(next, 7 * 5)));
+  assert.match(head, new RegExp(addDays(next, 7 * 6) + ' 以后'));
+  await page.getByRole('combobox', { name: '展望周数' }).click();
+  await page.getByRole('option', { name: '2 周', exact: true }).click();
+  await page.waitForURL(/ahead=2/);
+  assert.match(
+    await page.locator('.ld-table thead tr').first().innerText(),
+    new RegExp(addDays(next, 7 * 3) + ' 以后'),
+  );
+  await page.screenshot({ path: '.runtime/artifacts/development-load/ahead.png' });
   assert.deepEqual(errors, []);
 });

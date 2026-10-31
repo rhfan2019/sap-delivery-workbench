@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { CalendarRange, RefreshCw } from '@lucide/vue';
 import { addDays, type OverviewFilter } from '@sap-delivery-workbench/contracts/delivery/overview';
 import {
+  AHEAD_MAX,
+  aheadOf,
   isoWeek,
   loadWindow,
   mondayOf,
@@ -22,7 +24,7 @@ import { loadLink, pct, shortDate, type DevelopmentLoad } from './model';
 
 // 开发管理 → 开发排期 (docs/specs/development-load.md): per developer and week, the development
 // effort and items planned to finish, those actually finished and the running difference. The
-// base Monday (?week=) picks the nine weeks shown; a number opens the development list in this
+// base Monday (?week=) and the look-ahead (?ahead=) pick the weeks shown; a number opens the development list in this
 // tab, and the back button returns here exactly as it was.
 const route = useRoute();
 const router = useRouter();
@@ -71,6 +73,16 @@ const thisWeek = computed(() => (data.value ? mondayOf(data.value.today) : ''));
 function pick(week: string) {
   if (week !== base.value) void router.replace({ query: { ...route.query, week } });
 }
+// Weeks shown after the base week; the rest adds up in “YYYY-MM-DD 以后”.
+const ahead = computed(() => aheadOf(route.query.ahead));
+function pickAhead(value: string) {
+  if (Number(value) !== ahead.value)
+    void router.replace({ query: { ...route.query, ahead: value } });
+}
+const aheadOptions = Array.from({ length: AHEAD_MAX }, (_, n) => ({
+  value: String(n + 1),
+  label: `${n + 1} 周`,
+}));
 const options = computed(() =>
   (data.value?.options ?? []).map((monday) => ({
     value: monday,
@@ -126,11 +138,13 @@ const lines = computed<Line[]>(() => {
 });
 const table = computed(() =>
   base.value
-    ? lines.value.map((line) => ({ ...line, cols: loadWindow(line.row, base.value) }))
+    ? lines.value.map((line) => ({ ...line, cols: loadWindow(line.row, base.value, ahead.value) }))
     : [],
 );
 const weeks = computed(() => table.value[0]?.cols.weeks.map((w) => w.monday) ?? []);
 const beforeLabel = computed(() => (weeks.value[0] ? shortDate(weeks.value[0]) + ' 以前' : ''));
+const afterFrom = computed(() => table.value[0]?.cols.after.from ?? '');
+const afterLabel = computed(() => (afterFrom.value ? afterFrom.value + ' 以后' : ''));
 
 // --- drill-down --------------------------------------------------------------------------
 function open(line: Line, filter: OverviewFilter, what: string) {
@@ -139,6 +153,7 @@ function open(line: Line, filter: OverviewFilter, what: string) {
 }
 const range = (monday: string) => `${monday}~${addDays(monday, 6)}`;
 const beforeRange = () => '~' + addDays(weeks.value[0]!, -1);
+const afterRange = () => afterFrom.value + '~';
 const weekName = (monday: string) =>
   `${isoWeek(monday)}（${shortDate(monday)}~${shortDate(addDays(monday, 6))}）`;
 const show = (n: number) => (n ? String(Math.round(n * 10) / 10) : '');
@@ -178,6 +193,14 @@ const tone = (diff: number) => (diff < 0 ? 'bad' : diff > 0 ? 'good' : '');
           @click="pick(thisWeek)"
           >回到本周</BaseButton
         >
+        <span class="ld-base-label">展望周数</span>
+        <BaseSelect
+          v-if="data"
+          :model-value="String(ahead)"
+          :options="aheadOptions"
+          label="展望周数"
+          @update:model-value="pickAhead"
+        />
         <BaseIconButton label="刷新" size="sm" :disabled="loading" @click="load()"
           ><RefreshCw
         /></BaseIconButton>
@@ -212,6 +235,7 @@ const tone = (diff: number) => (diff < 0 ? 'bad' : diff > 0 ? 'good' : '');
             >
               {{ w }}
             </th>
+            <th rowspan="3" colspan="4" class="ld-group">{{ afterLabel }}</th>
           </tr>
           <tr>
             <th
@@ -236,7 +260,7 @@ const tone = (diff: number) => (diff < 0 ? 'bad' : diff > 0 ? 'good' : '');
             </th>
           </tr>
           <tr class="ld-metrics">
-            <template v-for="g in weeks.length + 2" :key="g">
+            <template v-for="g in weeks.length + 3" :key="g">
               <th class="ld-effort ld-first" title="预计人天">预计<br />人天</th>
               <th class="ld-planned" title="计划个数">计划<br />个数</th>
               <th class="ld-actual" title="实际个数">实际<br />个数</th>
@@ -311,7 +335,7 @@ const tone = (diff: number) => (diff < 0 ? 'bad' : diff > 0 ? 'good' : '');
             <td class="ld-diff" :class="tone(line.cols.before.diff)">
               {{ line.cols.before.diff || '' }}
             </td>
-            <!-- 九周 -->
+            <!-- 各周 -->
             <template v-for="w in line.cols.weeks" :key="w.monday">
               <td class="ld-effort ld-first" :class="{ now: w.monday === thisWeek }">
                 {{ show(w.effort) }}
@@ -338,6 +362,31 @@ const tone = (diff: number) => (diff < 0 ? 'bad' : diff > 0 ? 'good' : '');
               </td>
               <td class="ld-diff" :class="tone(w.diff)">{{ w.diff || '' }}</td>
             </template>
+            <!-- 展望以后 -->
+            <td class="ld-effort ld-first">{{ show(line.cols.after.effort) }}</td>
+            <td class="ld-planned">
+              <button
+                v-if="line.cols.after.planned"
+                type="button"
+                class="ld-num"
+                @click="open(line, { planned: afterRange() }, afterLabel + ' 计划')"
+              >
+                {{ line.cols.after.planned }}
+              </button>
+            </td>
+            <td class="ld-actual">
+              <button
+                v-if="line.cols.after.actual"
+                type="button"
+                class="ld-num"
+                @click="open(line, { actual: afterRange() }, afterLabel + ' 实际')"
+              >
+                {{ line.cols.after.actual }}
+              </button>
+            </td>
+            <td class="ld-diff" :class="tone(line.cols.after.diff)">
+              {{ line.cols.after.diff || '' }}
+            </td>
           </tr>
         </tbody>
       </table>
@@ -345,7 +394,7 @@ const tone = (diff: number) => (diff < 0 ? 'bad' : diff > 0 ? 'good' : '');
     <p v-if="data && (data.people.length || data.rows.length)" class="ld-note">
       只统计开发阶段：预计人天与计划个数按计划完成日所在的周，实际个数按实际完成日所在的周；累计差异从左往右累计“实际
       −
-      计划”。总计的计划个数是该人负责的全部开发项（含未安排日期的）。开发阶段已取消的开发项不统计。点数字在本标签打开开发清单，后退即回到这里。
+      计划”；展望周数决定基准周之后显示几周，更晚的合计在“以后”一组。总计的计划个数是该人负责的全部开发项（含未安排日期的）。开发阶段已取消的开发项不统计。点数字在本标签打开开发清单，后退即回到这里。
     </p>
   </div>
 </template>
