@@ -46,15 +46,16 @@ import {
   stageOwner,
   type AgentStage,
 } from '@sap-delivery-workbench/contracts/delivery/fields';
+import { atRisk, pastGate } from '@sap-delivery-workbench/contracts/delivery/overview';
 import { currentProject, projects, leaveDelivery } from '../../services/projectContext';
 import { askConfirmation } from '../../services/confirmation';
 import {
   OPTIONS,
   PHASES,
   catalog,
-  overdue,
   richText,
   sortValue,
+  today,
   type CustomFieldDefinition,
   type Item,
   type ListContext,
@@ -178,12 +179,7 @@ const freeze = computed(() => {
 const lateItems = computed(() => {
   const date = freeze.value?.date;
   if (!date) return 0;
-  return items.value.filter(
-    (i) =>
-      (i.phases.development?.plannedEnd ?? '') > date &&
-      i.phases.development?.status !== 'completed' &&
-      i.phases.development?.status !== 'cancelled',
-  ).length;
+  return items.value.filter((i) => pastGate(i, 'development', { code_freeze: date })).length;
 });
 const columnStorageKey = computed(
   () =>
@@ -295,11 +291,7 @@ const scopes = computed(() => {
         i.phases.consultant_test.assigneeId === me.value ||
         i.phases.user_test.assigneeId === me.value,
     },
-    {
-      id: 'overdue',
-      name: '计划逾期',
-      test: (i: Item) => PHASES.some((p) => overdue(i.phases[p.key])),
-    },
+    { id: 'risk', name: '风险', test: (i: Item) => atRisk(i, today()) },
   ];
   return defs.map((d) => ({ ...d, count: matching.value.filter(d.test).length }));
 });

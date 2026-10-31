@@ -10,6 +10,7 @@ import {
   type CustomFieldDefinition,
   type PhaseKey,
 } from '@sap-delivery-workbench/contracts/delivery/fields';
+import { phaseRisk } from '@sap-delivery-workbench/contracts/delivery/overview';
 
 export { FIELDS, PHASES, GROUPS, OPTIONS, fieldValue, richText };
 export type { FieldDef, CustomFieldDefinition, PhaseKey };
@@ -163,14 +164,9 @@ export const today = () => {
   ].join('-');
 };
 
-// Planned end passed while the phase is still open: shown as a reminder, data is not changed.
-export function overdue(phase: Phase) {
-  return (
-    !!phase.plannedEnd &&
-    phase.plannedEnd < today() &&
-    !['completed', 'cancelled', 'delayed'].includes(phase.status)
-  );
-}
+// Planned end passed while the phase is still open and nobody set 已延误: a reminder on the status
+// cell, data is not changed. Both count as risk (docs/specs/development-overview.md 3).
+export const overdue = (phase: Phase) => phaseRisk(phase, today()) === 'stale';
 
 // Deep copy that also works on reactive proxies (structuredClone rejects them).
 export const cloneItem = (item: Item): Item => JSON.parse(JSON.stringify(item));

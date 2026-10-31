@@ -10,6 +10,7 @@
     "./agent-core/sse": "./agent-core/sse.mjs",
     "./agent-core/types": "./agent-core/types.ts",
     "./delivery/fields": "./delivery/fields.mjs",
+    "./delivery/overview": "./delivery/overview.mjs",
     "./projects/options": "./projects/options.mjs"
   }
 }
