@@ -92,7 +92,8 @@ async function submit() {
   </main>
 </template>
 <style scoped>
-/* Sign-in (DESIGN.md 6.5): one centred card on the page ground. */
+/* Sign-in (DESIGN.md 6.5, 4.0): one translucent card floating on the warm backdrop, a thin large
+   title, pill fields and an ink pill button. */
 .login-page {
   min-height: 100dvh;
   display: flex;
@@ -101,26 +102,28 @@ async function submit() {
   justify-content: center;
   gap: var(--space-6);
   padding: var(--space-10) var(--space-4);
-  background: var(--page);
+  background: var(--page-backdrop);
   color: var(--text);
 }
 .login-card {
   width: 100%;
-  max-width: 380px;
-  padding: var(--space-8);
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-12);
-  box-shadow: var(--shadow-card);
+  max-width: 420px;
+  padding: var(--space-10);
+  background: var(--surface-strong);
+  border-radius: var(--radius-28);
+  box-shadow:
+    inset 0 0 0 1px var(--surface-edge),
+    var(--shadow-panel);
 }
 .brand {
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-10);
   font-size: var(--font-14);
 }
 .login-card h1 {
-  font-size: var(--font-20);
-  line-height: var(--leading-28);
-  font-weight: var(--weight-550);
+  font-size: var(--font-32);
+  line-height: var(--leading-40);
+  font-weight: var(--weight-300);
+  letter-spacing: -0.01em;
 }
 .login-lead {
   margin-top: var(--space-1);
@@ -132,6 +135,15 @@ form {
 }
 form label:first-child {
   margin-top: 0;
+}
+form label {
+  color: var(--text-muted);
+  font-weight: var(--weight-400);
+}
+.login-card form input {
+  height: var(--layout-record-bar);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
 }
 /* Browser autofill keeps the field colours. */
 form input:-webkit-autofill {
@@ -146,7 +158,7 @@ form input:-webkit-autofill {
 }
 .password-field .icon-button {
   position: absolute;
-  right: var(--space-0-5);
+  right: var(--space-2);
   top: 50%;
   width: var(--space-8);
   height: var(--space-6);
@@ -154,13 +166,15 @@ form input:-webkit-autofill {
 }
 .login-submit {
   width: 100%;
-  margin-top: var(--space-6);
+  min-height: var(--layout-record-bar);
+  margin-top: var(--space-8);
 }
 .login-submit:active:not(:disabled) {
   transform: scale(0.985);
 }
 .login-help {
   margin-top: var(--space-4);
+  color: var(--text-muted);
 }
 .login-foot {
   color: var(--text-subtle);

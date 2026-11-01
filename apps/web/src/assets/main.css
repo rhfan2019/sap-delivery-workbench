@@ -236,10 +236,10 @@ p {
   width: var(--control-button);
   height: var(--control-button);
   background: var(--primary);
-  color: var(--on-primary);
+  color: var(--accent);
   font-size: var(--font-20);
   font-weight: var(--weight-550);
-  border-radius: var(--radius-8);
+  border-radius: var(--radius-full);
   flex-shrink: 0;
 }
 .brand-mark > span {
@@ -247,7 +247,7 @@ p {
   position: absolute;
   right: var(--space-1);
   top: 0;
-  color: var(--on-primary);
+  color: var(--accent);
 }
 .form-symbol {
   width: var(--space-10);
@@ -255,10 +255,9 @@ p {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--neutral-fill-1);
-  color: var(--neutral-icon-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-8);
+  background: var(--primary);
+  color: var(--accent);
+  border-radius: var(--radius-full);
   margin-bottom: var(--space-6);
 }
 form label {
@@ -311,24 +310,39 @@ form input:focus-visible {
 input::placeholder {
   color: var(--text-subtle);
 }
+/* First sign-in password change: the same floating card as sign-in (DESIGN.md 6.5, 4.0). */
 .password-page {
   min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: var(--space-8);
-  background: var(--page);
+  background: var(--page-backdrop);
 }
 .password-card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-12);
-  box-shadow: var(--shadow-card);
-  padding: var(--space-8);
-  width: min(100%, 420px);
+  background: var(--surface-strong);
+  border-radius: var(--radius-28);
+  box-shadow:
+    inset 0 0 0 1px var(--surface-edge),
+    var(--shadow-panel);
+  padding: var(--space-10);
+  width: min(100%, 440px);
 }
 .password-card h1 {
-  font-size: var(--font-20);
-  line-height: var(--leading-28);
+  font-size: var(--font-32);
+  line-height: var(--leading-40);
+  font-weight: var(--weight-300);
+}
+.password-card form label {
+  color: var(--text-muted);
+  font-weight: var(--weight-400);
+}
+.password-card form input {
+  height: var(--layout-record-bar);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+}
+.password-card .primary-button {
+  min-height: var(--layout-record-bar);
 }
 .password-card .muted {
   font-size: var(--font-12);
