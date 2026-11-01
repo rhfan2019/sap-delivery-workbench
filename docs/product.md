@@ -27,18 +27,18 @@
 
 ## 3. 功能地图
 
-| 菜单       | 页面                                 | 说明                                               | 文档                                                         |
-| ---------- | ------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------ |
-| 工作台     | 首页                                 | 快捷入口与我的项目（待焕新，见路线图第 2 节）      | —                                                            |
-| 开发管理   | 开发概览                             | 按角色的开发驾驶舱，24 个指标，可下钻到清单        | [development-overview.md](modules/development-overview.md)   |
-|            | 开发清单                             | 开发台账：FSD、开发、顾问测试、IT/用户测试四阶段   | [development-list.md](modules/development-list.md)           |
-|            | 开发排期                             | 按周的开发人员计划、完成与负载                     | [development-load.md](modules/development-load.md)           |
-| 开发项     | 设计助手                             | 模型主导写 FSD，读取 SAP、批注、定稿、导出         | [fsd-agent.md](modules/fsd-agent.md)                         |
-|            | 开发助手                             | 写开发方案与 ABAP 代码，同步与校验                 | [dev-agent.md](modules/dev-agent.md)                         |
-| 知识与资产 | 知识问答、知识库、代码资产、文档模板 | 规划中                                             | —                                                            |
-| 设置       | 个人、项目、企业、智能体、审计与运维 | 项目主数据、成员权限、SAP 系统与凭据、大模型、审计 | [access.md](modules/access.md)、[audit.md](modules/audit.md) |
+| 菜单       | 页面                                 | 说明                                                                               | 文档                                                         |
+| ---------- | ------------------------------------ | ---------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 工作台     | 首页                                 | 便当格仪表盘：项目阶段、关键指标、本周要点、趋势、待办、里程碑、模块热力、团队负载 | [DESIGN.md](DESIGN.md) 第 12.4 节                            |
+| 开发管理   | 开发概览                             | 按角色的开发驾驶舱，24 个指标，可下钻到清单                                        | [development-overview.md](modules/development-overview.md)   |
+|            | 开发清单                             | 开发台账：FSD、开发、顾问测试、IT/用户测试四阶段                                   | [development-list.md](modules/development-list.md)           |
+|            | 开发排期                             | 按周的开发人员计划、完成与负载                                                     | [development-load.md](modules/development-load.md)           |
+| 开发项     | 设计助手                             | 模型主导写 FSD，读取 SAP、批注、定稿、导出                                         | [fsd-agent.md](modules/fsd-agent.md)                         |
+|            | 开发助手                             | 写开发方案与 ABAP 代码，同步与校验                                                 | [dev-agent.md](modules/dev-agent.md)                         |
+| 知识与资产 | 知识问答、知识库、代码资产、文档模板 | 规划中                                                                             | —                                                            |
+| 设置       | 个人、项目、企业、智能体、审计与运维 | 项目主数据、成员权限、SAP 系统与凭据、大模型、审计                                 | [access.md](modules/access.md)、[audit.md](modules/audit.md) |
 
-外壳：图标栏 + 二级菜单 + 浏览器式多标签页（[workbench-tabs.md](modules/workbench-tabs.md)），界面规范见[设计规范](DESIGN.md)。
+外壳：图标栏 + 二级菜单 + 浏览器式多标签页（[workbench-tabs.md](modules/workbench-tabs.md)），界面规范见[设计规范](DESIGN.md)：展示页（工作台、开发概览、开发排期）用便当格仪表盘语言，干活页用 Plain 风格。
 
 ## 4. 技术
 

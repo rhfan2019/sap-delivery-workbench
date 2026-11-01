@@ -1,0 +1,362 @@
+/* Dashboard language for the show pages (docs/DESIGN.md 12): a canvas under white cards on a
+   12-column grid, big numbers, one hero card in the brand blue and one ink card. Tokens only. */
+.dash {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius-20);
+  background: var(--dash-canvas);
+}
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: stretch;
+}
+.dash-grid > .span-3 {
+  grid-column: span 3;
+}
+.dash-grid > .span-4 {
+  grid-column: span 4;
+}
+.dash-grid > .span-5 {
+  grid-column: span 5;
+}
+.dash-grid > .span-6 {
+  grid-column: span 6;
+}
+.dash-grid > .span-7 {
+  grid-column: span 7;
+}
+.dash-grid > .span-8 {
+  grid-column: span 8;
+}
+.dash-grid > .span-9 {
+  grid-column: span 9;
+}
+.dash-grid > .span-12 {
+  grid-column: span 12;
+}
+@media (max-width: 1280px) {
+  .dash-grid > [class*='span-'] {
+    grid-column: span 6;
+  }
+  .dash-grid > .span-8,
+  .dash-grid > .span-9,
+  .dash-grid > .span-12 {
+    grid-column: span 12;
+  }
+}
+@media (max-width: 760px) {
+  .dash {
+    padding: var(--space-3);
+  }
+  .dash-grid > [class*='span-'] {
+    grid-column: span 12;
+  }
+}
+
+/* Cards. */
+.dash-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-5);
+  border-radius: var(--radius-16);
+  background: var(--dash-card);
+  box-shadow: var(--shadow-soft);
+}
+.dash-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: var(--leading-24);
+}
+.dash-card-head h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--font-14);
+  font-weight: var(--weight-550);
+  line-height: var(--leading-20);
+}
+.dash-card-head h2 svg {
+  width: 16px;
+  height: 16px;
+  color: var(--neutral-icon-1);
+}
+.dash-card-head small {
+  color: var(--text-muted);
+  font-size: var(--font-12);
+  font-weight: var(--weight-400);
+}
+.dash-card.hero {
+  background: var(--dash-hero);
+  color: var(--dash-on-hero);
+}
+.dash-card.hero .dash-card-head h2,
+.dash-card.hero .dash-card-head h2 svg,
+.dash-card.hero .dash-card-head small {
+  color: var(--dash-on-hero-muted);
+}
+.dash-card.ink {
+  background: var(--dash-ink);
+  color: var(--dash-on-ink);
+}
+.dash-card.ink .dash-card-head h2,
+.dash-card.ink .dash-card-head h2 svg,
+.dash-card.ink .dash-card-head small {
+  color: var(--dash-on-ink-muted);
+}
+.dash-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--link);
+  font: inherit;
+  font-size: var(--font-12);
+  cursor: pointer;
+}
+.dash-link:hover {
+  text-decoration: underline;
+}
+.dash-link svg {
+  width: 14px;
+  height: 14px;
+}
+.dash-card.hero .dash-link,
+.dash-card.ink .dash-link {
+  color: inherit;
+}
+
+/* Big numbers. */
+.dash-number {
+  font-size: var(--font-40);
+  font-weight: var(--weight-475);
+  line-height: var(--leading-48);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.dash-number small {
+  margin-left: var(--space-1);
+  font-size: var(--font-16);
+  font-weight: var(--weight-400);
+  letter-spacing: 0;
+}
+.dash-metric {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 0;
+  border-radius: var(--radius-16);
+  background: var(--dash-card);
+  box-shadow: var(--shadow-soft);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+button.dash-metric {
+  cursor: pointer;
+  transition: background var(--motion-fast);
+}
+button.dash-metric:hover {
+  background: var(--neutral-bg-2);
+}
+.dash-metric:focus-visible,
+.dash-card:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.dash-metric .label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  color: var(--text-muted);
+  font-size: var(--font-12);
+  line-height: var(--leading-16);
+}
+.dash-metric .label svg {
+  width: 14px;
+  height: 14px;
+}
+.dash-metric .row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+.dash-metric .value {
+  font-size: var(--font-32);
+  font-weight: var(--weight-475);
+  line-height: var(--leading-40);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.dash-metric .value small {
+  margin-left: var(--space-0-5);
+  font-size: var(--font-14);
+  font-weight: var(--weight-400);
+  letter-spacing: 0;
+}
+.dash-metric .value.red {
+  color: var(--red-text-2);
+}
+.dash-metric .value.yellow {
+  color: var(--yellow-text-2);
+}
+.dash-metric .sub {
+  color: var(--text-muted);
+  font-size: var(--font-12);
+  line-height: var(--leading-16);
+}
+
+/* Trend badge: a pill that says which way and whether that is good. */
+.dash-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0-5);
+  padding: 0 var(--space-1-5);
+  border-radius: var(--radius-full);
+  font-size: var(--font-12);
+  font-weight: var(--weight-475);
+  line-height: var(--leading-20);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.dash-trend svg {
+  width: 12px;
+  height: 12px;
+}
+.dash-trend.good {
+  background: var(--green-fill-1);
+  color: var(--green-text-2);
+}
+.dash-trend.bad {
+  background: var(--red-fill-1);
+  color: var(--red-text-2);
+}
+.dash-trend.flat {
+  background: var(--neutral-fill-1);
+  color: var(--text-muted);
+}
+.dash-card.hero .dash-trend {
+  background: var(--dash-hero-track);
+  color: var(--dash-on-hero);
+}
+
+/* Rows inside a card: a list without boxes. */
+.dash-rows {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dash-rows > li + li {
+  border-top: 1px solid var(--border);
+}
+.dash-card.ink .dash-rows > li + li {
+  border-top-color: var(--dash-ink-line);
+}
+.dash-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--control-table-row);
+  padding: var(--space-2) 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+button.dash-row,
+a.dash-row {
+  cursor: pointer;
+}
+button.dash-row:hover .dash-row-main strong,
+a.dash-row:hover .dash-row-main strong {
+  color: var(--link);
+}
+.dash-row-main {
+  display: grid;
+  flex: 1;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+.dash-row-main strong,
+.dash-row-main small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dash-row-main strong {
+  font-size: var(--font-14);
+  font-weight: var(--weight-475);
+}
+.dash-row-main small {
+  color: var(--text-muted);
+  font-size: var(--font-12);
+}
+.dash-empty {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-14);
+}
+
+/* Heat cells: five steps of the brand blue over the card. */
+.dash-heat {
+  display: grid;
+  place-items: center;
+  min-height: var(--control-icon);
+  border: 0;
+  border-radius: var(--radius-6);
+  background: var(--neutral-fill-1);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--font-12);
+  font-variant-numeric: tabular-nums;
+}
+button.dash-heat {
+  cursor: pointer;
+}
+button.dash-heat:hover {
+  outline: 2px solid var(--border-emphasis);
+}
+.dash-heat.h1 {
+  background: color-mix(in srgb, var(--dash-hero) 14%, var(--dash-card));
+}
+.dash-heat.h2 {
+  background: color-mix(in srgb, var(--dash-hero) 32%, var(--dash-card));
+}
+.dash-heat.h3 {
+  background: color-mix(in srgb, var(--dash-hero) 55%, var(--dash-card));
+  color: var(--dash-on-hero);
+}
+.dash-heat.h4 {
+  background: var(--dash-hero);
+  color: var(--dash-on-hero);
+}
+.dash-heat.risk {
+  box-shadow: inset 0 0 0 2px var(--red-solid-1);
+}
+
+/* Numbers that count up once when they first show (DESIGN.md 12: no bounce, no glow). */
+@media (prefers-reduced-motion: no-preference) {
+  .dash-rise {
+    animation: dash-rise var(--duration-slow) ease-out both;
+  }
+}
+@keyframes dash-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-1));
+  }
+}

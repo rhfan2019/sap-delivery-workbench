@@ -3,6 +3,7 @@ import { identity, restoreSession } from '../services/session';
 import LoginView from '../views/LoginView.vue';
 import PasswordView from '../views/PasswordView.vue';
 import AppLayout from '../components/AppLayout.vue';
+import HomeView from '../views/HomeView.vue';
 import WorkspaceView from '../views/WorkspaceView.vue';
 const page = <T>(path: string, component: () => Promise<T>) => ({ path, component });
 const settingsRoutes = [
@@ -53,7 +54,7 @@ export const router = createRouter({
       component: AppLayout,
       children: [
         { path: '', redirect: '/home' },
-        { path: 'home', component: WorkspaceView },
+        { path: 'home', component: HomeView },
         { path: 'projects/:id?', component: WorkspaceView },
         {
           path: 'projects/:projectId/development-items/:itemId/design',

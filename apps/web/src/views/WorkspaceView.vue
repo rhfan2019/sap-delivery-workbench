@@ -9,7 +9,7 @@ import BaseSection from '../components/base/BaseSection.vue';
 import BaseSkeleton from '../components/base/BaseSkeleton.vue';
 import { menus } from '../features/navigation';
 import { HEALTH, PROJECT_STATUSES } from '@sap-delivery-workbench/contracts/projects/options';
-import { api, identity, ApiError, type Project } from '../services/session';
+import { api, ApiError, type Project } from '../services/session';
 import { selectProject } from '../services/projectContext';
 const route = useRoute();
 const router = useRouter();
@@ -18,7 +18,6 @@ const project = ref<Project | null>(null);
 const loading = ref(true);
 const error = ref('');
 const filter = ref('');
-const isHome = computed(() => route.path === '/home');
 const isProjects = computed(() => route.path === '/projects');
 const isDetail = computed(() => Boolean(route.params.id));
 const module = computed(() => menus.find((m) => m.path === route.path));
@@ -45,16 +44,6 @@ const facts = (p: Project) =>
     .filter(Boolean)
     .join(' · ');
 const healthTone = { green: 'green', yellow: 'yellow', red: 'red' } as const;
-const pick = (ids: string[]) => ids.map((id) => menus.find((m) => m.id === id)!).filter(Boolean);
-// The home page (DESIGN.md 6.4): what people open most, then their projects and knowledge.
-const shortcuts = pick(['development-items', 'project-plan', 'sap-credentials', 'templates']);
-const knowledge = pick(['qa', 'knowledge', 'assets']);
-const date = new Intl.DateTimeFormat('zh-CN', {
-  timeZone: 'Asia/Shanghai',
-  month: 'long',
-  day: 'numeric',
-  weekday: 'long',
-}).format(new Date());
 async function openSettings(id: string) {
   await selectProject(id);
   await router.push('/settings/project/general');
@@ -64,7 +53,7 @@ async function load() {
   error.value = '';
   try {
     if (isDetail.value) project.value = await api<Project>('/projects/' + String(route.params.id));
-    else if (isHome.value || isProjects.value) projects.value = await api<Project[]>('/projects');
+    else if (isProjects.value) projects.value = await api<Project[]>('/projects');
   } catch (e) {
     error.value = (e as Error).message;
     if (e instanceof ApiError && e.status === 401) await router.replace('/login');
@@ -75,85 +64,7 @@ async function load() {
 onMounted(load);
 </script>
 <template>
-  <div v-if="isHome" class="home">
-    <header class="page-heading">
-      <div>
-        <h1>你好，{{ identity?.user.displayName }}</h1>
-        <p class="muted">{{ date }} · 从开发清单开始今天的交付。</p>
-      </div>
-      <RouterLink to="/workspace/development-items" class="primary-button"
-        ><AppIcon name="file" :size="16" />打开开发清单</RouterLink
-      >
-    </header>
-    <section class="home-group" aria-labelledby="home-start">
-      <h2 id="home-start">常用</h2>
-      <div class="home-cards">
-        <RouterLink v-for="item in shortcuts" :key="item.id" :to="item.path" class="home-card">
-          <span class="icon-tile"><AppIcon :name="item.icon" :size="16" /></span>
-          <span class="home-card-text">
-            <strong>{{ item.label }}</strong>
-            <small>{{ item.description }}</small>
-          </span>
-        </RouterLink>
-      </div>
-    </section>
-    <div class="home-columns">
-      <section class="home-group" aria-labelledby="home-projects">
-        <div class="home-group-head">
-          <h2 id="home-projects">
-            我的项目<span class="count-badge">{{ loading ? '—' : projects.length }}</span>
-          </h2>
-          <RouterLink to="/projects" class="text-link">查看全部</RouterLink>
-        </div>
-        <div v-if="loading" class="home-skeleton">
-          <BaseSkeleton v-for="n in 3" :key="n" />
-        </div>
-        <p v-else-if="error" class="error-note" role="alert">
-          {{ error }}<button class="text-button" @click="load">重新加载</button>
-        </p>
-        <BaseEmptyState
-          v-else-if="!projects.length"
-          title="还没有加入项目"
-          text="联系管理员把你加入项目后，项目会显示在这里。"
-        >
-          <template #icon><AppIcon name="folder" :size="16" /></template>
-        </BaseEmptyState>
-        <ul v-else class="project-list">
-          <li v-for="p in projects.slice(0, 5)" :key="p.id">
-            <RouterLink :to="'/projects/' + p.id" class="project-row">
-              <span class="icon-tile"><AppIcon name="folder" :size="16" /></span>
-              <span class="project-text">
-                <strong>{{ p.name }}</strong>
-                <small>{{ facts(p) }}</small>
-              </span>
-              <BaseTag v-if="p.health" :tone="healthTone[p.health.overall as 'green']">{{
-                HEALTH[p.health.overall as 'green']
-              }}</BaseTag>
-              <BaseTag :tone="tone(p)">{{ status(p) }}</BaseTag>
-            </RouterLink>
-          </li>
-        </ul>
-      </section>
-      <section class="home-group" aria-labelledby="home-knowledge">
-        <div class="home-group-head">
-          <h2 id="home-knowledge">知识与资产</h2>
-          <BaseTag>建设中</BaseTag>
-        </div>
-        <ul class="project-list">
-          <li v-for="item in knowledge" :key="item.id">
-            <RouterLink :to="item.path" class="project-row">
-              <span class="icon-tile"><AppIcon :name="item.icon" :size="16" /></span>
-              <span class="project-text">
-                <strong>{{ item.label }}</strong>
-                <small>{{ item.description }}</small>
-              </span>
-            </RouterLink>
-          </li>
-        </ul>
-      </section>
-    </div>
-  </div>
-  <div v-else-if="isProjects" class="home">
+  <div v-if="isProjects" class="home">
     <header class="page-heading">
       <div>
         <h1>我的项目</h1>
@@ -269,69 +180,22 @@ onMounted(load);
   max-width: 1080px;
   margin: 0 auto;
 }
-.home-group {
-  margin-top: var(--space-6);
-}
-.home-group > h2,
-.home-group-head h2 {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--font-14);
-  font-weight: var(--weight-550);
-}
-.home-group-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-.home-cards {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-3);
-  margin-top: var(--space-3);
-}
-.home-card {
-  display: grid;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-8);
-  background: var(--panel);
-  box-shadow: var(--shadow-card);
-  transition:
-    background var(--motion-fast),
-    border-color var(--motion-fast);
-}
-.home-card:hover,
 .project-row:hover {
   background: var(--neutral-bg-2);
 }
-.home-card:hover {
-  border-color: var(--border-strong);
-}
-.home-card-text,
 .project-text {
   display: grid;
   gap: var(--space-0-5);
   min-width: 0;
 }
-.home-card strong,
 .project-text strong {
   font-size: var(--font-14);
   font-weight: var(--weight-550);
 }
-.home-card small,
 .project-text small {
   font-size: var(--font-12);
   line-height: var(--leading-16);
   color: var(--text-muted);
-}
-.home-columns {
-  display: grid;
-  grid-template-columns: 3fr 2fr;
-  gap: var(--space-6);
 }
 .project-list {
   margin: var(--space-3) 0 0;
@@ -396,14 +260,5 @@ onMounted(load);
   display: grid;
   gap: var(--space-1);
   margin: 0;
-}
-@media (max-width: 950px) {
-  .home-cards {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .home-columns {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
 }
 </style>

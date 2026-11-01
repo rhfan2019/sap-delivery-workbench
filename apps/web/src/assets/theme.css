@@ -1,4 +1,5 @@
-/* Design tokens (docs/DESIGN.md 2.0, Plain style). The only file that writes colours,
+/* Design tokens (docs/DESIGN.md 3.0: Plain for the work pages, the dashboard language of section 12
+   for the show pages). The only file that writes colours,
    fonts, sizes, weights, spacing, radii, shadows and durations (contract 1.13, 1.15).
    Dark follows the system. */
 :root {
@@ -128,12 +129,14 @@
   --font-20: 20px;
   --font-24: 24px;
   --font-32: 32px;
+  --font-40: 40px;
   --leading-16: 16px;
   --leading-20: 20px;
   --leading-24: 24px;
   --leading-28: 28px;
   --leading-32: 32px;
   --leading-40: 40px;
+  --leading-48: 48px;
   --weight-400: 400;
   --weight-475: 475;
   --weight-550: 550;
@@ -160,6 +163,8 @@
   --radius-8: 8px;
   --radius-10: 10px;
   --radius-12: 12px;
+  --radius-16: 16px;
+  --radius-20: 20px;
   --radius-full: 9999px;
   --shadow-card: 0 0 0 1px #20272c14, 0 1px 1px #20272c14;
   --shadow-popover: 0 1px 2px #20272c3d, 0 2px 6px 2px #20272c14, 0 2px 8px #20272c14;
@@ -343,5 +348,40 @@
     --tag-orange-text: #f0a875;
     --tag-teal-bg: #0e2a29;
     --tag-teal-text: #79d0ca;
+  }
+}
+
+/* Dashboard language for the show pages: workbench and overviews (DESIGN.md 12). Three layers
+   of ground (page, canvas, card), one hero card in the brand blue, one ink card for the summary,
+   chart colours in a fixed order. */
+:root {
+  --dash-canvas: var(--neutral-fill-1);
+  --dash-card: var(--neutral-bg-1);
+  --dash-hero: var(--blue-solid-1);
+  --dash-hero-hover: var(--blue-solid-2);
+  --dash-on-hero: #ffffff;
+  --dash-on-hero-muted: #ffffffc2;
+  --dash-hero-track: #ffffff3d;
+  --dash-ink: #1f1f28;
+  --dash-on-ink: #f0f0f5;
+  --dash-on-ink-muted: #a9a9b6;
+  --dash-ink-line: #ffffff1f;
+  --shadow-soft: 0 1px 2px #20272c0a, 0 4px 16px #20272c0d;
+  --chart-1: var(--blue-solid-1);
+  --chart-2: var(--green-solid-1);
+  --chart-3: var(--purple-solid-1);
+  --chart-4: var(--yellow-solid-1);
+  --chart-5: var(--red-solid-1);
+  --chart-track: var(--neutral-fill-2);
+  --chart-grid: var(--neutral-border-1);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --dash-canvas: var(--neutral-bg-2);
+    --dash-card: var(--neutral-fill-1);
+    --dash-ink: #0b0b0e;
+    --dash-ink-line: #ffffff1a;
+    --shadow-soft: 0 0 0 1px #ffffff0f, 0 4px 16px #00000066;
+    --chart-track: var(--neutral-fill-3);
   }
 }

@@ -379,7 +379,7 @@ const coverageRows = computed(() => [
   height: var(--control-input);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-6);
-  background: var(--panel);
+  background: var(--dash-card);
   color: var(--text);
   font: inherit;
   font-size: var(--font-12);
@@ -425,7 +425,7 @@ const coverageRows = computed(() => [
   cursor: pointer;
 }
 .dot.estimated {
-  background: var(--panel);
+  background: var(--dash-card);
 }
 .dot:focus-visible {
   outline: 2px solid var(--focus);

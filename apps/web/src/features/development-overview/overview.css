@@ -1,9 +1,13 @@
-/* Development overview (docs/modules/development-overview.md 2, 8): sections of white cards on the
-   panel, numbers that open the list, tables in the list style. Tokens only (DESIGN.md 9). */
+/* Development overview (docs/modules/development-overview.md 2, 8) in the dashboard language
+   (DESIGN.md 12): white cards on the canvas, big numbers that open the list, tables in the list
+   style. Tokens only (DESIGN.md 9). */
 .ov {
   display: grid;
-  gap: var(--space-8);
+  gap: var(--space-6);
   max-width: 1600px;
+  padding: var(--space-5);
+  border-radius: var(--radius-20);
+  background: var(--dash-canvas);
 }
 .ov-sr {
   position: absolute;
@@ -44,10 +48,11 @@
   font-weight: var(--weight-400);
 }
 .ov-card {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-12);
-  background: var(--panel);
-  padding: var(--space-4);
+  border: 0;
+  border-radius: var(--radius-16);
+  background: var(--dash-card);
+  box-shadow: var(--shadow-soft);
+  padding: var(--space-5);
   min-width: 0;
 }
 .ov-card.scroll {
@@ -63,8 +68,8 @@
 /* Number cards. */
 .ov-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
-  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: var(--space-4);
 }
 .ov-stat {
   display: grid;
@@ -77,7 +82,7 @@
   transition: background var(--motion-fast);
 }
 .ov-stat:hover {
-  background: var(--hover);
+  background: var(--neutral-bg-2);
 }
 .ov-stat:focus-visible {
   outline: 2px solid var(--focus);
@@ -95,9 +100,11 @@
   height: 14px;
 }
 .ov-stat .value {
-  font-size: var(--font-24);
-  line-height: var(--leading-32);
+  font-size: var(--font-32);
+  font-weight: var(--weight-475);
+  line-height: var(--leading-40);
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 .ov-stat .value.red {
   color: var(--red-text-2);

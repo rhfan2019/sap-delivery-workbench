@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { CalendarRange, RefreshCw } from '@lucide/vue';
+import { CalendarRange, CheckCircle2, Code2, ListChecks, RefreshCw } from '@lucide/vue';
 import { addDays, type OverviewFilter } from '@sap-delivery-workbench/contracts/delivery/overview';
 import {
   AHEAD_MAX,
@@ -18,6 +18,7 @@ import BaseEmptyState from '../../components/base/BaseEmptyState.vue';
 import BaseIconButton from '../../components/base/BaseIconButton.vue';
 import BaseSelect from '../../components/base/BaseSelect.vue';
 import BaseSkeleton from '../../components/base/BaseSkeleton.vue';
+import DashMetric from '../../components/dashboard/DashMetric.vue';
 import { api, ApiError } from '../../services/session';
 import { currentProject } from '../../services/projectContext';
 import { loadLink, pct, shortDate, type DevelopmentLoad } from './model';
@@ -164,18 +165,23 @@ const tone = (diff: number) => (diff < 0 ? 'bad' : diff > 0 ? 'good' : '');
     <h1 class="ld-sr">开发排期</h1>
     <div class="ld-head">
       <div v-if="data" class="ld-totals" aria-label="开发进度">
-        <span class="ld-total"
-          ><span class="ld-total-label">总个数</span><strong>{{ data.totals.items }}</strong></span
-        >
-        <span class="ld-total"
-          ><span class="ld-total-label">已开发</span><strong>{{ data.totals.developed }}</strong
-          ><span class="ld-pct">{{ pct(data.totals.developed, data.totals.items) }}%</span></span
-        >
-        <span class="ld-total"
-          ><span class="ld-total-label">已测试</span><strong>{{ data.totals.tested }}</strong
-          ><span class="ld-pct">{{ pct(data.totals.tested, data.totals.items) }}%</span></span
-        >
-        <span class="ld-hint">已测试按顾问测试完成计</span>
+        <DashMetric label="开发项总数" :value="data.totals.items" unit="项"
+          ><template #icon><ListChecks /></template
+        ></DashMetric>
+        <DashMetric
+          label="已开发"
+          :value="pct(data.totals.developed, data.totals.items)"
+          unit="%"
+          :sub="`${data.totals.developed} / ${data.totals.items} 项`"
+          ><template #icon><Code2 /></template
+        ></DashMetric>
+        <DashMetric
+          label="已测试"
+          :value="pct(data.totals.tested, data.totals.items)"
+          unit="%"
+          :sub="`${data.totals.tested} / ${data.totals.items} 项 · 按顾问测试完成计`"
+          ><template #icon><CheckCircle2 /></template
+        ></DashMetric>
       </div>
       <span v-else />
       <span class="ld-tools">
@@ -399,10 +405,15 @@ const tone = (diff: number) => (diff < 0 ? 'bad' : diff > 0 ? 'good' : '');
   </div>
 </template>
 <style scoped>
+/* The show part follows the dashboard language (DESIGN.md 12): the canvas, the key numbers as
+   tiles, the table on a white card. */
 .ld {
   display: grid;
   gap: var(--space-4);
   min-width: 0;
+  padding: var(--space-5);
+  border-radius: var(--radius-20);
+  background: var(--dash-canvas);
 }
 .ld-sr {
   position: absolute;
@@ -420,43 +431,10 @@ const tone = (diff: number) => (diff < 0 ? 'bad' : diff > 0 ? 'good' : '');
   gap: var(--space-3);
 }
 .ld-totals {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(160px, 220px));
+  gap: var(--space-4);
 }
-.ld-total {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-8);
-  background: var(--panel);
-  font-size: var(--font-14);
-}
-.ld-total-label {
-  padding: var(--space-0-5) var(--space-2);
-  border-radius: var(--radius-6);
-  background: var(--blue-solid-1);
-  color: var(--neutral-on-solid);
-  font-size: var(--font-12);
-  font-weight: var(--weight-550);
-}
-.ld-total strong {
-  padding-right: var(--space-1);
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--weight-550);
-}
-.ld-pct {
-  padding: var(--space-0-5) var(--space-1-5);
-  border-radius: var(--radius-6);
-  background: var(--green-bg-2);
-  color: var(--green-text-1);
-  font-size: var(--font-12);
-  font-weight: var(--weight-550);
-}
-.ld-hint,
 .ld-note,
 .ld-base-label {
   color: var(--text-muted);
@@ -478,12 +456,12 @@ const tone = (diff: number) => (diff < 0 ? 'bad' : diff > 0 ? 'good' : '');
 
 /* The table: header rows and the first two columns stay while it scrolls both ways. */
 .ld-scroll {
-  max-height: calc(100dvh - 220px);
+  max-height: calc(100dvh - 340px);
   min-height: 240px;
   overflow: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-8);
-  background: var(--panel);
+  border-radius: var(--radius-16);
+  background: var(--dash-card);
+  box-shadow: var(--shadow-soft);
 }
 .ld-table {
   border-collapse: separate;
@@ -548,7 +526,7 @@ thead .ld-stick {
 }
 tbody .ld-name,
 tbody .ld-unplanned {
-  background: var(--panel);
+  background: var(--dash-card);
 }
 tbody .ld-name {
   padding: var(--space-1) var(--space-2);

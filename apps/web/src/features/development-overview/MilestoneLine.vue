@@ -97,7 +97,7 @@ li.past {
   width: 12px;
   height: 12px;
   border-radius: var(--radius-full);
-  box-shadow: 0 0 0 2px var(--panel);
+  box-shadow: 0 0 0 2px var(--dash-canvas);
 }
 li.today {
   flex: 0 0 auto;
