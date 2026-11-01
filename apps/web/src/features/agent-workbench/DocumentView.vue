@@ -270,7 +270,7 @@ function download() {
   padding: var(--space-5);
   font-size: var(--font-14);
   border-bottom: 1px solid var(--blue-fill-1);
-  color: var(--primary-hover);
+  color: var(--text);
 }
 .spec-label {
   border-radius: var(--radius-full);

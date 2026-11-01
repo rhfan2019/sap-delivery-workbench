@@ -83,7 +83,7 @@ function trap(event: KeyboardEvent) {
   max-width: 480px;
   border-radius: var(--radius-12);
   padding: var(--space-6);
-  color: var(--primary-hover);
+  color: var(--text);
   box-shadow: var(--shadow-dialog);
 }
 .confirm-scrim h2 {

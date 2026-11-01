@@ -215,7 +215,7 @@ onBeforeUnmount(() => {
 }
 .selection-comment-form button {
   border: 1px solid var(--border-emphasis);
-  border-radius: var(--radius-6);
+  border-radius: var(--radius-button);
   padding: var(--space-1) var(--space-3);
   background: var(--panel);
   color: var(--text);

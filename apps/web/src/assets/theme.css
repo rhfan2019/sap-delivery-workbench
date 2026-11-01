@@ -110,9 +110,10 @@
   --hover: var(--neutral-fill-1);
   --selected: var(--neutral-fill-2);
   --pressed: var(--neutral-fill-3);
-  --primary: var(--neutral-solid-1);
-  --primary-hover: var(--neutral-solid-2);
-  --on-primary: var(--neutral-on-solid);
+  /* The brand blue for primary actions (3.0, UI-014); white text in light and dark. */
+  --primary: var(--blue-solid-1);
+  --primary-hover: var(--blue-solid-2);
+  --on-primary: #ffffff;
   --link: var(--blue-text-2);
   --focus: var(--blue-solid-1);
   --tooltip-bg: var(--neutral-solid-1);
@@ -166,6 +167,9 @@
   --radius-16: 16px;
   --radius-20: 20px;
   --radius-full: 9999px;
+  /* Shapes shared by the work and show pages (3.0): pill buttons, the content panel. */
+  --radius-button: var(--radius-full);
+  --radius-panel: var(--radius-16);
   --shadow-card: 0 0 0 1px #20272c14, 0 1px 1px #20272c14;
   --shadow-popover: 0 1px 2px #20272c3d, 0 2px 6px 2px #20272c14, 0 2px 8px #20272c14;
   --shadow-dialog: 0 1px 2px #20272c3d, 0 2px 8px 2px #20272c14, 0 2px 16px #20272c14;
@@ -357,8 +361,8 @@
 :root {
   --dash-canvas: var(--neutral-fill-1);
   --dash-card: var(--neutral-bg-1);
-  --dash-hero: var(--blue-solid-1);
-  --dash-hero-hover: var(--blue-solid-2);
+  --dash-hero: var(--primary);
+  --dash-hero-hover: var(--primary-hover);
   --dash-on-hero: #ffffff;
   --dash-on-hero-muted: #ffffffc2;
   --dash-hero-track: #ffffff3d;

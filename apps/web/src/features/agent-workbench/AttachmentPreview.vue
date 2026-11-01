@@ -126,7 +126,7 @@ button:focus-visible {
   overflow-wrap: anywhere;
   font: var(--font-14)/1.9 var(--font-mono);
   margin: 0;
-  color: var(--primary-hover);
+  color: var(--text);
 }
 .preview-content:has(iframe) {
   padding: 0;

@@ -37,7 +37,7 @@ withDefaults(
   height: var(--control-button);
   padding: 0 var(--space-3) 0 var(--space-2-5);
   border: 1px solid transparent;
-  border-radius: var(--radius-6);
+  border-radius: var(--radius-button);
   background: transparent;
   color: var(--text);
   font: inherit;

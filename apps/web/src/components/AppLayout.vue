@@ -724,7 +724,7 @@ const keys = [
   min-height: 0;
   margin-bottom: var(--layout-gap);
   overflow: hidden;
-  border-radius: 0 var(--radius-12) var(--radius-12) var(--radius-12);
+  border-radius: 0 var(--radius-panel) var(--radius-panel) var(--radius-panel);
   background: var(--panel);
   box-shadow: var(--shadow-card);
 }

@@ -658,16 +658,6 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
   display: flex;
   gap: var(--space-2);
 }
-.home-actions .primary-button {
-  border-radius: var(--radius-full);
-  background: var(--dash-hero);
-}
-.home-actions .primary-button:hover {
-  background: var(--dash-hero-hover);
-}
-.home-actions .secondary-button {
-  border-radius: var(--radius-full);
-}
 
 /* Hero: the phase. */
 .hero-phase {
