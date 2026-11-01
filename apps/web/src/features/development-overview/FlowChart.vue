@@ -5,7 +5,7 @@ import BaseTabs from '../../components/base/BaseTabs.vue';
 import { shortDate, type Flow } from './model';
 
 // M22 cumulative flow: how many items of a phase were in each status each day, stacked, replayed
-// from the phase status history. A widening blue band is work piling up; the slope of the green
+// from the phase status history. A widening accent band is work piling up; the slope of the green
 // band is the throughput.
 const props = defineProps<{ flow: Flow }>();
 const phase = ref<PhaseKey>('development');
@@ -15,7 +15,7 @@ const LAYERS = [
   { status: 'completed', color: 'var(--green-solid-1)' },
   { status: 'cancelled', color: 'var(--neutral-fill-3)' },
   { status: 'delayed', color: 'var(--red-solid-1)' },
-  { status: 'in_progress', color: 'var(--blue-solid-1)' },
+  { status: 'in_progress', color: 'var(--accent)' },
   { status: 'not_started', color: 'var(--neutral-border-2)' },
 ];
 const W = 600;

@@ -48,7 +48,7 @@ const backlog = computed(() => {
     parts: [
       { id: 'overdue', label: '已逾期', ids: b.overdue, color: 'var(--red-solid-1)' },
       { id: 'week', label: '7 天内到期', ids: b.week, color: 'var(--yellow-solid-1)' },
-      { id: 'later', label: '更远', ids: b.later, color: 'var(--blue-solid-1)' },
+      { id: 'later', label: '更远', ids: b.later, color: 'var(--chart-1)' },
       { id: 'unplanned', label: '未排期', ids: b.unplanned, color: 'var(--neutral-solid-1)' },
     ],
   };

@@ -194,7 +194,7 @@ const scoped = computed(() => !!(data.value?.scope.owner || data.value?.scope.mo
         ><template #icon><LayoutGrid /></template
       ></BaseEmptyState>
       <template v-else>
-        <section class="ov-section" aria-label="里程碑">
+        <section class="ov-section ov-card" aria-label="里程碑">
           <MilestoneRail :milestones="data.milestones" :today="data.today" />
         </section>
         <section v-if="view !== 'mine'" class="ov-section" aria-label="关键数字">

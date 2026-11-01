@@ -111,7 +111,7 @@ svg line {
   stroke: var(--border);
 }
 .actual {
-  stroke: var(--blue-solid-1);
+  stroke: var(--chart-1);
   stroke-width: 2;
 }
 .ideal {
@@ -124,7 +124,7 @@ svg line {
   stroke-width: 2;
 }
 .today {
-  stroke: var(--blue-border-2);
+  stroke: var(--border-emphasis);
 }
 .freeze {
   stroke: var(--red-solid-1);
@@ -152,7 +152,7 @@ svg line {
 .mark {
   width: 14px;
   height: 0;
-  border-top: 2px solid var(--blue-solid-1);
+  border-top: 2px solid var(--chart-1);
 }
 .mark.ideal {
   border-top: 2px dashed var(--border-emphasis);
@@ -161,7 +161,7 @@ svg line {
   border-top: 2px dashed var(--yellow-solid-1);
 }
 .mark.today {
-  border-top-color: var(--blue-border-2);
+  border-top-color: var(--border-emphasis);
 }
 .mark.freeze {
   border-top-color: var(--red-solid-1);

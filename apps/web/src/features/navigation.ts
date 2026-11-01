@@ -16,6 +16,8 @@ export interface MenuItem {
   permission?: string;
   scope?: MenuScope;
   planned?: boolean;
+  // A show page (DESIGN.md 12): its cards float straight on the backdrop, without the white panel.
+  show?: boolean;
 }
 const item = (
   id: string,
@@ -58,11 +60,13 @@ const delivery: MenuItem[] = [
   item('development-overview', '开发概览', 'grid', '按项目角色展示开发驾驶舱。', {
     scope: 'project',
     permission: 'delivery.overview:view',
+    show: true,
   }),
   item('development-items', '开发清单', 'file', '维护开发台账，从开发项进入设计与开发助手。'),
   item('development-load', '开发排期', 'calendar', '按周查看每位开发人员的计划、完成与负载。', {
     scope: 'project',
     permission: 'delivery.load:view',
+    show: true,
   }),
 ];
 // The project itself (roadmap 3.1): what a project manager looks at every week.

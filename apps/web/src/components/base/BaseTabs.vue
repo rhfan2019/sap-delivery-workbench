@@ -36,9 +36,9 @@ button {
   align-items: center;
   gap: var(--space-1-5);
   height: var(--control-tab);
-  padding: 0 var(--space-2);
+  padding: 0 var(--space-3);
   border: 0;
-  border-radius: var(--radius-6);
+  border-radius: var(--radius-full);
   background: transparent;
   color: var(--text);
   font: inherit;
@@ -51,7 +51,11 @@ button:hover {
 }
 .selected,
 .selected:hover {
-  background: var(--selected);
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.selected .count {
+  color: inherit;
 }
 button:focus-visible {
   outline: none;

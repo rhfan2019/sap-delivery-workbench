@@ -397,23 +397,23 @@ const tone = (diff: number) => (diff < 0 ? 'bad' : diff > 0 ? 'good' : '');
         </tbody>
       </table>
     </div>
-    <p v-if="data && (data.people.length || data.rows.length)" class="ld-note">
-      只统计开发阶段：预计人天与计划个数按计划完成日所在的周，实际个数按实际完成日所在的周；累计差异从左往右累计“实际
-      −
-      计划”；展望周数决定基准周之后显示几周，更晚的合计在“以后”一组。总计的计划个数是该人负责的全部开发项（含未安排日期的）。开发阶段已取消的开发项不统计。点数字在本标签打开开发清单，后退即回到这里。
-    </p>
+    <details v-if="data && (data.people.length || data.rows.length)" class="ld-note">
+      <summary>统计口径</summary>
+      <p>
+        只统计开发阶段：预计人天与计划个数按计划完成日所在的周，实际个数按实际完成日所在的周；累计差异从左往右累计“实际
+        −
+        计划”；展望周数决定基准周之后显示几周，更晚的合计在“以后”一组。总计的计划个数是该人负责的全部开发项（含未安排日期的）。开发阶段已取消的开发项不统计。点数字在本标签打开开发清单，后退即回到这里。
+      </p>
+    </details>
   </div>
 </template>
 <style scoped>
-/* The show part follows the dashboard language (DESIGN.md 12): the canvas, the key numbers as
-   tiles, the table on a white card. */
+/* The show part follows the show-page language (DESIGN.md 12, 4.0): the key numbers as cards on
+   the backdrop, the table on an opaque white card (its sticky columns hide what scrolls under). */
 .ld {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-5);
   min-width: 0;
-  padding: var(--space-5);
-  border-radius: var(--radius-20);
-  background: var(--dash-canvas);
 }
 .ld-sr {
   position: absolute;
@@ -441,8 +441,17 @@ const tone = (diff: number) => (diff < 0 ? 'bad' : diff > 0 ? 'good' : '');
   font-size: var(--font-12);
   line-height: var(--leading-16);
 }
-.ld-note {
-  margin: 0;
+/* The counting rules fold away under one line (DESIGN.md 12: one conclusion per card). */
+.ld-note summary {
+  width: fit-content;
+  cursor: pointer;
+}
+.ld-note summary:hover {
+  color: var(--text);
+}
+.ld-note p {
+  max-width: 960px;
+  margin: var(--space-2) 0 0;
 }
 .ld-tools {
   display: flex;
@@ -459,8 +468,8 @@ const tone = (diff: number) => (diff < 0 ? 'bad' : diff > 0 ? 'good' : '');
   max-height: calc(100dvh - 340px);
   min-height: 240px;
   overflow: auto;
-  border-radius: var(--radius-16);
-  background: var(--dash-card);
+  border-radius: var(--radius-28);
+  background: var(--panel);
   box-shadow: var(--shadow-soft);
 }
 .ld-table {
@@ -493,11 +502,11 @@ const tone = (diff: number) => (diff < 0 ? 'bad' : diff > 0 ? 'good' : '');
   color: var(--text-muted);
 }
 .ld-table thead .now {
-  background: var(--green-bg-2);
-  color: var(--green-text-1);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 .ld-table thead .base:not(.now) {
-  box-shadow: inset 0 2px 0 var(--blue-solid-1);
+  box-shadow: inset 0 2px 0 var(--primary);
 }
 .ld-metrics th {
   min-width: 40px;
@@ -505,7 +514,7 @@ const tone = (diff: number) => (diff < 0 ? 'bad' : diff > 0 ? 'good' : '');
   font-weight: var(--weight-475);
 }
 .ld-metrics .ld-diff {
-  color: var(--red-text-1);
+  color: var(--text-muted);
 }
 .ld-stick {
   position: sticky;
@@ -526,7 +535,7 @@ thead .ld-stick {
 }
 tbody .ld-name,
 tbody .ld-unplanned {
-  background: var(--dash-card);
+  background: var(--panel);
 }
 tbody .ld-name {
   padding: var(--space-1) var(--space-2);
@@ -551,25 +560,25 @@ tbody .ld-name {
   color: var(--text-muted);
 }
 tbody .ld-planned {
-  background: var(--yellow-bg-2);
+  background: var(--neutral-bg-2);
 }
 tbody .ld-actual {
-  background: var(--blue-bg-2);
+  background: color-mix(in srgb, var(--accent) 16%, var(--panel));
 }
 tbody td.ld-effort.now {
-  box-shadow: inset 2px 0 0 var(--green-solid-1);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 .ld-diff {
   font-weight: var(--weight-550);
 }
 tbody .ld-diff.bad,
 tbody .ld-unplanned.alert {
-  background: var(--red-solid-1);
-  color: var(--neutral-on-solid);
+  background: var(--red-fill-1);
+  color: var(--red-text-2);
 }
 tbody .ld-diff.good {
-  background: var(--green-solid-1);
-  color: var(--neutral-on-solid);
+  background: var(--green-fill-1);
+  color: var(--green-text-2);
 }
 tbody tr.total th,
 tbody tr.total td {
@@ -596,7 +605,6 @@ tbody tr:hover td:not(.bad):not(.good):not(.alert) {
   cursor: pointer;
 }
 .ld-num:hover {
-  color: var(--link);
   text-decoration: underline;
 }
 .ld-num:focus-visible {

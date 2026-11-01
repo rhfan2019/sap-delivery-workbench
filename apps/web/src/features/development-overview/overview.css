@@ -1,13 +1,11 @@
-/* Development overview (docs/modules/development-overview.md 2, 8) in the dashboard language
-   (DESIGN.md 12): white cards on the canvas, big numbers that open the list, tables in the list
-   style. Tokens only (DESIGN.md 9). */
+/* Development overview (docs/modules/development-overview.md 2, 8) in the show-page language
+   (DESIGN.md 12, 4.0): translucent cards straight on the backdrop, big thin numbers that open the
+   list, tables in the list style. Tokens only (DESIGN.md 9). */
 .ov {
   display: grid;
   gap: var(--space-6);
   max-width: 1600px;
-  padding: var(--space-5);
-  border-radius: var(--radius-20);
-  background: var(--dash-canvas);
+  margin: 0 auto;
 }
 .ov-sr {
   position: absolute;
@@ -37,9 +35,9 @@
 }
 .ov-section > h2 {
   margin: 0;
-  font-size: var(--font-16);
-  font-weight: var(--weight-550);
-  line-height: var(--leading-24);
+  font-size: var(--font-20);
+  font-weight: var(--weight-400);
+  line-height: var(--leading-28);
 }
 .ov-section > h2 small {
   margin-left: var(--space-2);
@@ -49,10 +47,12 @@
 }
 .ov-card {
   border: 0;
-  border-radius: var(--radius-16);
+  border-radius: var(--radius-28);
   background: var(--dash-card);
-  box-shadow: var(--shadow-soft);
-  padding: var(--space-5);
+  box-shadow:
+    inset 0 0 0 1px var(--surface-edge),
+    var(--shadow-soft);
+  padding: var(--space-6);
   min-width: 0;
 }
 .ov-card.scroll {
@@ -82,7 +82,7 @@
   transition: background var(--motion-fast);
 }
 .ov-stat:hover {
-  background: var(--neutral-bg-2);
+  background: var(--surface-strong);
 }
 .ov-stat:focus-visible {
   outline: 2px solid var(--focus);
@@ -100,9 +100,9 @@
   height: 14px;
 }
 .ov-stat .value {
-  font-size: var(--font-32);
-  font-weight: var(--weight-475);
-  line-height: var(--leading-40);
+  font-size: var(--font-48);
+  font-weight: var(--weight-300);
+  line-height: var(--leading-56);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
@@ -159,7 +159,7 @@
 }
 .ov-cell-button {
   border: 0;
-  border-radius: var(--radius-4);
+  border-radius: var(--radius-full);
   background: none;
   padding: var(--space-0-5) var(--space-1-5);
   color: inherit;
@@ -208,15 +208,16 @@
   font-variant-numeric: tabular-nums;
 }
 .ov-bar .track {
-  height: 6px;
+  height: 8px;
   border-radius: var(--radius-full);
-  background: var(--neutral-fill-2);
+  background: var(--hatch);
+  box-shadow: inset 0 0 0 1px var(--border);
   overflow: hidden;
 }
 .ov-bar .fill {
   height: 100%;
   border-radius: var(--radius-full);
-  background: var(--blue-solid-1);
+  background: var(--primary);
 }
 .ov-bar .fill.green {
   background: var(--green-solid-1);

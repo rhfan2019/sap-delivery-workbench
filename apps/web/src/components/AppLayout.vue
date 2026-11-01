@@ -58,8 +58,8 @@ import {
 
 // The shell (DESIGN.md 4.1): icon rail, the current module's menu, and the content panel, each a
 // panel floating over the warm backdrop. A record page (a development item and its assistants)
-// folds the menu away, as Plain does for a thread. 工作台 is a show page: its cards sit straight on
-// the backdrop, without the white panel.
+// folds the menu away, as Plain does for a thread. Show pages (工作台, 开发概览, 开发排期) put their
+// cards straight on the backdrop, without the white panel.
 const route = useRoute();
 const router = useRouter();
 const module = computed(() => moduleOf(route.path));
@@ -338,7 +338,7 @@ const keys = [
       'menu-hidden': hidden || record || menuless,
       'menu-open': mobileMenu,
       record,
-      show: menuless,
+      show: menuless || activeEntry?.show,
     }"
     :style="{ '--nav-width': navWidth + 'px' }"
   >

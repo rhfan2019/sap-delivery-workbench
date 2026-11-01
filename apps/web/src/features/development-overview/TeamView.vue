@@ -419,9 +419,9 @@ const coverageRows = computed(() => [
   width: 10px;
   height: 10px;
   padding: 0;
-  border: 2px solid var(--blue-solid-1);
+  border: 2px solid var(--chart-1);
   border-radius: var(--radius-full);
-  background: var(--blue-solid-1);
+  background: var(--chart-1);
   cursor: pointer;
 }
 .dot.estimated {

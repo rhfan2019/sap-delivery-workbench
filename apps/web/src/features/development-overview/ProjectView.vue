@@ -45,10 +45,10 @@ const shade = (days: number) =>
   days <= 0
     ? ''
     : days <= 2
-      ? 'var(--blue-fill-1)'
+      ? 'color-mix(in srgb, var(--accent) 30%, transparent)'
       : days <= 4
-        ? 'var(--blue-fill-2)'
-        : 'var(--blue-fill-3)';
+        ? 'color-mix(in srgb, var(--accent) 60%, transparent)'
+        : 'var(--accent)';
 const budget = computed(() => {
   const b = props.data.budget;
   if (!b?.budgetDays) return null;
