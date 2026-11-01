@@ -65,6 +65,6 @@ async function logout() {
     />
   </div>
   <p v-else-if="sap.view.value && !compact" class="text-sm text-destructive">
-    项目还没有登记测试系统，请项目经理在“设置 → 项目 → SAP 系统”中登记。
+    项目还没有登记测试系统，请项目经理在“设置 → 项目配置 → SAP 系统”中登记。
   </p>
 </template>

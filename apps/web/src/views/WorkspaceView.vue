@@ -7,7 +7,7 @@ import BaseTag from '../components/base/BaseTag.vue';
 import BasePropertyRow from '../components/base/BasePropertyRow.vue';
 import BaseSection from '../components/base/BaseSection.vue';
 import BaseSkeleton from '../components/base/BaseSkeleton.vue';
-import { menus } from '../features/navigation';
+import { menus, upcoming } from '../features/navigation';
 import { HEALTH, PROJECT_STATUSES } from '@sap-delivery-workbench/contracts/projects/options';
 import { api, ApiError, type Project } from '../services/session';
 import { selectProject } from '../services/projectContext';
@@ -20,7 +20,7 @@ const error = ref('');
 const filter = ref('');
 const isProjects = computed(() => route.path === '/projects');
 const isDetail = computed(() => Boolean(route.params.id));
-const module = computed(() => menus.find((m) => m.path === route.path));
+const module = computed(() => [...menus, ...upcoming].find((m) => m.path === route.path));
 const filtered = computed(() =>
   projects.value.filter((p) =>
     (p.name + p.code + p.customerName).toLowerCase().includes(filter.value.toLowerCase()),
@@ -46,7 +46,7 @@ const facts = (p: Project) =>
 const healthTone = { green: 'green', yellow: 'yellow', red: 'red' } as const;
 async function openSettings(id: string) {
   await selectProject(id);
-  await router.push('/settings/project/general');
+  await router.push('/project/general');
 }
 async function load() {
   loading.value = true;

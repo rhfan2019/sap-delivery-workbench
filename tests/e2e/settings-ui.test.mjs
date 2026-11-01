@@ -277,10 +277,12 @@ test('settings: menu by permission, customers, models, project SAP login and lis
     await page.goto('http://127.0.0.1:5188/settings');
     await page.getByRole('heading', { name: '设置', exact: true, level: 1 }).waitFor();
     const menu = page.getByRole('navigation', { name: '设置菜单' });
-    // Planned pages are listed; pages the user may not open are not. Groups fold: personal and
-    // project start open, the rest closed; the page header names the place.
-    await menu.getByRole('link', { name: /通知/ }).waitFor();
-    await menu.getByRole('button', { name: '项目', exact: true, expanded: true }).waitFor();
+    // Only built pages are listed (planned ones are announced on the workbench); pages the user
+    // may not open are not. Groups fold: personal and project configuration start open, the
+    // rest closed; the page header names the place.
+    await menu.getByRole('link', { name: '我的 SAP 凭据' }).waitFor();
+    assert.equal(await menu.getByRole('link', { name: /通知/ }).count(), 0);
+    await menu.getByRole('button', { name: '项目配置', exact: true, expanded: true }).waitFor();
     await menu.getByRole('button', { name: '智能体', exact: true, expanded: false }).waitFor();
     await page.getByRole('navigation', { name: '当前位置' }).getByText('设置').waitFor();
     // A module icon on the rail opens a folded menu again (backlog BUG-006).
@@ -309,8 +311,6 @@ test('settings: menu by permission, customers, models, project SAP login and lis
     await page.getByRole('heading', { name: '客户', exact: true, level: 1 }).waitFor();
     await page.getByText('客户甲', { exact: true }).waitFor();
     await page.getByLabel('搜索设置').fill('');
-    await menu.getByRole('link', { name: /通知/ }).click();
-    await page.getByRole('heading', { name: '通知', exact: true, level: 1 }).waitFor();
     await menu.getByRole('button', { name: '智能体', exact: true }).click();
     await menu.getByRole('link', { name: '大模型', exact: true }).click();
     // Every settings page opened so far shares the one settings tab (workbench-tabs.md 3).
@@ -384,8 +384,8 @@ test('settings: menu by permission, customers, models, project SAP login and lis
       fullPage: true,
     });
 
-    // The icon rail switches module; 开发管理 opens the development list.
-    await page.getByRole('link', { name: '开发管理', exact: true }).click();
+    // The icon rail switches module; 交付 opens the development list.
+    await page.getByRole('link', { name: '交付', exact: true }).click();
     await page
       .getByRole('link', { name: '设计 00001', exact: true })
       .waitFor({ state: 'attached' });

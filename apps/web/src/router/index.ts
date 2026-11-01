@@ -6,19 +6,17 @@ import AppLayout from '../components/AppLayout.vue';
 import HomeView from '../views/HomeView.vue';
 import WorkspaceView from '../views/WorkspaceView.vue';
 const page = <T>(path: string, component: () => Promise<T>) => ({ path, component });
+// The project module (roadmap 3.1) and settings.
 const settingsRoutes = [
   page('settings', () => import('../features/settings/SettingsOverview.vue')),
   page('settings/profile', () => import('../features/settings/ProfileView.vue')),
   page('settings/sap-credentials', () => import('../features/sap/MySapCredentialsView.vue')),
-  page('settings/project/general', () => import('../features/projects/ProjectGeneralView.vue')),
-  page('settings/project/plan', () => import('../features/projects/ProjectPlanView.vue')),
-  page('settings/project/team', () => import('../features/projects/ProjectTeamView.vue')),
+  page('project/general', () => import('../features/projects/ProjectGeneralView.vue')),
+  page('project/plan', () => import('../features/projects/ProjectPlanView.vue')),
+  page('project/team', () => import('../features/projects/ProjectTeamView.vue')),
   page('settings/project/members', () => import('../features/access/ProjectMembersView.vue')),
   page('settings/project/sap', () => import('../features/sap/ProjectSapView.vue')),
-  page(
-    'settings/project/commercial',
-    () => import('../features/projects/ProjectCommercialView.vue'),
-  ),
+  page('project/commercial', () => import('../features/projects/ProjectCommercialView.vue')),
   page('settings/organization', () => import('../features/admin/OrganizationView.vue')),
   page('settings/customers', () => import('../features/admin/CustomersView.vue')),
   page('settings/projects', () => import('../features/admin/ProjectsView.vue')),
@@ -85,8 +83,8 @@ export const router = createRouter({
           meta: { keepOnQuery: true },
         },
         { path: 'workspace/:module', component: WorkspaceView },
-        // Settings (docs/modules/access.md 4.3). Planned entries have no route here:
-        // they fall through to WorkspaceView, which shows the shared “规划中” page.
+        // The project module and settings (docs/modules/access.md 4.3). Planned pages have no
+        // route here: they fall through to WorkspaceView, which shows the shared “规划中” page.
         ...settingsRoutes,
         { path: ':pathMatch(.*)*', component: WorkspaceView },
       ],

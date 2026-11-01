@@ -157,7 +157,7 @@ test('development load: drill-down and back keep the page as it was', async (t) 
   await table.waitFor();
   assert.match(
     await page.locator('.ld-totals').innerText(),
-    new RegExp(`总个数\\s*${totals.items}`),
+    new RegExp(`开发项总数\\s*${totals.items}`),
   );
   assert.equal(await page.locator('.ld-table tbody tr').count(), people.length + 2); // 总计, TBD
 

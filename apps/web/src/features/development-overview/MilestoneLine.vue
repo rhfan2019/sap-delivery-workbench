@@ -43,7 +43,7 @@ const stops = computed(() => {
 <template>
   <section class="ov-section" aria-label="里程碑">
     <p v-if="!stops.dated.length" class="ov-note">
-      项目还没有排期的里程碑。在“设置 → 项目 → 计划与健康”中维护开发冻结、SIT、UAT 与上线日期。
+      项目还没有排期的里程碑。在“项目 → 计划与健康”中维护开发冻结、SIT、UAT 与上线日期。
     </p>
     <ol v-else class="line">
       <template v-for="(s, index) in stops.dated" :key="s.key">

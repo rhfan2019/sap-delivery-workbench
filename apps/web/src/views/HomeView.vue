@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   ArrowRight,
   BarChart3,
+  Bot,
   CalendarClock,
   CheckCircle2,
   Flag,
@@ -38,7 +39,7 @@ import {
   shortDate,
   type Overview,
 } from '../features/development-overview/model';
-import { menus } from '../features/navigation';
+import { menus, upcoming } from '../features/navigation';
 import { api, ApiError, identity } from '../services/session';
 import { currentProject, projectAccess, projects } from '../services/projectContext';
 
@@ -220,6 +221,28 @@ const points = computed(() => {
 });
 const signal = computed(() => data.value?.signal.color ?? 'green');
 
+// AI 效能 (roadmap 2.3, user 2026-11-01): output counts only, no saved-effort estimate.
+const ai = computed(() => {
+  const a = data.value?.development.ai;
+  if (!a) return null;
+  return [
+    {
+      label: '助手参与的开发项',
+      value: a.assisted,
+      unit: ` / ${a.items}`,
+      sub: `覆盖 ${pct(a.assisted, a.items)}%`,
+    },
+    { label: 'FSD 定稿', value: a.fsdFinal, unit: '项', sub: '设计助手产出并定稿' },
+    { label: '代码定稿', value: a.codeFinal, unit: '项', sub: '开发助手产出并定稿' },
+    {
+      label: '产出版本',
+      value: a.versions,
+      unit: '版',
+      sub: `本周 +${a.versionsWeek} · 对话 ${a.turns} 轮（本周 ${a.turnsWeek}）`,
+    },
+  ];
+});
+
 // The burn-down of the open FSD and development effort with the ideal line to the freeze.
 const trend = computed(() => {
   const f = data.value?.flow;
@@ -311,7 +334,7 @@ function openTodo(t: Overview['mine']['today'][number]) {
 // Entry points for those without the overview, and the coming-soon announcements (roadmap 3.1).
 const pick = (ids: string[]) => ids.map((id) => menus.find((m) => m.id === id)!).filter(Boolean);
 const shortcuts = pick(['development-items', 'development-overview', 'development-load']);
-const coming = pick(['qa', 'knowledge', 'assets', 'templates']);
+const coming = upcoming.filter((u) => u.path.startsWith('/workspace/'));
 const hasProject = computed(() => !!currentProject.value);
 const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
 </script>
@@ -417,9 +440,7 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
           <DashCard tone="hero" title="项目阶段" :span="4">
             <template #icon><Flag /></template>
             <template #action>
-              <RouterLink to="/settings/project/plan" class="dash-link"
-                >计划与健康<ArrowRight
-              /></RouterLink>
+              <RouterLink to="/project/plan" class="dash-link">计划与健康<ArrowRight /></RouterLink>
             </template>
             <div class="hero-phase">
               <span class="dash-number dash-rise">{{ phase.name }}</span>
@@ -532,6 +553,20 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
           </DashCard>
         </div>
 
+        <div v-if="ai" class="dash-grid">
+          <DashCard title="AI 效能" hint="助手为本项目产出的成果，只计数量" :span="12">
+            <template #icon><Bot /></template>
+            <div class="ai-stats">
+              <div v-for="a in ai" :key="a.label" class="ai-stat dash-rise">
+                <span class="ai-label">{{ a.label }}</span>
+                <span class="ai-value"
+                  >{{ a.value }}<small>{{ a.unit }}</small></span
+                >
+                <span class="ai-sub">{{ a.sub }}</span>
+              </div>
+            </div>
+          </DashCard>
+        </div>
         <div class="dash-grid">
           <DashCard title="近期里程碑" :span="4">
             <template #icon><Flag /></template>
@@ -797,6 +832,36 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
   cursor: default;
 }
 
+/* AI output. */
+.ai-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.ai-stat {
+  display: grid;
+  gap: var(--space-1);
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--chart-1);
+}
+.ai-label,
+.ai-sub {
+  color: var(--text-muted);
+  font-size: var(--font-12);
+}
+.ai-value {
+  font-size: var(--font-32);
+  font-weight: var(--weight-475);
+  line-height: var(--leading-40);
+  font-variant-numeric: tabular-nums;
+}
+.ai-value small {
+  margin-left: var(--space-0-5);
+  color: var(--text-muted);
+  font-size: var(--font-14);
+  font-weight: var(--weight-400);
+}
+
 /* Team load. */
 .load-row {
   display: grid;
@@ -847,6 +912,11 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
   display: flex;
   align-items: flex-start;
   gap: var(--space-3);
+}
+@media (max-width: 1024px) {
+  .ai-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (max-width: 760px) {
   .home-metrics {

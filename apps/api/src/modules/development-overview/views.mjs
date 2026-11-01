@@ -62,6 +62,24 @@ export function coverage(items, devCoverage) {
   };
 }
 
+// “AI 效能” on the workbench (roadmap 2.3, user 2026-11-01): what the assistants produced for
+// the items in view, as counts only; no saved-effort estimate and no per-person ranking.
+export function aiOutput(items, { output = [], finals, devCoverage }) {
+  const ids = new Set(items.map((i) => i.id));
+  const rows = output.filter((r) => ids.has(r.itemId));
+  const sum = (key) => rows.reduce((n, r) => n + r[key], 0);
+  return {
+    items: items.length,
+    assisted: new Set(rows.filter((r) => r.turns || r.versions).map((r) => r.itemId)).size,
+    fsdFinal: items.filter((i) => finals.has(i.id)).length,
+    codeFinal: items.filter((i) => devCoverage.get(i.id)?.final).length,
+    versions: sum('versions'),
+    versionsWeek: sum('versionsWeek'),
+    turns: sum('turns'),
+    turnsWeek: sum('turnsWeek'),
+  };
+}
+
 // M16: open FSD phases by when they are due.
 export function fsdBacklog(items, today) {
   const open = items.filter((i) => isOpen(i.phases.fsd));

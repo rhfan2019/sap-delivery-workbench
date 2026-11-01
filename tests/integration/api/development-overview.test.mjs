@@ -262,6 +262,17 @@ test('development overview: permissions, scope, judgments and drill-down counts'
       },
       { started: 2, session: 0, final: 0, sap: 0, missing: ['B', 'C'] },
     );
+    // AI 效能 (roadmap 2.3): A's two FSD versions, one of them final; no turns, no code.
+    assert.deepEqual(o.development.ai, {
+      items: 3,
+      assisted: 1,
+      fsdFinal: 1,
+      codeFinal: 0,
+      versions: 2,
+      versionsWeek: 2,
+      turns: 0,
+      turnsWeek: 0,
+    });
     assert.deepEqual(
       o.development.rework.map((x) => [x.name, x.laterVersions, x.retest]),
       [['A', 1, false]],

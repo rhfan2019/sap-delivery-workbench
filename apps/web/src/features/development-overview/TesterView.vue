@@ -104,7 +104,7 @@ const cards = computed(() => [
     </h2>
     <div class="ov-card">
       <p v-if="!data.sitForecast" class="ov-empty">
-        项目未设 SIT 开始日期。在“设置 → 项目 → 计划与健康”中维护后即可预测。
+        项目未设 SIT 开始日期。在“项目 → 计划与健康”中维护后即可预测。
       </p>
       <table v-else class="ov-table">
         <thead>

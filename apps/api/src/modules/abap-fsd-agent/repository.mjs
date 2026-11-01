@@ -399,3 +399,20 @@ export async function itemComments(db, organizationId, projectId) {
     )
   ).rows;
 }
+
+// What the assistant has produced per item (development overview “AI 效能”, roadmap 2.3):
+// conversation turns and saved versions, in all and in the last seven days.
+export async function itemOutput(db, organizationId, projectId) {
+  return (
+    await db.query(
+      `SELECT s.item_id AS "itemId",count(DISTINCT t.id)::int AS turns,
+         count(DISTINCT t.id) FILTER (WHERE t.started_at>now()-interval '7 days')::int AS "turnsWeek",
+         count(DISTINCT v.id)::int AS versions,
+         count(DISTINCT v.id) FILTER (WHERE v.created_at>now()-interval '7 days')::int AS "versionsWeek"
+       FROM ${T}session s LEFT JOIN ${T}turn t ON t.session_id=s.id
+       LEFT JOIN ${T}document v ON v.session_id=s.id
+       WHERE s.organization_id=$1 AND s.project_id=$2 GROUP BY s.item_id`,
+      [organizationId, projectId],
+    )
+  ).rows;
+}

@@ -19,11 +19,13 @@ import {
 import {
   finalizedItems,
   itemComments as fsdComments,
+  itemOutput as fsdOutput,
   lastTurns as fsdLastTurns,
 } from '../abap-fsd-agent/public.mjs';
 import {
   itemComments as devComments,
   itemCoverage,
+  itemOutput as devOutput,
   lastTurns as devLastTurns,
 } from '../abap-dev-agent/public.mjs';
 import { keyedMilestones, latestHealth } from '../admin/projects.mjs';
@@ -42,6 +44,7 @@ import {
 } from './trends.mjs';
 import {
   aging,
+  aiOutput,
   commentStats,
   consultant,
   coverage,
@@ -103,6 +106,8 @@ async function facts(c, projectId, budgetDays) {
     devNotes,
     devCover,
     transitions,
+    fsdMade,
+    devMade,
   ] = await Promise.all([
     keyedMilestones(db, org, projectId),
     finalizedItems(db, org, projectId),
@@ -114,6 +119,8 @@ async function facts(c, projectId, budgetDays) {
     devComments(db, org, projectId),
     itemCoverage(db, org, projectId),
     c.overview.transitions(db, projectId),
+    fsdOutput(db, org, projectId),
+    devOutput(db, org, projectId),
   ]);
   // The last thing that happened to an item: its own change, or a turn of either assistant.
   const activity = new Map();
@@ -131,6 +138,7 @@ async function facts(c, projectId, budgetDays) {
     ],
     devCoverage: new Map(devCover.map((r) => [r.itemId, r])),
     transitions,
+    output: [...fsdMade, ...devMade],
   };
 }
 
@@ -355,6 +363,7 @@ export function buildOverview({ items, people, facts: f, today, grant, userId })
       ),
       aging: aging(live, today),
       coverage: coverage(live, f.devCoverage),
+      ai: aiOutput(live, f),
       rework: rework(live, f.finals),
       comments: commentStats(live, f.comments, today),
     },

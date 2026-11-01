@@ -99,6 +99,16 @@ export interface Overview {
       }
     >;
     coverage: { started: number; session: number; final: number; sap: number; missing: Brief[] };
+    ai: {
+      items: number;
+      assisted: number;
+      fsdFinal: number;
+      codeFinal: number;
+      versions: number;
+      versionsWeek: number;
+      turns: number;
+      turnsWeek: number;
+    };
     rework: (Brief & { laterVersions: number; retest: boolean })[];
     comments: {
       open: number;

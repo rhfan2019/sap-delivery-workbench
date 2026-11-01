@@ -137,7 +137,7 @@ async function openSettings(p: DirectoryProject) {
   }
   if (!mine.value.some((x) => x.id === p.id)) await loadProjects();
   await selectProject(p.id);
-  await router.push('/settings/project/general');
+  await router.push('/project/general');
 }
 
 // Archiving is one-way and needs project:archive in that project, read from its detail.

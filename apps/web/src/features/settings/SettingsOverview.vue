@@ -15,7 +15,7 @@ const sections = computed(() =>
     project: projectAccess.value,
   }).map((s) =>
     s.id === 'project'
-      ? { ...s, label: '项目 · ' + (project.value?.shortName || project.value?.name || '') }
+      ? { ...s, label: '项目配置 · ' + (project.value?.shortName || project.value?.name || '') }
       : s,
   ),
 );

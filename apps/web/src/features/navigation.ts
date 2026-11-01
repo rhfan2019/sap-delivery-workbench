@@ -1,7 +1,8 @@
 // The navigation of the shell (DESIGN.md 4.1) and the settings menu
-// (docs/modules/access.md 4.3). Every page is listed, built or not: a planned page
-// opens the shared “规划中” page. Visibility follows the permission catalog; the API checks
-// every request again.
+// (docs/modules/access.md 4.3), arranged as docs/roadmap.md 3.1: 工作台, 项目, 交付, 设置. Only
+// built pages are in the menus; planned ones are listed in `upcoming`, announced on the
+// workbench, and their addresses still open the shared “规划中” page. Visibility follows the
+// permission catalog; the API checks every request again.
 import type { ProjectAccess } from '../services/session';
 
 export type MenuScope = 'personal' | 'project' | 'organization';
@@ -64,15 +65,39 @@ const delivery: MenuItem[] = [
     permission: 'delivery.load:view',
   }),
 ];
-const knowledge: MenuItem[] = [
-  item('qa', '知识问答', 'message', '在授权的知识范围内提问，查看答案依据与来源。', {
-    planned: true,
-  }),
-  item('knowledge', '知识库', 'book', '沉淀 SAP 业务知识、技术规范与项目经验。', { planned: true }),
-  item('assets', '代码资产', 'code', '查找经过验证的成熟代码与工具，在项目中复用。', {
-    planned: true,
-  }),
-  item('templates', '文档模板', 'files', '统一 FS、TS、测试与评审模板。', { planned: true }),
+// The project itself (roadmap 3.1): what a project manager looks at every week.
+const project = (
+  id: string,
+  label: string,
+  icon: string,
+  description: string,
+  permission: string,
+): MenuItem => ({
+  id: 'project-' + id,
+  label,
+  icon,
+  description,
+  path: '/project/' + id,
+  scope: 'project',
+  permission,
+});
+const projectPages: MenuItem[] = [
+  project('general', '基本信息', 'folder', '项目信息、实施方法与 SAP 系统形态。', 'project:view'),
+  project('plan', '计划与健康', 'calendar', '阶段、里程碑与每周健康度。', 'project:view'),
+  project(
+    'team',
+    '团队与干系人',
+    'contact',
+    '关键岗位、模块负责人与客户方联系人。',
+    'project:view',
+  ),
+  project(
+    'commercial',
+    '规模与商务',
+    'coins',
+    '合同、人天预算与已计划人天。',
+    'project.commercial:view',
+  ),
 ];
 
 export const settingsOverview = setting(
@@ -102,45 +127,13 @@ export const settingsSections: MenuSection[] = [
         'key',
         '各项目、各系统的本人 SAP 用户；登录、删除与到期时间。',
       ),
-      setting(
-        'notifications',
-        '/notifications',
-        '通知',
-        'bell',
-        '选择接收哪些提醒，例如里程碑到期、权限即将到期。',
-        { planned: true },
-      ),
     ],
   },
   {
     id: 'project',
-    label: '项目',
-    note: '当前项目的信息、计划、团队、成员权限与 SAP 系统。',
+    label: '项目配置',
+    note: '当前项目的成员权限与 SAP 系统；项目信息、计划与团队在“项目”模块。',
     items: [
-      setting(
-        'project-general',
-        '/project/general',
-        '基本信息',
-        'folder',
-        '项目信息、实施方法与 SAP 系统形态。',
-        { scope: 'project', permission: 'project:view' },
-      ),
-      setting(
-        'project-plan',
-        '/project/plan',
-        '计划与健康',
-        'calendar',
-        '阶段、里程碑与每周健康度。',
-        { scope: 'project', permission: 'project:view' },
-      ),
-      setting(
-        'project-team',
-        '/project/team',
-        '团队与干系人',
-        'contact',
-        '关键岗位、模块负责人与客户方联系人。',
-        { scope: 'project', permission: 'project:view' },
-      ),
       setting(
         'project-members',
         '/project/members',
@@ -156,30 +149,6 @@ export const settingsSections: MenuSection[] = [
         'server',
         '项目的开发与测试系统、默认系统与连接测试。',
         { scope: 'project', permission: 'project.sap:view' },
-      ),
-      setting(
-        'project-commercial',
-        '/project/commercial',
-        '规模与商务',
-        'coins',
-        '合同、人天预算与已计划人天。',
-        { scope: 'project', permission: 'project.commercial:view' },
-      ),
-      setting(
-        'project-delivery',
-        '/project/delivery',
-        '开发清单设置',
-        'list',
-        '模块选项、自定义列与标签（目前在开发清单页的列设置中维护）。',
-        { scope: 'project', permission: 'delivery.config:manage', planned: true },
-      ),
-      setting(
-        'project-models',
-        '/project/models',
-        '模型与智能体',
-        'sparkles',
-        '本项目允许使用的大模型。',
-        { scope: 'project', permission: 'project:edit', planned: true },
       ),
     ],
   },
@@ -200,14 +169,6 @@ export const settingsSections: MenuSection[] = [
         scope: 'organization',
         permission: 'project.directory:view',
       }),
-      setting(
-        'project-fields',
-        '/project-fields',
-        '项目字段',
-        'sliders',
-        '为项目增加企业关心的扩展字段。',
-        { scope: 'organization', permission: 'customer:manage', planned: true },
-      ),
       setting('users', '/users', '用户', 'users', '账号、人员类型、职位、企业级角色与有效权限。', {
         scope: 'organization',
         permission: 'user:view',
@@ -229,20 +190,12 @@ export const settingsSections: MenuSection[] = [
   {
     id: 'agents',
     label: '智能体',
-    note: '助手使用的大模型与提示词。',
+    note: '助手使用的大模型。',
     items: [
       setting('models', '/models', '大模型', 'sparkles', '模型接入、测试与企业默认模型。', {
         scope: 'organization',
         permission: 'model:view',
       }),
-      setting(
-        'prompts',
-        '/prompts',
-        '提示词与框架',
-        'workflow',
-        '助手的系统指令与开发框架默认类名。',
-        { scope: 'organization', permission: 'model:manage', planned: true },
-      ),
     ],
   },
   {
@@ -270,14 +223,35 @@ export const settingsSections: MenuSection[] = [
         '用部署配置的凭据验证 SAP 表结构读取。',
         { scope: 'organization', permission: 'ops.diagnostics:run' },
       ),
-      setting('runs', '/runs', '运行记录', 'activity', '跟踪助手与工具任务的执行状态与重试。', {
-        scope: 'organization',
-        permission: 'audit:view',
-        planned: true,
-      }),
     ],
   },
 ];
+
+// Planned pages (roadmap 3.1 principle 3): in no menu, announced on the workbench.
+export const upcoming: MenuItem[] = [
+  item('qa', '知识问答', 'message', '在授权的知识范围内提问，查看答案依据与来源。'),
+  item('knowledge', '知识库', 'book', '沉淀 SAP 业务知识、技术规范与项目经验。'),
+  item('assets', '代码资产', 'code', '查找经过验证的成熟代码与工具，在项目中复用。'),
+  item('templates', '文档模板', 'files', '统一 FS、TS、测试与评审模板。'),
+  setting('notifications', '/notifications', '通知', 'bell', '里程碑到期、权限即将到期等提醒。'),
+  setting(
+    'project-delivery',
+    '/project/delivery',
+    '开发清单设置',
+    'list',
+    '模块选项、自定义列与标签。',
+  ),
+  setting('project-models', '/project/models', '项目模型', 'sparkles', '本项目允许使用的大模型。'),
+  setting(
+    'project-fields',
+    '/project-fields',
+    '项目字段',
+    'sliders',
+    '为项目增加企业关心的扩展字段。',
+  ),
+  setting('prompts', '/prompts', '提示词与框架', 'workflow', '助手的系统指令与开发框架默认类名。'),
+  setting('runs', '/runs', '运行记录', 'activity', '跟踪助手与工具任务的执行状态与重试。'),
+].map((i) => ({ ...i, planned: true }));
 
 export const modules: Module[] = [
   {
@@ -288,18 +262,18 @@ export const modules: Module[] = [
     sections: [{ id: 'home', items: [home] }],
   },
   {
-    id: 'delivery',
-    label: '开发管理',
-    icon: 'layers',
-    path: '/workspace/development-items',
-    sections: [{ id: 'delivery', items: delivery }],
+    id: 'project',
+    label: '项目',
+    icon: 'folder',
+    path: '/project/general',
+    sections: [{ id: 'project', items: projectPages }],
   },
   {
-    id: 'knowledge',
-    label: '知识与资产',
-    icon: 'library',
-    path: '/workspace/qa',
-    sections: [{ id: 'knowledge', items: knowledge }],
+    id: 'delivery',
+    label: '交付',
+    icon: 'layers',
+    path: '/workspace/development-items',
+    sections: [{ id: 'delivery', label: '开发', items: delivery }],
   },
   {
     id: 'settings',

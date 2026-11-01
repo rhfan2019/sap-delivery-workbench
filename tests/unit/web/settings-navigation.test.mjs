@@ -7,9 +7,10 @@ import { createSSRApp, h } from 'vue';
 
 const root = fileURLToPath(new URL('../../../apps/web/', import.meta.url));
 
-// docs/modules/access.md 4.3: every page is listed (planned ones too), and each
-// person sees what their permissions open.
-test('the settings menu lists every page and follows the permissions', async () => {
+// docs/modules/access.md 4.3 and docs/roadmap.md 3.1: the menus list the built pages (planned
+// ones are announced, not listed), the project has a module of its own, and each person sees
+// what their permissions open.
+test('the menus list the built pages and follow the permissions', async () => {
   const vite = await createServer({
     root,
     server: { middlewareMode: true, hmr: false },
@@ -21,7 +22,6 @@ test('the settings menu lists every page and follows the permissions', async () 
     for (const id of [
       'profile',
       'sap-credentials',
-      'project-general',
       'project-members',
       'project-sap',
       'users',
@@ -34,20 +34,36 @@ test('the settings menu lists every page and follows the permissions', async () 
       'diagnostics',
     ])
       assert.ok(ids.includes(id), id);
-    const planned = nav.settingsSections.flatMap((s) =>
-      s.items.filter((i) => i.planned).map((i) => i.id),
+    assert.equal(
+      nav.menus.some((i) => i.planned),
+      false,
+      'planned pages stay out of the menus',
     );
     assert.deepEqual(
-      planned.sort(),
+      nav.upcoming.map((i) => i.id).sort(),
       [
+        'assets',
+        'knowledge',
         'notifications',
         'project-delivery',
         'project-fields',
         'project-models',
         'prompts',
+        'qa',
         'runs',
+        'templates',
       ].sort(),
     );
+    assert.deepEqual(
+      nav.modules.map((m) => m.id),
+      ['home', 'project', 'delivery', 'settings'],
+    );
+    const projectModule = nav.modules.find((m) => m.id === 'project');
+    assert.deepEqual(
+      projectModule.sections[0].items.map((i) => i.path),
+      ['/project/general', '/project/plan', '/project/team', '/project/commercial'],
+    );
+    assert.equal(nav.moduleOf('/project/plan').id, 'project');
     assert.ok(
       nav.settingsSections.flatMap((s) => s.items).every((i) => i.path.startsWith('/settings/')),
     );
