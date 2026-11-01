@@ -272,7 +272,7 @@ export const modules: Module[] = [
     id: 'delivery',
     label: '交付',
     icon: 'layers',
-    path: '/workspace/development-items',
+    path: '/workspace/development-overview',
     sections: [{ id: 'delivery', label: '开发', items: delivery }],
   },
   {
@@ -320,4 +320,14 @@ export function visibleSections(sections: MenuSection[], v: Visibility): MenuSec
   return sections
     .map((s) => ({ ...s, items: s.items.filter((i) => visible(i, v)) }))
     .filter((s) => s.items.length);
+}
+// Where the rail takes the user: the module's first page, or else its first page they may see
+// (交付 opens 开发概览, or 开发清单 without the overview permission).
+export function startOf(module: Module, v: Visibility): string {
+  const pages = visibleSections(module.sections, v).flatMap((s) => s.items);
+  return pages.some((i) => i.path === module.path) ? module.path : (pages[0]?.path ?? module.path);
+}
+// A module of a single page (工作台) shows no menu beside the rail.
+export function hasMenu(module: Module): boolean {
+  return module.sections.flatMap((s) => s.items).length > 1;
 }

@@ -64,6 +64,21 @@ test('the menus list the built pages and follow the permissions', async () => {
       ['/project/general', '/project/plan', '/project/team', '/project/commercial'],
     );
     assert.equal(nav.moduleOf('/project/plan').id, 'project');
+    // 工作台 has no menu; 交付 opens 开发概览, or 开发清单 for whoever may not see the overview.
+    assert.deepEqual(
+      nav.modules.map((m) => nav.hasMenu(m)),
+      [false, true, true, true],
+    );
+    const deliveryModule = nav.modules.find((m) => m.id === 'delivery');
+    const viewer = (permissions) => ({
+      organization: [],
+      project: { projectId: 'p', permissions, limits: {} },
+    });
+    assert.equal(
+      nav.startOf(deliveryModule, viewer(['delivery.overview:view'])),
+      '/workspace/development-overview',
+    );
+    assert.equal(nav.startOf(deliveryModule, viewer([])), '/workspace/development-items');
     assert.ok(
       nav.settingsSections.flatMap((s) => s.items).every((i) => i.path.startsWith('/settings/')),
     );

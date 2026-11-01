@@ -27,7 +27,14 @@ import BaseNavItem from './base/BaseNavItem.vue';
 import BaseResizeHandle from './base/BaseResizeHandle.vue';
 import BaseToaster from './base/BaseToaster.vue';
 import { toast } from './base/toast';
-import { modules, moduleOf, entryOf, visibleSections } from '../features/navigation';
+import {
+  modules,
+  moduleOf,
+  entryOf,
+  hasMenu,
+  startOf,
+  visibleSections,
+} from '../features/navigation';
 import { api, identity } from '../services/session';
 import { detailOpen } from '../services/shell';
 import { useShortcut } from '../services/shortcuts';
@@ -55,12 +62,13 @@ const route = useRoute();
 const router = useRouter();
 const module = computed(() => moduleOf(route.path));
 // Only what the user may open is listed (docs/modules/access.md 4.3).
-const sections = computed(() =>
-  visibleSections(module.value.sections, {
-    organization: identity.value?.permissions ?? [],
-    project: projectAccess.value,
-  }),
-);
+const visibility = computed(() => ({
+  organization: identity.value?.permissions ?? [],
+  project: projectAccess.value,
+}));
+const sections = computed(() => visibleSections(module.value.sections, visibility.value));
+// 工作台 is a single page: no menu beside the rail, and nothing to fold or unfold.
+const menuless = computed(() => !hasMenu(module.value));
 const activeEntry = computed(() => entryOf(route.path));
 const activeSection = computed(() =>
   sections.value.find((s) => s.items.some((i) => i.id === activeEntry.value?.id)),
@@ -164,10 +172,12 @@ function showMenu() {
   shownAnyway.value = true;
 }
 // Choosing a module on the rail while its menu is folded away opens the menu (backlog BUG-006).
-function openModule() {
-  if (!narrow.value && hidden.value) showMenu();
+// A module without a menu (工作台) leaves the choice as it was.
+function openModule(path: string) {
+  if (!narrow.value && hidden.value && hasMenu(moduleOf(path))) showMenu();
 }
 function toggleMenu() {
+  if (menuless.value) return;
   if (hidden.value) showMenu();
   else menuHidden.value = true;
 }
@@ -241,7 +251,7 @@ function menuClick(event: MouseEvent) {
   if (middle || event.ctrlKey || event.metaKey) void openInNewTab(path);
   else {
     if (event.currentTarget instanceof HTMLElement && event.currentTarget.matches('.rail'))
-      openModule();
+      openModule(path);
     void openPage(path);
   }
 }
@@ -322,7 +332,7 @@ const keys = [
   <ConfirmDialog />
   <div
     class="shell"
-    :class="{ 'menu-hidden': hidden || record, 'menu-open': mobileMenu, record }"
+    :class="{ 'menu-hidden': hidden || record || menuless, 'menu-open': mobileMenu, record }"
     :style="{ '--nav-width': navWidth + 'px' }"
   >
     <a class="skip-link" href="#main-content">跳转到主要内容</a>
@@ -335,7 +345,7 @@ const keys = [
       >
         <RouterLink to="/home" class="mark" aria-label="SAP 智能交付工作台">S</RouterLink>
         <BaseIconButton
-          v-if="narrow"
+          v-if="narrow && !menuless"
           label="打开菜单"
           side="right"
           @click="mobileMenu = !mobileMenu"
@@ -345,10 +355,9 @@ const keys = [
           v-for="m in modules"
           :key="m.id"
           :label="m.label"
-          :to="m.path"
+          :to="startOf(m, visibility)"
           :pressed="module.id === m.id"
           side="right"
-          @click="openModule"
           ><AppIcon :name="m.icon" :size="18"
         /></BaseIconButton>
         <span class="rail-space"></span>
@@ -374,7 +383,7 @@ const keys = [
         @auxclick.capture="menuClick"
       >
         <BaseResizeHandle
-          v-if="!narrow && !hidden && !record"
+          v-if="!narrow && !hidden && !record && !menuless"
           v-model="navWidth"
           class="menu-resize"
           label="调整菜单宽度"
@@ -449,7 +458,7 @@ const keys = [
       <main id="main-content" class="shell-content">
         <header v-if="!record" class="page-bar">
           <BaseIconButton
-            v-if="hidden && !narrow"
+            v-if="hidden && !narrow && !menuless"
             label="展开菜单"
             kbd="["
             size="sm"
