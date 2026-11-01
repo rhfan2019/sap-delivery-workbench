@@ -565,7 +565,7 @@ button.s-list-row:hover {
 }
 .s-field {
   display: grid;
-  grid-template-columns: 88px minmax(0, 1fr);
+  grid-template-columns: 104px minmax(0, 1fr);
   gap: var(--space-3);
   align-items: center;
   margin-top: var(--space-4);
@@ -581,6 +581,22 @@ button.s-list-row:hover {
 }
 .s-field > :first-child {
   color: var(--text-muted);
+}
+/* A field name may lead with a small icon (DESIGN.md 5 “抽屉”), like a contact card. */
+.s-field > :first-child:has(> .s-icon) {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+.s-field.top > :first-child:has(> .s-icon) {
+  align-items: start;
+}
+.s-icon {
+  flex-shrink: 0;
+  color: var(--neutral-icon-1);
+}
+.s-field.top .s-icon {
+  margin-top: var(--space-0-5);
 }
 .s-value {
   min-width: 0;
@@ -688,6 +704,25 @@ button.s-list-row:hover {
 }
 .s-fields.reading :is(.s-field b, .s-drawer-help, .s-edit-only) {
   display: none;
+}
+/* Reading is a contact card (DESIGN.md 5 “抽屉”): small grey group names over hairlines, and
+   tighter rows of icon, name and value. */
+.s-drawer.reading .s-drawer-body h3 {
+  margin-bottom: var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--font-12);
+  letter-spacing: 0.04em;
+}
+.s-drawer.reading .s-drawer-body > section,
+.s-drawer.reading .s-drawer-body > .s-fields > section {
+  padding: var(--space-5) 0;
+  border-bottom-color: var(--border);
+}
+.s-drawer.reading .s-field {
+  margin-top: var(--space-1);
+}
+.s-fields.reading .s-field :is(input:not([type='checkbox']), select) {
+  height: var(--control-menu-item);
 }
 .s-drawer-help {
   margin: var(--space-3) 0;

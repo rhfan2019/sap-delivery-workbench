@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../../components/AppIcon.vue';
 import { computed, ref } from 'vue';
 import {
   PERMISSIONS,
@@ -304,10 +305,12 @@ defineExpose({ dirty, busy, refresh, startEdit });
         <h3>账号</h3>
         <fieldset class="s-fields" :class="{ reading }" :disabled="reading">
           <div class="s-field">
-            <span>登录账号</span><span class="s-value mono">{{ user.loginName }}</span>
+            <span><AppIcon class="s-icon" name="at" :size="14" />登录账号</span
+            ><span class="s-value mono">{{ user.loginName }}</span>
           </div>
           <label class="s-field"
-            ><span>姓名 <b v-if="editable">*</b></span
+            ><span
+              ><AppIcon class="s-icon" name="user" :size="14" />姓名 <b v-if="editable">*</b></span
             ><input
               v-model="form.displayName"
               maxlength="100"
@@ -315,7 +318,7 @@ defineExpose({ dirty, busy, refresh, startEdit });
               :disabled="!editable || save.busy.value"
           /></label>
           <label class="s-field"
-            ><span>邮箱</span
+            ><span><AppIcon class="s-icon" name="mail" :size="14" />邮箱</span
             ><input
               v-model="form.email"
               type="email"
@@ -324,7 +327,7 @@ defineExpose({ dirty, busy, refresh, startEdit });
               :disabled="!editable || save.busy.value"
           /></label>
           <label class="s-field"
-            ><span>人员类型</span
+            ><span><AppIcon class="s-icon" name="shapes" :size="14" />人员类型</span
             ><select v-model="form.personType" :disabled="!editable || save.busy.value">
               <option v-for="(text, key) in PERSON_TYPES" :key="key" :value="key">
                 {{ text }}
@@ -333,7 +336,7 @@ defineExpose({ dirty, busy, refresh, startEdit });
           >
           <p class="s-drawer-help">分包与外部人员的角色必须设结束日期。</p>
           <div class="s-field">
-            <span>账号状态</span>
+            <span><AppIcon class="s-icon" name="status" :size="14" />账号状态</span>
             <label class="s-check"
               ><input
                 type="checkbox"
@@ -352,13 +355,13 @@ defineExpose({ dirty, busy, refresh, startEdit });
           </p>
         </fieldset>
         <div class="s-field">
-          <span>最近登录</span
+          <span><AppIcon class="s-icon" name="clock" :size="14" />最近登录</span
           ><span class="s-value" :class="{ muted: !user.lastLoginAt }">{{
             user.lastLoginAt ? day(user.lastLoginAt) : '从未登录'
           }}</span>
         </div>
         <div v-if="can('user.password:reset') && !self" class="s-field">
-          <span>密码</span>
+          <span><AppIcon class="s-icon" name="lock" :size="14" />密码</span>
           <div>
             <BaseButton size="sm" :loading="reset1.busy.value" @click="resetPassword"
               >重置密码</BaseButton
@@ -371,7 +374,7 @@ defineExpose({ dirty, busy, refresh, startEdit });
         <h3>职位与模块</h3>
         <fieldset class="s-fields" :class="{ reading }" :disabled="reading">
           <label class="s-field"
-            ><span>职位</span
+            ><span><AppIcon class="s-icon" name="id" :size="14" />职位</span
             ><select v-model="form.positionId" :disabled="!editable || save.busy.value">
               <option value="">未设置</option>
               <option
@@ -400,7 +403,7 @@ defineExpose({ dirty, busy, refresh, startEdit });
             />同时授予职位的企业级角色（只增不减）</label
           >
           <div class="s-field top">
-            <span>擅长模块</span>
+            <span><AppIcon class="s-icon" name="layers" :size="14" />擅长模块</span>
             <ChoiceChips
               v-model="form.skillModules"
               :options="moduleOptions"
@@ -475,7 +478,7 @@ defineExpose({ dirty, busy, refresh, startEdit });
         >
           <h4>{{ editing.id ? '调整企业级角色' : '分配企业级角色' }}</h4>
           <label class="s-field"
-            ><span>角色 <b>*</b></span
+            ><span><AppIcon class="s-icon" name="shield" :size="14" />角色 <b>*</b></span
             ><select v-model="editing.roleId" :disabled="!!editing.id || assign.busy.value">
               <option v-for="r in orgRoles" :key="r.id" :value="r.id">
                 {{ r.name }} — {{ r.description }}
@@ -483,7 +486,7 @@ defineExpose({ dirty, busy, refresh, startEdit });
             </select></label
           >
           <label class="s-field"
-            ><span>项目范围</span
+            ><span><AppIcon class="s-icon" name="folders" :size="14" />项目范围</span
             ><select
               v-model="editing.projectScope"
               :disabled="assign.busy.value"
@@ -504,11 +507,11 @@ defineExpose({ dirty, busy, refresh, startEdit });
             />
           </div>
           <label class="s-field"
-            ><span>开始日期</span
+            ><span><AppIcon class="s-icon" name="calendar" :size="14" />开始日期</span
             ><input v-model="editing.validFrom" type="date" :disabled="assign.busy.value"
           /></label>
           <label class="s-field"
-            ><span>结束日期</span
+            ><span><AppIcon class="s-icon" name="calendar" :size="14" />结束日期</span
             ><input v-model="editing.validTo" type="date" :disabled="assign.busy.value"
           /></label>
           <p class="s-drawer-help">只能授予你自己持有的权限；不能修改自己的角色。</p>

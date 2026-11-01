@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../../components/AppIcon.vue';
 import { computed, ref } from 'vue';
 import { HEALTH, HEALTH_DIMENSIONS } from '@sap-delivery-workbench/contracts/projects/options';
 import { api } from '../../services/session';
@@ -88,7 +89,7 @@ defineExpose({ dirty, busy: save.busy });
     <section>
       <h3>说明</h3>
       <label class="s-field top"
-        ><span>一句话说明</span
+        ><span><AppIcon class="s-icon" name="note" :size="14" />一句话说明</span
         ><textarea
           v-model="form.note"
           class="s-textarea"

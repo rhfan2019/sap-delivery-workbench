@@ -56,6 +56,18 @@ import {
   IdCard,
   Database,
   Briefcase,
+  StickyNote,
+  CircleDot,
+  Tag,
+  Shapes,
+  Mail,
+  Phone,
+  Hash,
+  AtSign,
+  Clock,
+  Globe,
+  Link,
+  Flag,
 } from '@lucide/vue';
 const props = defineProps<{ name: string; size?: number }>();
 const icons: Record<string, unknown> = {
@@ -114,6 +126,19 @@ const icons: Record<string, unknown> = {
   id: IdCard,
   database: Database,
   briefcase: Briefcase,
+  // Field labels of a record (DESIGN.md 5 “抽屉”).
+  note: StickyNote,
+  status: CircleDot,
+  tag: Tag,
+  shapes: Shapes,
+  mail: Mail,
+  phone: Phone,
+  hash: Hash,
+  at: AtSign,
+  clock: Clock,
+  globe: Globe,
+  link: Link,
+  flag: Flag,
 };
 const icon = computed(() => icons[props.name] ?? FileText);
 </script>

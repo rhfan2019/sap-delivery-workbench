@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../../components/AppIcon.vue';
 import { computed, ref } from 'vue';
 import SettingsDrawer from '../settings/SettingsDrawer.vue';
 import { useSave } from '../settings/useLoad';
@@ -66,7 +67,7 @@ defineExpose({ dirty, busy: save.busy });
     <section>
       <h3>基本信息</h3>
       <label class="s-field"
-        ><span>编码 <b>*</b></span
+        ><span><AppIcon class="s-icon" name="hash" :size="14" />编码 <b>*</b></span
         ><input
           v-model="draft.code"
           class="mono"
@@ -76,25 +77,25 @@ defineExpose({ dirty, busy: save.busy });
           :disabled="save.busy.value"
       /></label>
       <label class="s-field"
-        ><span>名称 <b>*</b></span
+        ><span><AppIcon class="s-icon" name="tag" :size="14" />名称 <b>*</b></span
         ><input v-model="draft.name" maxlength="60" required autofocus :disabled="save.busy.value"
       /></label>
       <label class="s-field top"
-        ><span>说明</span
+        ><span><AppIcon class="s-icon" name="note" :size="14" />说明</span
         ><textarea v-model="draft.description" maxlength="300" :disabled="save.busy.value" />
       </label>
     </section>
     <section>
       <h3>类型与来源</h3>
       <label class="s-field"
-        ><span>类型</span
+        ><span><AppIcon class="s-icon" name="shapes" :size="14" />类型</span
         ><select v-model="draft.kind" :disabled="save.busy.value" @change="draft.copyFrom = ''">
           <option value="single">单一角色（一组权限点）</option>
           <option value="composite">复合角色（一组单一角色）</option>
         </select></label
       >
       <label class="s-field"
-        ><span>层级</span
+        ><span><AppIcon class="s-icon" name="layers" :size="14" />层级</span
         ><select v-model="draft.scope" :disabled="save.busy.value" @change="draft.copyFrom = ''">
           <option value="project">项目级（在项目中分配）</option>
           <option value="organization">企业级（可带项目范围）</option>

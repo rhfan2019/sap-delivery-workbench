@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../../components/AppIcon.vue';
 import { computed, ref } from 'vue';
 import SettingsDrawer from '../settings/SettingsDrawer.vue';
 import { useSave } from '../settings/useLoad';
@@ -76,7 +77,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
       <section>
         <h3>基本信息</h3>
         <label class="s-field"
-          ><span>名称 <b>*</b></span
+          ><span><AppIcon class="s-icon" name="tag" :size="14" />名称 <b>*</b></span
           ><input
             v-model="form.name"
             maxlength="60"
@@ -86,7 +87,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
             :disabled="save.busy.value"
         /></label>
         <label class="s-field"
-          ><span>用途 <b>*</b></span
+          ><span><AppIcon class="s-icon" name="note" :size="14" />用途 <b>*</b></span
           ><select v-model="form.purpose" :disabled="!!system || save.busy.value">
             <option value="development">开发系统</option>
             <option value="test">测试系统</option>
@@ -94,7 +95,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
         >
         <p v-if="system" class="s-drawer-help">用途登记后不能修改；需要时删除后重新登记。</p>
         <label class="s-field"
-          ><span>系统标识 <b>*</b></span
+          ><span><AppIcon class="s-icon" name="hash" :size="14" />系统标识 <b>*</b></span
           ><input
             v-model="form.sid"
             class="mono"
@@ -104,14 +105,14 @@ defineExpose({ dirty, busy: save.busy, startEdit });
             :disabled="save.busy.value"
         /></label>
         <label class="s-field"
-          ><span>状态</span
+          ><span><AppIcon class="s-icon" name="status" :size="14" />状态</span
           ><select v-model="form.status" :disabled="save.busy.value">
             <option value="active">启用</option>
             <option value="inactive">停用（助手不可选，历史保留）</option>
           </select></label
         >
         <label class="s-field"
-          ><span>说明</span
+          ><span><AppIcon class="s-icon" name="note" :size="14" />说明</span
           ><input
             v-model="form.description"
             maxlength="300"
@@ -122,7 +123,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
       <section>
         <h3>接入配置</h3>
         <label class="s-field"
-          ><span>ADT 地址 <b>*</b></span
+          ><span><AppIcon class="s-icon" name="link" :size="14" />ADT 地址 <b>*</b></span
           ><input
             v-model="form.sapUrl"
             class="mono"
@@ -133,7 +134,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
         /></label>
         <p class="s-drawer-help">填写 HTTPS 主机地址及端口，不含路径或凭据。</p>
         <label class="s-field"
-          ><span>Client <b>*</b></span
+          ><span><AppIcon class="s-icon" name="hash" :size="14" />Client <b>*</b></span
           ><input
             v-model="form.client"
             class="mono"
@@ -143,7 +144,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
             :disabled="save.busy.value"
         /></label>
         <label class="s-field"
-          ><span>登录语言</span
+          ><span><AppIcon class="s-icon" name="globe" :size="14" />登录语言</span
           ><input
             v-model="form.language"
             class="mono"

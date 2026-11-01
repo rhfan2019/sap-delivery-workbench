@@ -49,7 +49,7 @@ onUnmounted(() => {
   <dialog
     ref="dialog"
     class="s-drawer"
-    :class="{ wide }"
+    :class="{ wide, reading }"
     :aria-labelledby="id"
     @cancel.prevent="emit('close')"
     @keydown.esc.stop.prevent="emit('close')"

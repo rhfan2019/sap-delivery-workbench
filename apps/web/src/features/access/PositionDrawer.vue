@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../../components/AppIcon.vue';
 import { computed, ref } from 'vue';
 import SettingsDrawer from '../settings/SettingsDrawer.vue';
 import { useSave } from '../settings/useLoad';
@@ -79,7 +80,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
       <section>
         <h3>基本信息</h3>
         <label class="s-field"
-          ><span>编码 <b>*</b></span
+          ><span><AppIcon class="s-icon" name="hash" :size="14" />编码 <b>*</b></span
           ><input
             v-model="form.code"
             class="mono"
@@ -89,18 +90,18 @@ defineExpose({ dirty, busy: save.busy, startEdit });
             :disabled="save.busy.value"
         /></label>
         <label class="s-field"
-          ><span>名称 <b>*</b></span
+          ><span><AppIcon class="s-icon" name="tag" :size="14" />名称 <b>*</b></span
           ><input v-model="form.name" maxlength="60" required :disabled="save.busy.value"
         /></label>
         <label class="s-field"
-          ><span>状态</span
+          ><span><AppIcon class="s-icon" name="status" :size="14" />状态</span
           ><select v-model="form.status" :disabled="save.busy.value">
             <option value="active">启用</option>
             <option value="inactive">停用（不能再设给用户）</option>
           </select></label
         >
         <label class="s-field"
-          ><span>说明</span
+          ><span><AppIcon class="s-icon" name="note" :size="14" />说明</span
           ><input
             v-model="form.description"
             maxlength="300"

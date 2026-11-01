@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../../components/AppIcon.vue';
 import { computed, onMounted, ref } from 'vue';
 import { PROJECT_SCOPES } from '@sap-delivery-workbench/contracts/access/catalog';
 import BaseAvatar from '../../components/base/BaseAvatar.vue';
@@ -142,15 +143,20 @@ defineExpose({ dirty, busy: save.busy, startEdit });
         <section>
           <h3>基本信息</h3>
           <label class="s-field"
-            ><span>编码</span><input :value="role.code" class="mono" disabled
+            ><span><AppIcon class="s-icon" name="hash" :size="14" />编码</span
+            ><input :value="role.code" class="mono" disabled
           /></label>
-          <label class="s-field"><span>类型</span><input :value="typeText" disabled /></label>
           <label class="s-field"
-            ><span>名称 <b v-if="editable">*</b></span
+            ><span><AppIcon class="s-icon" name="shapes" :size="14" />类型</span
+            ><input :value="typeText" disabled
+          /></label>
+          <label class="s-field"
+            ><span
+              ><AppIcon class="s-icon" name="tag" :size="14" />名称 <b v-if="editable">*</b></span
             ><input v-model="name" maxlength="60" required :disabled="!editable || save.busy.value"
           /></label>
           <label class="s-field top"
-            ><span>说明</span
+            ><span><AppIcon class="s-icon" name="note" :size="14" />说明</span
             ><textarea
               v-model="description"
               maxlength="300"
@@ -159,7 +165,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
             />
           </label>
           <div class="s-field">
-            <span>状态</span>
+            <span><AppIcon class="s-icon" name="status" :size="14" />状态</span>
             <label class="s-check state"
               ><input
                 type="checkbox"

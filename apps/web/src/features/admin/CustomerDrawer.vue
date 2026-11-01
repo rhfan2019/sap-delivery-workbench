@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../../components/AppIcon.vue';
 import { computed, ref } from 'vue';
 import SettingsDrawer from '../settings/SettingsDrawer.vue';
 import { useSave } from '../settings/useLoad';
@@ -54,7 +55,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
       <section>
         <h3>基本信息</h3>
         <label class="s-field"
-          ><span>客户名称 <b>*</b></span
+          ><span><AppIcon class="s-icon" name="tag" :size="14" />客户名称 <b>*</b></span
           ><input
             v-model="form.name"
             maxlength="200"
@@ -63,7 +64,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
             :disabled="save.busy.value"
         /></label>
         <label class="s-field"
-          ><span>客户编码 <b>*</b></span
+          ><span><AppIcon class="s-icon" name="hash" :size="14" />客户编码 <b>*</b></span
           ><input
             v-model="form.code"
             class="mono"
@@ -72,21 +73,21 @@ defineExpose({ dirty, busy: save.busy, startEdit });
             :disabled="save.busy.value"
         /></label>
         <label class="s-field"
-          ><span>客户类型</span
+          ><span><AppIcon class="s-icon" name="shapes" :size="14" />客户类型</span
           ><select v-model="form.customerKind" :disabled="save.busy.value">
             <option value="external">外部客户</option>
             <option value="self">本企业（内部项目）</option>
           </select></label
         >
         <label class="s-field"
-          ><span>状态</span
+          ><span><AppIcon class="s-icon" name="status" :size="14" />状态</span
           ><select v-model="form.status" :disabled="save.busy.value">
             <option value="active">启用</option>
             <option value="inactive">停用（不能再为其新建项目）</option>
           </select></label
         >
         <label class="s-field top"
-          ><span>说明</span
+          ><span><AppIcon class="s-icon" name="note" :size="14" />说明</span
           ><textarea
             v-model="form.description"
             class="s-textarea"

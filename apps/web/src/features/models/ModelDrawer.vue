@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../../components/AppIcon.vue';
 import { computed, ref } from 'vue';
 import { KeyRound, ChevronDown, Play } from '@lucide/vue';
 import SettingsDrawer from '../settings/SettingsDrawer.vue';
@@ -74,7 +75,7 @@ defineExpose({ dirty, startEdit });
       <section>
         <h3>基本信息</h3>
         <label class="s-field"
-          ><span>模型名称 <b>*</b></span
+          ><span><AppIcon class="s-icon" name="tag" :size="14" />模型名称 <b>*</b></span
           ><input
             v-model="form.name"
             required
@@ -84,7 +85,7 @@ defineExpose({ dirty, startEdit });
             :disabled="busy"
         /></label>
         <label class="s-field"
-          ><span>提供方 <b>*</b></span
+          ><span><AppIcon class="s-icon" name="building" :size="14" />提供方 <b>*</b></span
           ><input
             v-model="form.provider"
             required
@@ -93,7 +94,7 @@ defineExpose({ dirty, startEdit });
             :disabled="busy"
         /></label>
         <label class="s-field"
-          ><span>API 协议 <b>*</b></span
+          ><span><AppIcon class="s-icon" name="plug" :size="14" />API 协议 <b>*</b></span
           ><select v-model="form.protocol" :disabled="busy">
             <option value="openai_chat">OpenAI Chat</option>
             <option value="openai_responses">OpenAI Responses</option>
@@ -101,7 +102,7 @@ defineExpose({ dirty, startEdit });
           </select></label
         >
         <label class="s-field"
-          ><span>模型标识 <b>*</b></span
+          ><span><AppIcon class="s-icon" name="hash" :size="14" />模型标识 <b>*</b></span
           ><input
             v-model="form.modelId"
             required
@@ -113,7 +114,7 @@ defineExpose({ dirty, startEdit });
       <section>
         <h3>接入配置</h3>
         <label class="s-field"
-          ><span>接入地址 <b>*</b></span
+          ><span><AppIcon class="s-icon" name="link" :size="14" />接入地址 <b>*</b></span
           ><input
             v-model="form.baseUrl"
             type="url"
@@ -126,7 +127,7 @@ defineExpose({ dirty, startEdit });
           服务。
         </p>
         <label v-if="replaceKey" class="s-field"
-          ><span>API 密钥 <b>*</b></span
+          ><span><AppIcon class="s-icon" name="key" :size="14" />API 密钥 <b>*</b></span
           ><input
             v-model="apiKey"
             type="password"

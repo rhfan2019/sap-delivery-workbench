@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../../components/AppIcon.vue';
 import { computed, ref } from 'vue';
 import { CONTACT_ROLES } from '@sap-delivery-workbench/contracts/projects/options';
 import { api } from '../../services/session';
@@ -81,11 +82,11 @@ defineExpose({ dirty, busy: save.busy, startEdit });
       <section>
         <h3>基本信息</h3>
         <label class="s-field"
-          ><span>姓名 <b>*</b></span
+          ><span><AppIcon class="s-icon" name="user" :size="14" />姓名 <b>*</b></span
           ><input v-model="form.name" maxlength="60" required autofocus :disabled="save.busy.value"
         /></label>
         <label class="s-field"
-          ><span>角色</span
+          ><span><AppIcon class="s-icon" name="shield" :size="14" />角色</span
           ><select v-model="form.contactRole" :disabled="save.busy.value">
             <option v-for="(label, key) in CONTACT_ROLES" :key="key" :value="key">
               {{ label }}
@@ -93,7 +94,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
           </select></label
         >
         <label class="s-field"
-          ><span>职务</span
+          ><span><AppIcon class="s-icon" name="id" :size="14" />职务</span
           ><input
             v-model="form.title"
             maxlength="60"
@@ -101,7 +102,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
             :disabled="save.busy.value"
         /></label>
         <label class="s-field"
-          ><span>部门</span
+          ><span><AppIcon class="s-icon" name="building" :size="14" />部门</span
           ><input
             v-model="form.department"
             maxlength="60"
@@ -112,7 +113,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
       <section>
         <h3>联系方式</h3>
         <label class="s-field"
-          ><span>电话</span
+          ><span><AppIcon class="s-icon" name="phone" :size="14" />电话</span
           ><input
             v-model="form.phone"
             maxlength="40"
@@ -120,7 +121,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
             :disabled="save.busy.value"
         /></label>
         <label class="s-field"
-          ><span>邮箱</span
+          ><span><AppIcon class="s-icon" name="mail" :size="14" />邮箱</span
           ><input
             v-model="form.email"
             type="email"
@@ -132,11 +133,11 @@ defineExpose({ dirty, busy: save.busy, startEdit });
       <section>
         <h3>负责与备注</h3>
         <div class="s-field top">
-          <span>负责模块</span>
+          <span><AppIcon class="s-icon" name="layers" :size="14" />负责模块</span>
           <ChoiceChips v-model="form.modules" :options="modules" label="负责模块" />
         </div>
         <label class="s-field top"
-          ><span>备注</span
+          ><span><AppIcon class="s-icon" name="note" :size="14" />备注</span
           ><textarea
             v-model="form.notes"
             class="s-textarea"

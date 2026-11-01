@@ -19,7 +19,7 @@ import BaseTabs from '../../components/base/BaseTabs.vue';
 import BaseButton from '../../components/base/BaseButton.vue';
 import { api, ApiError, can } from '../../services/session';
 import { currentProject } from '../../services/projectContext';
-import MilestoneLine from './MilestoneLine.vue';
+import MilestoneRail from '../../components/dashboard/MilestoneRail.vue';
 import ConsultantView from './ConsultantView.vue';
 import MineView from './MineView.vue';
 import PortfolioView from './PortfolioView.vue';
@@ -194,7 +194,9 @@ const scoped = computed(() => !!(data.value?.scope.owner || data.value?.scope.mo
         ><template #icon><LayoutGrid /></template
       ></BaseEmptyState>
       <template v-else>
-        <MilestoneLine :milestones="data.milestones" :today="data.today" />
+        <section class="ov-section" aria-label="里程碑">
+          <MilestoneRail :milestones="data.milestones" :today="data.today" />
+        </section>
         <section v-if="view !== 'mine'" class="ov-section" aria-label="关键数字">
           <div class="ov-stats">
             <button

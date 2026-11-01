@@ -23,10 +23,13 @@ import {
   milestoneState,
 } from '@sap-delivery-workbench/contracts/projects/options';
 import BaseButton from '../../components/base/BaseButton.vue';
+import BaseTabs from '../../components/base/BaseTabs.vue';
 import BaseTag from '../../components/base/BaseTag.vue';
+import MilestoneRail from '../../components/dashboard/MilestoneRail.vue';
 import { toast } from '../../components/base/toast';
 import { askConfirmation } from '../../services/confirmation';
 import { api } from '../../services/session';
+import { today } from '../delivery/model';
 import SettingsPage from '../settings/SettingsPage.vue';
 import SettingsCard from '../settings/SettingsCard.vue';
 import SettingsRowMenu from '../settings/SettingsRowMenu.vue';
@@ -97,6 +100,20 @@ const counts = computed(() => ({
 }));
 const query = ref('');
 const stateFilter = ref('');
+// The states as tabs with their counts (DESIGN.md 5); overdue and due ones stand out.
+const TAB_TONES: Partial<Record<MilestoneState, 'red' | 'yellow' | 'green'>> = {
+  delayed: 'red',
+  due: 'yellow',
+};
+const stateTabs = computed(() => [
+  { id: '', label: '全部', count: milestones.value.length },
+  ...(Object.keys(MILESTONE_STATES) as MilestoneState[]).map((key) => ({
+    id: key,
+    label: MILESTONE_STATES[key],
+    count: milestones.value.filter((m) => m.state === key).length,
+    tone: TAB_TONES[key],
+  })),
+]);
 const page = ref(1);
 const filtered = computed(() =>
   milestones.value.filter(
@@ -324,6 +341,9 @@ const latest = computed(() => project.value?.health[0]);
               >。开发冻结与上线会显示在开发清单与项目列表中。
             </p>
           </header>
+          <div v-if="project.milestones.length" class="plan-rail">
+            <MilestoneRail :milestones="project.milestones" :today="today()" />
+          </div>
           <p v-if="removal.error.value" class="s-error" role="alert">{{ removal.error.value }}</p>
           <div class="s-table-toolbar">
             <label class="s-table-search"
@@ -331,12 +351,7 @@ const latest = computed(() => project.value?.health[0]);
                 v-model="query"
                 aria-label="搜索里程碑"
                 placeholder="搜索名称、阶段或说明" /></label
-            ><select v-model="stateFilter" aria-label="筛选里程碑状态">
-              <option value="">全部状态</option>
-              <option v-for="(label, key) in MILESTONE_STATES" :key="key" :value="key">
-                {{ label }}
-              </option>
-            </select>
+            ><BaseTabs v-model="stateFilter" label="里程碑状态" :tabs="stateTabs" />
             <div v-if="planEditable" class="s-table-actions">
               <button class="primary-button" @click="openMilestone(null)">
                 <Plus :size="17" />新增里程碑
@@ -524,5 +539,12 @@ const latest = computed(() => project.value?.health[0]);
   color: var(--text-muted);
   font-size: var(--font-12);
   font-weight: var(--weight-550);
+}
+/* The milestones to scale above their list (DESIGN.md 12). */
+.plan-rail {
+  margin-bottom: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
 }
 </style>

@@ -21,7 +21,6 @@ import { daysBetween, addDays } from '@sap-delivery-workbench/contracts/delivery
 import {
   HEALTH as HEALTH_LABELS,
   PHASES as PROJECT_PHASES,
-  milestoneState,
 } from '@sap-delivery-workbench/contracts/projects/options';
 import AppIcon from '../components/AppIcon.vue';
 import BaseEmptyState from '../components/base/BaseEmptyState.vue';
@@ -30,6 +29,7 @@ import BaseTag from '../components/base/BaseTag.vue';
 import DashArea from '../components/dashboard/DashArea.vue';
 import DashCard from '../components/dashboard/DashCard.vue';
 import DashMetric, { type Trend } from '../components/dashboard/DashMetric.vue';
+import MilestoneRail from '../components/dashboard/MilestoneRail.vue';
 import {
   assistantLink,
   drillLink,
@@ -256,27 +256,6 @@ const trend = computed(() => {
       })
     : undefined;
   return { values: f.remaining, labels: f.days.map(shortDate), target };
-});
-
-// The next milestones, nearest first.
-const milestones = computed(() => {
-  const d = data.value;
-  if (!d) return [];
-  return d.milestones
-    .filter((m) => m.plannedOn && !m.achievedOn)
-    .sort((a, b) => a.plannedOn!.localeCompare(b.plannedOn!))
-    .slice(0, 4)
-    .map((m) => {
-      const days = daysBetween(today.value, m.plannedOn!);
-      const state = milestoneState(m, today.value);
-      return {
-        key: m.key,
-        name: m.name,
-        date: shortDate(m.plannedOn!),
-        when: days === 0 ? '今天' : days > 0 ? `${days} 天后` : `已过 ${-days} 天`,
-        tone: state === 'delayed' ? 'red' : state === 'due' ? 'yellow' : 'neutral',
-      } as const;
-    });
 });
 
 // Modules × phases: share completed, outlined when something is at risk.
@@ -568,20 +547,16 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
           </DashCard>
         </div>
         <div class="dash-grid">
-          <DashCard title="近期里程碑" :span="4">
+          <DashCard title="里程碑" :span="12">
             <template #icon><Flag /></template>
-            <ul class="dash-rows">
-              <li v-for="m in milestones" :key="m.key" class="dash-row">
-                <span class="dash-row-main"
-                  ><strong>{{ m.name }}</strong
-                  ><small>{{ m.date }}</small></span
-                >
-                <BaseTag :tone="m.tone">{{ m.when }}</BaseTag>
-              </li>
-            </ul>
-            <p v-if="!milestones.length" class="dash-empty">没有待达成的已排期里程碑。</p>
+            <template #action>
+              <RouterLink to="/project/plan" class="dash-link">计划与健康<ArrowRight /></RouterLink>
+            </template>
+            <MilestoneRail :milestones="data.milestones" :today="today" :cards="4" />
           </DashCard>
-          <DashCard title="模块 × 阶段" hint="完成率，红框为有风险" :span="team.length ? 5 : 8">
+        </div>
+        <div class="dash-grid">
+          <DashCard title="模块 × 阶段" hint="完成率，红框为有风险" :span="team.length ? 8 : 12">
             <template #icon><Grid3x3 /></template>
             <div
               v-if="heat.length"
@@ -609,7 +584,7 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
             </div>
             <p v-else class="dash-empty">还没有开发项。</p>
           </DashCard>
-          <DashCard v-if="team.length" title="团队负载" hint="本周计划人天" :span="3">
+          <DashCard v-if="team.length" title="团队负载" hint="本周计划人天" :span="4">
             <template #icon><Users /></template>
             <ul class="dash-rows">
               <li v-for="t in team" :key="t.name" class="load-row">

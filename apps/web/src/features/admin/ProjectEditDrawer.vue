@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../../components/AppIcon.vue';
 import { computed, onMounted, ref } from 'vue';
 import {
   CONTRACT_ROLES,
@@ -118,18 +119,23 @@ defineExpose({ dirty, busy: save.busy, startEdit });
         <section>
           <h3>基本信息</h3>
           <label class="s-field"
-            ><span>客户</span><input :value="detail.customerName" disabled
+            ><span><AppIcon class="s-icon" name="building" :size="14" />客户</span
+            ><input :value="detail.customerName" disabled
           /></label>
           <label class="s-field"
-            ><span>项目编号 <b v-if="editable">*</b></span
+            ><span
+              ><AppIcon class="s-icon" name="hash" :size="14" />项目编号
+              <b v-if="editable">*</b></span
             ><input v-model="draft.code" class="mono" maxlength="32" required :disabled="disabled"
           /></label>
           <label class="s-field"
-            ><span>项目名称 <b v-if="editable">*</b></span
+            ><span
+              ><AppIcon class="s-icon" name="tag" :size="14" />项目名称
+              <b v-if="editable">*</b></span
             ><input v-model="draft.name" maxlength="200" required :disabled="disabled"
           /></label>
           <label class="s-field"
-            ><span>简称</span
+            ><span><AppIcon class="s-icon" name="tag" :size="14" />简称</span
             ><input
               v-model="draft.shortName"
               maxlength="20"
@@ -137,7 +143,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
               :disabled="disabled"
           /></label>
           <label class="s-field"
-            ><span>项目类型</span
+            ><span><AppIcon class="s-icon" name="shapes" :size="14" />项目类型</span
             ><select v-model="draft.projectType" :disabled="disabled">
               <option v-for="(label, key) in PROJECT_TYPES" :key="key" :value="key">
                 {{ label }}
@@ -145,7 +151,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
             </select></label
           >
           <label class="s-field"
-            ><span>项目状态</span
+            ><span><AppIcon class="s-icon" name="status" :size="14" />项目状态</span
             ><select v-model="draft.status" :disabled="disabled">
               <option v-for="[value, label] in statuses" :key="value" :value="value">
                 {{ label }}
@@ -160,7 +166,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
             />暂停（只有筹备中或实施中的项目可以暂停）</label
           >
           <label class="s-field"
-            ><span>实施方法论</span
+            ><span><AppIcon class="s-icon" name="workflow" :size="14" />实施方法论</span
             ><select v-model="draft.methodology" :disabled="disabled">
               <option v-for="(label, key) in METHODOLOGIES" :key="key" :value="key">
                 {{ label }}
@@ -168,7 +174,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
             </select></label
           >
           <label class="s-field"
-            ><span>我方角色</span
+            ><span><AppIcon class="s-icon" name="shield" :size="14" />我方角色</span
             ><select v-model="draft.contractRole" :disabled="disabled">
               <option v-for="(label, key) in CONTRACT_ROLES" :key="key" :value="key">
                 {{ label }}
@@ -180,7 +186,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
             ><input v-model="draft.primeContractor" maxlength="200" required :disabled="disabled"
           /></label>
           <label class="s-field top"
-            ><span>项目说明</span
+            ><span><AppIcon class="s-icon" name="note" :size="14" />项目说明</span
             ><textarea
               v-model="draft.description"
               maxlength="4000"
@@ -192,20 +198,20 @@ defineExpose({ dirty, busy: save.busy, startEdit });
         <section>
           <h3>负责人与计划</h3>
           <div class="s-field">
-            <span>项目经理</span
+            <span><AppIcon class="s-icon" name="user" :size="14" />项目经理</span
             ><span class="s-value" :class="{ muted: !detail.keyRoles.manager }">{{
               detail.keyRoles.manager?.displayName ?? '未指定'
             }}</span>
           </div>
           <div class="s-field">
-            <span>当前阶段</span
+            <span><AppIcon class="s-icon" name="flag" :size="14" />当前阶段</span
             ><span class="s-value" :class="{ muted: !detail.currentPhase }">{{
               detail.currentPhase ?? '—'
             }}</span>
           </div>
           <p class="s-drawer-help">项目经理与关键岗位在项目设置的“团队与干系人”中调整。</p>
           <label class="s-field"
-            ><span>计划开始</span
+            ><span><AppIcon class="s-icon" name="calendar" :size="14" />计划开始</span
             ><input
               v-model="draft.plannedStartDate"
               :type="reading ? 'text' : 'date'"
@@ -213,7 +219,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
               :disabled="disabled"
           /></label>
           <label class="s-field"
-            ><span>计划结束</span
+            ><span><AppIcon class="s-icon" name="calendar" :size="14" />计划结束</span
             ><input
               v-model="draft.plannedEndDate"
               :type="reading ? 'text' : 'date'"
@@ -229,27 +235,30 @@ defineExpose({ dirty, busy: save.busy, startEdit });
       <section>
         <h3>基本信息</h3>
         <div class="s-field">
-          <span>客户</span><span class="s-value">{{ project.customerName }}</span>
+          <span><AppIcon class="s-icon" name="building" :size="14" />客户</span
+          ><span class="s-value">{{ project.customerName }}</span>
         </div>
         <div class="s-field">
-          <span>项目编号</span><span class="s-value mono">{{ project.code }}</span>
+          <span><AppIcon class="s-icon" name="hash" :size="14" />项目编号</span
+          ><span class="s-value mono">{{ project.code }}</span>
         </div>
         <div class="s-field">
-          <span>项目类型</span
+          <span><AppIcon class="s-icon" name="shapes" :size="14" />项目类型</span
           ><span class="s-value">{{ PROJECT_TYPES[project.projectType as 'other'] }}</span>
         </div>
         <div class="s-field">
-          <span>项目状态</span
+          <span><AppIcon class="s-icon" name="status" :size="14" />项目状态</span
           ><span class="s-value">{{ PROJECT_STATUSES[project.status as 'active'] }}</span>
         </div>
       </section>
       <section>
         <h3>负责人与计划</h3>
         <div class="s-field">
-          <span>项目经理</span><span class="s-value">{{ project.managerName ?? '未指定' }}</span>
+          <span><AppIcon class="s-icon" name="user" :size="14" />项目经理</span
+          ><span class="s-value">{{ project.managerName ?? '未指定' }}</span>
         </div>
         <div class="s-field">
-          <span>计划起止</span
+          <span><AppIcon class="s-icon" name="calendar" :size="14" />计划起止</span
           ><span class="s-value"
             >{{ project.plannedStartDate ?? '—' }} 至 {{ project.plannedEndDate ?? '—' }}</span
           >

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../../components/AppIcon.vue';
 import { computed, ref, watch } from 'vue';
 import {
   PERSON_TYPES,
@@ -164,7 +165,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
       <section>
         <h3>成员</h3>
         <label v-if="!member" class="s-field"
-          ><span>成员 <b>*</b></span
+          ><span><AppIcon class="s-icon" name="user" :size="14" />成员 <b>*</b></span
           ><select v-model="userId">
             <option value="" disabled>选择企业内的用户</option>
             <option v-for="c in candidates" :key="c.id" :value="c.id">
@@ -185,7 +186,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
           >中新建用户，职位选“开发顾问”等，再回到这里添加。
         </p>
         <div v-if="member" class="s-field">
-          <span>成员</span>
+          <span><AppIcon class="s-icon" name="user" :size="14" />成员</span>
           <span class="s-value"
             >{{ member.displayName }}
             <small class="member-sub"
@@ -250,7 +251,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
       <section>
         <h3>范围与期限</h3>
         <div class="s-field top">
-          <span>模块范围</span>
+          <span><AppIcon class="s-icon" name="layers" :size="14" />模块范围</span>
           <span v-if="reading" class="s-value">{{
             modules.length ? modules.join('、') : '全部模块'
           }}</span>
@@ -276,7 +277,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
           />仅本人负责：只能修改自己负责的开发项，只能在自己负责的阶段使用助手</label
         >
         <label class="s-field"
-          ><span>开始日期</span
+          ><span><AppIcon class="s-icon" name="calendar" :size="14" />开始日期</span
           ><input v-model="validFrom" :type="reading ? 'text' : 'date'" placeholder="未填写"
         /></label>
         <label class="s-field"

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../../components/AppIcon.vue';
 import { computed, ref } from 'vue';
 import { PERSON_TYPES } from '@sap-delivery-workbench/contracts/access/catalog';
 import { SAP_MODULES } from '@sap-delivery-workbench/contracts/projects/options';
@@ -61,7 +62,7 @@ defineExpose({ dirty, busy: save.busy });
     <section>
       <h3>账号</h3>
       <label class="s-field"
-        ><span>登录账号 <b>*</b></span
+        ><span><AppIcon class="s-icon" name="at" :size="14" />登录账号 <b>*</b></span
         ><input
           v-model="draft.loginName"
           class="mono"
@@ -73,15 +74,15 @@ defineExpose({ dirty, busy: save.busy });
       /></label>
       <p class="s-drawer-help">3–64 位英文字母、数字、点、下划线或连字符。</p>
       <label class="s-field"
-        ><span>姓名 <b>*</b></span
+        ><span><AppIcon class="s-icon" name="user" :size="14" />姓名 <b>*</b></span
         ><input v-model="draft.displayName" maxlength="100" required :disabled="save.busy.value"
       /></label>
       <label class="s-field"
-        ><span>邮箱</span
+        ><span><AppIcon class="s-icon" name="mail" :size="14" />邮箱</span
         ><input v-model="draft.email" type="email" maxlength="254" :disabled="save.busy.value"
       /></label>
       <label class="s-field"
-        ><span>人员类型</span
+        ><span><AppIcon class="s-icon" name="shapes" :size="14" />人员类型</span
         ><select v-model="draft.personType" :disabled="save.busy.value">
           <option v-for="(label, key) in PERSON_TYPES" :key="key" :value="key">
             {{ label }}
@@ -92,7 +93,7 @@ defineExpose({ dirty, busy: save.busy });
     <section>
       <h3>职位与模块</h3>
       <label class="s-field"
-        ><span>职位</span
+        ><span><AppIcon class="s-icon" name="id" :size="14" />职位</span
         ><select v-model="draft.positionId" :disabled="save.busy.value">
           <option value="">暂不设置</option>
           <option v-for="p in positions" :key="p.id" :value="p.id">{{ p.name }}</option>
@@ -106,7 +107,7 @@ defineExpose({ dirty, busy: save.busy });
         />同时授予职位的企业级角色：{{ orgRoles.map((r) => r.name).join('、') }}</label
       >
       <div class="s-field top">
-        <span>擅长模块</span>
+        <span><AppIcon class="s-icon" name="layers" :size="14" />擅长模块</span>
         <ChoiceChips v-model="draft.skillModules" :options="moduleOptions" label="擅长模块" />
       </div>
       <p class="s-drawer-help">加入项目时用作默认的模块范围。</p>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../../components/AppIcon.vue';
 import { computed, ref } from 'vue';
 import { api } from '../../services/session';
 import SettingsDrawer from '../settings/SettingsDrawer.vue';
@@ -73,11 +74,11 @@ defineExpose({ dirty, busy: save.busy, startEdit });
       <section>
         <h3>基本信息</h3>
         <label class="s-field"
-          ><span>名称 <b>*</b></span
+          ><span><AppIcon class="s-icon" name="tag" :size="14" />名称 <b>*</b></span
           ><input v-model="form.name" maxlength="60" required autofocus :disabled="save.busy.value"
         /></label>
         <label class="s-field"
-          ><span>所在阶段</span
+          ><span><AppIcon class="s-icon" name="flag" :size="14" />所在阶段</span
           ><select v-model="form.phaseKey" :disabled="save.busy.value">
             <option :value="null">未指定</option>
             <option v-for="p in phases" :key="p.key" :value="p.key">{{ p.name }}</option>
@@ -87,7 +88,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
       <section>
         <h3>日期</h3>
         <label class="s-field"
-          ><span>计划日期</span
+          ><span><AppIcon class="s-icon" name="calendar" :size="14" />计划日期</span
           ><input
             v-model="form.plannedOn"
             :type="reading ? 'text' : 'date'"
@@ -95,7 +96,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
             :disabled="save.busy.value"
         /></label>
         <label class="s-field"
-          ><span>实际日期</span
+          ><span><AppIcon class="s-icon" name="calendar" :size="14" />实际日期</span
           ><input
             v-model="form.achievedOn"
             :type="reading ? 'text' : 'date'"
@@ -107,7 +108,7 @@ defineExpose({ dirty, busy: save.busy, startEdit });
       <section>
         <h3>说明</h3>
         <label class="s-field top"
-          ><span>说明</span
+          ><span><AppIcon class="s-icon" name="note" :size="14" />说明</span
           ><textarea
             v-model="form.notes"
             class="s-textarea"

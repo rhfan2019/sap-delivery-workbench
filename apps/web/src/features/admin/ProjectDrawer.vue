@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../../components/AppIcon.vue';
 import { computed, ref } from 'vue';
 import { PROJECT_TYPES } from '@sap-delivery-workbench/contracts/projects/options';
 import SettingsDrawer from '../settings/SettingsDrawer.vue';
@@ -47,13 +48,13 @@ defineExpose({ dirty, busy: save.busy });
     <section>
       <h3>基本信息</h3>
       <label class="s-field"
-        ><span>客户 <b>*</b></span
+        ><span><AppIcon class="s-icon" name="building" :size="14" />客户 <b>*</b></span
         ><select v-model="draft.customerId" required :disabled="save.busy.value">
           <option v-for="c in customers" :key="c.id" :value="c.id">{{ c.name }}</option>
         </select></label
       >
       <label class="s-field"
-        ><span>项目编号 <b>*</b></span
+        ><span><AppIcon class="s-icon" name="hash" :size="14" />项目编号 <b>*</b></span
         ><input
           v-model="draft.code"
           class="mono"
@@ -63,15 +64,15 @@ defineExpose({ dirty, busy: save.busy });
           :disabled="save.busy.value"
       /></label>
       <label class="s-field"
-        ><span>项目名称 <b>*</b></span
+        ><span><AppIcon class="s-icon" name="tag" :size="14" />项目名称 <b>*</b></span
         ><input v-model="draft.name" maxlength="200" required :disabled="save.busy.value"
       /></label>
       <label class="s-field"
-        ><span>简称</span
+        ><span><AppIcon class="s-icon" name="tag" :size="14" />简称</span
         ><input v-model="draft.shortName" maxlength="20" :disabled="save.busy.value"
       /></label>
       <label class="s-field"
-        ><span>项目类型</span
+        ><span><AppIcon class="s-icon" name="shapes" :size="14" />项目类型</span
         ><select v-model="draft.projectType" :disabled="save.busy.value">
           <option v-for="(label, key) in PROJECT_TYPES" :key="key" :value="key">
             {{ label }}
@@ -82,7 +83,7 @@ defineExpose({ dirty, busy: save.busy });
     <section>
       <h3>负责人与计划</h3>
       <label class="s-field"
-        ><span>项目经理</span
+        ><span><AppIcon class="s-icon" name="user" :size="14" />项目经理</span
         ><select v-model="draft.managerId" :disabled="save.busy.value">
           <option value="">稍后在成员中指定</option>
           <option v-for="u in users" :key="u.id" :value="u.id">
@@ -92,11 +93,11 @@ defineExpose({ dirty, busy: save.busy });
       >
       <p class="s-drawer-help">指定的项目经理会以“项目经理”角色加入项目。</p>
       <label class="s-field"
-        ><span>计划开始</span
+        ><span><AppIcon class="s-icon" name="calendar" :size="14" />计划开始</span
         ><input v-model="draft.plannedStartDate" type="date" :disabled="save.busy.value"
       /></label>
       <label class="s-field"
-        ><span>计划结束</span
+        ><span><AppIcon class="s-icon" name="calendar" :size="14" />计划结束</span
         ><input v-model="draft.plannedEndDate" type="date" :disabled="save.busy.value"
       /></label>
     </section>
