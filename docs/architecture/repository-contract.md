@@ -1,6 +1,8 @@
 # 仓库目录与依赖契约
 
-版本：1.24。日期：2026-10-31。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.25。日期：2026-11-01。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.25 变更：依据[视觉方向决策](../decisions/2026-11-01-visual-direction-decision.md)（用户 2026-11-01 确认），设计规范升为 4.0“暖亮浮动面板”，恢复一键换配色、取消深色模式。配色是 `assets/theme.css` 里的 `[data-theme='<配色>']` 规则（只改强调色与底色渐变），theme.css 仍是唯一允许写取值的文件，1.13、1.16 的检查规则不变；不恢复 1.14 的主题包目录与 `/api/preferences`，所选配色按“浏览器 + 用户”存在 `localStorage`，由 `apps/web/src/services/theme.ts` 读写并在挂载前设置到 `<html data-theme>`。1.15 中“深色跟随系统”“取消主题换肤”两句废止。
 
 1.24 变更：用户 2026-10-31 确认文档按“少而定”重组（backlog DOC-003）。现行文档按主题命名、原地更新，版本靠 Git；只有决策记录带日期。布局改为：`docs/` 根只放 README（导航）、product.md（产品说明）、DESIGN.md（设计规范）、roadmap.md（路线图）、backlog.md（待办）；`architecture/` 放本契约与模块依赖登记；`modules/` 一个模块一份规格，末节“现状与下一步”取代原交接文档；`decisions/` 放带日期的方向决策；`guides/` 放运行与开发说明；`samples/` 放验收样例；`archive/` 放已完成的计划、测试记录、历史方案、评审截图。原 `docs/specs`、`docs/plans`、`docs/design-options`、`docs/screenshots` 迁出，`docs/sap-delivery-workbench`（空的 Obsidian 库）删除。已执行的迁移文件中的旧文档路径按第 3 节不改写。新增检查见第 9 节。
 

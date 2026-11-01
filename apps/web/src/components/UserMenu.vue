@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { Keyboard, LogOut, Settings } from '@lucide/vue';
+import { Check, Keyboard, LogOut, Settings } from '@lucide/vue';
 import BaseAvatar from './base/BaseAvatar.vue';
 import BaseMenu from './base/BaseMenu.vue';
 import BaseMenuItem from './base/BaseMenuItem.vue';
 import BaseMenuSeparator from './base/BaseMenuSeparator.vue';
 import { identity } from '../services/session';
 import { openPage } from '../services/tabs';
-// The account menu at the foot of the icon rail.
+import { setTheme, theme, themes } from '../services/theme';
+// The account menu at the foot of the icon rail, with the colour themes (DESIGN.md 2.3).
 defineProps<{ busy: boolean }>();
 const emit = defineEmits<{ logout: []; shortcuts: [] }>();
 </script>
@@ -31,6 +32,12 @@ const emit = defineEmits<{ logout: []; shortcuts: [] }>();
     <BaseMenuItem kbd="?" @select="emit('shortcuts')"
       ><template #icon><Keyboard /></template>键盘快捷键</BaseMenuItem
     >
+    <BaseMenuSeparator />
+    <p class="group-label">配色</p>
+    <BaseMenuItem v-for="t in themes" :key="t.id" @select="setTheme(t.id)"
+      ><template #icon><span class="swatch" :data-theme="t.id"></span></template>{{ t.label
+      }}<Check v-if="theme === t.id" class="current" aria-label="当前配色"
+    /></BaseMenuItem>
     <BaseMenuSeparator />
     <BaseMenuItem :disabled="busy" @select="emit('logout')"
       ><template #icon><LogOut /></template>{{ busy ? '正在退出…' : '退出登录' }}</BaseMenuItem
@@ -73,5 +80,24 @@ const emit = defineEmits<{ logout: []; shortcuts: [] }>();
 .profile span {
   color: var(--text-muted);
   font-size: var(--font-12);
+}
+.group-label {
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--font-12);
+}
+.swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+.current {
+  width: 14px;
+  height: 14px;
+  margin-left: var(--space-2);
+  vertical-align: -2px;
 }
 </style>

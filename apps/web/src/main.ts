@@ -6,5 +6,7 @@ import './components/base/base.css';
 import './assets/elements.css';
 import './features/admin/admin.css';
 import { router } from './router';
+import { startTheme } from './services/theme';
 
+startTheme();
 createApp(App).use(router).mount('#app');

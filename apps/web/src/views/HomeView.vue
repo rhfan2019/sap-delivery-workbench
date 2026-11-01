@@ -4,17 +4,12 @@ import { useRouter } from 'vue-router';
 import {
   AlertTriangle,
   ArrowRight,
+  ArrowUpRight,
   BarChart3,
-  Bot,
-  CalendarClock,
   CheckCircle2,
   Flag,
-  Grid3x3,
   Lock,
   MessageSquare,
-  Sparkles,
-  TrendingDown,
-  Users,
 } from '@lucide/vue';
 import { PHASES as ITEM_PHASES } from '@sap-delivery-workbench/contracts/delivery/fields';
 import { daysBetween, addDays } from '@sap-delivery-workbench/contracts/delivery/overview';
@@ -28,7 +23,7 @@ import BaseSkeleton from '../components/base/BaseSkeleton.vue';
 import BaseTag from '../components/base/BaseTag.vue';
 import DashArea from '../components/dashboard/DashArea.vue';
 import DashCard from '../components/dashboard/DashCard.vue';
-import DashMetric, { type Trend } from '../components/dashboard/DashMetric.vue';
+import { type Trend } from '../components/dashboard/DashMetric.vue';
 import MilestoneRail from '../components/dashboard/MilestoneRail.vue';
 import {
   assistantLink,
@@ -199,6 +194,21 @@ const metrics = computed(() => {
   ];
 });
 
+// The ring of finished development and the pace against the freeze (DESIGN.md 12.4).
+const ring = computed(() => {
+  const d = data.value;
+  const done = d?.counts.developmentDone ?? 0;
+  const total = d?.counts.items ?? 0;
+  return { done, total, arc: total ? (2 * Math.PI * 66 * done) / total : 0 };
+});
+const pace = computed(() => {
+  const p = data.value?.flow.pace;
+  const recent = p?.recentPerWeek ?? 0;
+  const required = p?.requiredPerWeek ?? null;
+  const share = required ? Math.max(8, Math.min(100, Math.round((recent / required) * 100))) : 100;
+  return { recent, required, share };
+});
+
 // This week in a few lines: the computed project signal, the pace against the freeze and what is
 // due next week. Rules, not a model: an AI-written summary is backlog FEAT-019.
 const points = computed(() => {
@@ -231,14 +241,16 @@ const ai = computed(() => {
       value: a.assisted,
       unit: ` / ${a.items}`,
       sub: `覆盖 ${pct(a.assisted, a.items)}%`,
+      share: pct(a.assisted, a.items),
     },
-    { label: 'FSD 定稿', value: a.fsdFinal, unit: '项', sub: '设计助手产出并定稿' },
-    { label: '代码定稿', value: a.codeFinal, unit: '项', sub: '开发助手产出并定稿' },
+    { label: 'FSD 定稿', value: a.fsdFinal, unit: '项', sub: '设计助手产出并定稿', share: null },
+    { label: '代码定稿', value: a.codeFinal, unit: '项', sub: '开发助手产出并定稿', share: null },
     {
       label: '产出版本',
       value: a.versions,
       unit: '版',
       sub: `本周 +${a.versionsWeek} · 对话 ${a.turns} 轮（本周 ${a.turnsWeek}）`,
+      share: null,
     },
   ];
 });
@@ -299,6 +311,11 @@ const team = computed(() => {
     .sort((a, b) => b.days - a.days)
     .slice(0, 6);
 });
+
+// The heat map takes the room the to-do and team cards leave in their row.
+const heatSpan = computed(
+  () => 12 - (!personalFirst.value && personalLayer.value ? 3 : 0) - (team.value.length ? 3 : 0),
+);
 
 // Personal work (roadmap 6.6 personal layer).
 const stageLabel = (key: string) => ITEM_PHASES.find((p) => p.key === key)?.label ?? key;
@@ -415,53 +432,143 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
       </div>
 
       <template v-if="projectLayer && data">
+        <!-- The band (DESIGN.md 12.4): the Activate phases as pills, then three big numbers. -->
+        <section class="band" aria-label="项目进度">
+          <ol class="phases" aria-label="实施阶段">
+            <li v-for="s in phase.steps" :key="s.name" :class="s.state || 'left'">
+              <span class="phase-name">{{ s.name }}</span>
+              <span class="dash-pill" :class="s.state || 'left'"
+                ><template v-if="s.state === 'done'">已完成</template
+                ><template v-else-if="s.state === 'now'"
+                  >进行中<template v-if="health">
+                    · 自报{{ HEALTH_LABELS[health.overall as 'green'] }}</template
+                  ></template
+                ></span
+              >
+            </li>
+          </ol>
+          <div class="figures">
+            <button type="button" class="figure dash-rise" @click="metrics[0]!.open?.()">
+              <span class="figure-value">{{ metrics[0]!.value }}<small>%</small></span>
+              <span class="figure-label">开发完成 · {{ ring.done }} / {{ ring.total }}</span>
+            </button>
+            <button
+              v-if="data.cards.freeze.date"
+              type="button"
+              class="figure dash-rise"
+              @click="metrics[2]!.open?.()"
+            >
+              <span class="figure-value"
+                >{{ metrics[2]!.value }}<small>{{ metrics[2]!.unit }}</small></span
+              >
+              <span class="figure-label">开发冻结 · {{ shortDate(data.cards.freeze.date) }}</span>
+            </button>
+            <RouterLink
+              v-if="phase.goLiveDays !== null"
+              to="/project/plan"
+              class="figure dash-rise"
+            >
+              <span class="figure-value"
+                >{{ Math.abs(phase.goLiveDays)
+                }}<small>{{ phase.goLiveDays >= 0 ? '天后' : '天前' }}</small></span
+              >
+              <span class="figure-label">上线 · {{ shortDate(phase.goLive!) }}</span>
+            </RouterLink>
+          </div>
+        </section>
+
         <div class="dash-grid">
-          <DashCard tone="hero" title="项目阶段" :span="4">
-            <template #icon><Flag /></template>
+          <DashCard title="交付趋势" hint="剩余 FSD 与开发人天，虚线为到冻结的理想线" :span="3">
             <template #action>
-              <RouterLink to="/project/plan" class="dash-link">计划与健康<ArrowRight /></RouterLink>
+              <RouterLink
+                to="/workspace/development-overview"
+                class="dash-open"
+                aria-label="打开开发概览"
+                ><ArrowUpRight
+              /></RouterLink>
             </template>
-            <div class="hero-phase">
-              <span class="dash-number dash-rise">{{ phase.name }}</span>
-              <span v-if="phase.index >= 0" class="hero-sub"
-                >SAP Activate 第 {{ phase.index + 1 }} / {{ phase.steps.length }} 阶段</span
-              >
-            </div>
-            <ol class="hero-steps" aria-label="实施阶段">
-              <li v-for="s in phase.steps" :key="s.name" :class="s.state" :title="s.name">
-                <span class="bar"></span><span class="name">{{ s.name }}</span>
-              </li>
-            </ol>
-            <div class="hero-foot">
-              <span v-if="phase.goLiveDays !== null" class="hero-golive">
-                <strong>{{ Math.abs(phase.goLiveDays) }}</strong>
-                {{ phase.goLiveDays >= 0 ? '天后上线' : '天前已过上线日' }}
-                <small>{{ phase.goLive }}</small>
-              </span>
-              <span v-else class="hero-golive"><small>上线日期未排期</small></span>
-              <span v-if="health" class="dash-trend"
-                >自报 {{ HEALTH_LABELS[health.overall as 'green'] }}</span
-              >
-            </div>
+            <DashArea
+              v-if="trend"
+              :values="trend.values"
+              :labels="trend.labels"
+              :target="trend.target"
+              label="剩余人天趋势"
+            />
+            <p v-else class="dash-empty">开发清单积累一段时间的状态变化后，这里会画出趋势。</p>
           </DashCard>
 
-          <div class="span-5 home-metrics">
-            <DashMetric
-              v-for="m in metrics"
-              :key="m.id"
-              :label="m.label"
-              :value="m.value"
-              :unit="m.unit"
-              :tone="m.tone"
-              :trend="m.trend"
-              :sub="m.sub"
-              :open="m.open"
-              ><template #icon><component :is="m.icon" /></template
-            ></DashMetric>
-          </div>
+          <DashCard title="开发完成" :span="3">
+            <template #action>
+              <button
+                type="button"
+                class="dash-open"
+                aria-label="打开已完成的开发项"
+                @click="metrics[0]!.open?.()"
+              >
+                <ArrowUpRight />
+              </button>
+            </template>
+            <div class="donut" role="img" :aria-label="`开发完成 ${ring.done} / ${ring.total} 项`">
+              <svg viewBox="0 0 180 180" aria-hidden="true">
+                <circle class="donut-ticks" cx="90" cy="90" r="84" />
+                <circle class="donut-track" cx="90" cy="90" r="66" />
+                <circle
+                  class="donut-value"
+                  cx="90"
+                  cy="90"
+                  r="66"
+                  :stroke-dasharray="`${ring.arc} 999`"
+                  transform="rotate(-90 90 90)"
+                />
+              </svg>
+              <span class="donut-text"
+                ><strong>{{ ring.done }} / {{ ring.total }}</strong
+                ><small>项开发完成</small></span
+              >
+            </div>
+            <button
+              type="button"
+              class="dash-link risk-link"
+              :class="{ alert: data.cards.risk.count }"
+              @click="metrics[1]!.open?.()"
+            >
+              风险开发项 {{ data.cards.risk.count }} · 逾期未更新 {{ data.cards.risk.stale }}
+            </button>
+          </DashCard>
+
+          <DashCard title="冻结前节奏" :span="3">
+            <template #action>
+              <span class="pace-now">{{ pace.recent }}<small>人天/周</small></span>
+            </template>
+            <div class="pace">
+              <div class="pace-legend">
+                <span>近 4 周均值</span
+                ><span v-if="pace.required !== null">冻结前需 {{ pace.required }}</span>
+              </div>
+              <div class="pace-bar">
+                <span class="dash-pill now" :style="{ flexBasis: pace.share + '%' }">{{
+                  pace.recent
+                }}</span>
+                <span v-if="pace.share < 100" class="dash-pill left pace-rest"></span>
+              </div>
+              <div class="dash-pill done pace-week">
+                本周完成 {{ metrics[3]!.value }} 人天
+                <span v-if="metrics[3]!.trend" class="pace-trend">{{
+                  metrics[3]!.trend!.text
+                }}</span>
+              </div>
+            </div>
+            <button
+              v-if="data.cards.freeze.date"
+              type="button"
+              class="dash-link pace-foot"
+              @click="metrics[2]!.open?.()"
+            >
+              {{ metrics[2]!.sub }}
+            </button>
+          </DashCard>
 
           <DashCard tone="ink" title="本周要点" :hint="`至 ${weekEnd}`" :span="3">
-            <template #icon><Sparkles /></template>
             <p class="ink-signal">
               <span class="signal-dot" :class="signal"></span>数据信号：{{
                 { green: '正常', yellow: '关注', red: '风险' }[signal]
@@ -480,33 +587,46 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
         </div>
 
         <div class="dash-grid">
-          <DashCard
-            title="交付趋势"
-            hint="剩余 FSD 与开发人天，虚线为到开发冻结的理想线"
-            :span="personalFirst || !personalLayer ? 12 : 8"
-          >
-            <template #icon><TrendingDown /></template>
-            <DashArea
-              v-if="trend"
-              :values="trend.values"
-              :labels="trend.labels"
-              :target="trend.target"
-              label="剩余人天趋势"
-            />
-            <p v-else class="dash-empty">开发清单积累一段时间的状态变化后，这里会画出趋势。</p>
+          <DashCard title="里程碑" :span="ai ? 9 : 12">
+            <template #action>
+              <RouterLink to="/project/plan" class="dash-open" aria-label="打开计划与健康"
+                ><ArrowUpRight
+              /></RouterLink>
+            </template>
+            <MilestoneRail :milestones="data.milestones" :today="today" :cards="4" />
           </DashCard>
+          <DashCard v-if="ai" title="AI 效能" hint="助手为本项目产出的成果，只计数量" :span="3">
+            <ul class="dash-rows ai-rows">
+              <li v-for="(a, i) in ai" :key="a.label" class="dash-rise">
+                <span class="ai-row">
+                  <span class="ai-label"
+                    >{{ a.label }}<small>{{ a.sub }}</small></span
+                  >
+                  <span class="ai-value"
+                    >{{ a.value }}<small>{{ a.unit }}</small></span
+                  >
+                </span>
+                <span v-if="i === 0" class="ai-bar"
+                  ><span :style="{ width: Math.min(100, a.share ?? 0) + '%' }"></span
+                ></span>
+              </li>
+            </ul>
+          </DashCard>
+        </div>
+
+        <div class="dash-grid">
           <DashCard
             v-if="!personalFirst && personalLayer"
             title="我的待办"
             :hint="`${data.mine.todoTotal} 项`"
-            :span="4"
+            :span="3"
           >
-            <template #icon><CalendarClock /></template>
             <ul class="dash-rows">
               <li v-for="t in todo.slice(0, 5)" :key="t.id + t.phase">
                 <button class="dash-row" @click="openTodo(t)">
+                  <span class="todo-code">{{ t.code }}</span>
                   <span class="dash-row-main">
-                    <strong>{{ t.code }} {{ t.name }}</strong>
+                    <strong>{{ t.name }}</strong>
                     <small
                       >{{ stageLabel(t.phase)
                       }}<template v-if="t.plannedEnd">
@@ -530,34 +650,7 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
               </li>
             </ul>
           </DashCard>
-        </div>
-
-        <div v-if="ai" class="dash-grid">
-          <DashCard title="AI 效能" hint="助手为本项目产出的成果，只计数量" :span="12">
-            <template #icon><Bot /></template>
-            <div class="ai-stats">
-              <div v-for="a in ai" :key="a.label" class="ai-stat dash-rise">
-                <span class="ai-label">{{ a.label }}</span>
-                <span class="ai-value"
-                  >{{ a.value }}<small>{{ a.unit }}</small></span
-                >
-                <span class="ai-sub">{{ a.sub }}</span>
-              </div>
-            </div>
-          </DashCard>
-        </div>
-        <div class="dash-grid">
-          <DashCard title="里程碑" :span="12">
-            <template #icon><Flag /></template>
-            <template #action>
-              <RouterLink to="/project/plan" class="dash-link">计划与健康<ArrowRight /></RouterLink>
-            </template>
-            <MilestoneRail :milestones="data.milestones" :today="today" :cards="4" />
-          </DashCard>
-        </div>
-        <div class="dash-grid">
-          <DashCard title="模块 × 阶段" hint="完成率，红框为有风险" :span="team.length ? 8 : 12">
-            <template #icon><Grid3x3 /></template>
+          <DashCard title="模块 × 阶段" hint="完成率，红框为有风险" :span="heatSpan">
             <div
               v-if="heat.length"
               class="heat"
@@ -584,13 +677,21 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
             </div>
             <p v-else class="dash-empty">还没有开发项。</p>
           </DashCard>
-          <DashCard v-if="team.length" title="团队负载" hint="本周计划人天" :span="4">
-            <template #icon><Users /></template>
-            <ul class="dash-rows">
+          <DashCard v-if="team.length" title="团队负载" hint="本周计划人天" :span="3">
+            <template #action>
+              <RouterLink
+                to="/workspace/development-load"
+                class="dash-open"
+                aria-label="打开开发排期"
+                ><ArrowUpRight
+              /></RouterLink>
+            </template>
+            <ul class="dash-rows load-rows">
               <li v-for="t in team" :key="t.name" class="load-row">
                 <span class="load-name">{{ t.name }}</span>
                 <span class="load-track"
                   ><span
+                    v-if="t.days"
                     class="load-fill"
                     :class="{ over: t.over }"
                     :style="{ width: t.width + '%' }"
@@ -599,9 +700,19 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
                 <span class="load-days" :class="{ over: t.over }">{{ t.days }}</span>
               </li>
             </ul>
-            <RouterLink to="/workspace/development-load" class="dash-link"
-              >开发排期<ArrowRight
-            /></RouterLink>
+          </DashCard>
+        </div>
+        <div class="dash-grid">
+          <DashCard title="即将推出" hint="知识与资产" :span="12">
+            <ul class="coming">
+              <li v-for="c in coming" :key="c.id">
+                <span class="icon-tile"><AppIcon :name="c.icon" :size="16" /></span>
+                <span class="dash-row-main"
+                  ><strong>{{ c.label }}</strong
+                  ><small>{{ c.description }}</small></span
+                >
+              </li>
+            </ul>
           </DashCard>
         </div>
       </template>
@@ -623,7 +734,7 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
         </DashCard>
       </div>
 
-      <div class="dash-grid">
+      <div v-if="!projectLayer" class="dash-grid">
         <DashCard title="即将推出" hint="知识与资产" :span="12">
           <ul class="coming">
             <li v-for="c in coming" :key="c.id">
@@ -642,7 +753,7 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
 <style scoped>
 .home {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-6);
   max-width: 1600px;
   margin: 0 auto;
 }
@@ -653,15 +764,16 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
   justify-content: space-between;
   gap: var(--space-4);
 }
+/* The greeting is the page's headline: large and thin (DESIGN.md 12.4). */
 .home-head h1 {
   margin: 0;
-  font-size: var(--font-32);
-  font-weight: var(--weight-475);
-  line-height: var(--leading-40);
-  letter-spacing: -0.01em;
+  font-size: var(--font-48);
+  font-weight: var(--weight-300);
+  line-height: var(--leading-56);
+  letter-spacing: -0.02em;
 }
 .home-head p {
-  margin: var(--space-1) 0 0;
+  margin: var(--space-2) 0 0;
   color: var(--text-muted);
 }
 .home-actions {
@@ -669,72 +781,183 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
   gap: var(--space-2);
 }
 
-/* Hero: the phase. */
-.hero-phase {
-  display: grid;
-  gap: var(--space-0-5);
+/* The band: phase pills and the three big numbers. */
+.band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-8);
 }
-.hero-sub {
-  color: var(--dash-on-hero-muted);
-  font-size: var(--font-12);
-}
-.hero-steps {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: var(--space-1);
-  margin: var(--space-2) 0 0;
+.phases {
+  display: flex;
+  flex: 3 1 560px;
+  gap: var(--space-1-5);
+  min-width: 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
-.hero-steps li {
+.phases li {
   display: grid;
-  gap: var(--space-1);
-}
-.hero-steps .bar {
-  height: 6px;
-  border-radius: var(--radius-full);
-  background: var(--dash-hero-track);
-}
-.hero-steps .done .bar,
-.hero-steps .now .bar {
-  background: var(--dash-on-hero);
-}
-.hero-steps .name {
-  color: var(--dash-on-hero-muted);
-  font-size: var(--font-11);
-  text-align: center;
-}
-.hero-steps .now .name {
-  color: var(--dash-on-hero);
-  font-weight: var(--weight-550);
-}
-.hero-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex: 1 1 0;
   gap: var(--space-2);
-  margin-top: auto;
+  min-width: 0;
 }
-.hero-golive {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-1);
+.phases li.now {
+  flex-grow: 2.4;
 }
-.hero-golive strong {
-  font-size: var(--font-24);
-  font-weight: var(--weight-475);
-  font-variant-numeric: tabular-nums;
-}
-.hero-golive small {
-  color: var(--dash-on-hero-muted);
+.phase-name {
+  color: var(--text-muted);
   font-size: var(--font-12);
 }
-
-/* The 2 × 2 key numbers. */
-.home-metrics {
+.phases .now .phase-name {
+  color: var(--text);
+  font-weight: var(--weight-475);
+}
+.phases .dash-pill {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.figures {
+  display: flex;
+  flex: 1 1 360px;
+  justify-content: flex-end;
+  gap: var(--space-8);
+}
+.figure {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-8);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.figure:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: var(--space-1);
+}
+.figure-value {
+  font-size: var(--font-64);
+  font-weight: var(--weight-200);
+  line-height: var(--leading-64);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+}
+.figure-value small {
+  margin-left: var(--space-1);
+  font-size: var(--font-20);
+  font-weight: var(--weight-400);
+  letter-spacing: 0;
+}
+.figure-label {
+  color: var(--text-muted);
+  font-size: var(--font-12);
+}
+.figure:hover .figure-label {
+  color: var(--text);
+}
+
+/* The ring of finished development. */
+.donut {
+  position: relative;
+  width: min(100%, 180px);
+  aspect-ratio: 1;
+  margin: 0 auto;
+}
+.donut svg {
+  width: 100%;
+  height: 100%;
+}
+.donut circle {
+  fill: none;
+}
+.donut-ticks {
+  stroke: var(--border-emphasis);
+  stroke-width: 1.5;
+  stroke-dasharray: 1.5 7;
+}
+.donut-track {
+  stroke: var(--neutral-fill-2);
+  stroke-width: 16;
+}
+.donut-value {
+  stroke: var(--accent);
+  stroke-width: 16;
+  stroke-linecap: round;
+}
+.donut-text {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+}
+.donut-text strong {
+  font-size: var(--font-32);
+  font-weight: var(--weight-300);
+  line-height: var(--leading-40);
+  font-variant-numeric: tabular-nums;
+}
+.donut-text small {
+  color: var(--text-muted);
+  font-size: var(--font-12);
+}
+.risk-link {
+  justify-content: center;
+  margin-top: auto;
+  color: var(--text-muted);
+}
+.risk-link.alert {
+  color: var(--red-text-2);
+}
+
+/* The pace against the freeze. */
+.pace-now {
+  font-size: var(--font-32);
+  font-weight: var(--weight-300);
+  line-height: var(--leading-40);
+  font-variant-numeric: tabular-nums;
+}
+.pace-now small {
+  margin-left: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--font-12);
+}
+.pace {
+  display: grid;
+  gap: var(--space-2);
+}
+.pace-legend {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+  font-size: var(--font-12);
+}
+.pace-bar {
+  display: flex;
+  gap: var(--space-1);
+}
+.pace-bar .now {
+  flex-shrink: 0;
+}
+.pace-rest {
+  flex: 1;
+  padding: 0;
+}
+.pace-week {
+  justify-content: space-between;
+}
+.pace-trend {
+  color: var(--dash-on-ink-muted);
+}
+.pace-foot {
+  margin-top: auto;
+  color: var(--text-muted);
 }
 
 /* Ink: this week. */
@@ -764,14 +987,14 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
   background: var(--red-solid-1);
 }
 .point-dot.blue {
-  background: var(--blue-icon-1);
+  background: var(--accent);
 }
 .ink-points li {
   display: flex;
   align-items: baseline;
   gap: var(--space-2);
   padding: var(--space-2) 0;
-  font-size: var(--font-12);
+  font-size: var(--font-14);
   line-height: var(--leading-20);
 }
 .ink-points .point-dot {
@@ -784,22 +1007,78 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
 }
 .ink-more {
   margin-top: auto;
+  color: var(--dash-on-ink-muted);
+}
+
+/* My work: the code in mono before the name. */
+.todo-code {
+  flex: none;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-12);
+}
+
+/* AI output as rows with big thin numbers. */
+.ai-rows li {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+}
+.ai-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.ai-label {
+  display: grid;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+.ai-label small {
+  color: var(--text-muted);
+  font-size: var(--font-12);
+}
+.ai-value {
+  flex: none;
+  font-size: var(--font-24);
+  font-weight: var(--weight-300);
+  line-height: var(--leading-32);
+  font-variant-numeric: tabular-nums;
+}
+.ai-value small {
+  margin-left: var(--space-0-5);
+  color: var(--text-muted);
+  font-size: var(--font-12);
+  font-weight: var(--weight-400);
+}
+.ai-bar {
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--neutral-fill-2);
+  overflow: hidden;
+}
+.ai-bar span {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--primary);
 }
 
 /* Heat map. */
 .heat {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--space-1-5);
   align-items: center;
 }
 .heat-head {
   color: var(--text-muted);
-  font-size: var(--font-11);
+  font-size: var(--font-12);
   text-align: center;
 }
 .heat-module {
   padding-right: var(--space-2);
-  font-size: var(--font-12);
+  font-size: var(--font-14);
   font-weight: var(--weight-475);
 }
 .dash-heat:disabled {
@@ -807,44 +1086,17 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
   cursor: default;
 }
 
-/* AI output. */
-.ai-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-4);
+/* Team load: pill bars, ink when planned, striped when empty, red when over. */
+.load-rows li {
+  border-top: 0;
 }
-.ai-stat {
-  display: grid;
-  gap: var(--space-1);
-  padding-left: var(--space-4);
-  border-left: 2px solid var(--chart-1);
-}
-.ai-label,
-.ai-sub {
-  color: var(--text-muted);
-  font-size: var(--font-12);
-}
-.ai-value {
-  font-size: var(--font-32);
-  font-weight: var(--weight-475);
-  line-height: var(--leading-40);
-  font-variant-numeric: tabular-nums;
-}
-.ai-value small {
-  margin-left: var(--space-0-5);
-  color: var(--text-muted);
-  font-size: var(--font-14);
-  font-weight: var(--weight-400);
-}
-
-/* Team load. */
 .load-row {
   display: grid;
   grid-template-columns: 6em minmax(0, 1fr) 2.5em;
   align-items: center;
   gap: var(--space-2);
-  min-height: var(--control-menu-item);
-  font-size: var(--font-12);
+  min-height: var(--control-button);
+  font-size: var(--font-14);
 }
 .load-name {
   overflow: hidden;
@@ -852,16 +1104,17 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
   white-space: nowrap;
 }
 .load-track {
-  height: 6px;
+  height: var(--space-6);
   border-radius: var(--radius-full);
-  background: var(--chart-track);
+  background: var(--hatch);
+  box-shadow: inset 0 0 0 1px var(--border);
   overflow: hidden;
 }
 .load-fill {
   display: block;
   height: 100%;
   border-radius: var(--radius-full);
-  background: var(--chart-1);
+  background: var(--primary);
 }
 .load-fill.over {
   background: var(--chart-5);
@@ -874,7 +1127,7 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
   color: var(--red-text-2);
 }
 
-/* Coming soon. */
+/* Coming soon (without the project layer it spans the row). */
 .coming {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
@@ -888,14 +1141,29 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
   align-items: flex-start;
   gap: var(--space-3);
 }
-@media (max-width: 1024px) {
-  .ai-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 1280px) {
+  .figures {
+    justify-content: flex-start;
   }
 }
 @media (max-width: 760px) {
-  .home-metrics {
-    grid-template-columns: 1fr;
+  .home-head h1 {
+    font-size: var(--font-32);
+    line-height: var(--leading-40);
+  }
+  .phases {
+    flex-wrap: wrap;
+  }
+  .phases li {
+    flex-basis: 30%;
+  }
+  .figures {
+    flex-wrap: wrap;
+    gap: var(--space-5);
+  }
+  .figure-value {
+    font-size: var(--font-48);
+    line-height: var(--leading-56);
   }
 }
 </style>

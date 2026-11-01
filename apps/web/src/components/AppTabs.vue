@@ -129,6 +129,7 @@ function resolve(target: EventTarget | null): ContextItem[] | null {
   align-items: flex-end;
   gap: var(--space-1);
   min-width: 0;
+  align-items: center;
   height: var(--layout-tab-bar);
   padding-right: var(--space-1);
 }
@@ -191,19 +192,21 @@ function resolve(target: EventTarget | null): ContextItem[] | null {
   align-items: center;
   min-width: var(--layout-tab-min);
   height: var(--control-tab);
-  border-radius: var(--radius-8) var(--radius-8) 0 0;
+  border-radius: var(--radius-full);
   color: var(--text-muted);
   transition:
     background-color var(--motion-fast),
     color var(--motion-fast);
 }
 .tab:hover {
-  background: var(--hover);
+  background: var(--surface);
   color: var(--text);
 }
+/* Tabs are pills floating over the backdrop, the current one white (DESIGN.md 4.0). */
 .tab.active {
   background: var(--panel);
   color: var(--text);
+  box-shadow: var(--shadow-panel);
 }
 .tab-main {
   display: flex;

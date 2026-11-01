@@ -206,7 +206,8 @@ const view = computed(() => {
 }
 .rail-track {
   right: 0;
-  background: var(--chart-track);
+  background: var(--hatch);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 .rail-fill {
   background: var(--chart-1);
@@ -290,7 +291,7 @@ const view = computed(() => {
   line-height: var(--leading-16);
 }
 .achieved .rail-label strong {
-  color: var(--link);
+  color: var(--text);
 }
 .rail-label small {
   color: var(--text-muted);
@@ -312,9 +313,10 @@ const view = computed(() => {
 .rail-card {
   display: grid;
   gap: var(--space-0-5);
-  padding: var(--space-3) var(--space-3) var(--space-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-panel);
+  padding: var(--space-3) var(--space-4) var(--space-3);
+  border-radius: var(--radius-20);
+  background: var(--surface-strong);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 .rail-card strong {
   font-size: var(--font-14);
@@ -331,8 +333,8 @@ const view = computed(() => {
   align-items: center;
   gap: var(--space-1-5);
   margin-top: var(--space-2);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-6);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
   font-size: var(--font-12);
 }
 .rail-card-dot {
@@ -354,8 +356,8 @@ const view = computed(() => {
   color: var(--yellow-text-2);
 }
 .rail-card-foot.blue {
-  background: var(--blue-fill-1);
-  color: var(--link);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 .rail-card-foot.neutral {
   background: var(--neutral-fill-1);

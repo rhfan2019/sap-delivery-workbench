@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router';
-// A row of the secondary menu (DESIGN.md 4.1): icon, label, count; the current page is grey.
+// A row of the secondary menu (DESIGN.md 4.1): icon, label, count; the current page is a pill in
+// the accent.
 // A planned page carries a quiet “规划中” note instead of a count.
 defineProps<{ to: string; label: string; count?: number; active?: boolean; planned?: boolean }>();
 </script>
@@ -23,8 +24,8 @@ defineProps<{ to: string; label: string; count?: number; active?: boolean; plann
   align-items: center;
   gap: var(--space-2);
   height: var(--control-nav-item);
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-6);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
   color: var(--text-muted);
   font-size: var(--font-14);
   text-decoration: none;
@@ -38,8 +39,8 @@ defineProps<{ to: string; label: string; count?: number; active?: boolean; plann
 }
 .active,
 .active:hover {
-  background: var(--selected);
-  color: var(--text);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 .active .label {
   font-weight: var(--weight-550);
@@ -50,7 +51,7 @@ defineProps<{ to: string; label: string; count?: number; active?: boolean; plann
   color: var(--neutral-icon-1);
 }
 .active .icon {
-  color: var(--text);
+  color: var(--on-accent);
 }
 .icon :deep(svg) {
   width: 16px;

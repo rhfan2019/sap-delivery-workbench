@@ -1,26 +1,26 @@
-/* Design tokens (docs/DESIGN.md 3.0: Plain for the work pages, the dashboard language of section 12
-   for the show pages). The only file that writes colours,
-   fonts, sizes, weights, spacing, radii, shadows and durations (contract 1.13, 1.15).
-   Dark follows the system. */
+/* Design tokens (docs/DESIGN.md 4.0: warm floating panels on a cream-to-accent backdrop, ink, white
+   and one accent). The only file that writes colours, fonts, sizes, weights, spacing, radii,
+   shadows and durations (contract 1.13, 1.15, 1.25). Light only; the colour themes at the end
+   swap the accent and the backdrop (DESIGN.md 2.3). */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 
   /* Six hues, each with the same roles (DESIGN.md 2.1). */
   --neutral-bg-1: #ffffff;
-  --neutral-bg-2: #f9f9fc;
-  --neutral-fill-1: #f0f0f5;
-  --neutral-fill-2: #e7e7ef;
-  --neutral-fill-3: #e0e0e9;
-  --neutral-border-1: #e7e7ef;
-  --neutral-border-2: #e0e0e9;
-  --neutral-border-3: #cdcddb;
-  --neutral-text-1: #1f1f28;
-  --neutral-text-2: #636370;
-  --neutral-text-3: #8c8c9b;
-  --neutral-icon-1: #8e8e9c;
-  --neutral-icon-2: #adadb7;
-  --neutral-solid-1: #1f1f28;
-  --neutral-solid-2: #0b0b0e;
+  --neutral-bg-2: #f5f3ee;
+  --neutral-fill-1: #f0ece4;
+  --neutral-fill-2: #e7e2d7;
+  --neutral-fill-3: #ded8cb;
+  --neutral-border-1: #e8e3d8;
+  --neutral-border-2: #ddd8cd;
+  --neutral-border-3: #c9c3b6;
+  --neutral-text-1: #1c1b19;
+  --neutral-text-2: #5e5b55;
+  --neutral-text-3: #857f74;
+  --neutral-icon-1: #8c877c;
+  --neutral-icon-2: #ada89d;
+  --neutral-solid-1: #1c1b19;
+  --neutral-solid-2: #3a3833;
   --neutral-on-solid: #ffffff;
 
   --blue-bg-1: #fdfdff;
@@ -98,6 +98,26 @@
   --yellow-solid-1: #ffcb14;
   --yellow-solid-2: #f4c224;
 
+  /* The accent and the backdrop (DESIGN.md 2.3): the default theme, 明黄. Text on the accent is
+     always ink; the accent is never a text colour. */
+  --accent: #f2c94c;
+  --accent-hover: #e6bb36;
+  --accent-wash: #f7e7a8;
+  --accent-soft: color-mix(in srgb, var(--accent) 35%, transparent);
+  --on-accent: var(--neutral-text-1);
+  --page-backdrop: linear-gradient(
+    140deg,
+    var(--neutral-bg-2) 0%,
+    var(--neutral-bg-2) 40%,
+    var(--accent-wash) 100%
+  );
+  /* Translucent white of the floating panels and show-page cards, and their bright edge. */
+  --surface: #ffffffad;
+  --surface-strong: #ffffffdb;
+  --surface-edge: #fffffff2;
+  /* Not started, planned, what is left: fine diagonal stripes. */
+  --hatch: repeating-linear-gradient(135deg, #1c1b1914 0 2px, transparent 2px 8px);
+
   /* Semantic names (DESIGN.md 2.2). */
   --page: var(--neutral-bg-2);
   --panel: var(--neutral-bg-1);
@@ -110,9 +130,9 @@
   --hover: var(--neutral-fill-1);
   --selected: var(--neutral-fill-2);
   --pressed: var(--neutral-fill-3);
-  /* The brand blue for primary actions (3.0, UI-014); white text in light and dark. */
-  --primary: var(--blue-solid-1);
-  --primary-hover: var(--blue-solid-2);
+  /* Ink for primary actions (4.0). */
+  --primary: var(--neutral-solid-1);
+  --primary-hover: var(--neutral-solid-2);
   --on-primary: #ffffff;
   --link: var(--blue-text-2);
   --focus: var(--blue-solid-1);
@@ -131,6 +151,8 @@
   --font-24: 24px;
   --font-32: 32px;
   --font-40: 40px;
+  --font-48: 48px;
+  --font-64: 64px;
   --leading-16: 16px;
   --leading-20: 20px;
   --leading-24: 24px;
@@ -138,6 +160,10 @@
   --leading-32: 32px;
   --leading-40: 40px;
   --leading-48: 48px;
+  --leading-56: 56px;
+  --leading-64: 64px;
+  --weight-200: 200;
+  --weight-300: 300;
   --weight-400: 400;
   --weight-475: 475;
   --weight-550: 550;
@@ -166,15 +192,19 @@
   --radius-12: 12px;
   --radius-16: 16px;
   --radius-20: 20px;
+  --radius-24: 24px;
+  --radius-28: 28px;
   --radius-full: 9999px;
-  /* Shapes shared by the work and show pages (3.0): pill buttons, the content panel. */
+  /* Shapes shared by the work and show pages (4.0): pill buttons, the floating panels. */
   --radius-button: var(--radius-full);
-  --radius-panel: var(--radius-16);
+  --radius-panel: var(--radius-24);
   --shadow-card: 0 0 0 1px #20272c14, 0 1px 1px #20272c14;
   --shadow-popover: 0 1px 2px #20272c3d, 0 2px 6px 2px #20272c14, 0 2px 8px #20272c14;
   --shadow-dialog: 0 1px 2px #20272c3d, 0 2px 8px 2px #20272c14, 0 2px 16px #20272c14;
   --shadow-floating: 0 1px 12px #0000000d, 0 0.5px 4px #0000000d;
   --shadow-button: 0 1px 2px #20272c3d;
+  /* The floating shell panels over the warm backdrop. */
+  --shadow-panel: 0 0 0 1px #3c32140f, 0 24px 60px -36px #3c32144d;
 
   /* Motion (DESIGN.md 7). */
   --motion-fast: 75ms ease-in-out;
@@ -226,108 +256,6 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --neutral-bg-1: #1a191b;
-    --neutral-bg-2: #121113;
-    --neutral-fill-1: #232225;
-    --neutral-fill-2: #2b292d;
-    --neutral-fill-3: #323035;
-    --neutral-border-1: #2b292d;
-    --neutral-border-2: #323035;
-    --neutral-border-3: #49474e;
-    --neutral-text-1: #eeeef0;
-    --neutral-text-2: #b5b2bc;
-    --neutral-text-3: #7c7a85;
-    --neutral-icon-1: #98979f;
-    --neutral-icon-2: #72707b;
-    --neutral-solid-1: #eeeef0;
-    --neutral-solid-2: #f8f8fc;
-    --neutral-on-solid: #121113;
-
-    --blue-bg-1: #131628;
-    --blue-bg-2: #0e111f;
-    --blue-fill-1: #1c214e;
-    --blue-fill-2: #24296b;
-    --blue-fill-3: #2c327e;
-    --blue-border-1: #24296b;
-    --blue-border-2: #2c327e;
-    --blue-border-3: #4049a3;
-    --blue-text-1: #d7e0ff;
-    --blue-text-2: #9dafff;
-    --blue-icon-1: #5696ff;
-    --blue-icon-2: #4761e4;
-    --blue-solid-1: #5c67f4;
-    --blue-solid-2: #5159e5;
-
-    --green-bg-1: #121b14;
-    --green-bg-2: #0c130e;
-    --green-fill-1: #152d1c;
-    --green-fill-2: #143c22;
-    --green-fill-3: #19492b;
-    --green-border-1: #143c22;
-    --green-border-2: #19492b;
-    --green-border-3: #286940;
-    --green-text-1: #b2f2c0;
-    --green-text-2: #3ad878;
-    --green-icon-1: #18b562;
-    --green-icon-2: #008848;
-    --green-solid-1: #18b562;
-    --green-solid-2: #00a85c;
-
-    --purple-bg-1: #201320;
-    --purple-bg-2: #181118;
-    --purple-fill-1: #351a35;
-    --purple-fill-2: #451d47;
-    --purple-fill-3: #512454;
-    --purple-border-1: #451d47;
-    --purple-border-2: #512454;
-    --purple-border-3: #734079;
-    --purple-text-1: #f4d4f4;
-    --purple-text-2: #e796f3;
-    --purple-icon-1: #d066df;
-    --purple-icon-2: #a84fb6;
-    --purple-solid-1: #ab4aba;
-    --purple-solid-2: #b658c4;
-
-    --red-bg-1: #201312;
-    --red-bg-2: #18100f;
-    --red-fill-1: #3c1210;
-    --red-fill-2: #520e0e;
-    --red-fill-3: #621515;
-    --red-border-1: #520e0e;
-    --red-border-2: #621515;
-    --red-border-3: #8d332f;
-    --red-text-1: #ffd2cc;
-    --red-text-2: #ff8f86;
-    --red-icon-1: #f3625c;
-    --red-icon-2: #b94641;
-    --red-solid-1: #e33d3d;
-    --red-solid-2: #d42c30;
-
-    --yellow-bg-1: #1c180f;
-    --yellow-bg-2: #14120c;
-    --yellow-fill-1: #2c2207;
-    --yellow-fill-2: #3b2a00;
-    --yellow-fill-3: #483400;
-    --yellow-border-1: #3b2a00;
-    --yellow-border-2: #483400;
-    --yellow-border-3: #685317;
-    --yellow-text-1: #fde8b3;
-    --yellow-text-2: #d9b06a;
-    --yellow-icon-1: #d28f19;
-    --yellow-icon-2: #b17000;
-    --yellow-solid-1: #fdc700;
-    --yellow-solid-2: #f2bd00;
-
-    --shadow-card: 0 0 0 1px #ffffff14, 0 1px 1px #00000066;
-    --shadow-popover: 0 0 0 1px #ffffff14, 0 2px 6px 2px #00000066, 0 2px 8px #00000066;
-    --shadow-dialog: 0 0 0 1px #ffffff14, 0 2px 8px 2px #00000080, 0 2px 16px #00000080;
-    --shadow-floating: 0 0 0 1px #ffffff14, 0 1px 12px #00000066;
-    --shadow-button: 0 1px 2px #00000066;
-  }
-}
-
 /* Tag colours people pick for development items, stored by name (DESIGN.md 2.2). Orange and
    teal have no hue of their own in the scale. */
 :root {
@@ -346,32 +274,23 @@
   --tag-teal-bg: #ddf2f1;
   --tag-teal-text: #1f6d69;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --tag-orange-bg: #33200f;
-    --tag-orange-text: #f0a875;
-    --tag-teal-bg: #0e2a29;
-    --tag-teal-text: #79d0ca;
-  }
-}
 
-/* Dashboard language for the show pages: workbench and overviews (DESIGN.md 12). Three layers
-   of ground (page, canvas, card), one hero card in the brand blue, one ink card for the summary,
-   chart colours in a fixed order. */
+/* Show pages: workbench and overviews (DESIGN.md 12). Translucent cards straight on the backdrop,
+   one hero card in the accent, one ink card for the summary, chart colours in a fixed order. */
 :root {
-  --dash-canvas: var(--neutral-fill-1);
-  --dash-card: var(--neutral-bg-1);
-  --dash-hero: var(--primary);
-  --dash-hero-hover: var(--primary-hover);
-  --dash-on-hero: #ffffff;
-  --dash-on-hero-muted: #ffffffc2;
-  --dash-hero-track: #ffffff3d;
-  --dash-ink: #1f1f28;
-  --dash-on-ink: #f0f0f5;
-  --dash-on-ink-muted: #a9a9b6;
+  --dash-canvas: transparent;
+  --dash-card: var(--surface);
+  --dash-hero: var(--accent);
+  --dash-hero-hover: var(--accent-hover);
+  --dash-on-hero: var(--on-accent);
+  --dash-on-hero-muted: #1c1b19b3;
+  --dash-hero-track: #1c1b1924;
+  --dash-ink: var(--neutral-solid-1);
+  --dash-on-ink: #f7f5ef;
+  --dash-on-ink-muted: #cfcac0;
   --dash-ink-line: #ffffff1f;
-  --shadow-soft: 0 1px 2px #20272c0a, 0 4px 16px #20272c0d;
-  --chart-1: var(--blue-solid-1);
+  --shadow-soft: 0 16px 40px -24px #3c321440;
+  --chart-1: var(--neutral-solid-1);
   --chart-2: var(--green-solid-1);
   --chart-3: var(--purple-solid-1);
   --chart-4: var(--yellow-solid-1);
@@ -379,13 +298,32 @@
   --chart-track: var(--neutral-fill-2);
   --chart-grid: var(--neutral-border-1);
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --dash-canvas: var(--neutral-bg-2);
-    --dash-card: var(--neutral-fill-1);
-    --dash-ink: #0b0b0e;
-    --dash-ink-line: #ffffff1a;
-    --shadow-soft: 0 0 0 1px #ffffff0f, 0 4px 16px #00000066;
-    --chart-track: var(--neutral-fill-3);
-  }
+
+/* Colour themes, one click away in the account menu (DESIGN.md 2.3): each swaps only the accent
+   and the end of the backdrop. 明黄 is the default above; the attribute also works on any element,
+   so a swatch shows its own theme's accent. */
+[data-theme='yellow'] {
+  --accent: #f2c94c;
+  --accent-hover: #e6bb36;
+  --accent-wash: #f7e7a8;
+}
+[data-theme='coral'] {
+  --accent: #ff9f5a;
+  --accent-hover: #f58e45;
+  --accent-wash: #fad9be;
+}
+[data-theme='mint'] {
+  --accent: #8fd9a8;
+  --accent-hover: #78cc95;
+  --accent-wash: #d3eedb;
+}
+[data-theme='sky'] {
+  --accent: #8fb4ff;
+  --accent-hover: #779ff2;
+  --accent-wash: #d7e3fb;
+}
+[data-theme='lilac'] {
+  --accent: #c3a8f0;
+  --accent-hover: #b293ea;
+  --accent-wash: #e7dcf8;
 }

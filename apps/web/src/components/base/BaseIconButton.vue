@@ -67,7 +67,7 @@ function click(event: MouseEvent) {
   height: var(--control-icon);
   padding: 0;
   border: 0;
-  border-radius: var(--radius-6);
+  border-radius: var(--radius-full);
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;

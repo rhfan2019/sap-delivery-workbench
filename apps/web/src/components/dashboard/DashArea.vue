@@ -17,7 +17,8 @@ const chart = computed(() => {
   const all = [...props.values, ...(props.target ?? []).filter((v): v is number => v !== null)];
   const max = Math.max(1, ...all);
   const x = (i: number) => (n > 1 ? (i / (n - 1)) * W : 0);
-  const y = (v: number) => H - (v / max) * (H - 8);
+  // Headroom above the peak, so the line never runs along the top edge.
+  const y = (v: number) => H - (v / max) * H * 0.8;
   const line = props.values.map((v, i) => `${i ? 'L' : 'M'}${x(i)},${y(v)}`).join(' ');
   const target = (props.target ?? [])
     .map((v, i) => (v === null ? '' : `${x(i)},${y(v)}`))
@@ -41,7 +42,7 @@ const chart = computed(() => {
     </svg>
     <figcaption>
       <span>{{ labels[0] }}</span
-      ><span>最高 {{ chart.max }}</span
+      ><span>峰值 {{ chart.max }}</span
       ><span>{{ labels[labels.length - 1] }}</span>
     </figcaption>
   </figure>
@@ -65,7 +66,7 @@ svg {
   vector-effect: non-scaling-stroke;
 }
 .fill {
-  fill: color-mix(in srgb, var(--chart-1) 14%, transparent);
+  fill: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 .stroke {
   fill: none;

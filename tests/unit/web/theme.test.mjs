@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-// DESIGN.md 2.0: six hues with the same roles, in light and in dark, and theme.css carries the
-// spec's light values exactly (contract 1.15: one look, dark follows the system).
+// DESIGN.md 4.0: six hues with the same roles, theme.css carries the spec's values exactly, there
+// is no dark mode, and each colour theme swaps only the accent and the backdrop (contract 1.25).
 const css = await readFile(
   new URL('../../../apps/web/src/assets/theme.css', import.meta.url),
   'utf8',
@@ -28,16 +28,12 @@ const roles = [
 ];
 const values = (text) =>
   Object.fromEntries([...text.matchAll(/--([\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
-const darkStart = css.indexOf('@media (prefers-color-scheme: dark)');
-const light = values(css.slice(0, darkStart));
-const dark = values(css.slice(darkStart, css.indexOf('\n}\n', darkStart)));
+const light = values(css.slice(0, css.indexOf("[data-theme='")));
 
-test('every hue has every role in light and in dark', () => {
+test('every hue has every role, and there is no dark mode', () => {
   for (const hue of hues)
-    for (const role of roles) {
-      assert.ok(light[`${hue}-${role}`], `light --${hue}-${role}`);
-      assert.ok(dark[`${hue}-${role}`], `dark --${hue}-${role}`);
-    }
+    for (const role of roles) assert.ok(light[`${hue}-${role}`], `--${hue}-${role}`);
+  assert.doesNotMatch(css, /prefers-color-scheme/);
 });
 
 test('theme.css carries the light colours written in DESIGN.md', () => {
@@ -49,8 +45,16 @@ test('theme.css carries the light colours written in DESIGN.md', () => {
   }
 });
 
-test('there is one look: no theme packages or theme attributes', async () => {
-  assert.doesNotMatch(css, /data-ui-theme|data-ui-mode/);
-  const main = await readFile(new URL('../../../apps/web/src/main.ts', import.meta.url), 'utf8');
-  assert.doesNotMatch(main, /assets\/themes\//);
+test('each colour theme in DESIGN.md swaps only the accent and the backdrop', () => {
+  const blocks = [...css.matchAll(/\[data-theme='([\w-]+)'\]\s*\{([^}]+)\}/g)];
+  const table = spec.slice(spec.indexOf('### 2.3'), spec.indexOf('## 3.'));
+  assert.ok(blocks.length >= 2);
+  for (const [, id, body] of blocks) {
+    const set = values(body);
+    assert.deepEqual(Object.keys(set).sort(), ['accent', 'accent-hover', 'accent-wash'], id);
+    for (const value of Object.values(set)) assert.match(table, new RegExp(value, 'i'), id);
+  }
+  // The default theme is the one :root carries.
+  const yellow = values(blocks.find(([, id]) => id === 'yellow')[2]);
+  for (const [name, value] of Object.entries(yellow)) assert.equal(light[name], value, name);
 });

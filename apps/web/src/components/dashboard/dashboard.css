@@ -1,10 +1,8 @@
-/* Dashboard language for the show pages (docs/DESIGN.md 12): a canvas under white cards on a
-   12-column grid, big numbers, one hero card in the brand blue and one ink card. Tokens only. */
+/* Show pages (docs/DESIGN.md 12, 4.0): translucent cards straight on the warm backdrop on a
+   12-column grid, thin big numbers, one hero card in the accent and one ink card. Tokens only. */
 .dash {
   display: grid;
   gap: var(--space-4);
-  padding: var(--space-5);
-  border-radius: var(--radius-20);
   background: var(--dash-canvas);
 }
 .dash-grid {
@@ -48,9 +46,6 @@
   }
 }
 @media (max-width: 760px) {
-  .dash {
-    padding: var(--space-3);
-  }
   .dash-grid > [class*='span-'] {
     grid-column: span 12;
   }
@@ -62,40 +57,44 @@
   flex-direction: column;
   gap: var(--space-3);
   min-width: 0;
-  padding: var(--space-5);
-  border-radius: var(--radius-16);
+  padding: var(--space-6);
+  border-radius: var(--radius-28);
   background: var(--dash-card);
-  box-shadow: var(--shadow-soft);
+  box-shadow:
+    inset 0 0 0 1px var(--surface-edge),
+    var(--shadow-soft);
 }
 .dash-card-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  min-height: var(--leading-24);
+  min-height: var(--control-icon);
 }
 .dash-card-head h2 {
   display: flex;
-  align-items: center;
-  gap: var(--space-2);
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
   margin: 0;
-  font-size: var(--font-14);
-  font-weight: var(--weight-550);
-  line-height: var(--leading-20);
+  font-size: var(--font-20);
+  font-weight: var(--weight-400);
+  line-height: var(--leading-28);
 }
 .dash-card-head h2 svg {
-  width: 16px;
-  height: 16px;
-  color: var(--neutral-icon-1);
+  display: none;
 }
 .dash-card-head small {
+  flex-basis: 100%;
   color: var(--text-muted);
   font-size: var(--font-12);
   font-weight: var(--weight-400);
+  line-height: var(--leading-16);
 }
 .dash-card.hero {
   background: var(--dash-hero);
   color: var(--dash-on-hero);
+  box-shadow: var(--shadow-soft);
 }
 .dash-card.hero .dash-card-head h2,
 .dash-card.hero .dash-card-head h2 svg,
@@ -105,6 +104,7 @@
 .dash-card.ink {
   background: var(--dash-ink);
   color: var(--dash-on-ink);
+  box-shadow: var(--shadow-soft);
 }
 .dash-card.ink .dash-card-head h2,
 .dash-card.ink .dash-card-head h2 svg,
@@ -118,9 +118,10 @@
   border: 0;
   background: none;
   padding: 0;
-  color: var(--link);
+  color: var(--text);
   font: inherit;
   font-size: var(--font-12);
+  text-decoration: none;
   cursor: pointer;
 }
 .dash-link:hover {
@@ -135,11 +136,42 @@
   color: inherit;
 }
 
-/* Big numbers. */
+/* A round arrow button in a card's head that opens what the card sums up. */
+.dash-open {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--control-icon);
+  height: var(--control-icon);
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color var(--motion-fast);
+}
+.dash-open:hover {
+  background: var(--surface-strong);
+}
+.dash-open:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.dash-open svg {
+  width: 16px;
+  height: 16px;
+}
+.dash-card.ink .dash-open {
+  border-color: var(--dash-ink-line);
+  color: var(--dash-on-ink);
+}
+
+/* Big numbers: thin and large (4.0). */
 .dash-number {
-  font-size: var(--font-40);
-  font-weight: var(--weight-475);
-  line-height: var(--leading-48);
+  font-size: var(--font-48);
+  font-weight: var(--weight-300);
+  line-height: var(--leading-56);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
@@ -154,11 +186,13 @@
   align-content: start;
   gap: var(--space-1);
   min-width: 0;
-  padding: var(--space-4);
+  padding: var(--space-5);
   border: 0;
-  border-radius: var(--radius-16);
+  border-radius: var(--radius-28);
   background: var(--dash-card);
-  box-shadow: var(--shadow-soft);
+  box-shadow:
+    inset 0 0 0 1px var(--surface-edge),
+    var(--shadow-soft);
   color: inherit;
   font: inherit;
   text-align: left;
@@ -168,7 +202,7 @@ button.dash-metric {
   transition: background var(--motion-fast);
 }
 button.dash-metric:hover {
-  background: var(--neutral-bg-2);
+  background: var(--surface-strong);
 }
 .dash-metric:focus-visible,
 .dash-card:focus-visible {
@@ -193,9 +227,9 @@ button.dash-metric:hover {
   gap: var(--space-2);
 }
 .dash-metric .value {
-  font-size: var(--font-32);
-  font-weight: var(--weight-475);
-  line-height: var(--leading-40);
+  font-size: var(--font-40);
+  font-weight: var(--weight-300);
+  line-height: var(--leading-48);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
@@ -283,7 +317,7 @@ a.dash-row {
 }
 button.dash-row:hover .dash-row-main strong,
 a.dash-row:hover .dash-row-main strong {
-  color: var(--link);
+  text-decoration: underline;
 }
 .dash-row-main {
   display: grid;
@@ -311,14 +345,15 @@ a.dash-row:hover .dash-row-main strong {
   font-size: var(--font-14);
 }
 
-/* Heat cells: five steps of the brand blue over the card. */
+/* Heat cells: pills in four steps of the accent; nothing yet is striped. */
 .dash-heat {
   display: grid;
   place-items: center;
-  min-height: var(--control-icon);
+  min-height: var(--control-button);
   border: 0;
-  border-radius: var(--radius-6);
-  background: var(--neutral-fill-1);
+  border-radius: var(--radius-full);
+  background: var(--hatch);
+  box-shadow: inset 0 0 0 1px var(--border);
   color: var(--text);
   font: inherit;
   font-size: var(--font-12);
@@ -330,22 +365,53 @@ button.dash-heat {
 button.dash-heat:hover {
   outline: 2px solid var(--border-emphasis);
 }
+.dash-heat.h1,
+.dash-heat.h2,
+.dash-heat.h3,
+.dash-heat.h4 {
+  box-shadow: none;
+  color: var(--dash-on-hero);
+  font-weight: var(--weight-475);
+}
 .dash-heat.h1 {
-  background: color-mix(in srgb, var(--dash-hero) 14%, var(--dash-card));
+  background: color-mix(in srgb, var(--dash-hero) 35%, transparent);
 }
 .dash-heat.h2 {
-  background: color-mix(in srgb, var(--dash-hero) 32%, var(--dash-card));
+  background: color-mix(in srgb, var(--dash-hero) 60%, transparent);
 }
 .dash-heat.h3 {
-  background: color-mix(in srgb, var(--dash-hero) 55%, var(--dash-card));
-  color: var(--dash-on-hero);
+  background: color-mix(in srgb, var(--dash-hero) 82%, transparent);
 }
 .dash-heat.h4 {
   background: var(--dash-hero);
-  color: var(--dash-on-hero);
 }
 .dash-heat.risk {
   box-shadow: inset 0 0 0 2px var(--red-solid-1);
+}
+
+/* Pill bars (4.0): done in ink, now in the accent, what is left striped. */
+.dash-pill {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-button);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: var(--font-12);
+  white-space: nowrap;
+}
+.dash-pill.done {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.dash-pill.now {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: var(--weight-475);
+}
+.dash-pill.left {
+  background: var(--hatch);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  color: var(--text-muted);
 }
 
 /* Numbers that count up once when they first show (DESIGN.md 12: no bounce, no glow). */

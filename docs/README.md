@@ -50,6 +50,7 @@
 - [FSD 设计助手方向决策](decisions/2026-10-11-fsd-assistant-direction-decision.md)（2026-10-11）
 - [ABAP 开发助手方向决策](decisions/2026-10-13-abap-dev-agent-direction-decision.md)（2026-10-13）
 - [平台定位方向决策](decisions/2026-10-17-platform-positioning-decision.md)（2026-10-17）
+- [视觉方向决策：暖亮浮动面板](decisions/2026-11-01-visual-direction-decision.md)（2026-11-01）
 
 ## 指南
 

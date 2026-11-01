@@ -56,8 +56,10 @@ import {
   tabs,
 } from '../services/tabs';
 
-// The shell (DESIGN.md 4.1): icon rail, the current module's menu, and the content panel. A record
-// page (a development item and its assistants) folds the menu away, as Plain does for a thread.
+// The shell (DESIGN.md 4.1): icon rail, the current module's menu, and the content panel, each a
+// panel floating over the warm backdrop. A record page (a development item and its assistants)
+// folds the menu away, as Plain does for a thread. 工作台 is a show page: its cards sit straight on
+// the backdrop, without the white panel.
 const route = useRoute();
 const router = useRouter();
 const module = computed(() => moduleOf(route.path));
@@ -332,7 +334,12 @@ const keys = [
   <ConfirmDialog />
   <div
     class="shell"
-    :class="{ 'menu-hidden': hidden || record || menuless, 'menu-open': mobileMenu, record }"
+    :class="{
+      'menu-hidden': hidden || record || menuless,
+      'menu-open': mobileMenu,
+      record,
+      show: menuless,
+    }"
     :style="{ '--nav-width': navWidth + 'px' }"
   >
     <a class="skip-link" href="#main-content">跳转到主要内容</a>
@@ -514,7 +521,7 @@ const keys = [
   display: grid;
   grid-template-columns: var(--layout-rail) var(--nav-width, var(--layout-nav)) minmax(0, 1fr);
   height: 100dvh;
-  background: var(--page);
+  background: var(--page-backdrop);
   color: var(--text);
   font-family: var(--font-sans);
   font-size: var(--font-14);
@@ -542,17 +549,26 @@ const keys = [
   flex-direction: column;
   align-items: center;
   gap: var(--space-2);
+  margin: var(--layout-gap) 0 var(--layout-gap) var(--layout-gap);
   padding: var(--space-3) 0;
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-panel);
+}
+/* The current module: ink, as on the reference's pill navigation. */
+.rail :deep(.base-icon-button.pressed) {
+  background: var(--primary);
+  color: var(--on-primary);
 }
 .mark {
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: var(--control-icon);
+  height: var(--control-icon);
   margin-bottom: var(--space-2);
-  border-radius: var(--radius-6);
-  background: var(--blue-solid-1);
-  color: var(--neutral-on-solid);
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  color: var(--accent);
   font-weight: var(--weight-550);
   text-decoration: none;
 }
@@ -565,7 +581,11 @@ const keys = [
   flex-direction: column;
   min-width: 0;
   overflow: hidden auto;
-  padding: var(--space-2) var(--space-2) var(--space-4);
+  margin: var(--layout-gap);
+  padding: var(--space-3) var(--space-3) var(--space-4);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-panel);
   transition: opacity var(--motion-base);
 }
 .menu-resize {
@@ -574,6 +594,8 @@ const keys = [
 .menu-hidden .menu {
   visibility: hidden;
   opacity: 0;
+  margin: 0;
+  padding: 0;
 }
 .menu-head {
   display: flex;
@@ -684,7 +706,7 @@ const keys = [
   margin: var(--space-1) 0 var(--space-2);
   padding: 0 var(--space-2);
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-6);
+  border-radius: var(--radius-full);
   background: var(--panel);
   color: var(--neutral-icon-1);
   transition: box-shadow var(--motion-fast);
@@ -717,7 +739,10 @@ const keys = [
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  padding-right: var(--layout-gap);
+  padding: var(--layout-gap) var(--layout-gap) 0 0;
+}
+.menu-hidden .shell-main {
+  padding-left: var(--layout-gap);
 }
 .shell-main > .tab-bar {
   position: relative;
@@ -731,11 +756,18 @@ const keys = [
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  margin-bottom: var(--layout-gap);
+  margin: var(--space-1) 0 var(--layout-gap);
   overflow: hidden;
-  border-radius: 0 var(--radius-panel) var(--radius-panel) var(--radius-panel);
+  border-radius: var(--radius-panel);
   background: var(--panel);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-panel);
+}
+.show .shell-content {
+  background: transparent;
+  box-shadow: none;
+}
+.show .page-bar {
+  border-bottom: 0;
 }
 /* The page header (DESIGN.md 4.1): one slim row with the project switcher and where you are. */
 .page-bar {
@@ -843,12 +875,14 @@ a.crumb:focus-visible {
     width: var(--layout-nav);
     background: var(--page);
     box-shadow: var(--shadow-dialog);
-    transform: translateX(calc(-100% - var(--layout-rail)));
+    transform: translateX(calc(-100% - var(--layout-rail) - var(--layout-gap) * 2));
     transition: transform var(--motion-panel);
   }
   .menu-hidden .menu {
     visibility: visible;
     opacity: 1;
+    margin: var(--layout-gap);
+    padding: var(--space-3) var(--space-3) var(--space-4);
   }
   .menu-open .menu {
     transform: none;
