@@ -1,6 +1,6 @@
-# 设计助手（abap-fsd-agent）模块说明
+# 设计助手（abap-fsd-agent）
 
-> 状态：现行，原地更新。最后更新：2026-10-28（main `7f4f9c2`）。
+> 状态：已实施，批量测试与优化中 · 最后更新：2026-10-28（`7f4f9c2`）。规则与形态见[方向决策](../decisions/2026-10-11-fsd-assistant-direction-decision.md)，本文是现状、架构与测试资产。
 
 本模块的现状、架构与测试资产，也是新会话的入口。读完本文、[AGENTS.md](../../AGENTS.md) 和[目录与依赖契约](../architecture/repository-contract.md)即可接手。运行、登录与观察方法见[智能助手本机运行与观察](../guides/agent-operations.md)；未完成事项以[待办与问题清单](../backlog.md)为准，本文只列编号。
 

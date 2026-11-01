@@ -1,6 +1,6 @@
 # 文档导航
 
-> 最后更新：2026-10-31。文档按主题命名、原地更新，版本靠 Git；打开就是最新版。只有方向决策带日期；做完的计划、测试记录和历史资料在 `archive/`，不代表现状。布局规则见[目录与依赖契约](architecture/repository-contract.md)第 6 节。
+> 状态：现行 · 最后更新：2026-10-31。文档按主题命名、原地更新，版本靠 Git；打开就是最新版。只有方向决策带日期；做完的计划、测试记录和历史资料在 `archive/`，不代表现状。怎么写、何时改见[文档更新纪律](guides/development-discipline.md)第 1.1 节，布局规则见[目录与依赖契约](architecture/repository-contract.md)第 6 节。
 
 ## 阅读顺序
 
@@ -24,6 +24,7 @@
 | 界面长什么样、用哪些令牌       | [设计规范](DESIGN.md)                                              |
 | 代码放哪、模块怎么依赖         | [目录与依赖契约](architecture/repository-contract.md)              |
 | 怎么跑起来、命令与端口         | 根目录 [README](../README.md)                                      |
+| 部署到服务器                   | [生产部署说明](../infra/production/README.md)                      |
 | 开发流程与提交前检查           | [项目开发纪律](guides/development-discipline.md)                   |
 | 为什么当初这样定               | [方向决策](#方向决策)                                              |
 

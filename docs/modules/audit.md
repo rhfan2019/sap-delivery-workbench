@@ -1,6 +1,6 @@
 # 审计日志与优化建议
 
-状态：已实现（2026-10-12）。页面：设置 → 审计与运维 → 审计日志（`/settings/audit`），需要 `audit:view`（预置角色 `SYS_AUDITOR` 与超级管理员持有）。归属见[目录与依赖契约](../architecture/repository-contract.md) 3.2 节。
+> 状态：已实施 · 最后更新：2026-10-31。页面：设置 → 审计与运维 → 审计日志（`/settings/audit`），需要 `audit:view`（预置角色 `SYS_AUDITOR` 与超级管理员持有）。归属见[目录与依赖契约](../architecture/repository-contract.md) 3.2 节。
 
 页面基于另一会话开发的“智能助手日志”页面（未提交、准备阶段被删除，从其编辑历史恢复）改造，保留布局与交互，按 abap-fsd-agent 的新数据重写接口与详情内容。
 
@@ -34,3 +34,11 @@
 
 - 接口 `/api/audit/*` 需要 `audit:view`，发表与删除评论需要 `audit:comment`。评论只能删除自己的（软删除，记录保留）。
 - 运行时数据库账号对 `app.audit_event` 由“只写”调整为“读 + 写”，仍不能修改或删除（`provision.mjs`，并由 `tests/integration/database/runtime.test.mjs` 断言）。
+
+## 现状与下一步
+
+> 最后更新：2026-10-31。
+
+- **现状**：设计助手的运行已接入；开发助手尚未接入审计页。
+- **下一步**：开发助手接入审计日志页（FEAT-004）。
+- **已知问题**：FEAT-004。

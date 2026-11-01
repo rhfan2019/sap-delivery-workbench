@@ -1,6 +1,6 @@
-# 开发助手（abap-dev-agent）模块说明
+# 开发助手（abap-dev-agent）
 
-> 状态：现行，原地更新。最后更新：2026-10-28（main `7f4f9c2`）。
+> 状态：首版已实施，测试中 · 最后更新：2026-10-28（`7f4f9c2`）。规则与形态见[方向决策](../decisions/2026-10-13-abap-dev-agent-direction-decision.md)，本文是现状、架构与测试资产。
 
 本模块的现状、架构与测试资产，也是新会话的入口，**专注测试 ABAP 开发助手**（也覆盖与它共用底座的设计助手的回归）。读完本文、[AGENTS.md](../../AGENTS.md) 和[目录与依赖契约](../architecture/repository-contract.md)即可接手。运行、登录与观察方法见[智能助手本机运行与观察](../guides/agent-operations.md)；未完成事项以[待办与问题清单](../backlog.md)为准，本文只列编号。
 

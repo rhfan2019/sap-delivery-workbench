@@ -1,6 +1,8 @@
 # Web 应用目录与文件审查提示词
 
-归属：`docs/guides`（现行说明）。这是一份人审提示词，与 `scripts/checks/architecture.mjs` 的自动化检查互补，不替代它。
+> 状态：现行 · 最后更新：2026-10-31。
+
+这是一份人审提示词，与 `scripts/checks/architecture.mjs` 的自动化检查互补，不替代它。
 
 ## 0. 为什么还需要人审
 
