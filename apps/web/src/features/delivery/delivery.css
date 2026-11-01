@@ -18,19 +18,19 @@
   cursor: default;
 }
 .delivery-page select,
-.delivery-page :not(.base-input) > input:not([type='checkbox']),
+.delivery-page :not(.base-input) > input:not([type='checkbox'], .base-date-text),
 .item-drawer select,
-.item-drawer input:not([type='checkbox']),
+.item-drawer input:not([type='checkbox'], .base-date-text),
 .item-drawer textarea,
 .batch-dialog select,
-.batch-dialog input:not([type='checkbox']),
+.batch-dialog input:not([type='checkbox'], .base-date-text),
 .batch-dialog textarea,
 .settings-dialog select,
-.settings-dialog input:not([type='checkbox']) {
+.settings-dialog input:not([type='checkbox'], .base-date-text) {
   box-sizing: border-box;
   height: 34px;
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-6);
+  border-radius: var(--radius-full);
   background: var(--panel);
   color: var(--text);
   padding: 0 var(--space-2-5);
@@ -40,6 +40,7 @@
 .item-drawer textarea,
 .batch-dialog textarea {
   height: auto;
+  border-radius: var(--radius-16);
   width: 100%;
   padding: var(--space-2) var(--space-2-5);
   line-height: 1.7;

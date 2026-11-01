@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppIcon from '../../components/AppIcon.vue';
+import BaseDateInput from '../../components/base/BaseDateInput.vue';
 import { computed, ref } from 'vue';
 import { PROJECT_TYPES } from '@sap-delivery-workbench/contracts/projects/options';
 import SettingsDrawer from '../settings/SettingsDrawer.vue';
@@ -94,11 +95,14 @@ defineExpose({ dirty, busy: save.busy });
       <p class="s-drawer-help">指定的项目经理会以“项目经理”角色加入项目。</p>
       <label class="s-field"
         ><span><AppIcon class="s-icon" name="calendar" :size="14" />计划开始</span
-        ><input v-model="draft.plannedStartDate" type="date" :disabled="save.busy.value"
+        ><BaseDateInput
+          v-model="draft.plannedStartDate"
+          label="计划开始"
+          :disabled="save.busy.value"
       /></label>
       <label class="s-field"
         ><span><AppIcon class="s-icon" name="calendar" :size="14" />计划结束</span
-        ><input v-model="draft.plannedEndDate" type="date" :disabled="save.busy.value"
+        ><BaseDateInput v-model="draft.plannedEndDate" label="计划结束" :disabled="save.busy.value"
       /></label>
     </section>
     <template #actions>

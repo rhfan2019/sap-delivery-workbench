@@ -1,14 +1,15 @@
-/* Native form controls of the settings pages, drawn like BaseInput (DESIGN.md 5): 32px fields,
-   6px corners, a blue focus ring. Native elements keep forms usable with keyboard and on phones. */
+/* Native form controls of the settings pages (DESIGN.md 5, 4.0): 32px pill fields, a blue focus
+   ring; text areas round at 16. Native elements keep forms usable with keyboard and on phones;
+   dates use BaseDateInput. */
 .s-input,
 .s-select,
 .s-textarea {
   width: 100%;
   min-width: 0;
   height: var(--control-input);
-  padding: 0 var(--space-2);
+  padding: 0 var(--space-3);
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-6);
+  border-radius: var(--radius-full);
   background: var(--panel);
   color: var(--text);
   font: inherit;
@@ -20,7 +21,8 @@
 .s-textarea {
   height: auto;
   min-height: calc(var(--control-input) * 2.5);
-  padding: var(--space-1-5) var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-16);
   line-height: var(--leading-20);
   resize: vertical;
 }
@@ -56,7 +58,8 @@
   gap: var(--space-2);
 }
 .s-row > .s-input,
-.s-row > .s-select {
+.s-row > .s-select,
+.s-row > .base-date {
   flex: 1;
   min-width: 120px;
 }

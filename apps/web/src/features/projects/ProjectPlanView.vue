@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import BaseDateInput from '../../components/base/BaseDateInput.vue';
 import {
   AlertCircle,
   CalendarClock,
@@ -300,32 +301,24 @@ const latest = computed(() => project.value?.health[0]);
                   {{ label }}
                 </option>
               </select>
-              <input
+              <BaseDateInput
                 v-model="p.plannedStart"
-                type="date"
-                class="s-input"
-                :aria-label="p.name + ' 计划开始'"
+                :label="p.name + ' 计划开始'"
                 :disabled="!planEditable"
               />
-              <input
+              <BaseDateInput
                 v-model="p.plannedEnd"
-                type="date"
-                class="s-input"
-                :aria-label="p.name + ' 计划结束'"
+                :label="p.name + ' 计划结束'"
                 :disabled="!planEditable"
               />
-              <input
+              <BaseDateInput
                 v-model="p.actualStart"
-                type="date"
-                class="s-input"
-                :aria-label="p.name + ' 实际开始'"
+                :label="p.name + ' 实际开始'"
                 :disabled="!planEditable"
               />
-              <input
+              <BaseDateInput
                 v-model="p.actualEnd"
-                type="date"
-                class="s-input"
-                :aria-label="p.name + ' 实际结束'"
+                :label="p.name + ' 实际结束'"
                 :disabled="!planEditable"
               />
             </div>

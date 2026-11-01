@@ -61,6 +61,21 @@ a:focus-visible {
 svg {
   flex-shrink: 0;
 }
+/* Native selects (DESIGN.md 5, backlog UI-019): our own arrow on whatever field style the page
+   gives them; the open list stays the system's, so keyboards and phones work as before. Marked
+   important because pages set the background shorthand on their selects. */
+select:not([multiple]) {
+  appearance: none;
+  padding-right: calc(var(--space-3) + var(--space-4)) !important;
+  background-image: var(--select-chevron) !important;
+  background-repeat: no-repeat !important;
+  background-position: right var(--space-2-5) center !important;
+  background-size: var(--space-4) var(--space-4) !important;
+  cursor: pointer;
+}
+select:disabled {
+  cursor: default;
+}
 h1,
 h2,
 h3,

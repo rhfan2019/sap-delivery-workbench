@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppIcon from '../../components/AppIcon.vue';
+import BaseDateInput from '../../components/base/BaseDateInput.vue';
 import { computed, ref } from 'vue';
 import {
   PERMISSIONS,
@@ -508,11 +509,17 @@ defineExpose({ dirty, busy, refresh, startEdit });
           </div>
           <label class="s-field"
             ><span><AppIcon class="s-icon" name="calendar" :size="14" />开始日期</span
-            ><input v-model="editing.validFrom" type="date" :disabled="assign.busy.value"
+            ><BaseDateInput
+              v-model="editing.validFrom"
+              label="开始日期"
+              :disabled="assign.busy.value"
           /></label>
           <label class="s-field"
             ><span><AppIcon class="s-icon" name="calendar" :size="14" />结束日期</span
-            ><input v-model="editing.validTo" type="date" :disabled="assign.busy.value"
+            ><BaseDateInput
+              v-model="editing.validTo"
+              label="结束日期"
+              :disabled="assign.busy.value"
           /></label>
           <p class="s-drawer-help">只能授予你自己持有的权限；不能修改自己的角色。</p>
           <p v-if="assign.error.value" class="s-error" role="alert">{{ assign.error.value }}</p>

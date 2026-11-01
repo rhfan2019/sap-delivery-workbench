@@ -11,6 +11,7 @@ import {
   TRANSPORT_METHODS,
 } from '@sap-delivery-workbench/contracts/projects/options';
 import BaseButton from '../../components/base/BaseButton.vue';
+import BaseDateInput from '../../components/base/BaseDateInput.vue';
 import { toast } from '../../components/base/toast';
 import { askConfirmation } from '../../services/confirmation';
 import { loadProjects } from '../../services/projectContext';
@@ -218,19 +219,15 @@ const statuses = Object.entries(PROJECT_STATUSES).filter(([k]) => k !== 'archive
           </SettingsField>
           <SettingsField label="计划起止" help="项目合同周期。">
             <div class="s-row">
-              <input
+              <BaseDateInput
                 v-model="draft.plannedStartDate"
-                class="s-input"
-                type="date"
-                aria-label="计划开始"
+                label="计划开始"
                 :disabled="!editable"
               />
               <span class="s-note">至</span>
-              <input
+              <BaseDateInput
                 v-model="draft.plannedEndDate"
-                class="s-input"
-                type="date"
-                aria-label="计划结束"
+                label="计划结束"
                 :disabled="!editable"
               />
             </div>

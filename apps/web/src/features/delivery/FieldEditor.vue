@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseDateInput from '../../components/base/BaseDateInput.vue';
 import { computed } from 'vue';
 import type { FieldDef, ListContext, SapObject, Tag } from './model';
 import RichEditor from './RichEditor.vue';
@@ -67,13 +68,12 @@ function toggleOption(id: string, on: boolean) {
       {{ m.displayName }}{{ m.active ? '' : '（停用）' }}
     </option>
   </select>
-  <input
+  <BaseDateInput
     v-else-if="type === 'date' || type === 'custom-date'"
-    type="date"
-    :aria-label="field.label"
+    :label="field.label"
     :disabled="disabled"
-    :value="modelValue ?? ''"
-    @input="emit('update:modelValue', text($event) || null)"
+    :model-value="(modelValue as string | null) ?? ''"
+    @update:model-value="emit('update:modelValue', $event || null)"
   />
   <span v-else-if="type === 'percent'" class="unit-input">
     <input
