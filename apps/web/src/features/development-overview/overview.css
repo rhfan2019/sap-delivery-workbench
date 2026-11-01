@@ -1,4 +1,4 @@
-/* Development overview (docs/specs/development-overview.md 2, 8): sections of white cards on the
+/* Development overview (docs/modules/development-overview.md 2, 8): sections of white cards on the
    panel, numbers that open the list, tables in the list style. Tokens only (DESIGN.md 9). */
 .ov {
   display: grid;

@@ -4,8 +4,8 @@
 
 ## 参考与实现
 
-- 选定参考：docs/design-options/palette-3.png（海军蓝侧栏、浅色工作区）。
-- 实现截图：docs/screenshots/palette-3/，含 home.jpg、login.jpg、first-password.jpg、workspace-organization.jpg、member-assignment.jpg、settings.jpg 和各菜单页面。
+- 选定参考：docs/archive/design-options/palette-3.png（海军蓝侧栏、浅色工作区）。
+- 实现截图：docs/archive/screenshots/palette-3/，含 home.jpg、login.jpg、first-password.jpg、workspace-organization.jpg、member-assignment.jpg、settings.jpg 和各菜单页面。
 - 在同次图像输出中并排核对参考图、企业页、成员面板、个人设置；另检查登录、弹窗和移动截图。
 - 桌面 CSS 视口约 1264 × 712，截图 fullPage；移动请求 390 × 844，滚动条可能占用 15px。截图未作像素级重采样。
 - 保留现有字体、字号、页面布局、Lucide 图标和品牌标识，仅调整共享色彩与对比度；参考图的示例数据、标题排布不作为新增功能要求。
@@ -29,6 +29,6 @@
 
 ## 视觉结论
 
-字体和内容层级沿用已确认界面；深浅区域、卡片与输入控件边界清晰；布局和图标无非预期变化；表单错误、焦点和选中态保持可辨识。当前无未解决 P0/P1/P2 视觉问题。既有管理布局验收已归档 docs/design-options/admin-layout-docs/archive/docs\archive\design-qa.md，其中深色描述仅为历史记录。
+字体和内容层级沿用已确认界面；深浅区域、卡片与输入控件边界清晰；布局和图标无非预期变化；表单错误、焦点和选中态保持可辨识。当前无未解决 P0/P1/P2 视觉问题。既有管理布局验收已归档 docs/archive/design-options/admin-layout-docs/archive/docs\archive\design-qa.md，其中深色描述仅为历史记录。
 
 final result: passed

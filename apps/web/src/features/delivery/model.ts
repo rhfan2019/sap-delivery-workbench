@@ -69,7 +69,7 @@ export interface Tag {
 export interface ListContext {
   members: Member[];
   tags: Tag[];
-  // The code freeze date of the project (docs/specs/project-access-admin.md 1.3), if planned.
+  // The code freeze date of the project (docs/modules/access.md 1.3), if planned.
   codeFreeze?: string | null;
 }
 export type Changes = Record<string, unknown>;
@@ -166,7 +166,7 @@ export const today = () => {
 };
 
 // Planned end passed while the phase is still open and nobody set 已延误: a reminder on the status
-// cell, data is not changed. Both count as risk (docs/specs/development-overview.md 3).
+// cell, data is not changed. Both count as risk (docs/modules/development-overview.md 3).
 export const overdue = (phase: Phase) => phaseRisk(phase, today()) === 'stale';
 
 // Deep copy that also works on reactive proxies (structuredClone rejects them).

@@ -51,7 +51,7 @@ import {
   rework,
 } from './views.mjs';
 
-// Development overview, phase 1 (docs/specs/development-overview.md, plan 2026-10-30): the
+// Development overview, phase 1 (docs/modules/development-overview.md, plan 2026-10-30): the
 // project and development-team views. Numbers are computed here with the shared judgments the
 // list uses, so each number and its drill-down list agree.
 const IDLE_DAYS = 7;

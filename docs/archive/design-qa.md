@@ -4,8 +4,8 @@
 
 ## 参考、状态与证据
 
-- source visual truth: docs/design-options/llm-registry-refined-2026-10-03/option-3.png。
-- implementation: docs/screenshots/model-registry/model-drawer.jpg；列表独立截图 model-list.jpg；客户项目截图 customer-projects.jpg。
+- source visual truth: docs/archive/design-options/llm-registry-refined-2026-10-03/option-3.png。
+- implementation: docs/archive/screenshots/model-registry/model-drawer.jpg；列表独立截图 model-list.jpg；客户项目截图 customer-projects.jpg。
 - CSS viewport: 1586×992；参考与截图像素均 1586×992；无密度缩放。合成左右图 comparison.png 为 3172×1032（额外 40px 标题）；已实际打开核对，不以单独图片代替并排比较。
 - focused comparison: comparison-detail.png，同时裁取两图 x265–1586/y280–880，比较行间隔、默认星、操作列、表单文字与对齐，已打开检查。
 - 状态差异：参考编辑快速模型；实现编辑当前默认通用模型，以额外验证版本保护说明。列表均 5 行、右侧编辑抽屉；验收数据不代表真实服务商状态。原有完整平台侧栏与项目选择器保留；个人设置/退出按本轮需求迁到右上角。

@@ -29,7 +29,7 @@ import ProjectGate from './ProjectGate.vue';
 import { useProject, type Contact, type ProjectDetail } from './useProject';
 import '../settings/settings.css';
 
-// 项目 → 团队与干系人 (docs/specs/project-access-admin.md 1.4): our key roles and module leads as
+// 项目 → 团队与干系人 (docs/modules/access.md 1.4): our key roles and module leads as
 // a settings card, the customer's contacts as a settings list with its drawer (DESIGN.md 6.2).
 const { project, loading, error, replace, can, readOnly } = useProject();
 const editable = computed(() => can('project.team:edit') && !readOnly.value);

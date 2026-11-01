@@ -5,7 +5,7 @@ import SettingsDrawer from '../settings/SettingsDrawer.vue';
 import { useSave } from '../settings/useLoad';
 import type { Milestone, Phase, ProjectDetail } from './useProject';
 
-// A milestone of 计划与健康 in the list's drawer (docs/specs/project-access-admin.md 1.3;
+// A milestone of 计划与健康 in the list's drawer (docs/modules/access.md 1.3;
 // DESIGN.md 5 “抽屉”). A milestone opens to read unless its 编辑 was clicked
 // (development-discipline.md 4.1); dates read as text so an empty one says 未填写.
 const props = defineProps<{

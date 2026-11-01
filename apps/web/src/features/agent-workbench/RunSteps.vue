@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // What one turn did: a live status line while it runs, then one summary line that opens into
-// grouped activity and, per call, a readable preview (docs/specs/agent-conversation-ux.md 4).
+// grouped activity and, per call, a readable preview (docs/modules/agent-conversation.md 4).
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Check, ChevronRight, LoaderCircle, TriangleAlert } from '@lucide/vue';
 import { Shimmer } from '@/components/ai-elements/shimmer';

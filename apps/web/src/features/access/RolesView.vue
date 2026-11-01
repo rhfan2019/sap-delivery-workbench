@@ -34,7 +34,7 @@ import RoleDrawer from './RoleDrawer.vue';
 import { accessApi, day, type Holder, type Role } from './api';
 import '../settings/settings.css';
 
-// 企业 → 角色与权限 (docs/specs/project-access-admin.md 2.5, 2.8): built-in and custom roles in
+// 企业 → 角色与权限 (docs/modules/access.md 2.5, 2.8): built-in and custom roles in
 // one settings list (DESIGN.md 6.2), each opening in the wide drawer (`?role=<id>` links to it);
 // and the permission report (who holds a permission, through which role).
 const route = useRoute();

@@ -63,7 +63,7 @@ export function stepFromToolCall(call, index = 0) {
 
 // --- Run activity: what the agent did, grouped the way a person would describe it -------------
 // Read-only lookups between two writes become one row; each row names the objects it touched
-// (docs/specs/agent-conversation-ux.md 4.2).
+// (docs/modules/agent-conversation.md 4.2).
 const SAP_LOOKUP = new Set([
   'searchObject',
   'findObjectPath',

@@ -4,13 +4,13 @@
 
 ## 0. 为什么还需要人审
 
-| 自动化检查（本项目 `npm run check:architecture`） | 本提示词负责的部分 |
-| --- | --- |
-| 受控根目录名单、workspace 清单 | 白名单外目录是否**该存在**、是否该补登记 |
-| 字符串级禁用标识（`access_level`、旧模块名、SAP 写工具名） | 同一职责是否出现**第二套实现** |
-| 跨包物理路径与缺失本地导入 | 依赖方向是否被**间接绕过**（动态 import、文件 URL、命令字符串） |
-| 测试文件是否被发现 | 测试归属层级与 fixture 是否放错位置 |
-| 样式令牌字面值 | 文件级卫生：孤儿、空目录、超规模文件、改名后的死路径 |
+| 自动化检查（本项目 `npm run check:architecture`）          | 本提示词负责的部分                                              |
+| ---------------------------------------------------------- | --------------------------------------------------------------- |
+| 受控根目录名单、workspace 清单                             | 白名单外目录是否**该存在**、是否该补登记                        |
+| 字符串级禁用标识（`access_level`、旧模块名、SAP 写工具名） | 同一职责是否出现**第二套实现**                                  |
+| 跨包物理路径与缺失本地导入                                 | 依赖方向是否被**间接绕过**（动态 import、文件 URL、命令字符串） |
+| 测试文件是否被发现                                         | 测试归属层级与 fixture 是否放错位置                             |
+| 样式令牌字面值                                             | 文件级卫生：孤儿、空目录、超规模文件、改名后的死路径            |
 
 结论：自动化管"能用正则表达的规则"，人审管"需要判断职责归属的偏差"。二者不能互相替代，也不应让提示词去重述检查器已有的规则。
 
@@ -24,7 +24,7 @@
 
 ## 2. 提示词正文（可直接复制）
 
-````text
+```text
 # 角色
 你是一名仓库结构审计员。你的产出是一份可被第三方逐条复核的问题清单，不是改造方案演说。
 你不评价代码质量、不评价业务逻辑、不评价技术选型，只审计"目录与文件的结构事实与声明是否一致"。
@@ -145,21 +145,21 @@ P3 整洁度：空目录；命名不一致；规模异常；文档链接失效
 5. 修复建议是否都含具体文件与命令？
 6. 是否声明了未覆盖范围？
 7. 是否出现了被禁止的空话建议？
-````
+```
 
 ---
 
 ## 3. 参数表（通用版填写）
 
-| 参数 | 说明 | 示例 |
-| --- | --- | --- |
-| `REPO_ROOT` | 仓库根绝对路径 | `D:\Workspace\my-app` |
-| `CONTRACT_FILES` | 结构契约、协作约束、设计规范 | `docs/architecture/repository-contract.md`、`AGENTS.md` |
-| `CONTROLLED_ROOTS` | 根目录白名单 + 根文件清单 | `apps/ packages/ scripts/ tests/ infra/ docs/` + `package.json`、锁文件、README |
-| `LAYER_WHITELIST` | 各层允许子目录 | `apps/web/src` → `features/ components/ views/ router/ services/ lib/ assets/ types/` |
-| `FORBIDDEN_DEPS` | 禁止方向 | `web → api`、`api → scripts`、`contracts → 应用` |
-| `EXCEPTIONS` | 豁免及理由 | `vendor/`（第三方分发）、`assets/theme.css`（令牌唯一来源） |
-| `SCALE` | 规模上限 | 单文件 800 行、单目录 80 文件（超限仅提示） |
+| 参数               | 说明                         | 示例                                                                                  |
+| ------------------ | ---------------------------- | ------------------------------------------------------------------------------------- |
+| `REPO_ROOT`        | 仓库根绝对路径               | `D:\Workspace\my-app`                                                                 |
+| `CONTRACT_FILES`   | 结构契约、协作约束、设计规范 | `docs/architecture/repository-contract.md`、`AGENTS.md`                               |
+| `CONTROLLED_ROOTS` | 根目录白名单 + 根文件清单    | `apps/ packages/ scripts/ tests/ infra/ docs/` + `package.json`、锁文件、README       |
+| `LAYER_WHITELIST`  | 各层允许子目录               | `apps/web/src` → `features/ components/ views/ router/ services/ lib/ assets/ types/` |
+| `FORBIDDEN_DEPS`   | 禁止方向                     | `web → api`、`api → scripts`、`contracts → 应用`                                      |
+| `EXCEPTIONS`       | 豁免及理由                   | `vendor/`（第三方分发）、`assets/theme.css`（令牌唯一来源）                           |
+| `SCALE`            | 规模上限                     | 单文件 800 行、单目录 80 文件（超限仅提示）                                           |
 
 ## 4. 本项目已填参数（SAP Delivery Workbench）
 
@@ -167,7 +167,7 @@ P3 整洁度：空目录；命名不一致；规模异常；文档链接失效
 REPO_ROOT         = D:\Workspace\sap-delivery-workbench
 CONTRACT_FILES    = docs/architecture/repository-contract.md（v1.19，唯一目录规范）
                     AGENTS.md（协作约束与验证要求）
-                    docs/specs/DESIGN.md（界面与令牌）
+                    docs/DESIGN.md（界面与令牌）
 CONTROLLED_ROOTS  = apps/ packages/ database/ scripts/ tests/ infra/ tools/ vendor/ docs/ .runtime/
                     根文件：README.md AGENTS.md package.json 单一锁文件 start.cmd stop.cmd
                     compose.yaml 编辑器/格式/Git/测试配置

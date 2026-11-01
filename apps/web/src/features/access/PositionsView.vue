@@ -24,7 +24,7 @@ import PositionDrawer from './PositionDrawer.vue';
 import { accessApi, type Position, type Role } from './api';
 import '../settings/settings.css';
 
-// 企业 → 职位 (docs/specs/project-access-admin.md 2.6): a position carries default roles. They
+// 企业 → 职位 (docs/modules/access.md 2.6): a position carries default roles. They
 // are used when a user gets the position (organization roles) and when a user joins a project
 // (project roles); changing them never rewrites existing assignments. A settings list with its
 // drawer (DESIGN.md 6.2).

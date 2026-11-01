@@ -1,6 +1,6 @@
 # FS 智能工作区设计交付索引
 
-> 历史文档：FS 智能工作区已在 2026-10-11 的 abap-fsd-agent 重构中删除，见[方向决策](../../architecture/2026-10-11-fsd-assistant-direction-decision.md)。
+> 历史文档：FS 智能工作区已在 2026-10-11 的 abap-fsd-agent 重构中删除，见[方向决策](../../decisions/2026-10-11-fsd-assistant-direction-decision.md)。
 
 推荐以主 Agent、显式工作流、结构化文档和服务端审批门禁实现完整交付闭环。范围为传统 S/4HANA OP/PCE ABAP；本包不修改产品代码，也不宣称已完成 SAP 技术验证。
 
@@ -21,7 +21,7 @@
 
 1. [可点击前端原型](../../archive/fs-workspace-prototype/index.html)与[前端详细设计](./frontend-design.md)：管理、对话/文档、变更冲突、版本及评审发布页面，含响应式与交互规格。原型直接打开 HTML 即可使用；全部数据为演示。
 2. [开发详细设计](./engineering-design.md)与[OpenAPI 3.1 契约](../../../tests/fixtures/fs-workspace/specification/api.openapi.json)：工程目录、模块职责、数据表、鉴权、并发、任务恢复、迁移和集成边界。
-3. [AI 可执行实施计划](../../plans/2026-10-03-fs-intelligent-workspace.md)：T01—T15，列明文件、接口、测试和完成条件，尚未执行。
+3. [AI 可执行实施计划](../plans/2026-10-03-fs-intelligent-workspace.md)：T01—T15，列明文件、接口、测试和完成条件，尚未执行。
 4. [AI 开发启动提示词](./development-start-prompt.md)：可整段复制，明确要求检查并维护项目目录结构合理性。
 
 建议先看原型，再读前端与工程详细设计，最后把启动提示词交给开发 AI。实现细节按补充工程设计落实（例如首版附件上限 5MiB）；原始方案中的长期目标不代表已实现能力。

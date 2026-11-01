@@ -1,6 +1,6 @@
 // Permission catalog, built-in roles and positions shared by the API (checks, role editor,
 // startup sync) and the web (menus, buttons, role editor). Pure data: no decisions here.
-// Design: docs/specs/project-access-admin.md section 2.
+// Design: docs/modules/access.md section 2.
 
 // A group is one menu area in the role editor tree. `scope` decides where a permission applies:
 // 'organization' (organization-wide) or 'project' (inside one project).

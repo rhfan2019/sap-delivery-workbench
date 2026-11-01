@@ -9,7 +9,7 @@ import {
 } from '@sap-delivery-workbench/contracts/delivery/overview';
 import { dateText } from '../delivery/store.mjs';
 
-// Phase-2 views of the development overview (docs/specs/development-overview.md 2, 4): work in
+// Phase-2 views of the development overview (docs/modules/development-overview.md 2, 4): work in
 // progress age (M12), assistant coverage (M14), FSD backlog (M16), comments (M18), FSD rework
 // (M19), test readiness (M21), and the personal “mine” and consultant lists.
 const WORKING = ['in_progress', 'delayed'];

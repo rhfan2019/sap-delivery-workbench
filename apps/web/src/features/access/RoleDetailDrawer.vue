@@ -9,7 +9,7 @@ import { useLoad, useSave } from '../settings/useLoad';
 import PermissionTree from './PermissionTree.vue';
 import { accessApi, day, type Role } from './api';
 
-// One role in the list's wide drawer (docs/specs/project-access-admin.md 2.5, 2.8; DESIGN.md 5
+// One role in the list's wide drawer (docs/modules/access.md 2.5, 2.8; DESIGN.md 5
 // “抽屉”): its basic information, its permissions or member roles, who holds it and which
 // composites contain it. System roles are read-only and may be copied. A custom role opens to read
 // unless its 编辑 was clicked (development-discipline.md 4.1).

@@ -4,7 +4,7 @@ import SettingsDrawer from '../settings/SettingsDrawer.vue';
 import { useSave } from '../settings/useLoad';
 import { accessApi, type Position, type Role } from './api';
 
-// A position and its default roles in the list's drawer (docs/specs/project-access-admin.md 2.6;
+// A position and its default roles in the list's drawer (docs/modules/access.md 2.6;
 // DESIGN.md 5 “抽屉”): a saved one opens to read unless its 编辑 was clicked
 // (development-discipline.md 4.1).
 const props = defineProps<{

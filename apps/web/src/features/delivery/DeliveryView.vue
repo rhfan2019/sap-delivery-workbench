@@ -154,7 +154,7 @@ const drawerFields = computed(() =>
       ),
 );
 const checkedItems = computed(() => items.value.filter((i) => checked.value.includes(i.id)));
-// The code freeze milestone (docs/specs/project-access-admin.md 1.3): a countdown in the header,
+// The code freeze milestone (docs/modules/access.md 1.3): a countdown in the header,
 // and how many items plan their development after it.
 const codeFreeze = ref<{ plannedOn: string | null; achievedOn: string | null } | null>(null);
 // Keyed milestone dates (achieved, else planned) for drill-down filters on phase gates.
@@ -441,7 +441,7 @@ function followLink() {
 }
 
 // --- drill-down from the development overview and the load table ------------------------
-// ?project=&from=overview|load&label=&<filter keys> (docs/specs/development-overview.md 8,
+// ?project=&from=overview|load&label=&<filter keys> (docs/modules/development-overview.md 8,
 // development-load.md): the address wins over the filters saved for this project, which are
 // cleared while it applies.
 const DRILL_SOURCES: Record<string, string> = { overview: '开发概览', load: '开发排期' };

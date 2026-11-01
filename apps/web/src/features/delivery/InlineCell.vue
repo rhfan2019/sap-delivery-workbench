@@ -27,7 +27,7 @@ const error = ref('');
 const draft = ref<unknown>(null);
 const root = ref<HTMLElement>();
 const canEdit = computed(() => !props.readOnly && editableInline(props.field));
-// A development plan that ends after the code freeze is marked (docs/specs/project-access-admin.md 1.3).
+// A development plan that ends after the code freeze is marked (docs/modules/access.md 1.3).
 const late = computed(() => {
   if (props.field.key !== 'development.plannedEnd' || !props.ctx.codeFreeze) return false;
   const value = fieldValue(props.item, props.field.key);

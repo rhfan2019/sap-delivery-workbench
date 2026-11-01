@@ -1,6 +1,6 @@
 # ABAP FSD 后端运行与排障
 
-> 历史文档：所述功能已在 2026-10-11 的 abap-fsd-agent 重构中删除，见[方向决策](../architecture/2026-10-11-fsd-assistant-direction-decision.md)。不代表当前可用功能。
+> 历史文档：所述功能已在 2026-10-11 的 abap-fsd-agent 重构中删除，见[方向决策](../decisions/2026-10-11-fsd-assistant-direction-decision.md)。不代表当前可用功能。
 
 本指南对应新的 `work/design/fsd/v1` 后端。旧 `/design/agent`、`/design/gem-fsd-v2` 和旧管理接口继续返回 410。不得用旧设计入口测试新后端。当前工程验证使用合成材料；真实 SAP 和业务验收需要另行登记。
 

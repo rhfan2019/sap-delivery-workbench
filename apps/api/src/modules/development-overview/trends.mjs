@@ -7,7 +7,7 @@ import {
 } from '@sap-delivery-workbench/contracts/delivery/overview';
 import { dateText } from '../delivery/store.mjs';
 
-// Phase-3 views of the development overview (docs/specs/development-overview.md 4, 5): the
+// Phase-3 views of the development overview (docs/modules/development-overview.md 4, 5): the
 // cumulative flow and burn-down replayed from the phase status history (M22, instead of a daily
 // snapshot table), the freeze pace, the SIT forecast, the weekly report, plan drift against the
 // baseline (M09) and the computed health signal for the portfolio (M23, M24).
@@ -243,17 +243,26 @@ export function guards(items, transitions, today) {
   const live = new Set(items.map((i) => i.id));
   const reopened = transitions.filter(
     (t) =>
-      live.has(t.itemId) && t.from === 'completed' && t.status !== 'completed' && dateOf(t.at) >= since,
+      live.has(t.itemId) &&
+      t.from === 'completed' &&
+      t.status !== 'completed' &&
+      dateOf(t.at) >= since,
   );
   const effort = (i) => EFFORT.reduce((n, k) => n + (i.phases[k].effortDays ?? 0), 0);
   const median = (list) => {
-    const v = list.map(effort).filter((n) => n > 0).sort((a, b) => a - b);
+    const v = list
+      .map(effort)
+      .filter((n) => n > 0)
+      .sort((a, b) => a - b);
     return v.length ? v[Math.floor((v.length - 1) / 2)] : null;
   };
   const recent = items.filter((i) => i.registeredOn >= since);
   return {
     reopened: reopened.length,
     reopenedIds: [...new Set(reopened.map((t) => t.itemId))],
-    effortMedian: { recent: median(recent), earlier: median(items.filter((i) => !recent.includes(i))) },
+    effortMedian: {
+      recent: median(recent),
+      earlier: median(items.filter((i) => !recent.includes(i))),
+    },
   };
 }

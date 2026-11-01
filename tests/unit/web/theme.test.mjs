@@ -8,7 +8,7 @@ const css = await readFile(
   new URL('../../../apps/web/src/assets/theme.css', import.meta.url),
   'utf8',
 );
-const spec = await readFile(new URL('../../../docs/specs/DESIGN.md', import.meta.url), 'utf8');
+const spec = await readFile(new URL('../../../docs/DESIGN.md', import.meta.url), 'utf8');
 const hues = ['neutral', 'blue', 'green', 'purple', 'red', 'yellow'];
 const roles = [
   'bg-1',

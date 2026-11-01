@@ -3,7 +3,7 @@ import { failure } from '../../platform/auth.mjs';
 import { listRoles } from './roles.mjs';
 import * as v from './validation.mjs';
 
-// Project members and their project roles (docs/specs/project-access-admin.md 2.4, 2.7).
+// Project members and their project roles (docs/modules/access.md 2.4, 2.7).
 // Membership anchors the project roles, so the access module maintains app.project_member.
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -242,7 +242,7 @@ export function memberRoutes(app, ctx) {
       },
     );
   });
-  // The order of people in the development load table (docs/specs/development-load.md); anyone
+  // The order of people in the development load table (docs/modules/development-load.md); anyone
   // managing members may set it, their own included.
   app.put(base + '/:userId/sort-code', async (req) => {
     const userId = v.uuid(req.params.userId, '用户');

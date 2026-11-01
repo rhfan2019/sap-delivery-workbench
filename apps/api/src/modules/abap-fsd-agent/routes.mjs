@@ -92,7 +92,7 @@ export function registerAbapFsdAgent(app, pool, organizationId, requireSession, 
     return found;
   });
 
-  // The item drawer (docs/specs/agent-workspace-start-and-composer.md 6.4): the newest and the
+  // The item drawer (docs/modules/agent-start-and-composer.md 6.4): the newest and the
   // final FSD, readable with agent.fsd:view alone; no conversation, no comments.
   app.get(base + '/outputs', async (req) => {
     await c.authorizeView(req);

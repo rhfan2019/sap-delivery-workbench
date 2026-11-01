@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { apiFixture } from '../../fixtures/api.mjs';
 
-// docs/specs/agent-workspace-start-and-composer.md 4.2: a message may reference the item's
+// docs/modules/agent-start-and-composer.md 4.2: a message may reference the item's
 // business function, its files and other conversations' files; each becomes one attachment.
 const done = {
   content: '好的。',

@@ -2,7 +2,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import type { RouteLocationNormalizedLoaded, Router } from 'vue-router';
 import { entryOf, moduleOf } from '../features/navigation';
 
-// Browser-like tabs for the workbench (docs/specs/workbench-tabs.md). Each tab is an address with
+// Browser-like tabs for the workbench (docs/modules/workbench-tabs.md). Each tab is an address with
 // a page of its own; the address bar always shows the current tab. Remembered per user in this
 // browser.
 export interface Tab {

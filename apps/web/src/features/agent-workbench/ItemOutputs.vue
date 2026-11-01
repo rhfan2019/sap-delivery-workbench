@@ -8,7 +8,7 @@ import BaseTag from '../../components/base/BaseTag.vue';
 import ChatMarkdown from './ChatMarkdown.vue';
 
 // What an assistant produced for an item, without the conversation: the newest version and
-// the newest one labelled 定稿 (docs/specs/agent-workspace-start-and-composer.md 6.4).
+// the newest one labelled 定稿 (docs/modules/agent-start-and-composer.md 6.4).
 // Shown in the item drawer to whoever holds agent.*:view; "在助手中打开" only with :run.
 const props = defineProps<{
   projectId: string;

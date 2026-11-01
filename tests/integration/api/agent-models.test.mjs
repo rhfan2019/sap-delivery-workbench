@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { apiFixture } from '../../fixtures/api.mjs';
 import { saveModel } from '../../../apps/api/src/modules/models/store.mjs';
 
-// docs/specs/agent-workspace-start-and-composer.md 4.3: the composer lists the organization's
+// docs/modules/agent-start-and-composer.md 4.3: the composer lists the organization's
 // models (default first) and each message runs on the model the user picked.
 test('each message runs on the picked model; an unknown model is refused', async () => {
   const seen = [];

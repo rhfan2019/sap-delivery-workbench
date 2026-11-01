@@ -5,7 +5,7 @@ import { failure } from '../../platform/auth.mjs';
 import { AGENT_STAGES, stageOwner } from '@sap-delivery-workbench/contracts/delivery/fields';
 import { SAP_PRODUCTS, DEPLOYMENTS } from '@sap-delivery-workbench/contracts/projects/options';
 
-// The project's SAP landscape in one line for the agents' facts (docs/specs/project-access-admin.md 1.2).
+// The project's SAP landscape in one line for the agents' facts (docs/modules/access.md 1.2).
 export function landscapeOf(p) {
   return [
     [SAP_PRODUCTS[p.sap_product], p.sap_release].filter(Boolean).join(' '),
@@ -23,7 +23,7 @@ export function landscapeOf(p) {
 export function createWorkContext(pool, organizationId, requireSession, stage) {
   if (!['design', 'development'].includes(stage)) throw new Error('Unknown work stage: ' + stage);
   const delivery = deliveryContext(pool, organizationId, requireSession);
-  // Contract 3.5 (docs/specs/agent-workspace-start-and-composer.md 6): the assistant page,
+  // Contract 3.5 (docs/modules/agent-start-and-composer.md 6): the assistant page,
   // reads included, needs agent.<stage>:run for this item (module scope; "own items only"
   // means the stage's assignee). agent.<stage>:view only reads the outputs (`authorizeView`).
   const agent = AGENT_STAGES[stage].agent;

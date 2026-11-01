@@ -1,6 +1,6 @@
 # 表格页面模板：开发清单
 
-2026-10-06 首版，2026-10-13 按[开发清单重构设计](../specs/development-list.md)改版。开发清单是本平台基于 `@tanstack/vue-table` 共用组件 `WorkbenchTable` 的 List Report 页面，新的表格页面照此接入。
+2026-10-06 首版，2026-10-13 按[开发清单重构设计](../modules/development-list.md)改版。开发清单是本平台基于 `@tanstack/vue-table` 共用组件 `WorkbenchTable` 的 List Report 页面，新的表格页面照此接入。
 
 ## 文件与职责
 

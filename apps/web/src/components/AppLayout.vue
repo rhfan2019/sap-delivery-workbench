@@ -54,7 +54,7 @@ import {
 const route = useRoute();
 const router = useRouter();
 const module = computed(() => moduleOf(route.path));
-// Only what the user may open is listed (docs/specs/project-access-admin.md 4.3).
+// Only what the user may open is listed (docs/modules/access.md 4.3).
 const sections = computed(() =>
   visibleSections(module.value.sections, {
     organization: identity.value?.permissions ?? [],
@@ -172,7 +172,7 @@ function toggleMenu() {
   else menuHidden.value = true;
 }
 const mobileMenu = ref(false);
-// Tabs (docs/specs/workbench-tabs.md): every page opens in a tab and stays alive while another
+// Tabs (docs/modules/workbench-tabs.md): every page opens in a tab and stays alive while another
 // tab is in front, but a development item's assistants (FEAT-007). Each page sits in a wrapper
 // named after its tab and address, so KeepAlive drops exactly the pages whose tab closed.
 startTabs(router, identity.value?.user.id ?? '');

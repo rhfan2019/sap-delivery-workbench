@@ -4,7 +4,7 @@ import { requestModelStream } from './transport.mjs';
 import { openKey } from './crypto.mjs';
 
 // A model with its decrypted key, for server-side agents: the one the user picked for this
-// message (docs/specs/agent-workspace-start-and-composer.md 4.3), else the organization's
+// message (docs/modules/agent-start-and-composer.md 4.3), else the organization's
 // default. Unlike resolveDefaultModel this does not require a fresh capability probe: tool
 // calling is not probed, and the agent reports provider errors itself.
 const AGENT_MODEL = `SELECT m.id AS "id",v.id AS "versionId",v.model_id AS "modelId",v.config,v.credential_id AS "credentialId",c.secret_cipher AS "secret"

@@ -6,7 +6,7 @@ import {
 import { projectMembers } from '../access/public.mjs';
 import { dateText } from '../delivery/store.mjs';
 
-// 开发管理 → 开发排期 (docs/specs/development-load.md): the development load per developer and
+// 开发管理 → 开发排期 (docs/modules/development-load.md): the development load per developer and
 // week. The API groups the items; the page lays out the weeks around the chosen Monday, so
 // changing the base date needs no new request.
 

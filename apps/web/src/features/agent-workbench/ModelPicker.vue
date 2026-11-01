@@ -4,7 +4,7 @@ import { Sparkle } from '@lucide/vue';
 import { api } from '../../services/session';
 import ContextPicker from './ContextPicker.vue';
 
-// The model the next message runs on (docs/specs/agent-workspace-start-and-composer.md 4.3):
+// The model the next message runs on (docs/modules/agent-start-and-composer.md 4.3):
 // the organization's models, default first, fetched each time the picker opens. Empty means
 // the organization default.
 interface AgentModel {

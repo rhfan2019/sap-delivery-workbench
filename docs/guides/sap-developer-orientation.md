@@ -67,7 +67,7 @@ database/migrations/             所有表结构变更
 5. 业务逻辑与校验：[items.mjs](../../apps/api/src/modules/delivery/items.mjs)、[validation.mjs](../../apps/api/src/modules/delivery/validation.mjs)
 6. 读写表：[store.mjs](../../apps/api/src/modules/delivery/store.mjs)
 7. 表定义：[1791900000000_development-list-rebuild.sql](../../database/migrations/1791900000000_development-list-rebuild.sql)
-8. 功能设计：[开发清单重构设计](../specs/development-list.md)
+8. 功能设计：[开发清单重构设计](../modules/development-list.md)
 
 ## 5. 两种反查方法
 
@@ -79,17 +79,17 @@ database/migrations/             所有表结构变更
 `docs/` 下大部分是过程记录，相当于历史传输请求的说明，不必通读。按以下顺序读：
 
 1. [根目录 README](../../README.md)：启动方法、端口、常用命令
-2. [平台定位方向决策](../architecture/2026-10-17-platform-positioning-decision.md)：这个产品是做什么的
-3. [docs/specs/](../specs/)：各模块现行功能设计，相当于 FS / TS
+2. [平台定位方向决策](../decisions/2026-10-17-platform-positioning-decision.md)：这个产品是做什么的
+3. [docs/modules/](../modules/)：各模块现行功能设计，相当于 FS / TS
 4. [文档索引](../README.md)：需要查其他文档时再看
 
-| 文件夹                                                       | 怎么对待                       |
-| ------------------------------------------------------------ | ------------------------------ |
-| `docs/specs/`                                                | 现行设计，要看                 |
-| `docs/guides/`                                               | 操作说明，需要时看             |
-| `docs/architecture/`                                         | 架构契约与方向决策，改结构时查 |
-| `docs/plans/`                                                | 实施过程记录，需要追溯时查     |
-| `docs/archive/`、`docs/design-options/`、`docs/screenshots/` | 历史档案与设计参考，可以忽略   |
+| 文件夹                                                                       | 怎么对待                       |
+| ---------------------------------------------------------------------------- | ------------------------------ |
+| `docs/modules/`                                                              | 现行设计，要看                 |
+| `docs/guides/`                                                               | 操作说明，需要时看             |
+| `docs/architecture/`                                                         | 架构契约与方向决策，改结构时查 |
+| `docs/archive/plans/`                                                        | 实施过程记录，需要追溯时查     |
+| `docs/archive/`、`docs/archive/design-options/`、`docs/archive/screenshots/` | 历史档案与设计参考，可以忽略   |
 
 ## 7. 在 VS Code 中隐藏无关目录
 

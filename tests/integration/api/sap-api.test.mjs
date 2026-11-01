@@ -24,7 +24,7 @@ async function withEnv(values, run) {
   }
 }
 
-// Contract 3.4 / docs/specs/project-access-admin.md section 3: project SAP systems without
+// Contract 3.4 / docs/modules/access.md section 3: project SAP systems without
 // passwords, personal credentials, the saving policy and what the agents receive.
 test('project SAP systems, personal credentials and the saving policy', async (t) => {
   const db = await connectDatabase(),

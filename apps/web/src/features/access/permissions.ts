@@ -1,4 +1,4 @@
-// The web side of the permission model (docs/specs/project-access-admin.md 2). Pure functions:
+// The web side of the permission model (docs/modules/access.md 2). Pure functions:
 // the API decides every request again; these only choose what to show.
 import { SCOPED_PERMISSIONS } from '@sap-delivery-workbench/contracts/access/catalog';
 import type { ProjectAccess } from '../../services/session';

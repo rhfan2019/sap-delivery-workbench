@@ -7,7 +7,7 @@ import { digest } from '../../../apps/api/src/platform/auth.mjs';
 import { createApp } from '../../../apps/api/src/app.mjs';
 import { grantRole, dropOrganizations } from '../../fixtures/access.mjs';
 
-// docs/specs/project-access-admin.md section 2: roles, assignments, data scope, no escalation,
+// docs/modules/access.md section 2: roles, assignments, data scope, no escalation,
 // explanations. Every check here goes through the real HTTP API.
 test('roles, assignments and project data scope decide what each person can do', async (t) => {
   const db = await connectDatabase();

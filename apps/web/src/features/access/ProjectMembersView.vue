@@ -18,7 +18,7 @@ import MemberDrawer from './MemberDrawer.vue';
 import { accessApi, day, expiresSoon, type Candidate, type Member, type Role } from './api';
 import '../settings/settings.css';
 
-// 项目 → 成员与权限 (docs/specs/project-access-admin.md 2.4, 4.4): a settings list with its
+// 项目 → 成员与权限 (docs/modules/access.md 2.4, 4.4): a settings list with its
 // drawer, laid out like 大模型 (DESIGN.md 6.2).
 const { project, loading, error, can, readOnly } = useProject();
 const members = ref<Member[]>([]);
@@ -152,7 +152,7 @@ const rowMenu = (m: Member) => [
   },
 ];
 const canSensitive = (code: string) => can(code);
-// The sort code orders people in 开发排期 (docs/specs/development-load.md); saved on change,
+// The sort code orders people in 开发排期 (docs/modules/development-load.md); saved on change,
 // the member's own included.
 const sorting = useSave();
 async function saveSortCode(m: Member, event: Event) {

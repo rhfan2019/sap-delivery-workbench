@@ -19,7 +19,7 @@ import {
 } from './credentials.mjs';
 
 // Contract 3.4: project SAP systems, personal credentials and the credential policy
-// (docs/specs/project-access-admin.md section 3).
+// (docs/modules/access.md section 3).
 export function registerSapRoutes(app, pool, org, requireSession) {
   const ctx = accessContext(pool, org, requireSession);
   const { readProject, writeProject, authorize, write } = ctx;

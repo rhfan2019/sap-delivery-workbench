@@ -84,7 +84,7 @@ export const router = createRouter({
           meta: { keepOnQuery: true },
         },
         { path: 'workspace/:module', component: WorkspaceView },
-        // Settings (docs/specs/project-access-admin.md 4.3). Planned entries have no route here:
+        // Settings (docs/modules/access.md 4.3). Planned entries have no route here:
         // they fall through to WorkspaceView, which shows the shared “规划中” page.
         ...settingsRoutes,
         { path: ':pathMatch(.*)*', component: WorkspaceView },

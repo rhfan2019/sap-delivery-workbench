@@ -8,7 +8,7 @@ import { failure } from '../../platform/auth.mjs';
 
 // Contract 3.5: every authorization decision of the API goes through this kernel. Grants are
 // computed on each request from the current assignments, so changes apply immediately and
-// expired assignments stop counting on their end date (docs/specs/project-access-admin.md 2.7).
+// expired assignments stop counting on their end date (docs/modules/access.md 2.7).
 
 // Every valid assignment of a user, expanded to the permission codes of its single roles.
 const GRANTS = `

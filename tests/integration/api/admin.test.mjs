@@ -8,7 +8,7 @@ import { createApp } from '../../../apps/api/src/app.mjs';
 import { grantRole, dropOrganizations } from '../../fixtures/access.mjs';
 
 // Organization profile, customers, projects with their master data, and accounts
-// (docs/specs/project-access-admin.md sections 1 and 2.6).
+// (docs/modules/access.md sections 1 and 2.6).
 test('organization administration, project master data and accounts follow the permissions', async (t) => {
   const db = await connectDatabase();
   const org = randomUUID(),

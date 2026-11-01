@@ -5,7 +5,7 @@ import { Check, FileText, LoaderCircle, MessageSquare, NotebookText } from '@luc
 import { api } from '../../services/session';
 
 // Item materials a message can reference instead of uploading them again
-// (docs/specs/agent-workspace-start-and-composer.md 4.2). Opened from the “+” menu (with its own
+// (docs/modules/agent-start-and-composer.md 4.2). Opened from the “+” menu (with its own
 // search box) or by typing @ in the composer (the text after @ is the search; the composer
 // forwards arrow keys, Enter and Esc through `move`, `choose` and `close`).
 export interface Reference {

@@ -33,7 +33,7 @@ const phase = (extra = {}) => ({
   ...extra,
 });
 
-// docs/specs/development-load.md: a number opens the development list in the same tab with
+// docs/modules/development-load.md: a number opens the development list in the same tab with
 // exactly the items it counted; the back button returns to the very same page, scrolled where
 // it was, without loading it again.
 test('development load: drill-down and back keep the page as it was', async (t) => {

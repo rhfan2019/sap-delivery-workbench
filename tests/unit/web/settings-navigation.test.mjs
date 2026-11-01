@@ -7,7 +7,7 @@ import { createSSRApp, h } from 'vue';
 
 const root = fileURLToPath(new URL('../../../apps/web/', import.meta.url));
 
-// docs/specs/project-access-admin.md 4.3: every page is listed (planned ones too), and each
+// docs/modules/access.md 4.3: every page is listed (planned ones too), and each
 // person sees what their permissions open.
 test('the settings menu lists every page and follows the permissions', async () => {
   const vite = await createServer({
@@ -135,7 +135,7 @@ test('project permissions narrow by module and own items', async () => {
   }
 });
 
-// Assistant entry (docs/specs/agent-workspace-start-and-composer.md 6.3): "own items only" means
+// Assistant entry (docs/modules/agent-start-and-composer.md 6.3): "own items only" means
 // the stage's assignee, else the creator — the rule the API applies, not the item-edit owners.
 test('assistant entry follows the stage owner', async () => {
   const vite = await createServer({

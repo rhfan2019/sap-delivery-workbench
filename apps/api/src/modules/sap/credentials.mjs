@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { seal, open } from './crypto.mjs';
 
-// Contract 3.4 / docs/specs/project-access-admin.md 3.3–3.4: a person's own SAP user for one
+// Contract 3.4 / docs/modules/access.md 3.3–3.4: a person's own SAP user for one
 // project system. "This login only" lives in this process (by login session and system);
 // "saved" is AES-256-GCM in app.sap_user_credential, bound to the user, system, address,
 // client and SAP user. Passwords never leave this module except into the MCP environment.

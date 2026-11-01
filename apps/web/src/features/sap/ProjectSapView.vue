@@ -30,7 +30,7 @@ import SapSystemDrawer from './SapSystemDrawer.vue';
 import { credentialLabel, purposeLabel, sapApi, type ProjectSystems, type SapSystem } from './api';
 import '../settings/settings.css';
 
-// 项目 → SAP 系统 (docs/specs/project-access-admin.md 3.2–3.3, 4.4): the project's development and
+// 项目 → SAP 系统 (docs/modules/access.md 3.2–3.3, 4.4): the project's development and
 // test systems (never production, never a password) and the signed-in user's own login to each,
 // as a settings list with its drawer like 大模型 (DESIGN.md 6.2).
 const { project, loading, error, readOnly } = useProject();

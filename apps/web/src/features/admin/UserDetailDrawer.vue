@@ -28,7 +28,7 @@ import {
 } from '../access/api';
 import { adminApi, type AdminUser, type Customer, type DirectoryProject } from './api';
 
-// One account in the users list's wide drawer (docs/specs/project-access-admin.md 2.6–2.8;
+// One account in the users list's wide drawer (docs/modules/access.md 2.6–2.8;
 // DESIGN.md 5 “抽屉”): the account and its position, its organization roles with their project
 // scope, its project roles, and every effective permission with where it comes from. The footer
 // saves the account; role assignments take effect one by one. The account opens to read unless

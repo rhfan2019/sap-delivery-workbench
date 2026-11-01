@@ -6,7 +6,7 @@ import { useSave } from '../settings/useLoad';
 import { purposeLabel, sapApi, type ProjectSystems, type SapSystem } from './api';
 import '../settings/settings.css';
 
-// Logging in to one project SAP system with the person's own SAP user (docs/specs/
+// Logging in to one project SAP system with the person's own SAP user (docs/modules/
 // project-access-admin.md 3.3). The platform logs in to SAP once to check it; only an accepted
 // credential is kept, for this login or saved encrypted under the organization's policy.
 const props = defineProps<{

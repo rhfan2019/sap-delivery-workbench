@@ -94,7 +94,7 @@ export function checkLegacy(file, content = '') {
   if (write) errors.push(`${file}: SAP write tool ${write[1]} outside ${sapWriter}`);
   return errors;
 }
-// Contract 1.13 and 1.15: the web styles use the design tokens of theme.css (docs/specs/DESIGN.md);
+// Contract 1.13 and 1.15: the web styles use the design tokens of theme.css (docs/DESIGN.md);
 // colours, fonts, font sizes and weights, spacing, radii, shadows and durations are never
 // written literally.
 const tokenSource = 'apps/web/src/assets/theme.css';
@@ -337,6 +337,34 @@ async function walk(directory, relative = '') {
   return files;
 }
 
+// Contract 1.24: current documents are few, named by topic and updated in place; only decision
+// records carry a date. Plans, test records and history go to docs/archive.
+const docsRootFiles = new Set(['README.md', 'product.md', 'DESIGN.md', 'roadmap.md', 'backlog.md']);
+const docsDirectories = new Set([
+  'architecture',
+  'modules',
+  'decisions',
+  'guides',
+  'samples',
+  'archive',
+]);
+const dated = /^\d{4}-\d{2}-\d{2}-/;
+export function checkDocsLayout(files) {
+  const errors = [];
+  for (const file of files) {
+    const [, top, ...rest] = file.split('/');
+    const name = rest.at(-1);
+    if (!rest.length) {
+      if (!docsRootFiles.has(top)) errors.push(`${file}: Unregistered docs entry`);
+    } else if (!docsDirectories.has(top)) errors.push(`${file}: Unregistered docs directory`);
+    else if ((top === 'modules' || top === 'guides') && dated.test(name))
+      errors.push(`${file}: Current document named by date instead of topic`);
+    else if (top === 'decisions' && !dated.test(name))
+      errors.push(`${file}: Decision record without a date prefix`);
+  }
+  return errors;
+}
+
 export function checkTestDiscovery(files) {
   const errors = [];
   for (const file of files) {
@@ -470,6 +498,7 @@ export async function checkRepository(directory = root) {
       : '';
     errors.push(...checkLegacy(file, text));
   }
+  errors.push(...checkDocsLayout(list.filter((p) => p.startsWith('docs/'))));
   const webFiles = list.filter((p) => /^apps\/web\/src\/.*\.(css|vue|ts|mts|mjs)$/.test(p));
   const webText = new Map();
   for (const file of webFiles) webText.set(file, await readFile(resolve(directory, file), 'utf8'));

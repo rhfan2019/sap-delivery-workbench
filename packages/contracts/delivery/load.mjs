@@ -1,4 +1,4 @@
-// Development load table (docs/specs/development-load.md), shared by the API, which groups the
+// Development load table (docs/modules/development-load.md), shared by the API, which groups the
 // items per developer and week, and the web, which lays out the weeks around the chosen base
 // Monday. Only the development phase counts; a cancelled development phase (and so an item
 // removed from scope) is left out. Dates are `YYYY-MM-DD` strings.

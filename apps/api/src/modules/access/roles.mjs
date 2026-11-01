@@ -9,7 +9,7 @@ import {
 import { failure } from '../../platform/auth.mjs';
 import * as v from './validation.mjs';
 
-// Roles, positions and the permission report (docs/specs/project-access-admin.md 2.5–2.8).
+// Roles, positions and the permission report (docs/modules/access.md 2.5–2.8).
 
 const roleColumns = `r.id,r.code,r.name,r.description,r.kind,r.scope,r.built_in AS "builtIn",r.status,
   r.row_version AS "rowVersion",r.updated_at AS "updatedAt"`;

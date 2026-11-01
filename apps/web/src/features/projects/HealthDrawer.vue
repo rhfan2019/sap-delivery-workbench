@@ -6,7 +6,7 @@ import SettingsDrawer from '../settings/SettingsDrawer.vue';
 import { useSave } from '../settings/useLoad';
 import type { HealthReport, ProjectDetail } from './useProject';
 
-// Reporting the project's weekly health in a drawer (docs/specs/project-access-admin.md 1.6;
+// Reporting the project's weekly health in a drawer (docs/modules/access.md 1.6;
 // DESIGN.md 5 “抽屉”): starts from the latest report.
 const props = defineProps<{ projectId: string; latest?: HealthReport }>();
 const emit = defineEmits<{ saved: [project: ProjectDetail]; close: [] }>();

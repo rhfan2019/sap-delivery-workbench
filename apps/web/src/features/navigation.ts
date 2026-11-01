@@ -1,5 +1,5 @@
 // The navigation of the shell (DESIGN.md 4.1) and the settings menu
-// (docs/specs/project-access-admin.md 4.3). Every page is listed, built or not: a planned page
+// (docs/modules/access.md 4.3). Every page is listed, built or not: a planned page
 // opens the shared “规划中” page. Visibility follows the permission catalog; the API checks
 // every request again.
 import type { ProjectAccess } from '../services/session';

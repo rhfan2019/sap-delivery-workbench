@@ -1,6 +1,6 @@
 import { failure } from '../../platform/auth.mjs';
 
-// Project SAP systems (docs/specs/project-access-admin.md 3.2). Rows are returned in the shape
+// Project SAP systems (docs/modules/access.md 3.2). Rows are returned in the shape
 // the API, the agents and the credential store share.
 export const systemColumns = `s.id,s.project_id AS "projectId",s.name,s.purpose,s.sid,s.sap_url AS "sapUrl",s.client,s.language,
   s.description,s.is_default AS "isDefault",s.status,s.last_test_status AS "testStatus",s.last_test_message AS "testMessage",

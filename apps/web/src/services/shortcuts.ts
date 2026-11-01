@@ -3,7 +3,7 @@ import { onActivated, onBeforeUnmount, onDeactivated, onMounted } from 'vue';
 // Keyboard shortcuts (DESIGN.md 1.5, 5): one listener for the app. A component registers keys
 // such as "N", "?" or "Ctrl+K" while it is mounted. Plain keys never fire while the person types
 // in a field; Ctrl / ⌘ combinations do. The latest registration of a key wins. A page kept in a
-// tab behind the current one (docs/specs/workbench-tabs.md 4) lets go of its keys until it is back.
+// tab behind the current one (docs/modules/workbench-tabs.md 4) lets go of its keys until it is back.
 type Handler = (event: KeyboardEvent) => void;
 const handlers = new Map<string, Handler[]>();
 let listening = false;

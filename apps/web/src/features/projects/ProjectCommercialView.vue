@@ -12,7 +12,7 @@ import ProjectGate from './ProjectGate.vue';
 import { useProject, type ProjectDetail } from './useProject';
 import '../settings/settings.css';
 
-// 项目 → 规模与商务 (docs/specs/project-access-admin.md 1.5): visible with project.commercial:view.
+// 项目 → 规模与商务 (docs/modules/access.md 1.5): visible with project.commercial:view.
 const { project, loading, error, replace, can, readOnly } = useProject();
 const editable = computed(() => can('project.commercial:edit') && !readOnly.value);
 const draft = ref({

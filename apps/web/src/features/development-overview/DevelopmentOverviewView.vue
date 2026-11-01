@@ -30,7 +30,7 @@ import WeekReport from './WeekReport.vue';
 import { openFrom, VIEWS, drillLink, type Overview, type ViewId } from './model';
 import './overview.css';
 
-// 开发管理 → 开发概览 (docs/specs/development-overview.md): one page, several views; the
+// 开发管理 → 开发概览 (docs/modules/development-overview.md): one page, several views; the
 // default view follows the user's role, permissions decide what each view shows.
 const data = ref<Overview | null>(null);
 const loading = ref(false);

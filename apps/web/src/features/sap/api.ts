@@ -1,6 +1,6 @@
 import { api } from '../../services/session';
 
-// Project SAP systems and personal credentials (docs/specs/project-access-admin.md 3).
+// Project SAP systems and personal credentials (docs/modules/access.md 3).
 export interface CredentialState {
   state: 'none' | 'session' | 'saved' | 'profile';
   username: string;

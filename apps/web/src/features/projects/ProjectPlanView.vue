@@ -44,7 +44,7 @@ import {
 } from './useProject';
 import '../settings/settings.css';
 
-// 项目 → 计划与健康 (docs/specs/project-access-admin.md 1.3, 1.6): health and phases as settings
+// 项目 → 计划与健康 (docs/modules/access.md 1.3, 1.6): health and phases as settings
 // cards, milestones as a settings list; adding a milestone or a health report is done in a
 // drawer (DESIGN.md 6.2).
 const { project, loading, error, replace, can, readOnly } = useProject();

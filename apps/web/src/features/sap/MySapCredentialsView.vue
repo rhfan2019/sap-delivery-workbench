@@ -9,7 +9,7 @@ import SapLoginDialog from './SapLoginDialog.vue';
 import { credentialLabel, purposeLabel, sapApi, type SapSystem } from './api';
 import '../settings/settings.css';
 
-// 个人 → 我的 SAP 凭据 (docs/specs/project-access-admin.md 3.3–3.4): every project system the
+// 个人 → 我的 SAP 凭据 (docs/modules/access.md 3.3–3.4): every project system the
 // user may read, with their own login state; logging in and out from one place. A settings list
 // like 大模型 (DESIGN.md 6.2): one table for all projects, filtered by project.
 const { data, loading, error, reload } = useLoad(sapApi.mine);

@@ -16,7 +16,7 @@ import { useLoad } from '../settings/useLoad';
 import { purposeLabel, sapApi } from './api';
 import '../settings/settings.css';
 
-// 审计与运维 → SAP 系统一览 (docs/specs/project-access-admin.md 3.2): every system registered in
+// 审计与运维 → SAP 系统一览 (docs/modules/access.md 3.2): every system registered in
 // any project, read-only, for Basis to see the landscape. Systems are maintained per project;
 // laid out as a settings list like 大模型 (DESIGN.md 6.2), without a drawer.
 const { data, loading, error, reload } = useLoad(sapApi.directory);

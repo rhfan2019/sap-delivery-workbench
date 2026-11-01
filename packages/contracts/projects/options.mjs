@@ -1,5 +1,5 @@
 // Project master data options shared by the API (validation, defaults) and the web (forms, labels).
-// Design: docs/specs/project-access-admin.md section 1.
+// Design: docs/modules/access.md section 1.
 
 export const PROJECT_TYPES = {
   implementation: '新实施',

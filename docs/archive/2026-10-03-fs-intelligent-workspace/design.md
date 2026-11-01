@@ -595,4 +595,4 @@ MVP包括一个开发项一个活动FS工作区、多会话、上下文快照、
 
 ## 开发交接补充
 
-可视化与实施交接请结合 [前端原型与规格](./frontend-design.md)、[工程详细设计](./engineering-design.md)、[OpenAPI](../../../tests/fixtures/fs-workspace/specification/api.openapi.json)、[实施计划](../../plans/2026-10-03-fs-intelligent-workspace.md)和[开发启动提示词](./development-start-prompt.md)阅读。补充包明确了本期工程选择及放行要求；演示原型不代表产品功能已实现。
+可视化与实施交接请结合 [前端原型与规格](./frontend-design.md)、[工程详细设计](./engineering-design.md)、[OpenAPI](../../../tests/fixtures/fs-workspace/specification/api.openapi.json)、[实施计划](../plans/2026-10-03-fs-intelligent-workspace.md)和[开发启动提示词](./development-start-prompt.md)阅读。补充包明确了本期工程选择及放行要求；演示原型不代表产品功能已实现。

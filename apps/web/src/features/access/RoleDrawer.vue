@@ -4,7 +4,7 @@ import SettingsDrawer from '../settings/SettingsDrawer.vue';
 import { useSave } from '../settings/useLoad';
 import { accessApi, type Role } from './api';
 
-// Creating a role in the list's drawer (docs/specs/project-access-admin.md 2.5; DESIGN.md 5
+// Creating a role in the list's drawer (docs/modules/access.md 2.5; DESIGN.md 5
 // “抽屉”): a code and a name, single or composite, organization or project level; the
 // permissions are chosen in the role's own drawer afterwards (or copied from an existing role).
 const props = defineProps<{ roles: Role[]; copy: Role | null }>();

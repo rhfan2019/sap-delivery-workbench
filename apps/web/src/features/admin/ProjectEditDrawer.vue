@@ -14,7 +14,7 @@ import { useSave } from '../settings/useLoad';
 import type { ProjectDetail } from '../projects/useProject';
 import type { DirectoryProject } from './api';
 
-// A project's main data in the list's drawer (DESIGN.md 5 “抽屉”, docs/specs/project-access-admin.md
+// A project's main data in the list's drawer (DESIGN.md 5 “抽屉”, docs/modules/access.md
 // 1.1–1.2): the fields of 基本信息, editable with project:edit while the project is not archived.
 // The SAP landscape, team and plan stay in the project's settings. It opens to read; 编辑 switches
 // it in place (development-discipline.md 4.1).

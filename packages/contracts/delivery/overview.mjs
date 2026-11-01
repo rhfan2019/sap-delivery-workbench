@@ -1,4 +1,4 @@
-// Development overview judgments (docs/specs/development-overview.md 3), shared by the API
+// Development overview judgments (docs/modules/development-overview.md 3), shared by the API
 // aggregation and the web list so an overview number and its drill-down list always agree.
 // Items use the API JSON shape: `phases.<key>.{status, plannedStart, plannedEnd, ...}`.
 // Dates are `YYYY-MM-DD` strings; `today` is passed in so results do not depend on the clock.
@@ -87,7 +87,7 @@ export const reverseHandover = (item, fsdFinal) =>
 // Drill-down filters an overview number links to; the list applies the same test. Item-level
 // keys: ids, module, modules and owner (what the viewer's grant covers), awaiting. Phase-level keys must all hold on one phase (`phase` narrows which):
 // assignee, status, risk (any | declared | stale), due, gap, gate; and for the development
-// load table (docs/specs/development-load.md): unassigned, active (not cancelled), unplanned
+// load table (docs/modules/development-load.md): unassigned, active (not cancelled), unplanned
 // (open without a planned end), planned (`from~to`, either end may be empty) and actual
 // (completed, with its actual end in `from~to`).
 export const FILTER_KEYS = [

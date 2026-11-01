@@ -1,7 +1,7 @@
 import type { OverviewFilter } from '@sap-delivery-workbench/contracts/delivery/overview';
 import type { LoadRow } from '@sap-delivery-workbench/contracts/delivery/load';
 
-// GET /api/projects/:projectId/development-load (docs/specs/development-load.md).
+// GET /api/projects/:projectId/development-load (docs/modules/development-load.md).
 export interface LoadPerson {
   id: string;
   name: string;

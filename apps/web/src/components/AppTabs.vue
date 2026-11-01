@@ -20,7 +20,7 @@ import {
   tabs,
 } from '../services/tabs';
 
-// The tab bar above the content panel (DESIGN.md 4.1 “标签栏”, docs/specs/workbench-tabs.md).
+// The tab bar above the content panel (DESIGN.md 4.1 “标签栏”, docs/modules/workbench-tabs.md).
 const strip = ref<HTMLElement | null>(null);
 watch(
   activeTabId,

@@ -10,7 +10,7 @@ import { useLoad, useSave } from '../settings/useLoad';
 import { sapApi, type Policy } from './api';
 import '../settings/settings.css';
 
-// 企业 → 安全策略 (docs/specs/project-access-admin.md 3.4): whether and how long people may save
+// 企业 → 安全策略 (docs/modules/access.md 3.4): whether and how long people may save
 // their SAP passwords, and which saved credentials exist (never their content).
 const { data: policy, loading, error, reload } = useLoad(sapApi.policy);
 const list = useLoad(sapApi.savedCredentials);

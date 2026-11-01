@@ -1,6 +1,6 @@
 import { api } from '../../services/session';
 
-// Types and calls of the access module's API (docs/specs/project-access-admin.md 2).
+// Types and calls of the access module's API (docs/modules/access.md 2).
 export interface Role {
   id: string;
   code: string;
@@ -70,7 +70,7 @@ export interface Member {
   skillModules: string[];
   positionName: string | null;
   joinedAt: string;
-  // Order in the development load table (docs/specs/development-load.md).
+  // Order in the development load table (docs/modules/development-load.md).
   sortCode: number | null;
   rowVersion: string;
   roles: ProjectRole[];

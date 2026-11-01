@@ -7,7 +7,7 @@ import SettingsDrawer from '../settings/SettingsDrawer.vue';
 import { useSave } from '../settings/useLoad';
 import type { Contact, ProjectDetail } from './useProject';
 
-// A customer contact of 团队与干系人 in the list's drawer (docs/specs/project-access-admin.md 1.4;
+// A customer contact of 团队与干系人 in the list's drawer (docs/modules/access.md 1.4;
 // DESIGN.md 5 “抽屉”). Contacts are an address book, not platform users. A contact opens to read
 // unless its 编辑 was clicked (development-discipline.md 4.1).
 const props = defineProps<{

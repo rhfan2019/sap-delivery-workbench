@@ -4,6 +4,7 @@ import {
   checkImport,
   importsOf,
   checkTestDiscovery,
+  checkDocsLayout,
   checkDesignTokens,
   checkLegacy,
   declaredProperties,
@@ -402,4 +403,27 @@ test('contract 1.16 allows only defined variables: the 1.x names are gone', () =
   // Properties a page declares itself (also from an inline :style) count as defined.
   const local = declaredProperties(`<div :style="{ '--outline-width': w }"></div>`);
   assert.deepEqual([...local], ['--outline-width']);
+});
+
+test('docs keep few current documents named by topic; only decisions carry a date', () => {
+  assert.deepEqual(
+    checkDocsLayout([
+      'docs/README.md',
+      'docs/DESIGN.md',
+      'docs/modules/access.md',
+      'docs/decisions/2026-10-17-platform-positioning-decision.md',
+      'docs/archive/plans/2026-10-08-repository-refactor.md',
+    ]),
+    [],
+  );
+  const errors = checkDocsLayout([
+    'docs/notes.md',
+    'docs/plans/2026-10-31-x.md',
+    'docs/modules/2026-10-31-x.md',
+    'docs/decisions/positioning.md',
+  ]).join('\n');
+  assert.match(errors, /notes\.md: Unregistered docs entry/);
+  assert.match(errors, /plans\/2026-10-31-x\.md: Unregistered docs directory/);
+  assert.match(errors, /modules\/2026-10-31-x\.md: Current document named by date/);
+  assert.match(errors, /positioning\.md: Decision record without a date prefix/);
 });

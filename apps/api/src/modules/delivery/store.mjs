@@ -224,7 +224,7 @@ export async function applyChanges(db, ctx, before, normalized) {
   for (const [phase, changes] of Object.entries(normalized.phases)) {
     const moved = 'status' in changes && changes.status !== before.phases[phase].status;
     // A phase that first goes in progress (or is marked delayed) records when it started
-    // (docs/specs/development-overview.md 6, D2); a date typed by hand wins, and a reopened
+    // (docs/modules/development-overview.md 6, D2); a date typed by hand wins, and a reopened
     // phase whose actual end lies earlier keeps no start rather than an impossible one.
     const started = dateText(new Date());
     const ended = 'actualEnd' in changes ? changes.actualEnd : before.phases[phase].actualEnd;

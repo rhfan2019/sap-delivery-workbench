@@ -11,7 +11,7 @@ import { useSave } from '../settings/useLoad';
 import { can } from '../../services/session';
 import { accessApi, day, type Candidate, type Member, type Role } from './api';
 
-// A member and their project roles in the list's drawer (docs/specs/project-access-admin.md 2.4,
+// A member and their project roles in the list's drawer (docs/modules/access.md 2.4,
 // 4.4; DESIGN.md 5 “抽屉”): pick roles as cards (Plain's role picker), then the module scope,
 // “own items only” and the validity they share. A member opens to read, showing only the roles
 // they hold, unless their 编辑 was clicked (development-discipline.md 4.1).

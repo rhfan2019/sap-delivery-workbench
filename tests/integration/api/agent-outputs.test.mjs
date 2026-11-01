@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { apiFixture } from '../../fixtures/api.mjs';
 import { grantRole } from '../../fixtures/access.mjs';
 
-// docs/specs/agent-workspace-start-and-composer.md 6: the assistant pages need agent.*:run;
+// docs/modules/agent-start-and-composer.md 6: the assistant pages need agent.*:run;
 // agent.*:view only reads the outputs in the item drawer, without the conversation.
 const fake = {
   resolveModel: async () => ({

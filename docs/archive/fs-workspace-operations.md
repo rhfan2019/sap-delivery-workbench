@@ -1,6 +1,6 @@
 # FS 工作区运行说明
 
-> 历史文档：所述功能已在 2026-10-11 的 abap-fsd-agent 重构中删除，见[方向决策](../architecture/2026-10-11-fsd-assistant-direction-decision.md)。不代表当前可用功能。
+> 历史文档：所述功能已在 2026-10-11 的 abap-fsd-agent 重构中删除，见[方向决策](../decisions/2026-10-11-fsd-assistant-direction-decision.md)。不代表当前可用功能。
 
 目录结构以 [仓库契约](../architecture/repository-contract.md) 为准。FS 是功能规格说明书，不是文件系统。
 

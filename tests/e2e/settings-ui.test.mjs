@@ -4,7 +4,7 @@ import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 
-// The settings area (docs/specs/project-access-admin.md 4): menu and overview by permission,
+// The settings area (docs/modules/access.md 4): menu and overview by permission,
 // settings search, customers, the model drawer, a project's SAP systems with a personal login,
 // and the development list's actions under project permissions.
 test('settings: menu by permission, customers, models, project SAP login and list actions', async (t) => {

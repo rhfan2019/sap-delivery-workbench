@@ -12,7 +12,7 @@ import SettingsField from './SettingsField.vue';
 import { useLoad, useSave } from './useLoad';
 import './settings.css';
 
-// 个人资料 (docs/specs/project-access-admin.md 4.3): the account's name and e-mail, the facts an
+// 个人资料 (docs/modules/access.md 4.3): the account's name and e-mail, the facts an
 // administrator keeps (position, person type, skill modules, roles), and the login password.
 interface Me {
   id: string;

@@ -4,7 +4,7 @@ import { Check, ChevronDown, LoaderCircle } from '@lucide/vue';
 import BasePopover from '../../components/base/BasePopover.vue';
 
 // One control for what the next message runs with: the SAP system and the model
-// (docs/specs/agent-workspace-start-and-composer.md 4.3). Same trigger, same type size, a
+// (docs/modules/agent-start-and-composer.md 4.3). Same trigger, same type size, a
 // popover with a searchable list. `open` asks the owner to fetch the list again.
 export interface ContextOption {
   id: string;

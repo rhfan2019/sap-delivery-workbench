@@ -98,7 +98,7 @@ export function registerAbapDevAgent(app, pool, organizationId, requireSession, 
     };
   });
 
-  // The item drawer (docs/specs/agent-workspace-start-and-composer.md 6.4): the newest and the
+  // The item drawer (docs/modules/agent-start-and-composer.md 6.4): the newest and the
   // final plan and code, readable with agent.dev:view alone; no conversation, no comments.
   app.get(base + '/outputs', async (req) => {
     await c.authorizeView(req);

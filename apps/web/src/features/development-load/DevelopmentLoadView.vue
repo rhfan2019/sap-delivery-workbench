@@ -22,7 +22,7 @@ import { api, ApiError } from '../../services/session';
 import { currentProject } from '../../services/projectContext';
 import { loadLink, pct, shortDate, type DevelopmentLoad } from './model';
 
-// 开发管理 → 开发排期 (docs/specs/development-load.md): per developer and week, the development
+// 开发管理 → 开发排期 (docs/modules/development-load.md): per developer and week, the development
 // effort and items planned to finish, those actually finished and the running difference. The
 // base Monday (?week=) and the look-ahead (?ahead=) pick the weeks shown; a number opens the development list in this
 // tab, and the back button returns here exactly as it was.

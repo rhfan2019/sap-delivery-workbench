@@ -4,7 +4,7 @@ import SettingsDrawer from '../settings/SettingsDrawer.vue';
 import { useSave } from '../settings/useLoad';
 import { sapApi, type ProjectSystems, type SapSystem } from './api';
 
-// A project's SAP system in the list's drawer (docs/specs/project-access-admin.md 3.2, 4.4;
+// A project's SAP system in the list's drawer (docs/modules/access.md 3.2, 4.4;
 // DESIGN.md 5 “抽屉”): an address and a client, never a user or a password. A registered system
 // opens to read unless its 编辑 was clicked (development-discipline.md 4.1).
 const props = defineProps<{

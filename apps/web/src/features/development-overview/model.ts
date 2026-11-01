@@ -6,7 +6,7 @@ import type {
 } from '@sap-delivery-workbench/contracts/delivery/overview';
 import type { PhaseKey } from '@sap-delivery-workbench/contracts/delivery/fields';
 
-// The response of GET /projects/:id/development-overview (docs/specs/development-overview.md 7).
+// The response of GET /projects/:id/development-overview (docs/modules/development-overview.md 7).
 export interface Brief {
   id: string;
   code: string;

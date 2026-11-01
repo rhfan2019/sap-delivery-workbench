@@ -3,7 +3,7 @@ import { failure } from '../../platform/auth.mjs';
 import { parseFile } from './attachments/parser.mjs';
 
 // Materials already on the item that a message may reference instead of uploading them again
-// (docs/specs/agent-workspace-start-and-composer.md 4.2): the business function, the item's
+// (docs/modules/agent-start-and-composer.md 4.2): the business function, the item's
 // files and the files of the item's other conversations. A reference is copied into the
 // session's attachments once (storage key `ref:<kind>:<id>`), then read like an upload.
 export const MAX_REFERENCES = 10;

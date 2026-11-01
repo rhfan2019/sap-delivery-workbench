@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../../../apps/web/', import.meta.url));
 const page = { render: () => null };
 
-// docs/specs/workbench-tabs.md 2, 3, 5, 6: tabs open right of the current one, follow the address,
+// docs/modules/workbench-tabs.md 2, 3, 5, 6: tabs open right of the current one, follow the address,
 // share one settings tab, close towards the right, keep one tab open and come back for the same
 // user.
 test('workbench tabs open, follow, close and come back', async () => {

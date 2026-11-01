@@ -24,7 +24,7 @@ import ProjectGate from './ProjectGate.vue';
 import { useProject, type ProjectDetail } from './useProject';
 import '../settings/settings.css';
 
-// 项目 → 基本信息 (docs/specs/project-access-admin.md 1.1–1.2).
+// 项目 → 基本信息 (docs/modules/access.md 1.1–1.2).
 const { project, loading, error, reload, replace, can, readOnly } = useProject();
 const fields = [
   'code',

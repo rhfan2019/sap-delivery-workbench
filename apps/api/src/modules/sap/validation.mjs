@@ -20,7 +20,7 @@ export function sapUrl(value) {
     throw failure(400, 'ADT 地址必须是 HTTPS 主机地址及端口，不含路径或凭据。');
   }
 }
-// A project SAP system (docs/specs/project-access-admin.md 3.2): no user, no password.
+// A project SAP system (docs/modules/access.md 3.2): no user, no password.
 export function systemInput(body = {}) {
   const sid = text(body.sid, '系统标识 SID', 3).toUpperCase();
   if (!/^[A-Z][A-Z0-9]{2}$/.test(sid)) throw failure(400, 'SID 为 3 位字母或数字，以字母开头。');

@@ -4,7 +4,7 @@ import { listRoles, missingForGrant, escalation } from './roles.mjs';
 import * as v from './validation.mjs';
 
 // Organization-level assignments, the user permission view and the user facts the access
-// module keeps on app_user (docs/specs/project-access-admin.md 2.6–2.8).
+// module keeps on app_user (docs/modules/access.md 2.6–2.8).
 
 const today = () => new Date().toISOString().slice(0, 10);
 const active = (a) => a.validFrom <= today() && (!a.validTo || a.validTo >= today());

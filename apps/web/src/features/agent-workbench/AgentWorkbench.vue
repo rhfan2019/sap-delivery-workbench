@@ -258,7 +258,7 @@ async function authorize(decision: 'approve' | 'reject', note: string) {
 }
 const previewOpen = computed(() => !!activeAttachment.value);
 // A conversation with nothing in it opens on the start page: what this assistant produces and
-// the composer in the middle, nothing below it (docs/specs/agent-workspace-start-and-composer.md 3).
+// the composer in the middle, nothing below it (docs/modules/agent-start-and-composer.md 3).
 const empty = computed(() => !run.messages.value.length && !sending.value);
 </script>
 <template>

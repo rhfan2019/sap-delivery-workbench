@@ -8,7 +8,7 @@ import {
 } from '@sap-delivery-workbench/contracts/access/catalog';
 import BaseTag from '../../components/base/BaseTag.vue';
 
-// The permission tree of the role editor (docs/specs/project-access-admin.md 2.2): groups (menus)
+// The permission tree of the role editor (docs/modules/access.md 2.2): groups (menus)
 // and their permissions, each marked 菜单 / 操作 / 字段. Picking any permission of a group picks
 // its view permission; dropping the view permission drops the rest of the group.
 const value = defineModel<string[]>({ default: () => [] });

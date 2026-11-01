@@ -1,18 +1,20 @@
 # 仓库目录与依赖契约
 
-版本：1.23。日期：2026-10-31。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.24。日期：2026-10-31。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.24 变更：用户 2026-10-31 确认文档按“少而定”重组（backlog DOC-003）。现行文档按主题命名、原地更新，版本靠 Git；只有决策记录带日期。布局改为：`docs/` 根只放 README（导航）、product.md（产品说明）、DESIGN.md（设计规范）、roadmap.md（路线图）、backlog.md（待办）；`architecture/` 放本契约与模块依赖登记；`modules/` 一个模块一份规格，末节“现状与下一步”取代原交接文档；`decisions/` 放带日期的方向决策；`guides/` 放运行与开发说明；`samples/` 放验收样例；`archive/` 放已完成的计划、测试记录、历史方案、评审截图。原 `docs/specs`、`docs/plans`、`docs/design-options`、`docs/screenshots` 迁出，`docs/sap-delivery-workbench`（空的 Obsidian 库）删除。已执行的迁移文件中的旧文档路径按第 3 节不改写。新增检查见第 9 节。
 
 1.23 变更：文档核对。第 4 节末“重构完成条件”中“停用设计接口保持 410”是 2026-10-08 的条件，已按 1.3 与 3.1 清除，改为历史说明；规则与检查器不变。
 
-1.22 变更：依据[开发排期设计](../specs/development-load.md)（用户 2026-10-31 确认），development-overview 模块增加“开发管理 → 开发排期”的接口 `GET /api/projects/:projectId/development-load`（见 3.6），新增前端 feature `development-load`；按人按周的统计口径放 `packages/contracts/delivery/load.mjs`（浏览器可用），下钻筛选键仍在 `delivery/overview.mjs`。`app.project_member` 新增 `sort_code`（排序码），由 access 维护（`PUT /api/projects/:projectId/members/:userId/sort-code`）。没有新增依赖边。
+1.22 变更：依据[开发排期设计](../modules/development-load.md)（用户 2026-10-31 确认），development-overview 模块增加“开发管理 → 开发排期”的接口 `GET /api/projects/:projectId/development-load`（见 3.6），新增前端 feature `development-load`；按人按周的统计口径放 `packages/contracts/delivery/load.mjs`（浏览器可用），下钻筛选键仍在 `delivery/overview.mjs`。`app.project_member` 新增 `sort_code`（排序码），由 access 维护（`PUT /api/projects/:projectId/members/:userId/sort-code`）。没有新增依赖边。
 
-1.21 变更：依据[开发概览设计](../specs/development-overview.md)（用户 2026-10-30 确认），新增后端模块 `development-overview`（开发概览统计，见 3.6）与前端 feature `development-overview`。统计需要开发清单、变更历史、两个助手的定稿与轮次、项目里程碑，而助手模块经 item-workspace 依赖 delivery，统计放进 delivery 会形成循环，所以单独成模块，只经各模块的公开入口读取：delivery 的 `context.mjs`（新增只读的 `overview`）、abap-fsd-agent 与 abap-dev-agent 的 `public.mjs`（新增 `finalizedItems`、`lastTurns`、`itemComments`，开发助手另有 `itemCoverage`）、admin 的 `keyedMilestones`。前后端共用的统计口径放 `packages/contracts/delivery/overview.mjs`（浏览器可用）。新增依赖边登记见 module-dependencies.json。
+1.21 变更：依据[开发概览设计](../modules/development-overview.md)（用户 2026-10-30 确认），新增后端模块 `development-overview`（开发概览统计，见 3.6）与前端 feature `development-overview`。统计需要开发清单、变更历史、两个助手的定稿与轮次、项目里程碑，而助手模块经 item-workspace 依赖 delivery，统计放进 delivery 会形成循环，所以单独成模块，只经各模块的公开入口读取：delivery 的 `context.mjs`（新增只读的 `overview`）、abap-fsd-agent 与 abap-dev-agent 的 `public.mjs`（新增 `finalizedItems`、`lastTurns`、`itemComments`，开发助手另有 `itemCoverage`）、admin 的 `keyedMilestones`。前后端共用的统计口径放 `packages/contracts/delivery/overview.mjs`（浏览器可用）。新增依赖边登记见 module-dependencies.json。
 
 1.20 变更：根目录登记 `.workbuddy`（WorkBuddy 助手在本机写入的记忆，与 `.claude` 同类，整体不入库）。此前它未登记，`npm start` 第一步的架构检查失败，API 与前端均未启动，浏览器打不开 `http://127.0.0.1:5173/home`。架构检查是提交前的门槛，不是本机启动的前提：启动器（`start.cmd` / `npm start`）遇到检查不通过只告警、继续启动；并在 PostgreSQL、API（含数据库连接）、Vue 页面与依赖预构建、前端到 API 的代理都确认可用后，才报告启动成功。
 
 1.19 变更：用户 2026-10-18 要求本项目有独立的 pgAdmin 查看开发库与表关系图。根 `compose.yaml` 新增 `pgadmin` 服务（`tools` profile，不随 `npm start` 启动，只监听 127.0.0.1:5051），命令 `npm run db:admin` / `db:admin:stop`；本机开发用的 Docker 配置文件放 `infra/dev/`（首个文件 `pgadmin-servers.json`），与 `infra/production/` 并列。登录账号取 `.env` 的 `PGADMIN_DEFAULT_EMAIL`、`PGADMIN_DEFAULT_PASSWORD`，数据库密码在容器启动时写入容器内 pgpass，不入库。说明见 [查看开发数据库与表关系图](../guides/database-browsing.md)。
 
-1.18 变更：依据[平台定位方向决策](2026-10-17-platform-positioning-decision.md)与[项目主数据、权限与设置菜单设计](../specs/project-access-admin.md)（用户 2026-10-17 确认）：
+1.18 变更：依据[平台定位方向决策](../decisions/2026-10-17-platform-positioning-decision.md)与[项目主数据、权限与设置菜单设计](../modules/access.md)（用户 2026-10-17 确认）：
 
 - **权限内核**：新增后端模块 `access`（见 3.5），负责权限点检查、角色、复合角色、职位与分配；表用 `app.access_` 前缀。所有模块的授权一律经 `access/public.mjs`，不再判断“是否企业管理员”或“是否项目成员”；`app.organization_member.access_level` 删除（原管理员迁移为超级管理员分配，原项目成员迁移为该项目的 `C_ARCHITECT`）。权限点目录、预置角色与职位是前后端共用的纯数据，放 `packages/contracts/access/catalog.mjs`（浏览器可用）。
 - **项目主数据**：admin 模块新增项目字段与子表 `app.project_phase`、`app.project_milestone`、`app.project_module_lead`、`app.project_contact`、`app.project_health`。
@@ -25,11 +27,11 @@
 
 1.16 变更：Plain 重写第 7 批完成，`assets/theme.css` 末尾的 1.x 过渡变量名全部删除，页面一律引用 DESIGN.md 第 9 节的令牌；检查器新增规则：`apps/web/src` 的样式中每个 `var(--…)` 必须是 theme.css 的令牌或前端代码自己声明的属性（Tailwind `--tw-`、reka-ui `--reka-` 运行时属性除外），旧变量名因此不能再被引用。开发项标签颜色（`--tag-*`，按名称存储）与模型抽屉宽度 `--layout-drawer` 保留为正式令牌。
 
-1.15 变更：依据[重写计划](../plans/2026-10-17-plain-style-redesign.md)（用户 2026-10-17 确认），前端界面层参照 Plain 重写，规范为 [DESIGN.md 2.0](../specs/DESIGN.md)。只保留一套外观（深色跟随系统），取消 1.14 的主题换肤：`apps/web/src/assets/themes/` 与主题包在第 1 批删除，届时 1.13 的检查规则不再放宽到该目录，`assets/theme.css` 恢复为唯一允许写颜色、字体、字号、字重、间距、圆角取值的文件，并新增阴影与动效时长同样只能取自令牌；前端不再调用 `GET/PUT /api/preferences`，该接口与 `app.user_preference` 的删除另行经用户确认。前端新增依赖 `@tanstack/vue-table`（开发清单表格），全部迁移后删除 `vxe-table`、`vxe-pc-ui`。公共界面组件归 `apps/web/src/components/`；组件展示页只在开发环境可用。后端、契约包与前端数据逻辑层不在本次重写范围内。
+1.15 变更：依据[重写计划](../archive/plans/2026-10-17-plain-style-redesign.md)（用户 2026-10-17 确认），前端界面层参照 Plain 重写，规范为 [DESIGN.md 2.0](../DESIGN.md)。只保留一套外观（深色跟随系统），取消 1.14 的主题换肤：`apps/web/src/assets/themes/` 与主题包在第 1 批删除，届时 1.13 的检查规则不再放宽到该目录，`assets/theme.css` 恢复为唯一允许写颜色、字体、字号、字重、间距、圆角取值的文件，并新增阴影与动效时长同样只能取自令牌；前端不再调用 `GET/PUT /api/preferences`，该接口与 `app.user_preference` 的删除另行经用户确认。前端新增依赖 `@tanstack/vue-table`（开发清单表格），全部迁移后删除 `vxe-table`、`vxe-pc-ui`。公共界面组件归 `apps/web/src/components/`；组件展示页只在开发环境可用。后端、契约包与前端数据逻辑层不在本次重写范围内。
 
-1.14 变更：依据[主题系统实施计划](../plans/2026-10-16-theme-system.md)（用户 2026-10-16 确认），前端支持用户一键切换主题。主题包放 `apps/web/src/assets/themes/<主题>.css`，每个主题一个文件；它与 `assets/theme.css` 同为允许写颜色、字体、字号、字重、间距、圆角取值的文件（1.13 的检查规则同步放宽到该目录）。主题字体以 npm 字体包按需加载，不引用外网字体。用户的主题与明暗模式存 `app.user_preference`，归 platform（与账号、密码同层），接口为 `GET/PUT /api/preferences`。
+1.14 变更：依据[主题系统实施计划](../archive/plans/2026-10-16-theme-system.md)（用户 2026-10-16 确认），前端支持用户一键切换主题。主题包放 `apps/web/src/assets/themes/<主题>.css`，每个主题一个文件；它与 `assets/theme.css` 同为允许写颜色、字体、字号、字重、间距、圆角取值的文件（1.13 的检查规则同步放宽到该目录）。主题字体以 npm 字体包按需加载，不引用外网字体。用户的主题与明暗模式存 `app.user_preference`，归 platform（与账号、密码同层），接口为 `GET/PUT /api/preferences`。
 
-1.13 变更：用户 2026-10-16 要求全站严格按设计规范取值。界面风格的唯一规范是 [docs/specs/DESIGN.md](../specs/DESIGN.md)，令牌以 CSS 变量定义在 `apps/web/src/assets/theme.css`（唯一允许写颜色、字体、字号、字重、间距、圆角取值的文件）。`apps/web/src` 下其余样式（`.css` 与 `.vue` 的样式块）只能引用令牌，模板不得使用 Tailwind 调色板颜色类；第三方内置组件 `components/ai-elements`、`components/ui` 除外（其颜色经 `elements.css` 映射到令牌）。改风格时改 DESIGN.md 与 theme.css，不逐页修改。新增检查规则见第 9 节。
+1.13 变更：用户 2026-10-16 要求全站严格按设计规范取值。界面风格的唯一规范是 [docs/DESIGN.md](../DESIGN.md)，令牌以 CSS 变量定义在 `apps/web/src/assets/theme.css`（唯一允许写颜色、字体、字号、字重、间距、圆角取值的文件）。`apps/web/src` 下其余样式（`.css` 与 `.vue` 的样式块）只能引用令牌，模板不得使用 Tailwind 调色板颜色类；第三方内置组件 `components/ai-elements`、`components/ui` 除外（其颜色经 `elements.css` 映射到令牌）。改风格时改 DESIGN.md 与 theme.css，不逐页修改。新增检查规则见第 9 节。
 
 1.12 变更：用户 2026-10-16 澄清各助手使用的 SAP 系统，并决定 FSD 阶段只写测试数据需求：设计助手默认连接 QAS（含业务数据，用于梳理逻辑），开发助手默认连接 DEV，测试助手（预留）使用 QAS；对话界面可按消息选择 DEV 或 QAS。设计助手不再查找或建立测试单据，测试数据的查找与建立工具保留在公共层，留给 abap-test-agent。见 3.4 节。
 
@@ -39,17 +41,17 @@
 
 1.9 变更：用户 2026-10-16 决定取消建单白名单（维护工作量过大）：建单代码可调用任何 BAPI、函数模块和类，用户逐次授权与审阅代码是唯一的放行环节；黑名单留待确有需要时再设计，暂不实施。以新增迁移删除 `app.sap_system_allowlist`，后台“SAP 系统”页面不再提供白名单。语句级静态审查（禁止直接写库、动态调用等）保留。见 3.4 节。
 
-1.8 变更：依据 [FSD 附录 D 测试案例计划](../plans/2026-10-15-fsd-test-cases.md)（用户 2026-10-15 确认阶段 2），智能体对 SAP 的访问由“只读”扩展为“只读 + 经用户逐次授权、在 QAS 创建测试数据”。创建能力归 sap 模块（白名单、会话级个人凭据、临时类执行与运行记录），agent-core 只提供查询测试系统与申请建单的工具定义和执行编排；PRD 一律拒绝。新增表 `app.sap_system_allowlist`、`app.sap_test_data_run` 归 sap。见 3.4 节；新增检查规则见第 9 节。
+1.8 变更：依据 [FSD 附录 D 测试案例计划](../archive/plans/2026-10-15-fsd-test-cases.md)（用户 2026-10-15 确认阶段 2），智能体对 SAP 的访问由“只读”扩展为“只读 + 经用户逐次授权、在 QAS 创建测试数据”。创建能力归 sap 模块（白名单、会话级个人凭据、临时类执行与运行记录），agent-core 只提供查询测试系统与申请建单的工具定义和执行编排；PRD 一律拒绝。新增表 `app.sap_system_allowlist`、`app.sap_test_data_run` 归 sap。见 3.4 节；新增检查规则见第 9 节。
 
-1.7 变更：依据 [ABAP 开发助手方向决策](2026-10-13-abap-dev-agent-direction-decision.md) 与[实施计划](../plans/2026-10-14-abap-dev-agent-implementation.md)（用户 2026-10-14 确认），新增两个后端模块：`agent-core`（智能体公共运行层）与 `abap-dev-agent`（开发助手）；预留 `abap-test-agent`；规定智能体提示词与运行资源的放置和命名；两个助手共用的前端工作台外壳归 `features/agent-workbench/`，共用的流事件协议归 `packages/contracts/agent-core/`。设计助手的循环、事件缓冲、附件解析、SAP 只读工具在实施计划阶段 A 迁入 `agent-core`，迁出后不保留转发。见 3.1 节；新增检查规则见第 9 节。
+1.7 变更：依据 [ABAP 开发助手方向决策](../decisions/2026-10-13-abap-dev-agent-direction-decision.md) 与[实施计划](../archive/plans/2026-10-14-abap-dev-agent-implementation.md)（用户 2026-10-14 确认），新增两个后端模块：`agent-core`（智能体公共运行层）与 `abap-dev-agent`（开发助手）；预留 `abap-test-agent`；规定智能体提示词与运行资源的放置和命名；两个助手共用的前端工作台外壳归 `features/agent-workbench/`，共用的流事件协议归 `packages/contracts/agent-core/`。设计助手的循环、事件缓冲、附件解析、SAP 只读工具在实施计划阶段 A 迁入 `agent-core`，迁出后不保留转发。见 3.1 节；新增检查规则见第 9 节。
 
-1.6 变更：依据[开发清单重构设计](../specs/development-list.md)（用户 2026-10-12 确认），delivery 模块的开发清单按新字段口径重建：删除 delivery 自有的手工 FS 台账（`fs_draft`、`fs_version` 表、`/fs` 接口与前端 FS 章节编辑器），替代 3.1 节“保留”的规定；现有开发项及其关联数据（含设计助手会话）按用户授权清除；新增共享契约 `packages/contracts/delivery`（字段目录与选项，前后端共用）；Excel 导入导出在后端完成，新增依赖 `exceljs`。见 3.3 节。
+1.6 变更：依据[开发清单重构设计](../modules/development-list.md)（用户 2026-10-12 确认），delivery 模块的开发清单按新字段口径重建：删除 delivery 自有的手工 FS 台账（`fs_draft`、`fs_version` 表、`/fs` 接口与前端 FS 章节编辑器），替代 3.1 节“保留”的规定；现有开发项及其关联数据（含设计助手会话）按用户授权清除；新增共享契约 `packages/contracts/delivery`（字段目录与选项，前后端共用）；Excel 导入导出在后端完成，新增依赖 `exceljs`。见 3.3 节。
 
 1.5 变更（勘误，不改规则与检查器）：删除第 3 节末尾已失效的“开发助手主提示词归 item-workspace/prompts”。按 1.3 与 3.1 节，item-workspace 中的开发助手后端及其提示词已清除，开发助手预留为 abap-dev-agent，实现时其系统指令归该模块的 `prompts/`。
 
 1.4 变更：新增 audit 模块（平台审计与日志分析），承载后台“审计日志”页面的接口、助手运行评论和优化建议；助手运行数据仍归 abap-fsd-agent，audit 只通过 `abap-fsd-agent/public.mjs` 读取。优化建议由 Claude Code 按需分析后经维护脚本发布，平台不内置定时分析。见 3.2 节。
 
-1.3 变更：依据 [FSD 设计助手方向决策](2026-10-11-fsd-assistant-direction-decision.md)，FSD 设计助手改为模型主导的智能体，在现有项目中完全重构，统一命名为 abap-fsd-agent，开发助手预留命名 abap-dev-agent。智能助手只保留一个版本：不设版本目录、版本化 API 路径或版本化表名。历史各代 FS/FSD 助手（design-assistant 的 LangGraph 链路、gem-fsd-v2、agent、旧 abap-fsd-agent 引擎即 agent-runtime、fs-workspace 功能规格工作区、开发助手后端、“FS助手测试”）及其 410 边界、契约、表与数据全部清除，不保留转发壳或停用边界；现行设计助手前端界面保留并迁入新 feature。此项为用户明确授权，替代 1.1、1.2 中关于 LangGraph 后端、`work/design/fsd/v1` 入口、agent-runtime 公开入口和“旧 unavailable 边界不变”的规定。新边界见 3.1 节；新增检查规则见第 9 节。
+1.3 变更：依据 [FSD 设计助手方向决策](../decisions/2026-10-11-fsd-assistant-direction-decision.md)，FSD 设计助手改为模型主导的智能体，在现有项目中完全重构，统一命名为 abap-fsd-agent，开发助手预留命名 abap-dev-agent。智能助手只保留一个版本：不设版本目录、版本化 API 路径或版本化表名。历史各代 FS/FSD 助手（design-assistant 的 LangGraph 链路、gem-fsd-v2、agent、旧 abap-fsd-agent 引擎即 agent-runtime、fs-workspace 功能规格工作区、开发助手后端、“FS助手测试”）及其 410 边界、契约、表与数据全部清除，不保留转发壳或停用边界；现行设计助手前端界面保留并迁入新 feature。此项为用户明确授权，替代 1.1、1.2 中关于 LangGraph 后端、`work/design/fsd/v1` 入口、agent-runtime 公开入口和“旧 unavailable 边界不变”的规定。新边界见 3.1 节；新增检查规则见第 9 节。
 
 1.2 变更：design-assistant 可通过既有 agent-runtime/public.mjs 复用材料解析、模型文本流传输和只读历史投影；通过 item-workspace/public.mjs 获取工作稿基准及按原文档合同采用内容。不复用或恢复历史设计执行器。聊天轮次与用户可见流事件归 design-assistant，自有数据库迁移归 database/migrations，诊断事件不承载聊天正文。依赖方向及公开入口检查规则不变。
 
@@ -76,7 +78,7 @@
 | infra              | Docker、Nginx、生产部署配置（`production/`）与本机开发用的 Docker 配置（`dev/`） | 业务逻辑                                           |
 | tools              | 有明确用途、说明和维护边界的独立工程工具                                         | 产品运行时依赖、无入口的临时脚本                   |
 | vendor             | 必需的第三方内置源码/分发包、许可与版本说明                                      | 自有业务代码                                       |
-| docs               | 与代码版本对应的架构、规格、计划、运维与验收资料                                 | 产品运行时数据来源、个人助手记忆                   |
+| docs               | 与代码版本对应的产品说明、架构、模块规格、决策、运行说明与历史归档               | 产品运行时数据来源、个人助手记忆                   |
 | .runtime           | 本机私有状态、附件、凭据、日志及隔离测试环境（忽略提交）                         | 应提交的业务源码                                   |
 
 根目录只保留统一入口及工具要求的配置：README、AGENTS、package.json、单一锁文件、start.cmd、stop.cmd、compose.yaml、编辑器/格式/Git 配置及测试配置。本机工具配置目录 `.vscode`、`.claude`、`.workbuddy` 允许存在，其中 `.claude`、`.workbuddy` 整体不入库。不新增 frontend/backend、src、common 等与上述结构重叠的根目录。
@@ -131,7 +133,7 @@ fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3
 
 ### 3.3 开发清单（delivery）
 
-- **职责**：项目开发清单：开发项（基本信息与四个阶段）、开发对象、标签、项目级自定义列、批量操作、Excel 导入导出、附件与变更历史。表结构以[开发清单重构设计](../specs/development-list.md)为准。
+- **职责**：项目开发清单：开发项（基本信息与四个阶段）、开发对象、标签、项目级自定义列、批量操作、Excel 导入导出、附件与变更历史。表结构以[开发清单重构设计](../modules/development-list.md)为准。
 - **数据归属**：`app.development_item`、`app.development_item_phase`、`app.development_item_object`、`app.development_tag`、`app.development_item_tag`、`app.development_field`、`app.development_event`、`app.development_file`、`app.development_phase_transition`（阶段状态流水，开发概览二期起由保存开发项时写入）归 delivery。其他模块只读开发项，经 delivery 的 `context.mjs`（登记于 module-dependencies.json）取得。
 - **阶段负责人**：助手与开发项的修改权限由 access 判断（`agent.fsd:run`、`agent.dev:run`、`delivery.item:edit` 等）；分配限定“仅本人负责”时，设计助手看 `fsd` 阶段负责人，开发助手看 `development` 阶段负责人，开发项修改看任一阶段负责人或创建人。
 - **目标开发系统**：`development_item.sap_system_id` 引用项目 SAP 系统（开发用途），为空时取项目默认开发系统。
@@ -149,7 +151,7 @@ fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3
 
 ### 3.5 权限内核（access）
 
-- **职责**：权限点检查（企业级与项目级，含项目范围、模块范围、仅本人负责与有效期）、角色与复合角色、职位、企业级分配与项目内分配、权限报表，以及启动时同步预置角色与职位（`syncBuiltInRoles`）。设计见[项目主数据、权限与设置菜单设计](../specs/project-access-admin.md)第 2 节。
+- **职责**：权限点检查（企业级与项目级，含项目范围、模块范围、仅本人负责与有效期）、角色与复合角色、职位、企业级分配与项目内分配、权限报表，以及启动时同步预置角色与职位（`syncBuiltInRoles`）。设计见[项目主数据、权限与设置菜单设计](../modules/access.md)第 2 节。
 - **数据归属**：`app.access_role`、`app.access_role_permission`、`app.access_role_composition`、`app.access_position`、`app.access_position_role`、`app.access_assignment`、`app.access_project_role` 归 access；`app.app_user` 的 `position_id`、`person_type`、`skill_modules` 列由 access 维护。其他模块不得直接查询这些表。
 - **公开入口**：`access/public.mjs`。其他模块用它取得企业级权限、项目权限与可见项目，或在不满足时抛出 403（附缺少的权限点）/ 404（范围外项目）。
 - **共享契约**：`packages/contracts/access/catalog.mjs` 只放权限点目录、预置角色、预置职位与选项（纯数据与纯函数，浏览器可用），不放权限决策。
@@ -157,7 +159,7 @@ fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3
 
 ### 3.6 开发概览统计（development-overview）
 
-- **职责**：“开发管理 → 开发概览”的接口 `GET /api/projects/:projectId/development-overview` 与跨项目的 `GET /api/development-portfolio`（企业级 `delivery.portfolio:view`）：按[开发概览设计](../specs/development-overview.md)的口径汇总开发项、风险、里程碑、负载、预算与开发组视图。需要 `delivery.overview:view`，按分配的模块范围与“仅本人负责”过滤；他人负载与姓名需要 `delivery.overview.team:view`，预算需要 `project.commercial:view`。另有“开发管理 → 开发排期”的 `GET /api/projects/:projectId/development-load`（`load.mjs`，需要 `delivery.load:view`，不按范围过滤，见[开发排期设计](../specs/development-load.md)）。
+- **职责**：“开发管理 → 开发概览”的接口 `GET /api/projects/:projectId/development-overview` 与跨项目的 `GET /api/development-portfolio`（企业级 `delivery.portfolio:view`）：按[开发概览设计](../modules/development-overview.md)的口径汇总开发项、风险、里程碑、负载、预算与开发组视图。需要 `delivery.overview:view`，按分配的模块范围与“仅本人负责”过滤；他人负载与姓名需要 `delivery.overview.team:view`，预算需要 `project.commercial:view`。另有“开发管理 → 开发排期”的 `GET /api/projects/:projectId/development-load`（`load.mjs`，需要 `delivery.load:view`，不按范围过滤，见[开发排期设计](../modules/development-load.md)）。
 - **数据归属**：本模块没有自己的表，只读。开发项与变更历史经 delivery 的 `context.mjs`（`overview`），助手的定稿与轮次经 abap-fsd-agent、abap-dev-agent 的 `public.mjs`，里程碑与自报健康度经 admin 的 `keyedMilestones`、`latestHealth`，可见项目、企业级权限与项目成员（含排序码）经 access 的 `public.mjs`；不直接查询其他模块的表。
 - **共享契约**：风险、完成、到期、计划缺口、里程碑越线、交接与下钻筛选等判定只写在 `packages/contracts/delivery/overview.mjs`，按人按周的排期统计只写在 `packages/contracts/delivery/load.mjs`；本模块与前端共用，保证概览、排期的数字与下钻后的清单条数一致。
 - **跨模块调用**：development-overview → delivery、abap-fsd-agent、abap-dev-agent、admin、access，登记见 module-dependencies.json。
@@ -200,7 +202,7 @@ scripts/dev：本地联合启动、受管进程控制；scripts/database：迁�
 
 生产服务入口归 apps/api/src；需要独立后台进程时，入口同样放在 apps/api/src。scripts 可以编排应用，应用不能导入 scripts/lib。平台数据库/生产配置应由 api 的公开工具接口复用；只用于导入的解析工具留 maintenance。
 
-docs/architecture 放唯一架构契约与审计；docs/specs 放版本化设计规格；docs/plans 放实施计划；docs/guides 放现行说明；docs/archive 放历史报告。文档按内容归类，不按生成它的 AI 工具名称归类。测试需要的 JSON/Schema 示例迁入 tests/fixtures，不能继续依赖 docs 的布局。
+docs 根目录只放 README.md（导航）、product.md、DESIGN.md、roadmap.md、backlog.md；docs/architecture 放唯一架构契约与模块依赖登记；docs/modules 一个模块一份规格（按主题命名、原地更新，末节“现状与下一步”供接手）；docs/decisions 放带日期的方向决策；docs/guides 放现行说明；docs/samples 放验收样例；docs/archive 放已完成的计划、测试记录与历史资料。现行文档不带日期前缀，计划与测试记录完成后归档。文档按内容归类，不按生成它的 AI 工具名称归类。测试需要的 JSON/Schema 示例迁入 tests/fixtures，不能继续依赖 docs 的布局。
 
 历史说明不改写成现行事实；在入口标记历史状态。当前 README 必须能指出真实运行入口、目录、命令和已停用能力。个人工具记忆不是产品资料，归本机忽略区。
 
@@ -224,6 +226,8 @@ docs/architecture 放唯一架构契约与审计；docs/specs 放版本化设计
 ## 9. 可执行验收
 
 npm run check:architecture 必须检查：受控根目录、workspace 清单、跨应用违规依赖、应用反向导入 scripts、contracts 反向依赖、跨包物理路径、缺失本地导入、前端 Node 校验入口，以及测试文件是否被发现。检查器自身必须有违规反例测试。
+
+1.24 新增检查：`docs` 下只允许上述根文件与目录；`docs/modules`、`docs/guides` 中的文件名不得以日期开头；`docs/decisions` 中的文件名必须以日期开头。
 
 1.18 新增检查：`apps`、`packages`、`scripts`、`tools`、`infra` 中不得出现 `access_level`、`canManageOrganization`、`app.sap_system`（整词）、`app.sap_system_grant`、`app.project_sap_config`、`app.user_project_sap_config`；`apps/api` 中除 `apps/api/src/modules/access/` 外不得引用 `app.access_` 表。
 

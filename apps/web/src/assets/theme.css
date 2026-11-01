@@ -1,4 +1,4 @@
-/* Design tokens (docs/specs/DESIGN.md 2.0, Plain style). The only file that writes colours,
+/* Design tokens (docs/DESIGN.md 2.0, Plain style). The only file that writes colours,
    fonts, sizes, weights, spacing, radii, shadows and durations (contract 1.13, 1.15).
    Dark follows the system. */
 :root {

@@ -15,7 +15,7 @@ const localToday = () => {
     .join('-');
 };
 
-// docs/specs/development-load.md: permission and project scope, who gets a row and in which
+// docs/modules/development-load.md: permission and project scope, who gets a row and in which
 // order, what counts, the member sort code, and every number equal to its drill-down list.
 test('development load: permissions, rows, counts and sort code', async () => {
   const db = await connectDatabase();

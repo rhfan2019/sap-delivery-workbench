@@ -27,7 +27,7 @@ export async function latestHealth(db, organizationId, projectIds) {
   ).rows;
 }
 
-// The projects a user may enter and their master data (docs/specs/project-access-admin.md 1).
+// The projects a user may enter and their master data (docs/modules/access.md 1).
 // Reads need project:view; each group of fields has its own edit permission.
 
 const keyColumns = {

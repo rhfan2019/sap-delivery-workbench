@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppIcon from '../../components/AppIcon.vue';
-// A settings page (docs/specs/project-access-admin.md 4.4, after Plain): an optional back link,
+// A settings page (docs/modules/access.md 4.4, after Plain): an optional back link,
 // a 24px title with one sentence, actions on the right; then the content. Detail and form pages
 // keep a readable column; list pages may use the panel's full width. A list of records edited in
 // a drawer (`list`, DESIGN.md 6.2) is as wide as 大模型 and makes room while the drawer is open.
