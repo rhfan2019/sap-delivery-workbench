@@ -61,9 +61,11 @@ test('the menus list the built pages and follow the permissions', async () => {
     const projectModule = nav.modules.find((m) => m.id === 'project');
     assert.deepEqual(
       projectModule.sections[0].items.map((i) => i.path),
-      ['/project/general', '/project/plan', '/project/team', '/project/commercial'],
+      ['/project/general', '/project/plan', '/project/team'],
     );
     assert.equal(nav.moduleOf('/project/plan').id, 'project');
+    // 规模与商务 is out of the menu (UI-015) but its page still belongs to the project module.
+    assert.equal(nav.moduleOf('/project/commercial').id, 'project');
     // 工作台 has no menu; 交付 opens 开发概览, or 开发清单 for whoever may not see the overview.
     assert.deepEqual(
       nav.modules.map((m) => nav.hasMenu(m)),

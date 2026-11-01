@@ -91,13 +91,8 @@ const projectPages: MenuItem[] = [
     '关键岗位、模块负责人与客户方联系人。',
     'project:view',
   ),
-  project(
-    'commercial',
-    '规模与商务',
-    'coins',
-    '合同、人天预算与已计划人天。',
-    'project.commercial:view',
-  ),
+  // 规模与商务 (/project/commercial) is kept out of the menu for now: the figures are too
+  // sensitive to show (user 2026-11-01, backlog UI-015). The page still opens by its address.
 ];
 
 export const settingsOverview = setting(
@@ -286,11 +281,12 @@ export const modules: Module[] = [
 export const menus: MenuItem[] = modules.flatMap((m) => m.sections.flatMap((s) => s.items));
 
 // The module a route belongs to: development items and their assistants belong to delivery,
-// settings detail pages (a user, a role, an audit run) to settings.
+// settings detail pages (a user, a role, an audit run) to settings, any /project/ page to project.
 export function moduleOf(path: string): Module {
   if (path.includes('/development-items/')) return modules.find((m) => m.id === 'delivery')!;
   if (path === '/settings' || path.startsWith('/settings/'))
     return modules.find((m) => m.id === 'settings')!;
+  if (path.startsWith('/project/')) return modules.find((m) => m.id === 'project')!;
   return (
     modules.find((m) => m.sections.some((s) => s.items.some((i) => i.path === path))) ?? modules[0]!
   );
