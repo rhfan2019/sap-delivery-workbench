@@ -23,6 +23,7 @@ import BaseSkeleton from '../components/base/BaseSkeleton.vue';
 import BaseTag from '../components/base/BaseTag.vue';
 import DashArea from '../components/dashboard/DashArea.vue';
 import DashCard from '../components/dashboard/DashCard.vue';
+import DashWeekly from '../components/dashboard/DashWeekly.vue';
 import { type Trend } from '../components/dashboard/DashMetric.vue';
 import MilestoneRail from '../components/dashboard/MilestoneRail.vue';
 import {
@@ -44,6 +45,7 @@ import { currentProject, projectAccess, projects } from '../services/projectCont
 // with work of their own. Personal work goes first when something is overdue. Every number comes
 // from the development overview and opens the list it counts.
 const router = useRouter();
+const stageLabel = (key: string) => ITEM_PHASES.find((p) => p.key === key)?.label ?? key;
 const data = ref<Overview | null>(null);
 const loading = ref(false);
 const error = ref('');
@@ -194,12 +196,38 @@ const metrics = computed(() => {
   ];
 });
 
-// The ring of finished development and the pace against the freeze (DESIGN.md 12.4).
-const ring = computed(() => {
+// Three rings: FSD, development and the consultant test, each with how many are finished, under
+// way, not started and at risk (DESIGN.md 12.4); every number opens the list it counts.
+const RING_PHASES = [
+  { key: 'fsd', title: 'FSD 完成' },
+  { key: 'development', title: '开发完成' },
+  { key: 'consultant_test', title: '顾问测试完成' },
+] as const;
+const rings = computed(() => {
   const d = data.value;
-  const done = d?.counts.developmentDone ?? 0;
-  const total = d?.counts.items ?? 0;
-  return { done, total, arc: total ? (2 * Math.PI * 66 * done) / total : 0 };
+  if (!d) return [];
+  return RING_PHASES.map(({ key, title }) => {
+    const m = d.matrix[key] ?? {};
+    const done = m.completed ?? 0;
+    const doing = (m.in_progress ?? 0) + (m.delayed ?? 0);
+    const todo = m.not_started ?? 0;
+    const total = done + doing + todo;
+    const risk = Object.values(d.moduleMatrix).reduce((n, row) => n + (row[key]?.risk ?? 0), 0);
+    const label = stageLabel(key);
+    return {
+      key,
+      title,
+      done,
+      doing,
+      todo,
+      risk,
+      total,
+      pct: pct(done, total),
+      arc: total ? (2 * Math.PI * 66 * done) / total : 0,
+      open: (status: string, what: string) => drill({ phase: key, status }, `${label}${what}`),
+      openRisk: () => drill({ phase: key, risk: 'any' }, `${label}风险`),
+    };
+  });
 });
 const pace = computed(() => {
   const p = data.value?.flow.pace;
@@ -255,6 +283,22 @@ const ai = computed(() => {
   ];
 });
 
+// 每周进展: eight weeks of items added and in the list, and the phases finished at each week's end.
+const weekly = computed(() => {
+  const w = data.value?.weekly;
+  if (!w) return null;
+  return {
+    labels: w.weeks.map(shortDate),
+    added: w.added,
+    total: w.total,
+    completed: RING_PHASES.map(({ key, title }) => ({
+      key,
+      label: title,
+      values: w.completed[key],
+    })),
+  };
+});
+
 // The burn-down of the open FSD and development effort with the ideal line to the freeze.
 const trend = computed(() => {
   const f = data.value?.flow;
@@ -270,29 +314,53 @@ const trend = computed(() => {
   return { values: f.remaining, labels: f.days.map(shortDate), target };
 });
 
-// Modules × phases: share completed, outlined when something is at risk.
+// Modules × phases: the share completed and completed / total, outlined when something is at
+// risk; a last row sums the modules (user 2026-11-01).
 const heatPhases = ITEM_PHASES.map((p) => ({ key: p.key, label: p.label }));
+type HeatCell = { total: number; completed: number; risk: number };
+function heatCell(
+  module: string | null,
+  key: (typeof heatPhases)[number]['key'],
+  label: string,
+  c: HeatCell,
+) {
+  const share = c.total ? c.completed / c.total : 0;
+  return {
+    key,
+    label,
+    total: c.total,
+    text: c.total ? pct(c.completed, c.total) + '%' : '—',
+    count: c.total ? `${c.completed} / ${c.total}` : '',
+    level: c.total ? 'h' + Math.min(4, Math.ceil(share * 4)) : '',
+    risk: c.risk > 0,
+    hint: `${module ?? '合计'} · ${label}：完成 ${c.completed} / ${c.total}${c.risk ? `，风险 ${c.risk}` : ''}`,
+  };
+}
 const heat = computed(() => {
   const d = data.value;
   if (!d) return [];
-  return Object.entries(d.moduleMatrix)
+  const rows = Object.entries(d.moduleMatrix)
     .map(([module, row]) => ({
       module,
-      cells: heatPhases.map((p) => {
-        const c = row[p.key] ?? { total: 0, completed: 0, risk: 0 };
-        const share = c.total ? c.completed / c.total : 0;
-        return {
-          key: p.key,
-          label: p.label,
-          total: c.total,
-          text: c.total ? pct(c.completed, c.total) + '%' : '—',
-          level: c.total ? 'h' + Math.min(4, Math.ceil(share * 4)) : '',
-          risk: c.risk > 0,
-          hint: `${module} · ${p.label}：完成 ${c.completed} / ${c.total}${c.risk ? `，风险 ${c.risk}` : ''}`,
-        };
-      }),
+      sum: false,
+      cells: heatPhases.map((p) =>
+        heatCell(module, p.key, p.label, row[p.key] ?? { total: 0, completed: 0, risk: 0 }),
+      ),
     }))
     .filter((r) => r.cells.some((c) => c.total));
+  if (!rows.length) return rows;
+  const sums = heatPhases.map((p) => {
+    const c = { total: 0, completed: 0, risk: 0 };
+    for (const row of Object.values(d.moduleMatrix)) {
+      const x = row[p.key];
+      if (!x) continue;
+      c.total += x.total;
+      c.completed += x.completed;
+      c.risk += x.risk;
+    }
+    return heatCell(null, p.key, p.label, c);
+  });
+  return [...rows, { module: '合计', sum: true, cells: sums }];
 });
 
 // This week's planned development effort per person, over five days marked.
@@ -318,7 +386,6 @@ const heatSpan = computed(
 );
 
 // Personal work (roadmap 6.6 personal layer).
-const stageLabel = (key: string) => ITEM_PHASES.find((p) => p.key === key)?.label ?? key;
 function openTodo(t: Overview['mine']['today'][number]) {
   open(
     t.stage
@@ -450,7 +517,9 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
           <div class="figures">
             <button type="button" class="figure dash-rise" @click="metrics[0]!.open?.()">
               <span class="figure-value">{{ metrics[0]!.value }}<small>%</small></span>
-              <span class="figure-label">开发完成 · {{ ring.done }} / {{ ring.total }}</span>
+              <span class="figure-label"
+                >开发完成 · {{ data.counts.developmentDone }} / {{ data.counts.items }}</span
+              >
             </button>
             <button
               v-if="data.cards.freeze.date"
@@ -478,37 +547,18 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
         </section>
 
         <div class="dash-grid">
-          <DashCard title="交付趋势" hint="剩余 FSD 与开发人天，虚线为到冻结的理想线" :span="3">
-            <template #action>
-              <RouterLink
-                to="/workspace/development-overview"
-                class="dash-open"
-                aria-label="打开开发概览"
-                ><ArrowUpRight
-              /></RouterLink>
-            </template>
-            <DashArea
-              v-if="trend"
-              :values="trend.values"
-              :labels="trend.labels"
-              :target="trend.target"
-              label="剩余人天趋势"
-            />
-            <p v-else class="dash-empty">开发清单积累一段时间的状态变化后，这里会画出趋势。</p>
-          </DashCard>
-
-          <DashCard title="开发完成" :span="3">
+          <DashCard v-for="r in rings" :key="r.key" :title="r.title" :span="3">
             <template #action>
               <button
                 type="button"
                 class="dash-open"
-                aria-label="打开已完成的开发项"
-                @click="metrics[0]!.open?.()"
+                :aria-label="'打开' + r.title + '的开发项'"
+                @click="r.open('completed', '已完成')"
               >
                 <ArrowUpRight />
               </button>
             </template>
-            <div class="donut" role="img" :aria-label="`开发完成 ${ring.done} / ${ring.total} 项`">
+            <div class="donut" role="img" :aria-label="`${r.title} ${r.done} / ${r.total} 项`">
               <svg viewBox="0 0 180 180" aria-hidden="true">
                 <circle class="donut-ticks" cx="90" cy="90" r="84" />
                 <circle class="donut-track" cx="90" cy="90" r="66" />
@@ -517,55 +567,32 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
                   cx="90"
                   cy="90"
                   r="66"
-                  :stroke-dasharray="`${ring.arc} 999`"
+                  :stroke-dasharray="`${r.arc} 999`"
                   transform="rotate(-90 90 90)"
                 />
               </svg>
               <span class="donut-text"
-                ><strong>{{ ring.done }} / {{ ring.total }}</strong
-                ><small>项开发完成</small></span
+                ><strong>{{ r.done }} / {{ r.total }}</strong
+                ><small>{{ r.pct }}%</small></span
               >
             </div>
-            <button
-              type="button"
-              class="dash-link risk-link"
-              :class="{ alert: data.cards.risk.count }"
-              @click="metrics[1]!.open?.()"
-            >
-              风险开发项 {{ data.cards.risk.count }} · 逾期未更新 {{ data.cards.risk.stale }}
-            </button>
-          </DashCard>
-
-          <DashCard title="冻结前节奏" :span="3">
-            <template #action>
-              <span class="pace-now">{{ pace.recent }}<small>人天/周</small></span>
-            </template>
-            <div class="pace">
-              <div class="pace-legend">
-                <span>近 4 周均值</span
-                ><span v-if="pace.required !== null">冻结前需 {{ pace.required }}</span>
-              </div>
-              <div class="pace-bar">
-                <span class="dash-pill now" :style="{ flexBasis: pace.share + '%' }">{{
-                  pace.recent
-                }}</span>
-                <span v-if="pace.share < 100" class="dash-pill left pace-rest"></span>
-              </div>
-              <div class="dash-pill done pace-week">
-                本周完成 {{ metrics[3]!.value }} 人天
-                <span v-if="metrics[3]!.trend" class="pace-trend">{{
-                  metrics[3]!.trend!.text
-                }}</span>
-              </div>
+            <div class="ring-states">
+              <button type="button" class="dash-pill now" @click="r.open('in_progress', '进行中')">
+                进行中 {{ r.doing }}
+              </button>
+              <button type="button" class="dash-pill left" @click="r.open('not_started', '未开始')">
+                未开始 {{ r.todo }}
+              </button>
+              <button
+                type="button"
+                class="dash-pill"
+                :class="r.risk ? 'risk' : 'calm'"
+                :disabled="!r.risk"
+                @click="r.openRisk()"
+              >
+                风险 {{ r.risk }}
+              </button>
             </div>
-            <button
-              v-if="data.cards.freeze.date"
-              type="button"
-              class="dash-link pace-foot"
-              @click="metrics[2]!.open?.()"
-            >
-              {{ metrics[2]!.sub }}
-            </button>
           </DashCard>
 
           <DashCard tone="ink" title="本周要点" :hint="`至 ${weekEnd}`" :span="3">
@@ -584,6 +611,72 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
               >查看开发概览与周报<ArrowRight
             /></RouterLink>
           </DashCard>
+        </div>
+
+        <div class="dash-grid">
+          <DashCard title="每周进展" :span="8">
+            <DashWeekly
+              v-if="weekly"
+              :labels="weekly.labels"
+              :added="weekly.added"
+              :total="weekly.total"
+              :completed="weekly.completed"
+            />
+          </DashCard>
+
+          <!-- The two smaller cards stack beside the weekly chart. -->
+          <div class="span-4 home-side">
+            <DashCard title="交付趋势" hint="剩余 FSD 与开发人天，虚线为到冻结的理想线">
+              <template #action>
+                <RouterLink
+                  to="/workspace/development-overview"
+                  class="dash-open"
+                  aria-label="打开开发概览"
+                  ><ArrowUpRight
+                /></RouterLink>
+              </template>
+              <DashArea
+                v-if="trend"
+                :values="trend.values"
+                :labels="trend.labels"
+                :target="trend.target"
+                label="剩余人天趋势"
+              />
+              <p v-else class="dash-empty">开发清单积累一段时间的状态变化后，这里会画出趋势。</p>
+            </DashCard>
+
+            <DashCard title="冻结前节奏">
+              <template #action>
+                <span class="pace-now">{{ pace.recent }}<small>人天/周</small></span>
+              </template>
+              <div class="pace">
+                <div class="pace-legend">
+                  <span>近 4 周均值</span
+                  ><span v-if="pace.required !== null">冻结前需 {{ pace.required }}</span>
+                </div>
+                <div class="pace-bar">
+                  <span class="dash-pill now" :style="{ flexBasis: pace.share + '%' }">{{
+                    pace.recent
+                  }}</span>
+                  <span v-if="pace.share < 100" class="dash-pill left pace-rest"></span>
+                </div>
+                <div class="dash-pill done pace-week">
+                  本周完成 {{ metrics[3]!.value }} 人天
+                  <span v-if="metrics[3]!.trend" class="pace-trend">{{
+                    metrics[3]!.trend!.text
+                  }}</span>
+                </div>
+              </div>
+              <button
+                v-if="data.cards.freeze.date"
+                type="button"
+                class="dash-link pace-foot"
+                @click="metrics[2]!.open?.()"
+              >
+                {{ metrics[2]!.sub }}
+              </button>
+            </DashCard>
+          </div>
         </div>
 
         <div class="dash-grid">
@@ -650,7 +743,11 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
               </li>
             </ul>
           </DashCard>
-          <DashCard title="模块 × 阶段" hint="完成率，红框为有风险" :span="heatSpan">
+          <DashCard
+            title="模块 × 阶段"
+            hint="完成率与已完成 / 总数，红框为有风险；最后一行为合计"
+            :span="heatSpan"
+          >
             <div
               v-if="heat.length"
               class="heat"
@@ -659,19 +756,24 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
               <span></span>
               <span v-for="p in heatPhases" :key="p.key" class="heat-head">{{ p.label }}</span>
               <template v-for="r in heat" :key="r.module">
-                <span class="heat-module">{{ r.module }}</span>
+                <span class="heat-module" :class="{ sum: r.sum }">{{ r.module }}</span>
                 <button
                   v-for="c in r.cells"
                   :key="c.key"
                   type="button"
                   class="dash-heat"
-                  :class="[c.level, { risk: c.risk }]"
+                  :class="[c.level, { risk: c.risk, sum: r.sum }]"
                   :title="c.hint"
                   :aria-label="c.hint"
                   :disabled="!c.total"
-                  @click="drill({ module: r.module, phase: c.key }, r.module + ' · ' + c.label)"
+                  @click="
+                    r.sum
+                      ? drill({ phase: c.key }, c.label)
+                      : drill({ module: r.module, phase: c.key }, r.module + ' · ' + c.label)
+                  "
                 >
-                  {{ c.text }}
+                  <strong>{{ c.text }}</strong
+                  ><small v-if="c.count">{{ c.count }}</small>
                 </button>
               </template>
             </div>
@@ -916,6 +1018,41 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
   color: var(--red-text-2);
 }
 
+.home-side {
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: var(--space-4);
+}
+/* Under each ring: under way, not started, at risk, each opening its list. */
+.ring-states {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-1-5);
+  margin-top: auto;
+}
+.ring-states .dash-pill {
+  justify-content: center;
+  min-height: var(--control-tab);
+  padding: 0;
+  border: 0;
+  font: inherit;
+  font-size: var(--font-12);
+  cursor: pointer;
+}
+.ring-states .dash-pill.calm {
+  box-shadow: inset 0 0 0 1px var(--border);
+  background: none;
+  color: var(--text-muted);
+  cursor: default;
+}
+.ring-states .dash-pill.risk {
+  background: var(--red-fill-1);
+  color: var(--red-text-2);
+}
+.ring-states .dash-pill:disabled {
+  opacity: 1;
+}
+
 /* The pace against the freeze. */
 .pace-now {
   font-size: var(--font-32);
@@ -1081,9 +1218,46 @@ const weekEnd = computed(() => shortDate(addDays(today.value, 6)));
   font-size: var(--font-14);
   font-weight: var(--weight-475);
 }
+.dash-heat {
+  min-height: var(--layout-record-bar);
+  border-radius: var(--radius-20);
+  line-height: var(--leading-16);
+}
+.dash-heat strong {
+  display: block;
+  font-size: var(--font-14);
+  font-weight: var(--weight-475);
+}
+.dash-heat small {
+  display: block;
+  font-size: var(--font-11);
+  opacity: 0.75;
+}
 .dash-heat:disabled {
   color: var(--text-subtle);
   cursor: default;
+}
+/* The sum row: ink where something is finished, an ink outline where nothing is yet. */
+.heat-module.sum {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  margin-top: var(--space-1);
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--border-emphasis);
+}
+.dash-heat.sum {
+  margin-top: var(--space-1);
+  background: var(--panel);
+  box-shadow: inset 0 0 0 1.5px var(--primary);
+  color: var(--text);
+}
+.dash-heat.sum.h1,
+.dash-heat.sum.h2,
+.dash-heat.sum.h3,
+.dash-heat.sum.h4 {
+  background: var(--primary);
+  color: var(--on-primary);
 }
 
 /* Team load: pill bars, ink when planned, striped when empty, red when over. */

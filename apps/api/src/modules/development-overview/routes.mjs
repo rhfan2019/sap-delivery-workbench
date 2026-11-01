@@ -41,6 +41,7 @@ import {
   planDrift,
   sitForecast,
   weekReport,
+  weekly,
 } from './trends.mjs';
 import {
   aging,
@@ -385,6 +386,7 @@ export function buildOverview({ items, people, facts: f, today, grant, userId })
     flow: flow(live, f.transitions, ctx),
     sitForecast: sitForecast(live, ctx),
     week: weekReport(live, f.transitions, f.drift, today),
+    weekly: weekly(live, f.transitions, today),
     planDrift: planDrift(live),
     guards: guards(live, f.transitions, today),
     freshness: { lastOn: lastActivity(live, f.activity) },

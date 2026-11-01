@@ -150,6 +150,41 @@ export function sitForecast(items, { milestones }) {
   };
 }
 
+// 工作台“每周进展” (docs/DESIGN.md 12.4): the last eight weeks, Monday to Sunday, the current
+// week up to today. Per week the items added; at the end of each week the items in the list and
+// how many had finished FSD, development and the consultant test, replayed from the history. A
+// phase without history counts from its actual end (or today) when it is completed now.
+const WEEKLY_PHASES = ['fsd', 'development', 'consultant_test'];
+export function weekly(items, transitions, today) {
+  const weekday = (new Date(today + 'T00:00:00Z').getUTCDay() + 6) % 7;
+  const monday = addDays(today, -weekday);
+  const weeks = Array.from({ length: 8 }, (_, i) => addDays(monday, (i - 7) * 7));
+  const ends = weeks.map((w) => {
+    const end = addDays(w, 6);
+    return end < today ? end : today;
+  });
+  const { days, timeline } = replay(items, transitions, weeks[0], today);
+  const index = new Map(days.map((d, i) => [d, i]));
+  const created = items.map((i) => dateOf(i.createdAt));
+  const added = weeks.map((w, k) => created.filter((d) => d >= w && d <= ends[k]).length);
+  const total = ends.map((end) => created.filter((d) => d <= end).length);
+  const completed = Object.fromEntries(
+    WEEKLY_PHASES.map((phase) => [
+      phase,
+      ends.map(
+        (end) =>
+          items.filter((item) => {
+            const line = timeline.get(item.id + ' ' + phase);
+            if (line) return line[index.get(end)] === 'completed';
+            const p = item.phases[phase];
+            return p.status === 'completed' && (p.actualEnd ?? today) <= end;
+          }).length,
+      ),
+    ]),
+  );
+  return { weeks, added, total, completed };
+}
+
 // The weekly report draft (spec section 5): what finished, what was added, which plans moved
 // and what falls due next week; the page turns it into text for the internal weekly meeting.
 export function weekReport(items, transitions, drift, today) {

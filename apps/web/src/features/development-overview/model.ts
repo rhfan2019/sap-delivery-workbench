@@ -140,6 +140,13 @@ export interface Overview {
   consultant: { fsdRisk: string[]; comments: string[]; awaiting: string[] };
   people: { id: string; name: string }[];
   flow: Flow;
+  // 工作台“每周进展”: eight weeks (Mondays); added per week, the rest cumulative at week end.
+  weekly: {
+    weeks: string[];
+    added: number[];
+    total: number[];
+    completed: Record<'fsd' | 'development' | 'consultant_test', number[]>;
+  };
   sitForecast: {
     sit: string;
     slip: { days: number; samples: number };

@@ -304,6 +304,14 @@ test('development overview: permissions, scope, judgments and drill-down counts'
     assert.equal(o.flow.pace.recentPerWeek, 0.8);
     assert.equal(o.flow.freeze, addDays(today, 5));
     assert.deepEqual(o.week.created.map((x) => x.name).sort(), ['A', 'B', 'C']);
+    // 工作台“每周进展”: eight weeks ending with this one; all three items were added this week
+    // and the replayed completions at its end match the flow.
+    assert.equal(o.weekly.weeks.length, 8);
+    assert.ok(o.weekly.weeks[7] <= today && addDays(o.weekly.weeks[7], 6) >= today);
+    assert.deepEqual(o.weekly.added.slice(-1), [3]);
+    assert.deepEqual(o.weekly.total.slice(-1), [3]);
+    assert.equal(o.weekly.completed.development[7], o.flow.status.development.completed[last]);
+    assert.equal(o.weekly.completed.fsd[7], o.flow.status.fsd.completed[last]);
     assert.deepEqual(
       o.week.completed.map((x) => [x.name, x.phase]),
       [['C', 'development']],
