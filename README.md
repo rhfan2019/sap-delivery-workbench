@@ -100,6 +100,7 @@ ABAP 开发助手 `abap-dev-agent`（开发项工作区“开发”阶段）首�
 | `npm run db:migrate`         | 执行数据库迁移                                                                                   |
 | `npm run db:provision`       | 配置受限运行账号                                                                                 |
 | `npm run bootstrap`          | 幂等业务初始化                                                                                   |
+| `npm run seed:test-project`  | 在本机主库创建虚拟测试项目（虚构数据），账号写入 `.runtime/test-accounts.txt`；已存在时拒绝运行  |
 | `npm run dev`                | 前台联合运行 API 与 Vite，Ctrl+C 停止                                                            |
 | `npm run check:architecture` | 校验目录、导入、包 exports 和测试归属                                                            |
 | `npm run check`              | 架构、类型与生产构建                                                                             |

@@ -17,6 +17,7 @@
     "start": "node scripts/dev/components.mjs start",
     "stop": "node scripts/dev/components.mjs stop",
     "setup:env": "node scripts/dev/setup-env.mjs",
+    "seed:test-project": "node --env-file=.env scripts/dev/seed-test-project.mjs",
     "db:setup": "node --env-file=.env scripts/database/setup.mjs",
     "db:admin": "docker compose up -d --wait pgadmin",
     "db:admin:stop": "docker compose stop pgadmin",

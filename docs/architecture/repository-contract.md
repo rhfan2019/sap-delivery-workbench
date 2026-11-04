@@ -1,6 +1,8 @@
 # 仓库目录与依赖契约
 
-版本：1.26。日期：2026-11-03。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.27。日期：2026-11-03。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.27 变更：用户 2026-11-03 要求重建虚拟测试项目。`scripts/dev` 增加测试项目种子（`npm run seed:test-project`，只连本机 API 与开发库）；数据走业务接口写入，再由脚本把这个项目的时间戳改写到历史日期，供依赖历史的图表使用。
 
 1.26 变更：用户 2026-11-03 决定主力开发机由 Windows 换为 Mac，并把开发数据库移出 Docker，同时保持 Windows 重新 clone 后可用。开发库改用本机 PostgreSQL 17 服务（默认 127.0.0.1:5432，`npm run db:setup` 幂等创建项目角色与数据库），隔离测试库改用 `.runtime/fs-test-pg` 下的独立本机集群（仍为 55439，不与开发库共用服务器，因为角色是服务器级的）；根 `compose.yaml` 只保留可选的 pgAdmin；生产部署 `infra/production` 不变。根目录新增 `start.command`、`stop.command`（Mac 双击入口），`start.cmd`、`stop.cmd` 保留。架构检查忽略系统自动生成的 `.DS_Store`、`Thumbs.db`、`desktop.ini`，它们不属于仓库内容。
 
@@ -202,7 +204,7 @@ contracts 区分 Node 校验入口与浏览器可用的纯函数/类型入口。
 
 ## 6. 工程脚本与文档
 
-scripts/dev：本地联合启动、受管进程控制；scripts/database：迁移、配置、初始化；scripts/testing：测试发现、隔离环境和测试服务；scripts/maintenance：显式数据导入；scripts/vendor：第三方准备；scripts/checks：架构验证。按现有需要创建，不创建空目录。
+scripts/dev：本地联合启动、受管进程控制、虚拟测试项目种子；scripts/database：迁移、配置、初始化；scripts/testing：测试发现、隔离环境和测试服务；scripts/maintenance：显式数据导入；scripts/vendor：第三方准备；scripts/checks：架构验证。按现有需要创建，不创建空目录。
 
 生产服务入口归 apps/api/src；需要独立后台进程时，入口同样放在 apps/api/src。scripts 可以编排应用，应用不能导入 scripts/lib。平台数据库/生产配置应由 api 的公开工具接口复用；只用于导入的解析工具留 maintenance。
 
