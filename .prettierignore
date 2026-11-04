@@ -5,6 +5,7 @@ package-lock.json
 .env
 .env.*
 database/migrations/
+database/init/
 vendor/
 .runtime/
 docs/archive/

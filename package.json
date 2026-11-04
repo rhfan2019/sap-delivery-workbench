@@ -23,6 +23,7 @@
     "db:admin:stop": "docker compose stop pgadmin",
     "db:status": "node --env-file=.env scripts/database/status.mjs",
     "db:migrate": "node --env-file=.env scripts/database/migrate.mjs",
+    "db:export-init": "node scripts/database/export-init-sql.mjs",
     "db:provision": "node --env-file=.env scripts/database/provision.mjs",
     "db:test": "node scripts/testing/run-tests.mjs --database",
     "dev": "node scripts/dev/dev.mjs",

@@ -5,6 +5,7 @@ import { parseEnv } from 'node:util';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
+import { postgresTool } from '../database/postgres-tools.mjs';
 import { assertIsolatedDatabase } from './run-tests.mjs';
 
 // The isolated test database is its own native PostgreSQL cluster under .runtime, not a database on
@@ -14,21 +15,6 @@ const root = fileURLToPath(new URL('../../', import.meta.url));
 const runtime = join(root, '.runtime');
 const cluster = join(runtime, 'fs-test-pg');
 process.chdir(root);
-
-function postgresTool(name) {
-  const fromPath = spawnSync(name, ['--version']);
-  if (!process.env.PG_BIN_DIR && !fromPath.error) return name;
-  const directories = [
-    process.env.PG_BIN_DIR,
-    '/opt/homebrew/opt/postgresql@17/bin',
-    '/usr/local/opt/postgresql@17/bin',
-    'C:/Program Files/PostgreSQL/17/bin',
-  ];
-  for (const directory of directories)
-    if (directory && ['', '.exe'].some((suffix) => existsSync(join(directory, name + suffix))))
-      return join(directory, name);
-  throw new Error(`${name} not found. Install PostgreSQL 17 or set PG_BIN_DIR.`);
-}
 
 function run(command, args, env = process.env) {
   const result = spawnSync(command, args, { cwd: root, env, stdio: 'inherit', windowsHide: true });

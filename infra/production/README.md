@@ -32,12 +32,13 @@ Docker 管理权限可读取容器环境，因此部署主机与 production.env 
 dc() { docker compose --env-file production.env -f compose.yaml "$@"; }
 dc config --quiet
 dc --profile ops build
-dc up -d --wait postgres
-dc run --rm tooling node scripts/database/migrate.mjs
-dc run --rm tooling node scripts/database/provision.mjs
-dc run --rm tooling node scripts/database/bootstrap.mjs
+sudo bash init-database.sh
 sudo cat secrets/organization.env
 ```
+
+`init-database.sh` 用 `database/init/init-database.sql` 一次建好全部表结构、权限和迁移记录，再设置运行账号密码并创建首个管理员。这三步只用于空库：库里已有数据时 SQL 拒绝执行，不做任何修改。首个管理员不在 SQL 里，因为它的密码必须在部署时随机生成，不能写进仓库。
+
+`init-database.sql` 也可以单独执行（`psql -v ON_ERROR_STOP=1 -U <所有者> -d <空库> -f init-database.sql`），此后仍要运行 `provision.mjs` 和 `bootstrap.mjs`，否则应用没有登录账号。
 
 把输出的 DEFAULT_ORGANIZATION_ID 填回 production.env。工具容器以 root 写入交接文件并保留 0600 权限；普通 Docker 部署用户应在受控终端执行 `sudo cat secrets/initial-login.txt` 获取 admin 临时密码，不要放宽权限，也不要把内容复制到共享日志。然后：
 

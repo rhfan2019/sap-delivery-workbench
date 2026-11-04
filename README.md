@@ -98,6 +98,7 @@ ABAP 开发助手 `abap-dev-agent`（开发项工作区“开发”阶段）首�
 | `npm run db:admin`           | 启动本项目的 pgAdmin（127.0.0.1:5051），用法见[查看开发数据库](docs/guides/database-browsing.md) |
 | `npm run db:admin:stop`      | 停止 pgAdmin                                                                                     |
 | `npm run db:migrate`         | 执行数据库迁移                                                                                   |
+| `npm run db:export-init`     | 新增迁移或改动授权后，重新生成 `database/init/init-database.sql`（先运行 `npm run test:setup`）  |
 | `npm run db:provision`       | 配置受限运行账号                                                                                 |
 | `npm run bootstrap`          | 幂等业务初始化                                                                                   |
 | `npm run seed:test-project`  | 在本机主库创建虚拟测试项目（虚构数据），账号写入 `.runtime/test-accounts.txt`；已存在时拒绝运行  |

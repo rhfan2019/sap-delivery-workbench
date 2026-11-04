@@ -87,7 +87,7 @@
 
 ### BUG-011 全新数据库迁移失败
 
-`1791046806000_fsd-agent` 起的迁移授权给 `sap_workbench_app`，而角色原本只在迁移之后的 `provision.mjs` 里创建；旧库已有角色，所以一直没暴露。现在 `migrate.mjs` 先创建不可登录的角色。生产首次部署走同一脚本，同样受益，但没有实测。
+`1791046806000_fsd-agent` 起的迁移授权给 `sap_workbench_app`，而角色原本只在迁移之后的 `provision.mjs` 里创建；旧库已有角色，所以一直没暴露。现在 `migrate.mjs` 先创建不可登录的角色。生产首次部署现在用 `infra/production/init-database.sh`，2026-11-03 已按生产 Compose 在本机实测（未在云服务器上实测）。
 
 ### TECH-003 Windows 旧数据
 
