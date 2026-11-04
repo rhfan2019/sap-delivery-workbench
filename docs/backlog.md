@@ -59,8 +59,8 @@
 | UI-019     | 界面     | 表单页原生下拉与日期控件换成统一胶囊控件（日期用 BaseDateInput）                  | 中     | 已修复（beb6b33）                   |
 | UI-020     | 工作台   | 里程碑轨在 9 栏卡里标签仍偏挤，月份水印压住“今天”标签                             | 低     | 待处理                              |
 | UI-021     | 工作台   | 工作台 v2：FSD / 开发 / 顾问测试三个完成环、每周进展图、模块 × 阶段加个数与合计行 | 高     | 已修复（4315d4b）                   |
-| TECH-002   | 开发环境 | 主力机换为 Mac，开发库与测试库移出 Docker，保留 Windows 重新 clone 后可用         | 高     | 已修复（COMMIT_HASH）               |
-| BUG-011    | 开发环境 | 全新数据库迁移失败：迁移授权给尚未创建的 sap_workbench_app 角色                   | 高     | 已修复（COMMIT_HASH）               |
+| TECH-002   | 开发环境 | 主力机换为 Mac，开发库与测试库移出 Docker，保留 Windows 重新 clone 后可用         | 高     | 已修复（eefe6ea）                   |
+| BUG-011    | 开发环境 | 全新数据库迁移失败：迁移授权给尚未创建的 sap_workbench_app 角色                   | 高     | 已修复（eefe6ea）                   |
 | BUG-012    | 开发环境 | `npm run db:status` 写死 20 张业务表，实际 57 张，正常的库也返回失败              | 低     | 待处理                              |
 | TECH-003   | 开发环境 | Windows 旧 Docker 库的数据是否导入 Mac                                            | 高     | 待决定                              |
 | TECH-004   | 开发环境 | Homebrew PostgreSQL 默认本机免密（trust），项目密码在本机不起校验作用             | 低     | 待决定                              |
