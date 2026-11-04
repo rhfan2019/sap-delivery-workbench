@@ -1,6 +1,6 @@
 # 开发清单
 
-> 状态：已实施 · 最后更新：2026-10-31。字段口径以用户提供的字段表（5 组、43 个字段）为准；数据迁移、受影响代码与实施结果见[实施记录](../archive/records/development-list.md)。界面约定见[表格页面模板](../guides/table-page-template.md)。
+> 状态：已实施 · 最后更新：2026-11-04。字段口径以用户提供的字段表（5 组、43 个字段）为准；数据迁移、受影响代码与实施结果见[实施记录](../archive/records/development-list.md)。界面约定见[表格页面模板](../guides/table-page-template.md)。
 
 ## 1. 已确认的需求
 
@@ -216,7 +216,7 @@ project ─┬─< development_item ─┬─< development_item_phase   (固定 
 
 ## 现状与下一步
 
-> 最后更新：2026-10-31（`d02f62a`）。
+> 最后更新：2026-11-04（抽屉头部层次调整，见 [DESIGN.md](../DESIGN.md) 第 4.1 节“开发项详情面板”）。
 
 - **现状**：第 1–5 节已实施，表格基于 `WorkbenchTable`（TanStack Table），支持筛选、排序、列设置、Excel 导入导出与详情抽屉。
 - **下一步**：恢复已删除的开发项（FEAT-008，待决定）。

@@ -16,7 +16,6 @@ import BaseIconButton from '../../components/base/BaseIconButton.vue';
 import BaseMenu from '../../components/base/BaseMenu.vue';
 import BaseMenuItem from '../../components/base/BaseMenuItem.vue';
 import BaseAvatar from '../../components/base/BaseAvatar.vue';
-import BaseTag from '../../components/base/BaseTag.vue';
 import { kindIdentity, moduleHue } from '../../components/base/identity';
 import { api } from '../../services/session';
 import FieldEditor from './FieldEditor.vue';
@@ -194,6 +193,30 @@ const cards = computed<Card[]>(() =>
     return card;
   }),
 );
+// Head anchors in three groups: the item, its stages in order (short label and a status dot;
+// the section keeps the long heading), then what hangs off it.
+const anchors = computed(() => {
+  const phase = (key: string) => PHASES.find((p) => p.key === key);
+  const groups: { key: string; label: string; title?: string }[][] = [
+    sections.value.filter((s) => s.key === 'basic'),
+    sections.value
+      .filter((s) => phase(s.key))
+      .map((s) => ({ key: s.key, label: phase(s.key)!.label, title: s.label })),
+    [
+      ...sections.value.filter((s) => s.key === 'custom'),
+      ...(props.item && showOutputs.value ? [{ key: 'outputs', label: '成果' }] : []),
+      ...(props.item ? [{ key: 'extras', label: '附件与活动' }] : []),
+    ],
+  ];
+  const firsts = groups.filter((g) => g.length).map((g) => g[0].key);
+  return groups.flat().map((a) => ({
+    key: a.key,
+    label: a.label,
+    title: a.title ?? a.label,
+    status: stageStatus(a.key),
+    startsGroup: firsts.indexOf(a.key) > 0,
+  }));
+});
 const stageStatus = (key: string) =>
   props.item && PHASES.some((p) => p.key === key)
     ? props.item.phases[key as PhaseKey]?.status
@@ -291,12 +314,6 @@ function spy() {
 // started; the assignee and dates are the section's own fields, so the panel spends no height
 // repeating them.
 const kind = computed(() => (props.item ? kindIdentity[props.item.kind] : undefined));
-const phaseStatus = (key: string) => {
-  if (!props.item || !PHASES.some((p) => p.key === key)) return undefined;
-  const status = props.item.phases[key as keyof Item['phases']]?.status;
-  return status === 'not_started' ? undefined : status;
-};
-
 // Outputs of the assistants the reader may view; the development one only for kinds it supports.
 const outputStages = computed(() =>
   (['design', 'development'] as const).filter(
@@ -363,12 +380,18 @@ defineExpose({ dirty, busy });
             aria-hidden="true"
             ><component :is="kind.icon"
           /></span>
-          <template v-if="item">
-            <BaseTag variant="outline">{{ item.code }}</BaseTag>
-            <BaseTag v-if="item.module" :tone="moduleHue(item.module)">{{ item.module }}</BaseTag>
-            <span class="drawer-kind">{{ OPTIONS.kind[item.kind] ?? item.kind }}</span>
-          </template>
-          <h2 id="item-drawer-title" :title="title">{{ title }}</h2>
+          <div class="drawer-heading">
+            <h2 id="item-drawer-title" :title="title">{{ title }}</h2>
+            <p v-if="item" class="drawer-meta">
+              <span class="drawer-code">{{ item.code }}</span>
+              <span
+                v-if="item.module"
+                :style="{ color: `var(--${moduleHue(item.module)}-text-2)` }"
+                >{{ item.module }}</span
+              >
+              <span>{{ OPTIONS.kind[item.kind] ?? item.kind }}</span>
+            </p>
+          </div>
         </div>
         <div class="drawer-tools">
           <template v-if="item">
@@ -418,34 +441,18 @@ defineExpose({ dirty, busy });
         </div>
       </header>
       <nav class="drawer-anchors" aria-label="跳转到分组">
-        <button
-          v-for="s in sections"
-          :key="s.key"
-          type="button"
-          :aria-current="active === s.key ? 'true' : undefined"
-          @click="jump(s.key)"
-        >
-          {{ s.label
-          }}<span v-if="phaseStatus(s.key)" class="status-pill" :data-status="phaseStatus(s.key)">{{
-            OPTIONS.status[phaseStatus(s.key)!]
-          }}</span>
-        </button>
-        <button
-          v-if="item && showOutputs"
-          type="button"
-          :aria-current="active === 'outputs' ? 'true' : undefined"
-          @click="jump('outputs')"
-        >
-          成果
-        </button>
-        <button
-          v-if="item"
-          type="button"
-          :aria-current="active === 'extras' ? 'true' : undefined"
-          @click="jump('extras')"
-        >
-          附件与活动
-        </button>
+        <template v-for="a in anchors" :key="a.key">
+          <span v-if="a.startsGroup" class="drawer-anchor-divider" aria-hidden="true" />
+          <button
+            type="button"
+            :aria-current="active === a.key ? 'true' : undefined"
+            :aria-label="a.status ? `${a.label}，${OPTIONS.status[a.status]}` : undefined"
+            :title="a.status ? `${a.title}：${OPTIONS.status[a.status]}` : undefined"
+            @click="jump(a.key)"
+          >
+            <span v-if="a.status" class="phase-dot" :data-status="a.status" />{{ a.label }}
+          </button>
+        </template>
       </nav>
       <div ref="body" class="drawer-body" @scroll.passive="spy">
         <p v-if="error" class="error-note" role="alert">{{ error }}</p>

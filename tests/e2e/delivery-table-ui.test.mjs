@@ -221,7 +221,11 @@ test('development list: page/batch/row actions, inline edit, grouped drawer, col
   await drawer.getByRole('heading', { name: '供应商未清项批量清账' }).waitFor();
   // Phase status rides on the section tabs (no tracker cards, no percentages).
   assert.equal(await drawer.locator('.phase-track').count(), 0);
-  assert.doesNotMatch(await drawer.locator('.drawer-anchors').innerText(), /%/);
+  const anchors = drawer.locator('.drawer-anchors');
+  assert.doesNotMatch(await anchors.innerText(), /%/);
+  await anchors.getByRole('button', { name: /^IT\/用户测试，/ }).waitFor();
+  assert.equal(await anchors.locator('.phase-dot').count(), 4);
+  assert.equal(await anchors.locator('.drawer-anchor-divider').count(), 2);
   await page.keyboard.press('Escape');
   await drawer.waitFor({ state: 'detached' });
 
