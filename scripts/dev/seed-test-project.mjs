@@ -4,7 +4,6 @@
 import { randomBytes } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { createInterface } from 'node:readline';
 import { connectDatabase } from '@sap-delivery-workbench/api/platform/database';
 import { CONTACTS, ITEMS, OWNERS, PEOPLE, TAGS } from './seed-test-project-data.mjs';
 
@@ -47,16 +46,35 @@ function askPassword(prompt) {
   if (process.env.SEED_ADMIN_PASSWORD) return Promise.resolve(process.env.SEED_ADMIN_PASSWORD);
   if (!process.stdin.isTTY)
     throw new Error('Run this in a terminal so the administrator password can be typed.');
+  // Keys are read one by one and not echoed.
   return new Promise((done) => {
-    const reader = createInterface({ input: process.stdin, output: process.stdout });
+    let typed = '';
     process.stdout.write(prompt);
-    // The typed characters are not echoed.
-    reader._writeToOutput = () => {};
-    reader.question('', (answer) => {
-      reader.close();
+    process.stdin.setRawMode(true);
+    process.stdin.setEncoding('utf8');
+    process.stdin.resume();
+    const finish = () => {
+      process.stdin.setRawMode(false);
+      process.stdin.pause();
+      process.stdin.off('data', onData);
       process.stdout.write('\n');
-      done(answer);
-    });
+    };
+    function onData(chunk) {
+      for (const key of chunk) {
+        if (key === '\u0003') {
+          finish();
+          process.exit(130);
+        }
+        if (key === '\r' || key === '\n') {
+          finish();
+          done(typed);
+          return;
+        }
+        if (key === '\u007f' || key === '\b') typed = typed.slice(0, -1);
+        else typed += key;
+      }
+    }
+    process.stdin.on('data', onData);
   });
 }
 
