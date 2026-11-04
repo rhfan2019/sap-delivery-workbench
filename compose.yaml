@@ -1,32 +1,13 @@
 name: sap-delivery-workbench-dev
 services:
-  postgres:
-    image: postgres:17.11@sha256:d74eeac9a635390a49bc21bd49fccd973de707e2a53a76ac49b552b8712ec46f
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:?Run npm run setup:env first}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run npm run setup:env first}
-      POSTGRES_DB: ${POSTGRES_DB:?Run npm run setup:env first}
-      TZ: UTC
-      PGTZ: UTC
-    ports:
-      - '127.0.0.1:${POSTGRES_PORT:-55432}:5432'
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
-      interval: 5s
-      timeout: 5s
-      retries: 12
-      start_period: 10s
-  # Optional database browser (npm run db:admin); not started by npm start.
+  # Optional database browser (npm run db:admin); not started by npm start. The development database
+  # itself is the local PostgreSQL service, reached from the container through the host's name.
   pgadmin:
     image: dpage/pgadmin4:9@sha256:c332c5f6dfba995d9ebc4af261d93506d6876085d712eaaa3defc8dd1a3f26de
     profiles: ['tools']
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:?Set PGADMIN_DEFAULT_EMAIL in .env}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?Set PGADMIN_DEFAULT_PASSWORD in .env}
@@ -40,7 +21,7 @@ services:
       - /bin/sh
       - -c
       - >-
-        echo "postgres:5432:*:$$POSTGRES_USER:$$POSTGRES_PASSWORD" > "$$PGPASSFILE"
+        echo "host.docker.internal:*:*:$$POSTGRES_USER:$$POSTGRES_PASSWORD" > "$$PGPASSFILE"
         && chmod 600 "$$PGPASSFILE" && exec /entrypoint.sh
     ports:
       - '127.0.0.1:${PGADMIN_PORT:-5051}:80'
@@ -48,5 +29,4 @@ services:
       - pgadmin_data:/var/lib/pgadmin
       - ./infra/dev/pgadmin-servers.json:/pgadmin4/servers.json:ro
 volumes:
-  postgres_data:
   pgadmin_data:

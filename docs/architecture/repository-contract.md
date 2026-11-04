@@ -1,6 +1,8 @@
 # 仓库目录与依赖契约
 
-版本：1.25。日期：2026-11-01。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.26。日期：2026-11-03。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.26 变更：用户 2026-11-03 决定主力开发机由 Windows 换为 Mac，并把开发数据库移出 Docker，同时保持 Windows 重新 clone 后可用。开发库改用本机 PostgreSQL 17 服务（默认 127.0.0.1:5432，`npm run db:setup` 幂等创建项目角色与数据库），隔离测试库改用 `.runtime/fs-test-pg` 下的独立本机集群（仍为 55439，不与开发库共用服务器，因为角色是服务器级的）；根 `compose.yaml` 只保留可选的 pgAdmin；生产部署 `infra/production` 不变。根目录新增 `start.command`、`stop.command`（Mac 双击入口），`start.cmd`、`stop.cmd` 保留。架构检查忽略系统自动生成的 `.DS_Store`、`Thumbs.db`、`desktop.ini`，它们不属于仓库内容。
 
 1.25 变更：依据[视觉方向决策](../decisions/2026-11-01-visual-direction-decision.md)（用户 2026-11-01 确认），设计规范升为 4.0“暖亮浮动面板”，恢复一键换配色、取消深色模式。配色是 `assets/theme.css` 里的 `[data-theme='<配色>']` 规则（只改强调色与底色渐变），theme.css 仍是唯一允许写取值的文件，1.13、1.16 的检查规则不变；不恢复 1.14 的主题包目录与 `/api/preferences`，所选配色按“浏览器 + 用户”存在 `localStorage`，由 `apps/web/src/services/theme.ts` 读写并在挂载前设置到 `<html data-theme>`。1.15 中“深色跟随系统”“取消主题换肤”两句废止。
 
@@ -83,7 +85,7 @@
 | docs               | 与代码版本对应的产品说明、架构、模块规格、决策、运行说明与历史归档               | 产品运行时数据来源、个人助手记忆                   |
 | .runtime           | 本机私有状态、附件、凭据、日志及隔离测试环境（忽略提交）                         | 应提交的业务源码                                   |
 
-根目录只保留统一入口及工具要求的配置：README、AGENTS、package.json、单一锁文件、start.cmd、stop.cmd、compose.yaml、编辑器/格式/Git 配置及测试配置。本机工具配置目录 `.vscode`、`.claude`、`.workbuddy` 允许存在，其中 `.claude`、`.workbuddy` 整体不入库。不新增 frontend/backend、src、common 等与上述结构重叠的根目录。
+根目录只保留统一入口及工具要求的配置：README、AGENTS、package.json、单一锁文件、start.cmd、stop.cmd、start.command、stop.command、compose.yaml（只含可选的 pgAdmin）、编辑器/格式/Git 配置及测试配置。本机工具配置目录 `.vscode`、`.claude`、`.workbuddy` 允许存在，其中 `.claude`、`.workbuddy` 整体不入库。不新增 frontend/backend、src、common 等与上述结构重叠的根目录。
 
 ## 3. 应用内部边界
 

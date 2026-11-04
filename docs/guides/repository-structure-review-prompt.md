@@ -1,6 +1,6 @@
 # Web 应用目录与文件审查提示词
 
-> 状态：现行 · 最后更新：2026-10-31。
+> 状态：现行 · 最后更新：2026-11-03。
 
 这是一份人审提示词，与 `scripts/checks/architecture.mjs` 的自动化检查互补，不替代它。
 
@@ -155,7 +155,7 @@ P3 整洁度：空目录；命名不一致；规模异常；文档链接失效
 
 | 参数               | 说明                         | 示例                                                                                  |
 | ------------------ | ---------------------------- | ------------------------------------------------------------------------------------- |
-| `REPO_ROOT`        | 仓库根绝对路径               | `D:\Workspace\my-app`                                                                 |
+| `REPO_ROOT`        | 仓库根绝对路径               | `/Users/me/workspace/my-app`                                                          |
 | `CONTRACT_FILES`   | 结构契约、协作约束、设计规范 | `docs/architecture/repository-contract.md`、`AGENTS.md`                               |
 | `CONTROLLED_ROOTS` | 根目录白名单 + 根文件清单    | `apps/ packages/ scripts/ tests/ infra/ docs/` + `package.json`、锁文件、README       |
 | `LAYER_WHITELIST`  | 各层允许子目录               | `apps/web/src` → `features/ components/ views/ router/ services/ lib/ assets/ types/` |
@@ -166,12 +166,12 @@ P3 整洁度：空目录；命名不一致；规模异常；文档链接失效
 ## 4. 本项目已填参数（SAP Delivery Workbench）
 
 ```text
-REPO_ROOT         = D:\Workspace\sap-delivery-workbench
+REPO_ROOT         = 本仓库根目录的绝对路径
 CONTRACT_FILES    = docs/architecture/repository-contract.md（v1.19，唯一目录规范）
                     AGENTS.md（协作约束与验证要求）
                     docs/DESIGN.md（界面与令牌）
 CONTROLLED_ROOTS  = apps/ packages/ database/ scripts/ tests/ infra/ tools/ vendor/ docs/ .runtime/
-                    根文件：README.md AGENTS.md package.json 单一锁文件 start.cmd stop.cmd
+                    根文件：README.md AGENTS.md package.json 单一锁文件 start.cmd stop.cmd start.command stop.command
                     compose.yaml 编辑器/格式/Git/测试配置
                     允许的本机工具目录：.vscode、（.claude 整体不入库）
 LAYER_WHITELIST   = apps/web/src → features/ components/ views/ router/ services/ lib/ assets/ types/

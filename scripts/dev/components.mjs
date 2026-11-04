@@ -49,7 +49,6 @@ async function assertPortFree() {
 async function start() {
   const alreadyRunning = await control('status');
   if (!alreadyRunning) await assertPortFree();
-  run('docker', ['info', '--format', '{{.ServerVersion}}']);
   if (!existsSync(join(root, 'node_modules/vite/package.json'))) {
     if (process.platform === 'win32') run('cmd.exe', ['/d', '/c', 'npm ci']);
     else run('npm', ['ci']);
@@ -67,7 +66,7 @@ async function start() {
     );
   run(process.execPath, ['scripts/dev/setup-env.mjs']);
   run(process.execPath, ['scripts/vendor/setup-sap-mcp.mjs']);
-  run('docker', ['compose', 'up', '-d', '--wait', 'postgres']);
+  run(process.execPath, ['--env-file=.env', 'scripts/database/setup.mjs']);
   run(process.execPath, ['--env-file=.env', 'scripts/database/migrate.mjs']);
   run(process.execPath, ['--env-file=.env', 'scripts/database/provision.mjs']);
   run(process.execPath, ['--env-file=.env', 'scripts/database/bootstrap.mjs']);
@@ -141,8 +140,7 @@ async function stop() {
     if (!(await control('stop')))
       throw new Error('Frontend refused shutdown. Check .runtime/web.log.');
     for (let attempt = 0; existsSync(stateFile) && attempt < 40; attempt++) await delay(250);
-    if (existsSync(stateFile))
-      throw new Error('Frontend shutdown timed out. Database has not been stopped.');
+    if (existsSync(stateFile)) throw new Error('Frontend shutdown timed out.');
   } else {
     // Never terminate an unrelated process based on a stale PID or occupied port.
     if (existsSync(stateFile)) unlinkSync(stateFile);
@@ -150,8 +148,8 @@ async function stop() {
       'No managed frontend running. Manual npm run dev sessions must be stopped separately.',
     );
   }
-  if (existsSync(join(root, '.env'))) run('docker', ['compose', 'stop']);
-  console.log('Stopped managed components. Database volume and data are preserved.');
+  // The PostgreSQL service belongs to this machine and may serve other projects; it stays running.
+  console.log('Stopped API and Vue. The PostgreSQL service and its data are left as they are.');
 }
 
 try {

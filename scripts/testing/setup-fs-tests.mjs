@@ -30,29 +30,4 @@ try {
 } catch (error) {
   if (error.code !== 'EEXIST') throw error;
 }
-try {
-  await writeFile(
-    new URL('fs-tests.compose.yaml', runtime),
-    `name: sap-fs-tests-dev
-services:
-  postgres:
-    image: postgres:17.11@sha256:d74eeac9a635390a49bc21bd49fccd973de707e2a53a76ac49b552b8712ec46f
-    env_file: fs-tests.env
-    ports:
-      - '127.0.0.1:55439:5432'
-    volumes:
-      - fs_test_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
-      interval: 2s
-      timeout: 3s
-      retries: 20
-volumes:
-  fs_test_data:
-`,
-    { flag: 'wx' },
-  );
-} catch (error) {
-  if (error.code !== 'EEXIST') throw error;
-}
 console.log('FS test configuration ready; existing files preserved. Primary .env untouched.');

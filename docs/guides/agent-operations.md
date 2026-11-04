@@ -1,12 +1,12 @@
 # 智能助手本机运行与观察
 
-> 状态：现行 · 最后更新：2026-10-31。
+> 状态：现行 · 最后更新：2026-11-03。
 
 设计助手（`abap-fsd-agent`）与开发助手（`abap-dev-agent`）开发、测试时共用的操作说明。各模块文档只链接本文，不再各抄一份。启动、端口、检查命令以根目录 [README](../../README.md) 为准。
 
 ## 1. 启动、停止与重启
 
-- 启动 / 停止：双击 `start.cmd` / `stop.cmd`，或 `npm start` / `npm stop`。启动器逐项确认数据库、API、前端页面与代理都可用后才提示成功；开机后首次启动较慢（可能一分钟左右）。日志在 `.runtime/web.log`。
+- 启动 / 停止：`npm start` / `npm stop`（也可双击 `start.command` / `stop.command`，Windows 为 `.cmd`）。启动器逐项确认数据库、API、前端页面与代理都可用后才提示成功；开机后首次启动较慢（可能一分钟左右）。日志在 `.runtime/web.log`。
 - **API 不热更新**：改后端代码或提示词（`prompts/`）后要重启才生效；前端改动由 Vite 热更新。
 - **重启前确认没有运行中的轮次**：重启会打断正在运行的对话。先查 `app.abap_fsd_agent_turn`、`app.abap_dev_agent_turn` 中 `status='running'` 的记录；有则先问用户。
 - 页面某些入口点了没反应、控制台出现 `504 (Outdated Optimize Dep)` 或 `Failed to fetch dynamically imported module`：开发服务的依赖打包缓存被替换了，重启服务即可。测试已用单独的缓存（`node_modules/.vite-test`，BUG-008）；另起 Vite 时不要用开发服务的缓存目录。
@@ -24,7 +24,7 @@
 一轮通常 1～6 分钟。等待时用 Monitor 的 until 循环查轮次 `status` 不再是 `running`，不要短间隔轮询。
 
 - **审计页**（只有设计助手，开发助手接入见待办 FEAT-004）：`/settings/audit`，每轮详情含对话、工具调用与文档比对；也可调用 `/api/audit/runs/:turnId`。
-- **直接查库**（两个助手都适用，最快）：在 scratchpad 写 Node 脚本，用 `createRequire('file:///D:/Workspace/sap-delivery-workbench/apps/api/package.json')('pg')` 与 `apps/api/src/platform/database.mjs` 的 `databaseConfig({ runtime: true })` 连库，以 `node --env-file=.env` 运行。表前缀 `app.abap_fsd_agent_` / `app.abap_dev_agent_`：
+- **直接查库**（两个助手都适用，最快）：在 scratchpad 写 Node 脚本，用 `createRequire(pathToFileURL(resolve('apps/api/package.json')))('pg')` 与 `apps/api/src/platform/database.mjs` 的 `databaseConfig({ runtime: true })` 连库，在仓库根目录以 `node --env-file=.env` 运行。表前缀 `app.abap_fsd_agent_` / `app.abap_dev_agent_`：
   - `turn`：`status`、`stop_reason`、`usage`、`error`
   - `tool_call`：`name`、`status`、`result_summary`、`arguments`
   - `message`：`payload ? 'questions'` 取出题，`role='assistant'` 取回复

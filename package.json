@@ -17,8 +17,7 @@
     "start": "node scripts/dev/components.mjs start",
     "stop": "node scripts/dev/components.mjs stop",
     "setup:env": "node scripts/dev/setup-env.mjs",
-    "db:up": "docker compose up -d --wait postgres",
-    "db:stop": "docker compose stop postgres",
+    "db:setup": "node --env-file=.env scripts/database/setup.mjs",
     "db:admin": "docker compose up -d --wait pgadmin",
     "db:admin:stop": "docker compose stop pgadmin",
     "db:status": "node --env-file=.env scripts/database/status.mjs",
@@ -45,6 +44,7 @@
     "test:integration": "node scripts/testing/run-tests.mjs --integration",
     "test:e2e": "npm run test:e2e:node",
     "test:setup": "node scripts/testing/setup-database.mjs",
+    "test:teardown": "node scripts/testing/setup-database.mjs --stop",
     "test:e2e:node": "node scripts/testing/run-tests.mjs --e2e"
   },
   "devDependencies": {

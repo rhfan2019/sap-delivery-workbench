@@ -1,6 +1,6 @@
 # 待办与问题清单
 
-> 状态：现行 · 最后更新：2026-11-01。
+> 状态：现行 · 最后更新：2026-11-03。
 
 **所有未完成事项的唯一入口。** 日常发现的问题、专项测试的问题、模块文档“现状与下一步”里的待办，都在这里登记一行；模块文档只列编号，不重复描述。
 
@@ -59,6 +59,12 @@
 | UI-019     | 界面     | 表单页原生下拉与日期控件换成统一胶囊控件（日期用 BaseDateInput）                  | 中     | 已修复（beb6b33）                   |
 | UI-020     | 工作台   | 里程碑轨在 9 栏卡里标签仍偏挤，月份水印压住“今天”标签                             | 低     | 待处理                              |
 | UI-021     | 工作台   | 工作台 v2：FSD / 开发 / 顾问测试三个完成环、每周进展图、模块 × 阶段加个数与合计行 | 高     | 已修复（4315d4b）                   |
+| TECH-002   | 开发环境 | 主力机换为 Mac，开发库与测试库移出 Docker，保留 Windows 重新 clone 后可用         | 高     | 已修复（COMMIT_HASH）               |
+| BUG-011    | 开发环境 | 全新数据库迁移失败：迁移授权给尚未创建的 sap_workbench_app 角色                   | 高     | 已修复（COMMIT_HASH）               |
+| BUG-012    | 开发环境 | `npm run db:status` 写死 20 张业务表，实际 57 张，正常的库也返回失败              | 低     | 待处理                              |
+| TECH-003   | 开发环境 | Windows 旧 Docker 库的数据是否导入 Mac                                            | 高     | 待决定                              |
+| TECH-004   | 开发环境 | Homebrew PostgreSQL 默认本机免密（trust），项目密码在本机不起校验作用             | 低     | 待决定                              |
+| TEST-005   | 测试     | 集成测试库未建好时，测试进程长时间不退出                                          | 低     | 待处理                              |
 | BUG-010    | 开发环境 | 设计助手页白屏：Vite 报 504 Outdated Optimize Dep，刷新不恢复                     | 中     | 已关闭（2026-11-01 重启服务后正常） |
 | FEAT-019   | 工作台   | “本周要点”改由模型生成（AI 洞察），每条可直接指派或进助手                         | 中     | 待处理                              |
 | FEAT-020   | 工作台   | 模块层：按模块的角色模板、权限点 `delivery.item:assign`、模块切换条               | 中     | 待处理                              |
@@ -71,6 +77,26 @@
 | DEV-E2E-03 | 开发助手 | 模型自述不可信，以版本差异为准                                                    | 低     | 只记录                              |
 
 ## 条目详情
+
+### TECH-002 换机到 Mac 与数据库移出 Docker
+
+用户 2026-11-03 决定（契约 1.26）。开发库用本机 PostgreSQL 17 服务，测试库用 `.runtime/fs-test-pg` 独立集群，根 `compose.yaml` 只留可选的 pgAdmin；生产部署 `infra/production` 仍用 Docker，未改。已在 Mac 上实测初始化、启停、全部测试和 pgAdmin。Windows 分支（管理员账号、`PG_BIN_DIR`）按文档实现，**没有在 Windows 上实测**，下次在 Windows 重新 clone 时验证。
+
+### BUG-011 全新数据库迁移失败
+
+`1791046806000_fsd-agent` 起的迁移授权给 `sap_workbench_app`，而角色原本只在迁移之后的 `provision.mjs` 里创建；旧库已有角色，所以一直没暴露。现在 `migrate.mjs` 先创建不可登录的角色。生产首次部署走同一脚本，同样受益，但没有实测。
+
+### TECH-003 Windows 旧数据
+
+迁移前 Windows 上的项目数据、账号、已保存凭据和附件都不在 Git 里，这次初始化的是空库。要导入时（流程尚未实测）：在 Windows 用 `pg_dump -Fc -f` 写到容器内，再用 `docker compose cp` 取出（不用 PowerShell 的 `>` 重定向）；把旧 `.env` 的 `SAP_CREDENTIAL_KEY`、`LLM_CREDENTIAL_KEY`、`DEFAULT_ORGANIZATION_ID` 写入 Mac 的 `.env`，其他值保留；重建空的开发库后 `pg_restore --no-owner --no-acl`，再 `npm run db:migrate`、`npm run db:provision`；复制 `.runtime` 下的 `delivery-files`、`abap-fsd-agent-files`、`abap-dev-agent-files`。附件的 `storage_key` 旧值含反斜杠，但读取文件时不用它，不受影响。
+
+### TECH-004 本机免密
+
+Homebrew 初始化的集群 `pg_hba.conf` 对本机连接用 trust，任何本机进程都可不带密码连接任一角色，这是这台机器的服务级设置，这次没有改。开发库只监听本机。如要收紧，改为 `scram-sha-256`，同时要给本机其他使用者配密码。测试集群已用 `scram-sha-256`。
+
+### TEST-005 测试库未就绪时不退出
+
+2026-11-03 迁移失败后直接跑 `test:integration`，10 分钟没有结束，只能手动终止。建议在 `run-tests.mjs` 运行前检查数据库可连且迁移完成，否则立即报错并提示 `npm run test:setup`。
 
 ### UI-017 规范 4.0 暖亮浮动面板
 

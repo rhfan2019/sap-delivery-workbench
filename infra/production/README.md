@@ -6,7 +6,7 @@
 
 1. 准备 Ubuntu 24.04 LTS CVM（建议至少 2 核 4 GiB，独立数据盘和容量告警），按 Docker 官方 Ubuntu 指南安装 Engine、Buildx、Compose v2；确认 `docker version`、`docker compose version`。维护窗口操作使用具备 Docker 权限的部署账号。
 2. 域名解析至 CVM；中国大陆公网网站先完成适用备案。腾讯云安全组仅开放公网 80/443，SSH 22 限管理员固定 IP；不开放 3001/5432/5173。通过 VPC/VPN 打通 SAP 所需端口；模型出口域名按组织策略放行。
-3. 将源码与锁文件上传至 `/opt/sapwb`，不上传 `.env`、`.runtime`、`node_modules` 或客户数据。Docker 在 Linux 内重新安装 root 与 vendor 依赖，Argon2 原生模块不复用 Windows 二进制。保留 vendor 来源/许可证记录。
+3. 将源码与锁文件上传至 `/opt/sapwb`，不上传 `.env`、`.runtime`、`node_modules` 或客户数据。Docker 在 Linux 内重新安装 root 与 vendor 依赖，Argon2 原生模块不复用开发机的二进制。保留 vendor 来源/许可证记录。
 4. 在腾讯云 SSL 或受控 ACME 流程签发证书，放入 `infra/production/tls/fullchain.pem` 和 `privkey.pem`。证书须匹配 APP_ORIGIN 域名；设置到期告警及续签任务，更新后执行 `docker compose --env-file production.env exec web nginx -t`，再 `exec web nginx -s reload`。本方案不内置证书自动申请。
 
 所有以下命令均在 Linux Bash 执行，先进入目录：

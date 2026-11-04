@@ -1,12 +1,12 @@
 # 查看开发数据库与表关系图
 
-> 状态：现行 · 最后更新：2026-10-31。
+> 状态：现行 · 最后更新：2026-11-03。
 
-本项目自带一个 pgAdmin，用来浏览开发库的表、数据，并自动画出表关系图（ERD）。它只连本机开发库，不随 `npm start` 启动，用时单独开。
+本项目自带一个 pgAdmin，用来浏览开发库的表、数据，并自动画出表关系图（ERD）。开发库本身是本机 PostgreSQL 服务；pgAdmin 运行在 Docker 里（用时先打开 Docker Desktop），只连本机开发库，不随 `npm start` 启动，用时单独开。
 
 ## 启动与登录
 
-1. 先启动开发库（`npm start` 或 `npm run db:up`），再运行：
+1. 先准备好开发库（`npm start` 或 `npm run db:setup`），再运行：
 
    ```bash
    npm run db:admin
@@ -16,7 +16,7 @@
 3. 登录账号是 `.env` 中的 `PGADMIN_DEFAULT_EMAIL` 与 `PGADMIN_DEFAULT_PASSWORD`。这是 pgAdmin 自己的登录账号，不是数据库账号。
 4. 登录后，左侧 **Servers → sap-delivery-workbench → sap-delivery-workbench（开发库）** 已经登记好，点开即可连上，不需要输入数据库密码。
 
-停止：`npm run db:admin:stop`；`npm stop` 也会一并停止。
+停止：`npm run db:admin:stop`；`npm stop` 不会停止它。刚启动时页面可能要等几秒才能打开。
 
 ## 画表关系图
 
@@ -24,13 +24,13 @@
 
 ## 配置说明
 
-| 项目       | 位置                                                                                                                                |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 服务定义   | 根目录 `compose.yaml` 的 `pgadmin` 服务（`tools` profile，只监听 127.0.0.1，端口可用 `.env` 的 `PGADMIN_PORT` 改，默认 5051）       |
-| 服务器登记 | `infra/dev/pgadmin-servers.json`，每次启动按它重新登记；主机为 Compose 内的 `postgres:5432`，用户为 `postgres`                      |
-| 登录账号   | `.env` 的 `PGADMIN_DEFAULT_EMAIL`（须为合法邮箱格式）、`PGADMIN_DEFAULT_PASSWORD`；`npm run setup:env` 新建 `.env` 时会生成随机密码 |
-| 数据库密码 | 容器启动时从 `.env` 的 `POSTGRES_USER`、`POSTGRES_PASSWORD` 写入容器内的 pgpass 文件，不写入仓库                                    |
-| 保存的数据 | Docker 卷 `pgadmin_data`（查询历史、界面布局、ERD 文件）                                                                            |
+| 项目       | 位置                                                                                                                                         |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 服务定义   | 根目录 `compose.yaml` 的 `pgadmin` 服务（`tools` profile，只监听 127.0.0.1，端口可用 `.env` 的 `PGADMIN_PORT` 改，默认 5051）                |
+| 服务器登记 | `infra/dev/pgadmin-servers.json`，每次启动按它重新登记；主机为 `host.docker.internal:5432`（容器访问本机服务），用户为 `sap_workbench_owner` |
+| 登录账号   | `.env` 的 `PGADMIN_DEFAULT_EMAIL`（须为合法邮箱格式）、`PGADMIN_DEFAULT_PASSWORD`；`npm run setup:env` 新建 `.env` 时会生成随机密码          |
+| 数据库密码 | 容器启动时从 `.env` 的 `POSTGRES_USER`、`POSTGRES_PASSWORD` 写入容器内的 pgpass 文件，不写入仓库                                             |
+| 保存的数据 | Docker 卷 `pgadmin_data`（查询历史、界面布局、ERD 文件）                                                                                     |
 
 登录账号只在第一次创建 `pgadmin_data` 卷时生效。之后修改 `.env` 中的 pgAdmin 密码，需要在 pgAdmin 里改密码（右上角用户菜单 → Change Password），或删除 `pgadmin_data` 卷重建（只影响 pgAdmin 自身的保存内容，不影响业务数据库）。
 

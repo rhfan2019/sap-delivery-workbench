@@ -8,4 +8,4 @@ Fastify 应用，公开工具接口见 package.json 的 exports。
 - 模块清单与职责见根目录 README 的工程地图和目录契约第 3 节；例如 abap-fsd-agent 是 FSD 设计助手，abap-dev-agent 是 ABAP 开发助手，两者共用 agent-core；access 是权限内核；audit 承载审计日志与助手运行评论；item-workspace 只提供开发项工作区的访问上下文。
 - 应用不得依赖 scripts/tools/tests/docs。跨 workspace 使用包 exports。内部存量跨业务依赖在 docs/architecture/module-dependencies.json 登记。
 
-在仓库根目录 npm run dev 或 start.cmd 联合启动。规则见 ../../docs/architecture/repository-contract.md。
+在仓库根目录 npm run dev 或 npm start 联合启动。规则见 ../../docs/architecture/repository-contract.md。

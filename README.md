@@ -6,15 +6,18 @@ Vue 3 + Fastify + PostgreSQL 的全栈 Web 应用，使用 npm workspaces 统一
 
 ## 快速开始
 
-需要 Node.js 24 LTS（最低 22.12）、npm 10+、运行中的 Docker Desktop/Linux containers。
+需要 Node.js 24 LTS（最低 22.12）、npm 10+、本机 PostgreSQL 17。开发数据库不在 Docker 里；Docker 只有 pgAdmin 和生产部署才用。
 
-Windows 双击 `start.cmd`，或在根目录执行 `npm start`。启动器检查目录/依赖（架构检查不通过只告警，不阻止启动）、保留已有环境配置，启动数据库并执行迁移与幂等初始化，然后后台启动 API 和前端，逐项确认数据库、API、前端页面与代理都可用后才提示启动成功。开机后首次启动需要较长时间（可能一分钟左右）。
+- macOS（主力环境）：`brew install postgresql@17`。服务没运行时启动器会执行 `brew services start postgresql@17`。
+- Windows（重新 clone 后临时使用）：安装 PostgreSQL 17 官方包，先运行一次 `npm run setup:env`，在 `.env` 填 `POSTGRES_ADMIN_USER=postgres` 和安装时设的 `POSTGRES_ADMIN_PASSWORD`。运行测试时把 PostgreSQL 的 `bin` 目录加入 PATH，或设 `PG_BIN_DIR`。
 
-打开 http://127.0.0.1:5173/home 。前端端口为 5173，API 为 3001，开发数据库映射到 55432。前端同源代理 `/api`。
+在根目录执行 `npm start`，或双击 `start.command`（Mac）、`start.cmd`（Windows）。启动器检查目录/依赖（架构检查不通过只告警，不阻止启动）、保留已有环境配置，确认本机 PostgreSQL 可用并创建项目角色与数据库，执行迁移与幂等初始化，然后后台启动 API 和前端，逐项确认数据库、API、前端页面与代理都可用后才提示启动成功。开机后首次启动需要较长时间（可能一分钟左右）。
+
+打开 http://127.0.0.1:5173/home 。前端端口为 5173，API 为 3001，开发数据库为本机 5432。前端同源代理 `/api`。
 
 首次登录账号为 `admin`，随机临时密码保存在本机 `.runtime/initial-login.txt`，首次登录必须改密。不要提交或分享该文件。重复启动不会重置账号。
 
-双击 `stop.cmd` 或运行 `npm stop` 停止受管组件，保留数据库卷和附件。启动日志为 `.runtime/web.log`。不要使用 `docker compose down -v` 修复启动问题。
+运行 `npm stop`，或双击 `stop.command`（Mac）、`stop.cmd`（Windows）停止 API 与前端。PostgreSQL 是本机服务，可能还服务其他项目，不随之停止；数据和附件都保留。启动日志为 `.runtime/web.log`。不要用删除数据库或重新初始化集群的办法修复启动问题。
 
 ## 工程地图
 
@@ -58,7 +61,7 @@ tests/
   e2e/                       浏览器验收
   fixtures/                  测试样本
 infra/production/            Docker 和 Nginx 部署
-infra/dev/                   本机开发用的 Docker 配置（pgAdmin 服务器登记）
+infra/dev/                   可选 pgAdmin 的服务器登记（开发数据库本身不在 Docker）
 vendor/abap-adt/              内置第三方 SAP MCP 运行时
 docs/                        产品说明、架构、模块文档、决策、指南与归档（入口 docs/README.md）
 .runtime/                    本机数据、凭据、日志、附件和验证产物
@@ -91,7 +94,7 @@ ABAP 开发助手 `abap-dev-agent`（开发项工作区“开发”阶段）首�
 | ---------------------------- | ------------------------------------------------------------------------------------------------ |
 | `npm ci`                     | 按锁文件安装全部 workspace 依赖                                                                  |
 | `npm run setup:env`          | 创建本机环境配置，保留已有 .env                                                                  |
-| `npm run db:up`              | 启动开发 PostgreSQL                                                                              |
+| `npm run db:setup`           | 确认本机 PostgreSQL 可用，幂等创建项目角色与数据库                                               |
 | `npm run db:admin`           | 启动本项目的 pgAdmin（127.0.0.1:5051），用法见[查看开发数据库](docs/guides/database-browsing.md) |
 | `npm run db:admin:stop`      | 停止 pgAdmin                                                                                     |
 | `npm run db:migrate`         | 执行数据库迁移                                                                                   |
@@ -101,12 +104,13 @@ ABAP 开发助手 `abap-dev-agent`（开发项工作区“开发”阶段）首�
 | `npm run check:architecture` | 校验目录、导入、包 exports 和测试归属                                                            |
 | `npm run check`              | 架构、类型与生产构建                                                                             |
 | `npm run test:unit`          | 无主数据库依赖的单元测试                                                                         |
-| `npm run test:setup`         | 准备独立测试数据库，保留主数据库                                                                 |
+| `npm run test:setup`         | 创建并启动独立测试数据库，保留主数据库；重启电脑后要重新运行                                     |
+| `npm run test:teardown`      | 停止独立测试数据库，数据保留                                                                     |
 | `npm test`                   | 全部单元和隔离集成测试                                                                           |
 | `npm run test:integration`   | 仅隔离集成测试                                                                                   |
 | `npm run test:e2e`           | 浏览器回归                                                                                       |
 
-集成测试配置为 `.runtime/fs-tests.env`，数据库端口 55439，数据库名称必须满足 `sap_fs_test_*dev`。测试命令不会回退到主 `.env`。单元测试与集成测试不调用真实付费模型；实时 SAP 验证使用显式 `npm run verify:sap`。
+集成测试配置为 `.runtime/fs-tests.env`，数据库是 `.runtime/fs-test-pg` 下的独立本机集群，端口 55439（不与开发库共用服务器：角色是服务器级的，共用会改掉开发库运行账号的密码），数据库名称必须满足 `sap_fs_test_*dev`。测试命令不会回退到主 `.env`。单元测试与集成测试不调用真实付费模型；实时 SAP 验证使用显式 `npm run verify:sap`。
 
 后端和 contracts 各有独立 package.json/exports；跨 workspace 使用 `@sap-delivery-workbench/*` 包入口。只有一个根锁文件；vendor 的上游锁文件保留。
 

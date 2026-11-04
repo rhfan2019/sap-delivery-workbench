@@ -1,4 +1,5 @@
 import { connectDatabase, databaseConfig } from '@sap-delivery-workbench/api/platform/database';
+import { ensureRuntimeRole } from './runtime-role.mjs';
 
 const role = 'sap_workbench_app';
 if (process.env.APP_DB_USER !== role) throw new Error('APP_DB_USER must be sap_workbench_app.');
@@ -9,8 +10,7 @@ const client = await connectDatabase();
 try {
   await client.query('BEGIN');
   await client.query("SELECT pg_advisory_xact_lock(hashtext('sap-workbench-provision'))");
-  const exists = await client.query('SELECT 1 FROM pg_roles WHERE rolname=$1', [role]);
-  if (!exists.rowCount) await client.query('CREATE ROLE sap_workbench_app NOLOGIN');
+  await ensureRuntimeRole(client);
   await client.query(
     'ALTER ROLE sap_workbench_app WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD ' +
       client.escapeLiteral(runtime.password),

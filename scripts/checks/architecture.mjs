@@ -325,11 +325,16 @@ export function checkImport(file, specifier, { files, allowedModuleEdges }) {
   return errors;
 }
 
+// Contract 1.26: files the operating system writes on its own are not repository content.
+const osGeneratedFiles = new Set(['.DS_Store', 'Thumbs.db', 'desktop.ini']);
+export const isOsGenerated = (name) => osGeneratedFiles.has(name);
+
 async function walk(directory, relative = '') {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = [];
   for (const entry of entries) {
     if (['node_modules', 'dist', '.git', '.runtime'].includes(entry.name)) continue;
+    if (entry.isFile() && isOsGenerated(entry.name)) continue;
     const name = relative ? relative + '/' + entry.name : entry.name;
     if (entry.isDirectory()) files.push(...(await walk(resolve(directory, entry.name), name)));
     else files.push(name);
@@ -407,6 +412,8 @@ export async function checkRepository(directory = root) {
     'package-lock.json',
     'start.cmd',
     'stop.cmd',
+    'start.command',
+    'stop.command',
     'compose.yaml',
     'sap-delivery-workbench.code-workspace',
     '.dockerignore',
@@ -420,6 +427,7 @@ export async function checkRepository(directory = root) {
     '.prettierrc.json',
   ]);
   for (const entry of await readdir(directory, { withFileTypes: true })) {
+    if (entry.isFile() && isOsGenerated(entry.name)) continue;
     if (entry.isDirectory() ? !allowedRoots.has(entry.name) : !allowedRootFiles.has(entry.name))
       errors.push(`Unregistered root entry: ${entry.name}`);
   }

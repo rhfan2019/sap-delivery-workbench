@@ -8,6 +8,7 @@ import {
   checkDesignTokens,
   checkLegacy,
   declaredProperties,
+  isOsGenerated,
 } from '../../../scripts/checks/architecture.mjs';
 
 const files = new Set([
@@ -426,4 +427,10 @@ test('docs keep few current documents named by topic; only decisions carry a dat
   assert.match(errors, /plans\/2026-10-31-x\.md: Unregistered docs directory/);
   assert.match(errors, /modules\/2026-10-31-x\.md: Current document named by date/);
   assert.match(errors, /positioning\.md: Decision record without a date prefix/);
+});
+
+test('files the operating system writes on its own are not repository content', () => {
+  for (const name of ['.DS_Store', 'Thumbs.db', 'desktop.ini'])
+    assert.equal(isOsGenerated(name), true);
+  assert.equal(isOsGenerated('notes.md'), false);
 });
