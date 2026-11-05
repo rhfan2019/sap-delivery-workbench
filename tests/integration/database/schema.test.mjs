@@ -45,6 +45,7 @@ const expectedTables = [
   'llm_model',
   'llm_model_version',
   'llm_test_run',
+  'list_view',
   'login_throttle',
   'organization',
   'organization_member',

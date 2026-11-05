@@ -134,9 +134,15 @@ test('development overview: cards drill down to the list with the same count', a
   await page.goto('http://127.0.0.1:5194/workspace/development-items');
   await page.getByText(/ 共 15 项$/).waitFor();
   await page.evaluate(() => {
-    const key = Object.keys(sessionStorage).find((k) => k.startsWith('delivery-filters:v2:'));
+    const key = Object.keys(sessionStorage).find((k) => k.startsWith('delivery-filters:v3:'));
     const saved = JSON.parse(sessionStorage.getItem(key));
-    sessionStorage.setItem(key, JSON.stringify({ ...saved, moduleFilter: 'SD' }));
+    sessionStorage.setItem(
+      key,
+      JSON.stringify({
+        ...saved,
+        conditions: { module: [{ sign: 'I', option: 'EQ', low: 'SD' }] },
+      }),
+    );
   });
 
   await page.goto('http://127.0.0.1:5194/workspace/development-overview');

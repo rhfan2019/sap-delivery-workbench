@@ -1,6 +1,6 @@
 # 产品说明：SAP 智能交付工作台
 
-> 状态：现行 · 最后更新：2026-11-01。本文只写已确认、已上线的现状；规划中的内容见[路线图](roadmap.md)。
+> 状态：现行 · 最后更新：2026-11-04。本文只写已确认、已上线的现状；规划中的内容见[路线图](roadmap.md)。
 
 ## 1. 定位
 
@@ -33,6 +33,7 @@
 | 项目        | 基本信息、计划与健康、团队与干系人、规模与商务 | 项目主数据、Activate 阶段与里程碑、每周健康度、干系人、合同与人天预算                                                   | [access.md](modules/access.md) 第 1 节                       |
 | 交付 · 开发 | 开发概览                                       | 按角色的开发驾驶舱，24 个指标，可下钻到清单                                                                             | [development-overview.md](modules/development-overview.md)   |
 |             | 开发清单                                       | 开发台账：FSD、开发、顾问测试、IT/用户测试四阶段                                                                        | [development-list.md](modules/development-list.md)           |
+|             | 开发清单筛选与视图                             | 筛选栏、多选与排除、日期范围、列头菜单、适配筛选、保存个人视图                                                          | [list-report.md](modules/list-report.md)                     |
 |             | 开发排期                                       | 按周的开发人员计划、完成与负载                                                                                          | [development-load.md](modules/development-load.md)           |
 | 开发项      | 设计助手                                       | 模型主导写 FSD，读取 SAP、批注、定稿、导出                                                                              | [fsd-agent.md](modules/fsd-agent.md)                         |
 |             | 开发助手                                       | 写开发方案与 ABAP 代码，同步与校验                                                                                      | [dev-agent.md](modules/dev-agent.md)                         |

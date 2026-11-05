@@ -25,6 +25,7 @@
     "development-overview->delivery",
     "item-workspace->access",
     "item-workspace->delivery",
+    "list-views->access",
     "models->access",
     "models->admin",
     "models->sap",

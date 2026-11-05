@@ -1,6 +1,6 @@
 # 文档导航
 
-> 状态：现行 · 最后更新：2026-10-31。文档按主题命名、原地更新，版本靠 Git；打开就是最新版。只有方向决策带日期；做完的计划、测试记录和历史资料在 `archive/`，不代表现状。怎么写、何时改见[文档更新纪律](guides/development-discipline.md)第 1.1 节，布局规则见[目录与依赖契约](architecture/repository-contract.md)第 6 节。
+> 状态：现行 · 最后更新：2026-11-04。文档按主题命名、原地更新，版本靠 Git；打开就是最新版。只有方向决策带日期；做完的计划、测试记录和历史资料在 `archive/`，不代表现状。怎么写、何时改见[文档更新纪律](guides/development-discipline.md)第 1.1 节，布局规则见[目录与依赖契约](architecture/repository-contract.md)第 6 节。
 
 ## 阅读顺序
 
@@ -36,6 +36,7 @@
 | -------------------------- | ------------------------------------------------------------------ |
 | 项目主数据、权限与设置     | [access.md](modules/access.md)                                     |
 | 开发清单                   | [development-list.md](modules/development-list.md)                 |
+| 列表报表控件               | [list-report.md](modules/list-report.md)                           |
 | 开发概览                   | [development-overview.md](modules/development-overview.md)         |
 | 开发排期                   | [development-load.md](modules/development-load.md)                 |
 | 工作台多标签页             | [workbench-tabs.md](modules/workbench-tabs.md)                     |

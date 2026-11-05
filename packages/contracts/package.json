@@ -12,6 +12,8 @@
     "./delivery/fields": "./delivery/fields.mjs",
     "./delivery/overview": "./delivery/overview.mjs",
     "./delivery/load": "./delivery/load.mjs",
+    "./list-report/conditions": "./list-report/conditions.mjs",
+    "./list-report/views": "./list-report/views.mjs",
     "./projects/options": "./projects/options.mjs"
   }
 }

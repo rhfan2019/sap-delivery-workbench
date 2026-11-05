@@ -14,6 +14,8 @@ const browserContracts = new Set([
   'delivery/fields',
   'delivery/overview',
   'delivery/load',
+  'list-report/conditions',
+  'list-report/views',
   'access/catalog',
   'projects/options',
 ]);

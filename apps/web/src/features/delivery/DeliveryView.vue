@@ -4,11 +4,7 @@ import { RouterLink, onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import {
   Plus,
   Trash2,
-  RefreshCw,
-  Columns3,
-  SlidersHorizontal,
   X,
-  Search,
   Copy,
   PenSquare,
   FileDown,
@@ -23,21 +19,17 @@ import {
 } from '@lucide/vue';
 import BaseActionBar from '../../components/base/BaseActionBar.vue';
 import BaseButton from '../../components/base/BaseButton.vue';
-import BaseIconButton from '../../components/base/BaseIconButton.vue';
-import BaseInput from '../../components/base/BaseInput.vue';
 import BaseMenu from '../../components/base/BaseMenu.vue';
 import BaseTag from '../../components/base/BaseTag.vue';
-import BaseResizeHandle from '../../components/base/BaseResizeHandle.vue';
 import { moduleHue } from '../../components/base/identity';
 import BaseMenuItem from '../../components/base/BaseMenuItem.vue';
 import BaseMenuSeparator from '../../components/base/BaseMenuSeparator.vue';
-import BasePopover from '../../components/base/BasePopover.vue';
-import BaseTabs from '../../components/base/BaseTabs.vue';
 import { toast as notify } from '../../components/base/toast';
 import { detailOpen } from '../../services/shell';
 import { activeTabId, switchingTab, useTabLeave } from '../../services/tabs';
 import { useShortcut } from '../../services/shortcuts';
-import WorkbenchTable from '../../components/workbench-table/WorkbenchTable.vue';
+import ListReport from '../../components/list-report/ListReport.vue';
+import { useListReport } from '../../components/list-report/useListReport';
 import { api, ApiError, identity, type ProjectAccess } from '../../services/session';
 import { allows } from '../access/permissions';
 import {
@@ -68,6 +60,7 @@ import {
   type Member,
   type Tag,
 } from './model';
+import { listFields } from './listFields';
 import { tableColumns } from './tableColumns';
 import InlineCell from './InlineCell.vue';
 import ItemDrawer from './ItemDrawer.vue';
@@ -87,30 +80,11 @@ const readOnly = ref(true),
   busy = ref(false);
 const error = ref('');
 const checked = ref<string[]>([]);
-const table = ref<{ openColumns: () => void }>();
 const drawer = ref<InstanceType<typeof ItemDrawer> | null>(null);
 const drawerId = ref<string | null>(null); // '' = creating
-// The list beside an open item keeps the width the person dragged it to (DESIGN.md 4.1).
-const listWidth = ref(
-  (() => {
-    try {
-      return Number(localStorage.getItem('delivery-list-width')) || 400;
-    } catch {
-      return 400;
-    }
-  })(),
-);
-function saveListWidth(width: number) {
-  try {
-    localStorage.setItem('delivery-list-width', String(width));
-  } catch {
-    // Storage may be refused; the width then lasts for this page only.
-  }
-}
 const dialog = ref<'' | 'batch' | 'import' | 'settings'>('');
 const batchError = ref('');
 const menu = ref('');
-const columnKeys = ref<string[]>([]);
 
 const fields = computed(() => catalog(customFields.value));
 const ctx = computed<ListContext>(() => ({
@@ -195,212 +169,55 @@ const lateItems = computed(() => {
   if (!date) return 0;
   return items.value.filter((i) => pastGate(i, 'development', { code_freeze: date })).length;
 });
-const columnStorageKey = computed(
-  () =>
-    `delivery-columns:v2:${identity.value?.organization.id}:${identity.value?.user.id}:${currentProject.value}`,
-);
 
-// --- filters -----------------------------------------------------------------------------
-const search = ref(''),
-  scope = ref('all'),
-  moduleFilter = ref(''),
-  kindFilter = ref(''),
-  tagFilter = ref(''),
-  phaseFilter = ref(''),
-  statusFilter = ref(''),
-  priorityFilter = ref(''),
-  difficultyFilter = ref(''),
-  personFilter = ref('');
-// A drill-down from the development overview or the load table: applied on top of the
-// filters, not saved.
-const overview = ref<{ filter: OverviewFilter; label: string; source: string } | null>(null);
-const sortField = ref(''),
-  sortOrder = ref<'asc' | 'desc' | null>(null);
-const page = ref(1),
-  pageSize = ref(50);
-const filterState = {
-  search,
-  scope,
-  moduleFilter,
-  kindFilter,
-  tagFilter,
-  phaseFilter,
-  statusFilter,
-  priorityFilter,
-  difficultyFilter,
-  personFilter,
-  sortField,
-  sortOrder,
-  pageSize,
-};
-const filterKey = () =>
-  `delivery-filters:v2:${identity.value?.organization.id}:${identity.value?.user.id}:${currentProject.value}`;
-let restoring = false;
-// Set by a drill-down (below): this list's filters then stay its own.
-let drilled = false;
-watch(
-  Object.values(filterState),
-  () => {
-    if (restoring) return;
-    page.value = 1;
-    if (checked.value.length) checked.value = [];
-    if (drilled) return;
-    try {
-      sessionStorage.setItem(
-        filterKey(),
-        JSON.stringify(
-          Object.fromEntries(Object.entries(filterState).map(([k, r]) => [k, r.value])),
-        ),
-      );
-    } catch {
-      /* optional */
-    }
-  },
-  { flush: 'sync' },
-);
-function restoreFilters() {
-  if (drilled) return;
-  restoring = true;
-  let saved: Record<string, unknown> = {};
-  try {
-    saved = JSON.parse(sessionStorage.getItem(filterKey()) || '{}');
-  } catch {
-    /* optional */
-  }
-  for (const [key, state] of Object.entries(filterState)) {
-    const value = saved[key];
-    (state as { value: unknown }).value =
-      key === 'pageSize'
-        ? [20, 50, 100].includes(value as number)
-          ? value
-          : 50
-        : key === 'sortOrder'
-          ? ['asc', 'desc'].includes(value as string)
-            ? value
-            : null
-          : typeof value === 'string'
-            ? value
-            : key === 'scope'
-              ? 'all'
-              : '';
-  }
-  page.value = 1;
-  restoring = false;
-}
-function clearFilters() {
-  overview.value = null;
-  restoring = true;
-  for (const key of Object.keys(filterState))
-    if (!['sortField', 'sortOrder', 'pageSize', 'scope'].includes(key))
-      (filterState[key as keyof typeof filterState] as { value: unknown }).value = '';
-  restoring = false;
-  page.value = 1;
-}
+// --- the list report (docs/modules/list-report.md) -------------------------------------------
 const me = computed(() => identity.value?.user.id);
-const scopes = computed(() => {
-  const defs = [
-    { id: 'all', name: '全部', test: () => true },
-    { id: 'fsd', name: '我的 FSD', test: (i: Item) => i.phases.fsd.assigneeId === me.value },
-    {
-      id: 'development',
-      name: '我的开发',
-      test: (i: Item) => i.phases.development.assigneeId === me.value,
-    },
-    {
-      id: 'test',
-      name: '我的测试',
-      test: (i: Item) =>
-        i.phases.consultant_test.assigneeId === me.value ||
-        i.phases.user_test.assigneeId === me.value,
-    },
-    { id: 'risk', name: '风险', test: (i: Item) => atRisk(i, today()) },
-  ];
-  return defs.map((d) => ({ ...d, count: matching.value.filter(d.test).length }));
-});
-const matching = computed(() => {
-  const q = search.value.trim().toLowerCase();
-  const drill = overview.value;
-  const context = { today: today(), milestones: milestoneDates.value };
-  return items.value.filter(
-    (i) =>
-      (!drill || matchesFilter(i, drill.filter, context)) &&
-      (!q ||
-        [i.code, i.name, i.module, i.transactionCode, ...i.objects.map((o) => o.objectName)]
-          .join(' ')
-          .toLowerCase()
-          .includes(q)) &&
-      (!moduleFilter.value || i.module === moduleFilter.value) &&
-      (!kindFilter.value || i.kind === kindFilter.value) &&
-      (!tagFilter.value || i.tags.includes(tagFilter.value)) &&
-      (!statusFilter.value ||
-        (phaseFilter.value ? [phaseFilter.value] : PHASES.map((p) => p.key)).some(
-          (p) => i.phases[p as keyof Item['phases']].status === statusFilter.value,
-        )) &&
-      (!priorityFilter.value || i.priority === priorityFilter.value) &&
-      (!difficultyFilter.value || i.difficulty === difficultyFilter.value) &&
-      (!personFilter.value ||
-        PHASES.some((p) => i.phases[p.key].assigneeId === personFilter.value)),
-  );
-});
-const filtered = computed(() => {
-  const test = scopes.value.find((s) => s.id === scope.value)?.test ?? (() => true);
-  const result = matching.value.filter(test);
-  const field = fields.value.find((f) => f.key === sortField.value);
-  if (!field || !sortOrder.value) return result;
-  const dir = sortOrder.value === 'asc' ? 1 : -1;
-  return [...result].sort((a, b) => {
+const listScopes = computed(() => [
+  { id: 'all', name: '全部', test: () => true },
+  { id: 'fsd', name: '我的 FSD', test: (i: Item) => i.phases.fsd.assigneeId === me.value },
+  {
+    id: 'development',
+    name: '我的开发',
+    test: (i: Item) => i.phases.development.assigneeId === me.value,
+  },
+  {
+    id: 'test',
+    name: '我的测试',
+    test: (i: Item) =>
+      i.phases.consultant_test.assigneeId === me.value ||
+      i.phases.user_test.assigneeId === me.value,
+  },
+  { id: 'risk', name: '风险', test: (i: Item) => atRisk(i, today()) },
+]);
+const stateKey = () =>
+  `delivery-filters:v3:${identity.value?.organization.id}:${identity.value?.user.id}:${currentProject.value}`;
+const report = useListReport<Item>({
+  listKey: 'delivery.items',
+  rows: items,
+  fields: computed(() => listFields(fields.value, ctx.value)),
+  columns,
+  scopes: listScopes,
+  searchText: (i) =>
+    [i.code, i.name, i.module, i.transactionCode, ...i.objects.map((o) => o.objectName)].join(' '),
+  compare(a, b, key) {
+    const field = fields.value.find((f) => f.key === key);
+    if (!field) return 0;
     const x = sortValue(a, field, ctx.value),
       y = sortValue(b, field, ctx.value);
-    return (
-      (typeof x === 'number' && typeof y === 'number'
-        ? x - y
-        : String(x).localeCompare(String(y), 'zh-CN', { numeric: true })) * dir
-    );
-  });
+    return typeof x === 'number' && typeof y === 'number'
+      ? x - y
+      : String(x).localeCompare(String(y), 'zh-CN', { numeric: true });
+  },
+  today,
+  stateKey,
+  layoutKey: () =>
+    `delivery-columns:v2:${identity.value?.organization.id}:${identity.value?.user.id}:${currentProject.value}`,
+  viewsUrl: () =>
+    currentProject.value ? `/projects/${currentProject.value}/list-views/delivery.items` : null,
 });
-const pages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize.value)));
-watch(pages, (n) => (page.value = Math.min(page.value, n)));
-const rows = computed(() =>
-  filtered.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value),
-);
-const activeFilters = computed(() => {
-  const list: { key: string; label: string; clear: () => void }[] = [];
-  const add = (key: string, label: string, state: { value: string }) =>
-    state.value && list.push({ key, label, clear: () => (state.value = '') });
-  if (overview.value)
-    list.push({
-      key: 'overview',
-      label: `来自${overview.value.source}：${overview.value.label}`,
-      clear: () => (overview.value = null),
-    });
-  add('search', '搜索：' + search.value, search);
-  add('module', '模块：' + moduleFilter.value, moduleFilter);
-  add('kind', '类型：' + (OPTIONS.kind[kindFilter.value] ?? ''), kindFilter);
-  add('tag', '标签：' + (tags.value.find((t) => t.id === tagFilter.value)?.name ?? ''), tagFilter);
-  if (statusFilter.value)
-    list.push({
-      key: 'status',
-      label:
-        (PHASES.find((p) => p.key === phaseFilter.value)?.label ?? '任一阶段') +
-        '：' +
-        OPTIONS.status[statusFilter.value],
-      clear: () => {
-        statusFilter.value = '';
-        phaseFilter.value = '';
-      },
-    });
-  add('priority', '优先级：' + (OPTIONS.priority[priorityFilter.value] ?? ''), priorityFilter);
-  add(
-    'difficulty',
-    '难易度：' + (OPTIONS.difficulty[difficultyFilter.value] ?? ''),
-    difficultyFilter,
-  );
-  add(
-    'person',
-    '负责人：' + (members.value.find((m) => m.id === personFilter.value)?.displayName ?? ''),
-    personFilter,
-  );
-  return list;
+const { filtered, pageRows: rows } = report;
+watch(report.queryKey, () => {
+  if (checked.value.length) checked.value = [];
 });
 
 // --- links from the assistant pages ------------------------------------------------------
@@ -480,10 +297,11 @@ function applyDrill() {
   const drill = pendingDrill;
   if (!drill || (drill.project && currentProject.value !== drill.project)) return;
   pendingDrill = null;
-  drilled = true;
-  clearFilters();
-  scope.value = 'all';
-  overview.value = { filter: drill.filter, label: drill.label, source: drill.source };
+  report.drill({
+    label: `来自${drill.source}：${drill.label}`,
+    test: (item) =>
+      matchesFilter(item, drill.filter, { today: today(), milestones: milestoneDates.value }),
+  });
 }
 watch(
   () => route.query,
@@ -552,7 +370,7 @@ async function load(reset = false) {
 watch(
   [currentProject, () => identity.value?.user.id],
   () => {
-    restoreFilters();
+    report.enter();
     applyDrill();
     void load(true);
   },
@@ -769,7 +587,7 @@ async function exportExcel(ids: string[] | null, label: string) {
   busy.value = true;
   error.value = '';
   try {
-    const keys = columnKeys.value.filter((k) => k !== 'actions');
+    const keys = report.shownKeys.value.filter((k) => k !== 'actions');
     const response = await fetch('/api' + base.value + '/export', {
       method: 'POST',
       credentials: 'same-origin',
@@ -804,10 +622,8 @@ async function imported(summary: string) {
   await load();
   say(summary);
 }
-// The list's keys (DESIGN.md 1.5): N new, F filters, V columns, J / K next and previous item while
-// one is open, Esc closes it.
-const filterOpen = ref(false);
-const filterCount = computed(() => activeFilters.value.filter((f) => f.key !== 'search').length);
+// The list's keys (DESIGN.md 1.5): N new, J / K next and previous item while one is open, Esc
+// closes it; ListReport handles F (filter bar) and V (columns).
 function step(direction: number) {
   if (!drawerId.value) return;
   const index = rows.value.findIndex((i) => i.id === drawerId.value);
@@ -818,8 +634,6 @@ useShortcut(
   'N',
   () => !readOnly.value && loaded.value && may('delivery.item:create') && void openCreate(),
 );
-useShortcut('F', () => (filterOpen.value = true));
-useShortcut('V', () => table.value?.openColumns());
 useShortcut('J', () => step(1));
 useShortcut('K', () => step(-1));
 useShortcut('Escape', () => drawerId.value !== null && void closeDrawer());
@@ -831,7 +645,7 @@ const summary = (item: Item) =>
 </script>
 
 <template>
-  <div class="delivery-page" :class="{ split: drawerId !== null }">
+  <div class="delivery-page">
     <!-- The page header names the page; its actions sit on the right of it (DESIGN.md 6.1). -->
     <h1 class="sr-only">开发清单</h1>
     <Teleport v-if="inFront" defer to="#page-actions">
@@ -893,342 +707,181 @@ const summary = (item: Item) =>
     </p>
     <p v-if="readOnly && loaded" class="help-note">此项目已归档，只能查看。</p>
 
-    <div class="list-bar">
-      <BaseTabs
-        v-model="scope"
-        label="清单范围"
-        :tabs="scopes.map((s) => ({ id: s.id, label: s.name, count: s.count }))"
-      />
-      <BaseInput
-        v-model="search"
-        class="list-search"
-        placeholder="搜索编号、名称、事务码或开发对象"
-        label="搜索开发清单"
-        ><template #icon><Search /></template
-      ></BaseInput>
-      <span class="bar-end">
-        <span v-if="loading && loaded" class="refresh-status" role="status">更新中…</span>
-        <BasePopover v-model:open="filterOpen" align="end">
-          <template #trigger>
-            <BaseButton variant="ghost" size="sm" kbd="F"
-              ><template #icon><SlidersHorizontal /></template>筛选<span
-                v-if="filterCount"
-                class="filter-count"
-                >{{ filterCount }}</span
-              ></BaseButton
+    <ListReport
+      v-model:checked="checked"
+      :report="report"
+      scope-label="清单范围"
+      search-placeholder="编号、名称、事务码或开发对象"
+      width-key="delivery-list-width"
+      :current-id="drawerId ?? undefined"
+      :split="drawerId !== null"
+      :compact-keys="['code', 'name', 'fsd.status']"
+      :loading="loading"
+      :skeleton="loading && !loaded"
+      :view-key="stateKey()"
+      :disabled="busy"
+      :empty-text="
+        !currentProject
+          ? '选择项目后开始维护开发清单'
+          : !items.length
+            ? '还没有开发项'
+            : '没有符合条件的开发项'
+      "
+      @open="open($event.id)"
+      @refresh="load()"
+    >
+      <template #mobile-row="{ row: item }">
+        <div class="mobile-item">
+          <button class="mobile-title" @click="open(item.id)">
+            {{ item.code }} {{ item.name }}
+          </button>
+          <span v-if="summary(item)" class="name-sub">{{ summary(item) }}</span>
+          <div class="mobile-meta">
+            <BaseTag v-if="item.module" :tone="moduleHue(item.module)">{{ item.module }}</BaseTag
+            ><span v-for="p in PHASES" :key="p.key"
+              >{{ p.label }} {{ OPTIONS.status[item.phases[p.key].status] }}</span
             >
-          </template>
-          <div class="filter-panel" aria-label="筛选条件">
-            <label
-              >模块<select v-model="moduleFilter">
-                <option value="">全部</option>
-                <option v-for="(label, key) in OPTIONS.module" :key="key" :value="key">
-                  {{ label }}
-                </option>
-              </select></label
-            >
-            <label
-              >类型<select v-model="kindFilter">
-                <option value="">全部</option>
-                <option v-for="(label, key) in OPTIONS.kind" :key="key" :value="key">
-                  {{ label }}
-                </option>
-              </select></label
-            >
-            <label
-              >阶段状态<span class="pair"
-                ><select v-model="phaseFilter" aria-label="状态所属阶段">
-                  <option value="">任一阶段</option>
-                  <option v-for="p in PHASES" :key="p.key" :value="p.key">
-                    {{ p.label }}
-                  </option></select
-                ><select v-model="statusFilter" aria-label="状态">
-                  <option value="">全部状态</option>
-                  <option v-for="(label, key) in OPTIONS.status" :key="key" :value="key">
-                    {{ label }}
-                  </option>
-                </select></span
-              ></label
-            >
-            <label
-              >负责人<select v-model="personFilter">
-                <option value="">全部</option>
-                <option v-for="m in members" :key="m.id" :value="m.id">{{ m.displayName }}</option>
-              </select></label
-            >
-            <label
-              >标签<select v-model="tagFilter">
-                <option value="">全部</option>
-                <option v-for="t in tags" :key="t.id" :value="t.id">{{ t.name }}</option>
-              </select></label
-            >
-            <label
-              >优先级<select v-model="priorityFilter">
-                <option value="">全部</option>
-                <option v-for="(label, key) in OPTIONS.priority" :key="key" :value="key">
-                  {{ label }}
-                </option>
-              </select></label
-            >
-            <label
-              >难易度<select v-model="difficultyFilter">
-                <option value="">全部</option>
-                <option v-for="(label, key) in OPTIONS.difficulty" :key="key" :value="key">
-                  {{ label }}
-                </option>
-              </select></label
-            >
-            <footer>
-              <BaseButton variant="ghost" size="sm" :disabled="!filterCount" @click="clearFilters"
-                >清除全部</BaseButton
-              ><BaseButton variant="primary" size="sm" @click="filterOpen = false">完成</BaseButton>
-            </footer>
           </div>
-        </BasePopover>
-        <BaseButton variant="ghost" size="sm" kbd="V" @click="table?.openColumns()"
-          ><template #icon><Columns3 /></template>显示</BaseButton
+        </div>
+      </template>
+      <template #cell="{ row: item, column }">
+        <button
+          v-if="column.key === 'code'"
+          class="code-link"
+          :aria-label="`查看 ${item.code}`"
+          @click.stop="open(item.id)"
         >
-        <BaseIconButton label="刷新" size="sm" :disabled="loading" @click="load()"
-          ><RefreshCw
-        /></BaseIconButton>
-      </span>
-    </div>
-    <div v-if="activeFilters.length" class="filter-chips" aria-label="已生效的筛选">
-      <button
-        v-for="f in activeFilters"
-        :key="f.key"
-        type="button"
-        :aria-label="'移除筛选 ' + f.label"
-        @click="f.clear"
-      >
-        {{ f.label }}<X />
-      </button>
-      <button type="button" class="clear-all" @click="clearFilters">清除全部</button>
-    </div>
-
-    <section class="list-area" :style="{ '--list-width': listWidth + 'px' }">
-      <div class="list-column">
-        <BaseResizeHandle
-          v-if="drawerId !== null"
-          v-model="listWidth"
-          label="调整清单宽度"
-          :min="380"
-          :max="760"
-          @done="saveListWidth"
+          {{ item.code }}
+        </button>
+        <span v-else-if="column.key === 'name'" class="name-cell">
+          <button class="name-link" :title="item.name" @click.stop="open(item.id)">
+            {{ item.name }}
+          </button>
+          <span class="name-sub" :class="{ empty: !summary(item) }">{{
+            summary(item) || '尚未填写业务功能点'
+          }}</span>
+        </span>
+        <div v-else-if="column.key === 'actions'" class="row-actions" data-no-open>
+          <RouterLink
+            v-if="mayRun(item, 'design')"
+            class="row-icon"
+            :to="`/projects/${currentProject}/development-items/${item.id}/design`"
+            :aria-label="'设计 ' + item.code"
+            title="设计"
+            ><Sparkles
+          /></RouterLink>
+          <button
+            v-else
+            type="button"
+            class="row-icon"
+            aria-disabled="true"
+            :aria-label="'设计 ' + item.code + '（无权限）'"
+            :title="noRun.design"
+          >
+            <Sparkles />
+          </button>
+          <button
+            v-if="DEV_AGENT_KINDS.includes(item.kind) && !mayRun(item, 'development')"
+            type="button"
+            class="row-icon"
+            aria-disabled="true"
+            :aria-label="'开发 ' + item.code + '（无权限）'"
+            :title="noRun.development"
+          >
+            <Code2 />
+          </button>
+          <RouterLink
+            v-else-if="DEV_AGENT_KINDS.includes(item.kind)"
+            class="row-icon"
+            :to="`/projects/${currentProject}/development-items/${item.id}/development`"
+            :aria-label="'开发 ' + item.code"
+            title="开发"
+            ><Code2
+          /></RouterLink>
+          <button
+            v-else
+            type="button"
+            class="row-icon"
+            :aria-label="'开发 ' + item.code"
+            title="开发"
+            @click="comingSoon('开发')"
+          >
+            <Code2 />
+          </button>
+          <BaseMenu align="end">
+            <template #trigger>
+              <button type="button" class="row-icon" :aria-label="item.code + ' 的更多操作'">
+                <MoreHorizontal />
+              </button>
+            </template>
+            <BaseMenuItem tone="blue" @select="comingSoon('顾问测试')"
+              ><template #icon><ClipboardCheck /></template>顾问测试</BaseMenuItem
+            >
+            <BaseMenuItem tone="purple" @select="comingSoon('IT/用户测试')"
+              ><template #icon><UserCheck /></template>IT/用户测试</BaseMenuItem
+            >
+            <BaseMenuSeparator />
+            <BaseMenuItem @select="open(item.id)"
+              ><template #icon><PenSquare /></template>查看 / 编辑</BaseMenuItem
+            >
+            <BaseMenuItem
+              :disabled="readOnly || busy || !may('delivery.item:create')"
+              @select="((checked = [item.id]), batchCopy())"
+              ><template #icon><Copy /></template>复制</BaseMenuItem
+            >
+            <BaseMenuItem
+              danger
+              :disabled="readOnly || busy || !mayOn('delivery.item:delete', item)"
+              @select="removeOne(item)"
+              ><template #icon><Trash2 /></template>删除</BaseMenuItem
+            >
+          </BaseMenu>
+        </div>
+        <InlineCell
+          v-else-if="fields.find((f) => f.key === column.key)"
+          :item="item"
+          :field="fields.find((f) => f.key === column.key)!"
+          :ctx="ctx"
+          :read-only="readOnly || busy || !mayOn('delivery.item:edit', item)"
+          :save="saveCell"
         />
-        <WorkbenchTable
-          ref="table"
-          v-model:checked="checked"
-          :rows="rows"
-          :columns="columns"
-          :storage-key="columnStorageKey"
-          :sort-field="sortField"
-          :sort-order="sortOrder"
-          :current-id="drawerId ?? undefined"
-          :compact="drawerId !== null"
-          :compact-keys="['code', 'name', 'fsd.status']"
-          :loading="loading && !loaded"
-          :view-key="filterKey()"
-          :disabled="busy"
-          :empty-text="
-            !currentProject
-              ? '选择项目后开始维护开发清单'
-              : !items.length
-                ? '还没有开发项'
-                : '没有符合条件的开发项'
+      </template>
+      <template #empty="{ hasFilters }">
+        <BaseButton v-if="hasFilters" size="sm" @click="report.clearAll">清除所有筛选</BaseButton>
+        <BaseButton
+          v-else-if="
+            currentProject && !items.length && !readOnly && loaded && may('delivery.item:create')
           "
-          @open="open($event.id)"
-          @sort="
-            (field, order) => {
-              sortField = field;
-              sortOrder = order;
-            }
-          "
-          @columns-change="columnKeys = $event"
+          size="sm"
+          data-keep-drawer
+          @click="openCreate"
+          ><template #icon><Plus /></template>新建第一个开发项</BaseButton
         >
-          <template #mobile-row="{ row: item }">
-            <div class="mobile-item">
-              <button class="mobile-title" @click="open(item.id)">
-                {{ item.code }} {{ item.name }}
-              </button>
-              <span v-if="summary(item)" class="name-sub">{{ summary(item) }}</span>
-              <div class="mobile-meta">
-                <BaseTag v-if="item.module" :tone="moduleHue(item.module)">{{
-                  item.module
-                }}</BaseTag
-                ><span v-for="p in PHASES" :key="p.key"
-                  >{{ p.label }} {{ OPTIONS.status[item.phases[p.key].status] }}</span
-                >
-              </div>
-            </div>
-          </template>
-          <template #cell="{ row: item, column }">
-            <button
-              v-if="column.key === 'code'"
-              class="code-link"
-              :aria-label="`查看 ${item.code}`"
-              @click.stop="open(item.id)"
-            >
-              {{ item.code }}
-            </button>
-            <span v-else-if="column.key === 'name'" class="name-cell">
-              <button class="name-link" :title="item.name" @click.stop="open(item.id)">
-                {{ item.name }}
-              </button>
-              <span class="name-sub" :class="{ empty: !summary(item) }">{{
-                summary(item) || '尚未填写业务功能点'
-              }}</span>
-            </span>
-            <div v-else-if="column.key === 'actions'" class="row-actions" data-no-open>
-              <RouterLink
-                v-if="mayRun(item, 'design')"
-                class="row-icon"
-                :to="`/projects/${currentProject}/development-items/${item.id}/design`"
-                :aria-label="'设计 ' + item.code"
-                title="设计"
-                ><Sparkles
-              /></RouterLink>
-              <button
-                v-else
-                type="button"
-                class="row-icon"
-                aria-disabled="true"
-                :aria-label="'设计 ' + item.code + '（无权限）'"
-                :title="noRun.design"
-              >
-                <Sparkles />
-              </button>
-              <button
-                v-if="DEV_AGENT_KINDS.includes(item.kind) && !mayRun(item, 'development')"
-                type="button"
-                class="row-icon"
-                aria-disabled="true"
-                :aria-label="'开发 ' + item.code + '（无权限）'"
-                :title="noRun.development"
-              >
-                <Code2 />
-              </button>
-              <RouterLink
-                v-else-if="DEV_AGENT_KINDS.includes(item.kind)"
-                class="row-icon"
-                :to="`/projects/${currentProject}/development-items/${item.id}/development`"
-                :aria-label="'开发 ' + item.code"
-                title="开发"
-                ><Code2
-              /></RouterLink>
-              <button
-                v-else
-                type="button"
-                class="row-icon"
-                :aria-label="'开发 ' + item.code"
-                title="开发"
-                @click="comingSoon('开发')"
-              >
-                <Code2 />
-              </button>
-              <BaseMenu align="end">
-                <template #trigger>
-                  <button type="button" class="row-icon" :aria-label="item.code + ' 的更多操作'">
-                    <MoreHorizontal />
-                  </button>
-                </template>
-                <BaseMenuItem tone="blue" @select="comingSoon('顾问测试')"
-                  ><template #icon><ClipboardCheck /></template>顾问测试</BaseMenuItem
-                >
-                <BaseMenuItem tone="purple" @select="comingSoon('IT/用户测试')"
-                  ><template #icon><UserCheck /></template>IT/用户测试</BaseMenuItem
-                >
-                <BaseMenuSeparator />
-                <BaseMenuItem @select="open(item.id)"
-                  ><template #icon><PenSquare /></template>查看 / 编辑</BaseMenuItem
-                >
-                <BaseMenuItem
-                  :disabled="readOnly || busy || !may('delivery.item:create')"
-                  @select="((checked = [item.id]), batchCopy())"
-                  ><template #icon><Copy /></template>复制</BaseMenuItem
-                >
-                <BaseMenuItem
-                  danger
-                  :disabled="readOnly || busy || !mayOn('delivery.item:delete', item)"
-                  @select="removeOne(item)"
-                  ><template #icon><Trash2 /></template>删除</BaseMenuItem
-                >
-              </BaseMenu>
-            </div>
-            <InlineCell
-              v-else-if="fields.find((f) => f.key === column.key)"
-              :item="item"
-              :field="fields.find((f) => f.key === column.key)!"
-              :ctx="ctx"
-              :read-only="readOnly || busy || !mayOn('delivery.item:edit', item)"
-              :save="saveCell"
-            />
-          </template>
-          <template #empty>
-            <BaseButton v-if="activeFilters.length" size="sm" @click="clearFilters"
-              >清除所有筛选</BaseButton
-            >
-            <BaseButton
-              v-else-if="
-                currentProject &&
-                !items.length &&
-                !readOnly &&
-                loaded &&
-                may('delivery.item:create')
-              "
-              size="sm"
-              data-keep-drawer
-              @click="openCreate"
-              ><template #icon><Plus /></template>新建第一个开发项</BaseButton
-            >
-          </template>
-        </WorkbenchTable>
-        <footer class="list-footer">
-          <span
-            >{{ filtered.length ? (page - 1) * pageSize + 1 : 0 }}–{{
-              Math.min(page * pageSize, filtered.length)
-            }}
-            / 共 {{ filtered.length }} 项</span
-          >
-          <label
-            >每页<select v-model.number="pageSize" aria-label="每页数量">
-              <option :value="20">20</option>
-              <option :value="50">50</option>
-              <option :value="100">100</option>
-            </select></label
-          >
-          <span class="pager">
-            <BaseButton variant="ghost" size="sm" :disabled="page <= 1" @click="page--"
-              >上一页</BaseButton
-            ><span>{{ page }} / {{ pages }}</span
-            ><BaseButton variant="ghost" size="sm" :disabled="page >= pages" @click="page++"
-              >下一页</BaseButton
-            >
-          </span>
-        </footer>
-      </div>
-      <ItemDrawer
-        v-if="drawerId !== null && currentProject"
-        :key="drawerId === '' ? 'new' : 'item'"
-        ref="drawer"
-        :item="drawerItem"
-        :fields="drawerFields"
-        :ctx="ctx"
-        :base="base"
-        :project-id="currentProject"
-        :read-only="
-          readOnly ||
-          (drawerItem ? !mayOn('delivery.item:edit', drawerItem) : !may('delivery.item:create'))
-        "
-        :create-tag="createTag"
-        :agents="drawerItem ? agentAccess(drawerItem) : undefined"
-        :section="drawerSection"
-        @close="closeDrawer"
-        @saved="saved"
-        @delete="removeOne"
-        @agent="comingSoon"
-      />
-    </section>
+      </template>
+      <template #detail>
+        <ItemDrawer
+          v-if="drawerId !== null && currentProject"
+          :key="drawerId === '' ? 'new' : 'item'"
+          ref="drawer"
+          :item="drawerItem"
+          :fields="drawerFields"
+          :ctx="ctx"
+          :base="base"
+          :project-id="currentProject"
+          :read-only="
+            readOnly ||
+            (drawerItem ? !mayOn('delivery.item:edit', drawerItem) : !may('delivery.item:create'))
+          "
+          :create-tag="createTag"
+          :agents="drawerItem ? agentAccess(drawerItem) : undefined"
+          :section="drawerSection"
+          @close="closeDrawer"
+          @saved="saved"
+          @delete="removeOne"
+          @agent="comingSoon"
+        />
+      </template>
+    </ListReport>
 
     <div v-if="checked.length" class="batch-dock">
       <BaseActionBar>

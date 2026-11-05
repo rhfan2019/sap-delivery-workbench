@@ -1205,164 +1205,9 @@
   color: var(--yellow-text-2);
   font-size: var(--font-12);
 }
-/* One row: view tabs, the search box, then filter / display / refresh; it wraps when narrow. */
-.list-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
-}
-.list-bar .list-search {
-  flex: 1 1 180px;
-  min-width: 180px;
-  max-width: 420px;
-  margin-left: auto;
-}
-.bar-end {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: var(--space-1);
-}
-.refresh-status {
-  color: var(--text-muted);
-  font-size: var(--font-12);
-}
-.filter-count {
-  display: inline-grid;
-  place-items: center;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 var(--space-1);
-  border-radius: var(--radius-full);
-  background: var(--blue-solid-1);
-  color: var(--neutral-on-solid);
-  font-size: var(--font-11);
-  font-weight: var(--weight-550);
-}
-.filter-panel {
-  display: grid;
-  gap: var(--space-3);
-  width: 300px;
-}
-.filter-panel label {
-  display: grid;
-  gap: var(--space-1);
-  color: var(--text-muted);
-  font-size: var(--font-12);
-}
-.filter-panel select {
-  width: 100%;
-  height: var(--control-input);
-  padding: 0 var(--space-2);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-6);
-  background: var(--panel);
-  color: var(--text);
-  font: inherit;
-  font-size: var(--font-14);
-}
-.filter-panel .pair {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
-}
-.filter-panel footer {
-  display: flex;
-  justify-content: space-between;
-  padding-top: var(--space-2);
-  border-top: 1px solid var(--border);
-}
-.filter-chips {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1-5);
-  margin-bottom: var(--space-3);
-}
-.filter-chips button {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  height: 22px;
-  padding: 0 var(--space-1-5) 0 var(--space-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-6);
-  background: var(--panel);
-  color: var(--text);
-  font: inherit;
-  font-size: var(--font-12);
-  cursor: pointer;
-  transition: background-color var(--motion-fast);
-}
-.filter-chips button:hover {
-  background: var(--hover);
-}
-.filter-chips svg {
-  width: 12px;
-  height: 12px;
-  color: var(--neutral-icon-1);
-}
-.filter-chips .clear-all {
-  border-color: transparent;
-  color: var(--link);
-}
-.list-area {
-  display: grid;
-  flex: 1;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
-  min-height: 0;
-  margin: 0 calc(-1 * var(--body-pad-x)) calc(-1 * var(--body-pad-y));
-  border-top: 1px solid var(--border);
-}
-.split .list-area {
-  grid-template-columns: var(--list-width, var(--layout-list-panel)) minmax(0, 1fr);
-}
 /* The list page fills the content panel; only the table and the detail panel scroll. */
 .shell-body:has(.delivery-page) {
   overflow: clip;
-}
-.list-column {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-}
-.list-column .workbench-table {
-  flex: 1;
-}
-.list-footer {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-2) var(--space-4);
-  border-top: 1px solid var(--border);
-  color: var(--text-muted);
-  font-size: var(--font-12);
-}
-.list-footer label {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1-5);
-}
-.list-footer select {
-  height: var(--control-tab);
-  padding: 0 var(--space-1);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-6);
-  background: var(--panel);
-  color: var(--text);
-  font: inherit;
-  font-size: var(--font-12);
-}
-.pager {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  margin-left: auto;
 }
 .batch-dock {
   position: absolute;
@@ -1426,22 +1271,6 @@ tr.checked .row-actions,
   background: var(--red-fill-1);
   color: var(--red-text-1);
 }
-@media (max-width: 1100px) {
-  .split .list-area {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .split .list-column {
-    display: none;
-  }
-}
-@media (max-width: 760px) {
-  .list-bar .list-search {
-    flex-basis: 100%;
-    max-width: none;
-  }
-  .list-area {
-  }
-}
 
 /* Two-line rows and identity colours (DESIGN.md 2.2.1). */
 .list-area td {
@@ -1490,11 +1319,8 @@ tr.checked .row-actions,
   }
 }
 
-/* Low screens (DESIGN.md 4.1): slimmer drawer chrome and list bar. */
+/* Low screens (DESIGN.md 4.1): slimmer drawer chrome. */
 @media (max-height: 820px) {
-  .list-bar {
-    margin-bottom: var(--space-2);
-  }
   .drawer-head {
     padding-block: var(--space-2) var(--space-1);
   }

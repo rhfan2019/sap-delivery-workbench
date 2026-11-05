@@ -1,6 +1,6 @@
 # 项目主数据、权限、项目 SAP 系统与设置菜单
 
-> 状态：已实施 · 最后更新：2026-10-31。第 7 节为用户确认的结论；实施过程见[实施记录](../archive/records/access.md)。依据[平台定位方向决策](../decisions/2026-10-17-platform-positioning-decision.md)：平台是实施方内部的交付生产工具，用户是实施方人员（含分包），客户方人员暂不是用户，但权限模型要能在以后为客户增加用户。本文以 SAP 实施项目经理的视角设计四件事：项目主数据（第 1 节）、权限体系（第 2 节）、项目 SAP 系统与个人凭据（第 3 节）、设置菜单（第 4 节）。设置区的页面结构与交互对照 Plain 设置区实测（第 4.1 节）。目录与依赖按[契约](../architecture/repository-contract.md) 1.18 执行。
+> 状态：已实施 · 最后更新：2026-11-04。第 7 节为用户确认的结论；实施过程见[实施记录](../archive/records/access.md)。依据[平台定位方向决策](../decisions/2026-10-17-platform-positioning-decision.md)：平台是实施方内部的交付生产工具，用户是实施方人员（含分包），客户方人员暂不是用户，但权限模型要能在以后为客户增加用户。本文以 SAP 实施项目经理的视角设计四件事：项目主数据（第 1 节）、权限体系（第 2 节）、项目 SAP 系统与个人凭据（第 3 节）、设置菜单（第 4 节）。设置区的页面结构与交互对照 Plain 设置区实测（第 4.1 节）。目录与依赖按[契约](../architecture/repository-contract.md) 1.18 执行。
 
 ## 0. 设计原则
 
@@ -167,7 +167,7 @@
 | 项目          | `project:view` 查看项目、`project:edit` 修改基本信息与 SAP 形态、`project.plan:edit` 维护阶段与里程碑、`project.health:edit` 更新健康度、`project.team:edit` 维护关键岗位 / 模块负责人 / 客户联系人、`project.contact:view` 查看客户联系人、`project.commercial:view` / `:edit` 商务字段、`project:archive` 归档 |
 | 项目成员      | `project.member:view`、`project.member:manage`（增删成员、分配项目内角色；敏感角色的限制见 2.7）                                                                                                                                                                                                                 |
 | 项目 SAP 系统 | `project.sap:view`、`project.sap:manage`（增删改系统、设默认）                                                                                                                                                                                                                                                   |
-| 开发清单      | `delivery.item:view` / `:create` / `:edit` / `:delete` / `:import` / `:export`、`delivery.config:manage`（自定义列、标签）                                                                                                                                                                                       |
+| 开发清单      | `delivery.item:view` / `:create` / `:edit` / `:delete` / `:import` / `:export`、`delivery.config:manage`（自定义列、标签）、`delivery.view:save`（保存个人视图）                                                                                                                                                 |
 | 开发概览      | `delivery.overview:view`（菜单，按模块范围与仅本人负责收窄）、`delivery.overview.team:view`（看他人的负载与姓名）；见[开发概览设计](development-overview.md)                                                                                                                                                     |
 | 开发排期      | `delivery.load:view`（不按范围过滤）；见[开发排期设计](development-load.md)                                                                                                                                                                                                                                      |
 | FSD 设计助手  | `agent.fsd:view` 在开发项抽屉查看功能说明书（成果）、`agent.fsd:run` 进入设计助手（对话、上传、批注）、`agent.fsd:finalize` 定稿                                                                                                                                                                                 |
@@ -217,20 +217,20 @@
 
 **项目级单一角色**：
 
-| 编码             | 名称         | 权限点                                                                                                                                        |
-| ---------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PRJ_VIEW`       | 项目查看     | `project:view`、`project.member:view`、`project.sap:view`、`delivery.item:view`、`delivery.overview:view`、`agent.fsd:view`、`agent.dev:view` |
-| `PRJ_MANAGE`     | 项目管理     | `project:edit`、`project.plan:edit`、`project.health:edit`、`project.team:edit`、`project.member:manage`、`project:archive`                   |
-| `PRJ_CONTACT`    | 客户联系人   | `project.contact:view`                                                                                                                        |
-| `PRJ_COMMERCIAL` | 项目商务     | `project.commercial:view` / `:edit`                                                                                                           |
-| `PRJ_SAP`        | 项目系统管理 | `project.sap:manage`                                                                                                                          |
-| `DL_EDIT`        | 开发清单维护 | `delivery.item:create` / `:edit` / `:export`                                                                                                  |
-| `DL_ADMIN`       | 开发清单管理 | `delivery.item:delete` / `:import`、`delivery.config:manage`                                                                                  |
-| `DL_TEAM`        | 开发团队视图 | `delivery.overview.team:view`                                                                                                                 |
-| `DL_LOAD`        | 开发排期查看 | `delivery.load:view`                                                                                                                          |
-| `AG_FSD`         | FSD 设计     | `agent.fsd:run` / `:finalize`、`sap.development:read`、`sap.test:read`                                                                        |
-| `AG_DEV`         | ABAP 开发    | `agent.dev:run` / `:finalize`、`sap.development:read`、`sap.test:read`                                                                        |
-| `AG_TEST`        | 测试         | `sap.test:read`、`sap.test_data:create`                                                                                                       |
+| 编码             | 名称         | 权限点                                                                                                                                                              |
+| ---------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PRJ_VIEW`       | 项目查看     | `project:view`、`project.member:view`、`project.sap:view`、`delivery.item:view`、`delivery.view:save`、`delivery.overview:view`、`agent.fsd:view`、`agent.dev:view` |
+| `PRJ_MANAGE`     | 项目管理     | `project:edit`、`project.plan:edit`、`project.health:edit`、`project.team:edit`、`project.member:manage`、`project:archive`                                         |
+| `PRJ_CONTACT`    | 客户联系人   | `project.contact:view`                                                                                                                                              |
+| `PRJ_COMMERCIAL` | 项目商务     | `project.commercial:view` / `:edit`                                                                                                                                 |
+| `PRJ_SAP`        | 项目系统管理 | `project.sap:manage`                                                                                                                                                |
+| `DL_EDIT`        | 开发清单维护 | `delivery.item:create` / `:edit` / `:export`                                                                                                                        |
+| `DL_ADMIN`       | 开发清单管理 | `delivery.item:delete` / `:import`、`delivery.config:manage`                                                                                                        |
+| `DL_TEAM`        | 开发团队视图 | `delivery.overview.team:view`                                                                                                                                       |
+| `DL_LOAD`        | 开发排期查看 | `delivery.load:view`                                                                                                                                                |
+| `AG_FSD`         | FSD 设计     | `agent.fsd:run` / `:finalize`、`sap.development:read`、`sap.test:read`                                                                                              |
+| `AG_DEV`         | ABAP 开发    | `agent.dev:run` / `:finalize`、`sap.development:read`、`sap.test:read`                                                                                              |
+| `AG_TEST`        | 测试         | `sap.test:read`、`sap.test_data:create`                                                                                                                             |
 
 **项目级复合角色**（对应 SAP 项目的实际岗位）：
 

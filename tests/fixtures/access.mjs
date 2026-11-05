@@ -47,6 +47,7 @@ export async function grantRole(
 export async function dropOrganizations(db, organizationIds, userIds = []) {
   const orgs = [organizationIds].flat();
   const scoped = [
+    'list_view',
     'sap_user_credential',
     'project_sap_system',
     'sap_credential_policy',

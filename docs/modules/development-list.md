@@ -161,7 +161,7 @@ project ─┬─< development_item ─┬─< development_item_phase   (固定 
 
 - 标签按项目隔离：不同项目的标签互不影响。
 - 用户在开发项上输入新标签名时自动创建；在“标签管理”中可改名、改颜色、删除（删除同时解除所有关联）。
-- 列表支持按标签筛选（多选，任一匹配），批量修改支持“添加标签 / 移除标签”。
+- 列表支持按标签筛选（多选，任一匹配，也可排除或只看无标签），批量修改支持“添加标签 / 移除标签”。
 
 ### 3.5 `app.development_field`（自定义列定义，新建）
 
@@ -216,9 +216,9 @@ project ─┬─< development_item ─┬─< development_item_phase   (固定 
 
 ## 现状与下一步
 
-> 最后更新：2026-11-04（抽屉头部层次调整，见 [DESIGN.md](../DESIGN.md) 第 4.1 节“开发项详情面板”）。
+> 最后更新：2026-11-04（筛选改用[列表报表控件](list-report.md)；抽屉头部层次调整见 [DESIGN.md](../DESIGN.md) 第 4.1 节“开发项详情面板”）。
 
-- **现状**：第 1–5 节已实施，表格基于 `WorkbenchTable`（TanStack Table），支持筛选、排序、列设置、Excel 导入导出与详情抽屉。
+- **现状**：第 1–5 节已实施，列表用[列表报表控件](list-report.md)（筛选栏、视图、列头菜单，表格基于 `WorkbenchTable`），支持 Excel 导入导出与详情抽屉。
 - **下一步**：恢复已删除的开发项（FEAT-008，待决定）。
 - **已知问题**：FEAT-008。
 - **注意事项**：字段目录只在 `packages/contracts/delivery/fields.mjs` 改，抽屉、表格与 Excel 随之变化；阶段状态变化同事务写入阶段流水（[开发概览](development-overview.md)第 6 节）。

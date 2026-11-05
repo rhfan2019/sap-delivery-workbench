@@ -63,6 +63,7 @@ export const PERMISSIONS = [
   p('delivery.item:import', 'delivery', 'action', '导入开发项', '从 Excel 导入开发项。'),
   p('delivery.item:export', 'delivery', 'action', '导出开发项', '把开发清单导出为 Excel。'),
   p('delivery.config:manage', 'delivery', 'action', '维护清单设置', '自定义列与标签。'),
+  p('delivery.view:save', 'delivery', 'action', '保存个人视图', '保存自己的筛选条件、列与排序。'),
 
   p(
     'delivery.overview:view',
@@ -262,6 +263,7 @@ export const BUILT_IN_ROLES = [
     'project.member:view',
     'project.sap:view',
     'delivery.item:view',
+    'delivery.view:save',
     'delivery.overview:view',
     'agent.fsd:view',
     'agent.dev:view',

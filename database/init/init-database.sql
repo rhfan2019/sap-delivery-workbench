@@ -1,6 +1,6 @@
 -- SAP 智能交付工作台：在一个空数据库上一次建好全部结构。
 -- 生成的文件，不要手工修改：npm run test:setup，再 npm run db:export-init。
--- Source hash: 419b550825d74b14301b8ba72347f26de5fe2a73fd8077390a3d98c2849570eb
+-- Source hash: c4829106bc98c93dbbc067ced2eedd795df2f78bf51cc07db8d23ef85788e048
 --
 -- 包含：应用 schema、表、索引、约束、函数、触发器、运行账号的权限和迁移记录，
 -- 之后的 npm run db:migrate 只执行后续新增的迁移。
@@ -890,6 +890,27 @@ CREATE TABLE app.development_tag (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT development_tag_color_check CHECK (((color)::text = ANY ((ARRAY['gray'::character varying, 'blue'::character varying, 'green'::character varying, 'orange'::character varying, 'red'::character varying, 'purple'::character varying, 'teal'::character varying, 'yellow'::character varying])::text[]))),
     CONSTRAINT development_tag_name_check CHECK ((length(btrim((name)::text)) > 0))
+);
+
+
+--
+-- Name: list_view; Type: TABLE; Schema: app; Owner: -
+--
+
+CREATE TABLE app.list_view (
+    id uuid NOT NULL,
+    organization_id uuid NOT NULL,
+    project_id uuid NOT NULL,
+    owner_id uuid NOT NULL,
+    list_key text NOT NULL,
+    name text NOT NULL,
+    is_default boolean DEFAULT false NOT NULL,
+    auto_apply boolean DEFAULT true NOT NULL,
+    state jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT clock_timestamp() NOT NULL,
+    updated_at timestamp with time zone DEFAULT clock_timestamp() NOT NULL,
+    CONSTRAINT list_view_list_key_check CHECK (((char_length(list_key) >= 1) AND (char_length(list_key) <= 80))),
+    CONSTRAINT list_view_name_check CHECK (((char_length(name) >= 1) AND (char_length(name) <= 60)))
 );
 
 
@@ -1833,6 +1854,14 @@ ALTER TABLE ONLY app.development_tag
 
 
 --
+-- Name: list_view list_view_pkey; Type: CONSTRAINT; Schema: app; Owner: -
+--
+
+ALTER TABLE ONLY app.list_view
+    ADD CONSTRAINT list_view_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: llm_credential llm_credential_organization_id_id_key; Type: CONSTRAINT; Schema: app; Owner: -
 --
 
@@ -2416,6 +2445,20 @@ CREATE INDEX ix_project_status_updated ON app.project USING btree (organization_
 --
 
 CREATE INDEX ix_sap_user_credential_user ON app.sap_user_credential USING btree (organization_id, user_id);
+
+
+--
+-- Name: list_view_default; Type: INDEX; Schema: app; Owner: -
+--
+
+CREATE UNIQUE INDEX list_view_default ON app.list_view USING btree (organization_id, project_id, owner_id, list_key) WHERE is_default;
+
+
+--
+-- Name: list_view_name; Type: INDEX; Schema: app; Owner: -
+--
+
+CREATE UNIQUE INDEX list_view_name ON app.list_view USING btree (organization_id, project_id, owner_id, list_key, lower(name));
 
 
 --
@@ -3151,6 +3194,30 @@ ALTER TABLE ONLY app.llm_model
 
 
 --
+-- Name: list_view list_view_organization_id_fkey; Type: FK CONSTRAINT; Schema: app; Owner: -
+--
+
+ALTER TABLE ONLY app.list_view
+    ADD CONSTRAINT list_view_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app.organization(id);
+
+
+--
+-- Name: list_view list_view_owner_id_fkey; Type: FK CONSTRAINT; Schema: app; Owner: -
+--
+
+ALTER TABLE ONLY app.list_view
+    ADD CONSTRAINT list_view_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES app.app_user(id);
+
+
+--
+-- Name: list_view list_view_project_id_fkey; Type: FK CONSTRAINT; Schema: app; Owner: -
+--
+
+ALTER TABLE ONLY app.list_view
+    ADD CONSTRAINT list_view_project_id_fkey FOREIGN KEY (project_id) REFERENCES app.project(id);
+
+
+--
 -- Name: llm_credential llm_credential_created_by_fkey; Type: FK CONSTRAINT; Schema: app; Owner: -
 --
 
@@ -3779,6 +3846,13 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE app.development_tag TO sap_workbench_
 
 
 --
+-- Name: TABLE list_view; Type: ACL; Schema: app; Owner: -
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE app.list_view TO sap_workbench_app;
+
+
+--
 -- Name: TABLE llm_credential; Type: ACL; Schema: app; Owner: -
 --
 
@@ -3972,7 +4046,8 @@ INSERT INTO public.pgmigrations (id, name, run_on) VALUES
   (39, '1792630000000_agent-session-archive', now()),
   (40, '1792640000000_development-overview-records', now()),
   (41, '1792650000000_development-overview-baseline', now()),
-  (42, '1792660000000_project-member-sort-code', now());
-SELECT pg_catalog.setval('public.pgmigrations_id_seq', 42, true);
+  (42, '1792660000000_project-member-sort-code', now()),
+  (43, '1792670000000_list-view', now());
+SELECT pg_catalog.setval('public.pgmigrations_id_seq', 43, true);
 
 COMMIT;

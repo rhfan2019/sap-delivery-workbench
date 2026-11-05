@@ -8,22 +8,24 @@ import {
   type ColumnSizingState,
   type Header,
 } from '@tanstack/vue-table';
-import { ArrowDown, ArrowUp, ChevronsUpDown } from '@lucide/vue';
+import { ArrowDown, ArrowUp, ChevronsUpDown, Filter } from '@lucide/vue';
 import BaseButton from '../base/BaseButton.vue';
 import BaseDialog from '../base/BaseDialog.vue';
 import BaseEmptyState from '../base/BaseEmptyState.vue';
 import BaseIconButton from '../base/BaseIconButton.vue';
+import BasePopover from '../base/BasePopover.vue';
 import BaseSkeleton from '../base/BaseSkeleton.vue';
-import type { WorkbenchColumn } from './types';
+import type { ColumnPreference, WorkbenchColumn } from './types';
 import { layoutColumns } from './layout';
 
 // The list table (DESIGN.md 5, contract 1.15): TanStack Table keeps column order, visibility,
-// width and pinning; the page keeps filtering and sorting. The layout (order, visibility,
-// width) is saved per person and project under `storageKey`, in the same shape as before.
+// width and pinning; the page keeps filtering, sorting and the saved layout (`layout`). With a
+// `column-menu` slot a click on a header opens that menu instead of changing the sort.
 const props = defineProps<{
   rows: T[];
   columns: WorkbenchColumn[];
-  storageKey: string;
+  layout?: ColumnPreference[] | null;
+  filteredKeys?: string[];
   checked: string[];
   currentId?: string;
   compact?: boolean;
@@ -37,6 +39,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   'update:checked': [ids: string[]];
+  'update:layout': [layout: ColumnPreference[]];
   open: [row: T];
   sort: [field: string, order: 'asc' | 'desc' | null];
   'columns-change': [keys: string[]];
@@ -64,16 +67,26 @@ const maxWidth = (column: WorkbenchColumn) => (column.flex ? 1200 : 640);
 
 // --- saved layout --------------------------------------------------------------------------
 const configuration = ref<WorkbenchColumn[]>([]);
+const preferences = (columns: WorkbenchColumn[]): ColumnPreference[] =>
+  columns.map((c) => ({
+    key: c.key,
+    visible: c.visible !== false,
+    ...(c.width === undefined ? {} : { width: c.width }),
+  }));
+// The layout this table last reported: it comes straight back through the prop.
+let reported = '';
 watch(
-  [() => props.storageKey, () => props.columns.map((c) => c.key + ':' + c.label).join('|')],
-  () => {
-    let saved: WorkbenchColumn[] = [];
-    try {
-      const value = JSON.parse(localStorage.getItem(props.storageKey) || '[]');
-      if (Array.isArray(value)) saved = value.filter((c) => c && typeof c.key === 'string');
-    } catch {
-      // Storage is optional; the default layout applies.
-    }
+  [
+    () => JSON.stringify(props.layout ?? null),
+    () => props.columns.map((c) => c.key + ':' + c.label).join('|'),
+  ],
+  ([layout], previous) => {
+    if (
+      layout === reported &&
+      previous?.[1] === props.columns.map((c) => c.key + ':' + c.label).join('|')
+    )
+      return;
+    const saved = (props.layout ?? []).filter((c) => c && typeof c.key === 'string');
     const base = props.columns;
     const keys = [...new Set([...saved.map((c) => c.key), ...base.map((c) => c.key)])];
     configuration.value = keys.flatMap((key) => {
@@ -100,11 +113,9 @@ watch(
 watch(
   configuration,
   () => {
-    try {
-      localStorage.setItem(props.storageKey, JSON.stringify(configuration.value));
-    } catch {
-      // Storage is optional.
-    }
+    const layout = preferences(configuration.value);
+    reported = JSON.stringify(layout);
+    emit('update:layout', layout);
     emit(
       'columns-change',
       configuration.value.filter((c) => c.visible !== false).map((c) => c.key),
@@ -213,6 +224,8 @@ function pinClass(id: string) {
 }
 const label = (id: string) => byKey.value.get(id)?.label ?? '';
 const sortable = (id: string) => id !== SELECT && byKey.value.get(id)?.sortable !== false;
+const isFiltered = (id: string) => !!props.filteredKeys?.includes(id);
+const menuColumn = ref('');
 
 // --- selection, sorting, opening ----------------------------------------------------------
 const allChecked = computed(
@@ -320,7 +333,11 @@ function move(index: number, direction: number) {
 function reset() {
   configuration.value = props.columns.map((c) => ({ ...c, visible: c.visible !== false }));
 }
-defineExpose({ openColumns: () => (settingsOpen.value = true) });
+function hideColumn(key: string) {
+  const column = byKey.value.get(key);
+  if (column && !column.required) column.visible = false;
+}
+defineExpose({ openColumns: () => (settingsOpen.value = true), hideColumn });
 </script>
 
 <template>
@@ -375,7 +392,11 @@ defineExpose({ openColumns: () => (settingsOpen.value = true) });
             <th
               v-for="header in group.headers"
               :key="header.id"
-              :class="[...pinClass(header.column.id), 'th-' + header.column.id]"
+              :class="[
+                ...pinClass(header.column.id),
+                'th-' + header.column.id,
+                { filtered: isFiltered(header.column.id) },
+              ]"
               :style="pinStyle(header.column.id)"
               scope="col"
             >
@@ -388,6 +409,42 @@ defineExpose({ openColumns: () => (settingsOpen.value = true) });
                 :disabled="disabled || !rows.length"
                 @change="toggleAll(($event.target as HTMLInputElement).checked)"
               />
+              <BasePopover
+                v-else-if="$slots['column-menu'] && header.column.id !== 'actions'"
+                :open="menuColumn === header.column.id"
+                @update:open="menuColumn = $event ? header.column.id : ''"
+              >
+                <template #trigger>
+                  <button
+                    type="button"
+                    class="sort"
+                    :class="{ sorted: sortField === header.column.id && sortOrder }"
+                    :disabled="disabled"
+                    :aria-label="`${label(header.column.id)}列菜单`"
+                    :aria-sort="
+                      sortField === header.column.id && sortOrder
+                        ? sortOrder === 'asc'
+                          ? 'ascending'
+                          : 'descending'
+                        : undefined
+                    "
+                  >
+                    {{ label(header.column.id)
+                    }}<ArrowUp
+                      v-if="sortField === header.column.id && sortOrder === 'asc'"
+                      class="sort-icon"
+                    /><ArrowDown
+                      v-else-if="sortField === header.column.id && sortOrder === 'desc'"
+                      class="sort-icon"
+                    /><Filter v-if="isFiltered(header.column.id)" class="sort-icon" />
+                  </button>
+                </template>
+                <slot
+                  name="column-menu"
+                  :column="byKey.get(header.column.id)!"
+                  :close="() => (menuColumn = '')"
+                />
+              </BasePopover>
               <button
                 v-else-if="sortable(header.column.id)"
                 type="button"
@@ -560,6 +617,9 @@ th {
 }
 th.pinned {
   z-index: 3;
+}
+th.filtered {
+  background: var(--yellow-bg-2);
 }
 td {
   height: var(--control-table-row);

@@ -1,6 +1,8 @@
 # 仓库目录与依赖契约
 
-版本：1.28。日期：2026-11-03。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+版本：1.29。日期：2026-11-04。适用范围：本仓库的源码、资源、测试、脚本、文档和部署配置。
+
+1.29 变更：依据[列表报表控件](../modules/list-report.md)（用户 2026-11-04 确认），新增跨页面的前端控件 `apps/web/src/components/list-report/`；新增后端模块 `list-views`（见 3.7）与浏览器可用的共享契约 `packages/contracts/list-report/`（`conditions`、`views`，已登记到检查器的浏览器可用入口）；`WorkbenchTable` 的列布局改由外部传入，不再自己读写浏览器存储。
 
 1.28 变更：用户 2026-11-03 要求能用一份 SQL 在服务器上初始化数据库。新增 `database/init/init-database.sql`，由 `npm run db:export-init` 从迁移和 `provision.mjs` 的结果生成，不手工修改；迁移仍是结构变更的唯一来源，新增迁移或改动授权后必须重新生成，否则单元测试失败。新增 `infra/production/init-database.sh`，首次部署时一键完成建库、运行账号和首个管理员。
 
@@ -91,6 +93,13 @@
 
 根目录只保留统一入口及工具要求的配置：README、AGENTS、package.json、单一锁文件、start.cmd、stop.cmd、start.command、stop.command、compose.yaml（只含可选的 pgAdmin）、编辑器/格式/Git 配置及测试配置。本机工具配置目录 `.vscode`、`.claude`、`.workbuddy` 允许存在，其中 `.claude`、`.workbuddy` 整体不入库。不新增 frontend/backend、src、common 等与上述结构重叠的根目录。
 
+### 3.7 列表视图（list-views）
+
+- **职责**：个人保存的列表视图接口 `/api/projects/:projectId/list-views/:listKey`，按[列表报表控件](../modules/list-report.md)第 4 节。模块不认识具体业务，哪些列表可以保存、受哪些权限点保护只登记在 `packages/contracts/list-report/views.mjs` 的 `LIST_REPORTS`。
+- **数据归属**：`app.list_view`。
+- **共享契约**：条件的判断（`conditions.mjs`）与视图内容校验（`views.mjs`）只写在 `packages/contracts/list-report`，纯函数、浏览器可用。
+- **跨模块调用**：list-views → access，登记见 module-dependencies.json。
+
 ## 3. 应用内部边界
 
 ```text
@@ -113,7 +122,7 @@ apps/
       modules/<business>/    # 业务模块与其自有运行资源
 ```
 
-后端现有模块：admin（组织/用户/客户/项目与项目主数据）、access（权限内核，见 3.5）、delivery（交付台账）、item-workspace（开发项工作区）、models（模型配置与调用）、sap（SAP 连接）、technical（技术验证）、abap-fsd-agent（FSD 设计助手，见 3.1）、abap-dev-agent（ABAP 开发助手，见 3.1）、agent-core（智能体公共运行层，见 3.1）、audit（平台审计与日志分析，见 3.2）、development-overview（开发概览统计，见 3.6）。各模块在第一次放入真实文件时创建，不创建空目录。
+后端现有模块：admin（组织/用户/客户/项目与项目主数据）、access（权限内核，见 3.5）、delivery（交付台账）、item-workspace（开发项工作区）、models（模型配置与调用）、sap（SAP 连接）、technical（技术验证）、abap-fsd-agent（FSD 设计助手，见 3.1）、abap-dev-agent（ABAP 开发助手，见 3.1）、agent-core（智能体公共运行层，见 3.1）、audit（平台审计与日志分析，见 3.2）、development-overview（开发概览统计，见 3.6）、list-views（列表视图，见 3.7）。各模块在第一次放入真实文件时创建，不创建空目录。
 
 fs-workspace 中的 FS 是 Functional Specification，不是文件系统。除 3.1 授权的设计助手重构外，URL、数据库表名和历史协议字段不因内部目录改名而改变。
 
