@@ -1,6 +1,6 @@
 # 助手起始页、输入框与成果区
 
-> 状态：已实施 · 最后更新：2026-10-31。适用于 `apps/web/src/features/agent-workbench`（设计助手与开发助手共用）、`features/delivery` 的开发清单与开发项抽屉，以及对应后端路由；实施过程见[实施记录](../archive/records/agent-start-and-composer.md)。
+> 状态：已实施 · 最后更新：2026-11-07。适用于 `apps/web/src/features/agent-workbench`（设计助手与开发助手共用）、`features/delivery` 的开发清单与开发项抽屉，以及对应后端路由；实施过程见[实施记录](../archive/records/agent-start-and-composer.md)。
 
 本文来自 2026-10-18 用户对设计助手起始页（00030 全厂缺料分析）的审查，以及随后的头脑风暴。第 1 节列出问题，第 2 节记录用户已经做出的决策，第 3 至 6 节是设计方案，第 7 节是分期，第 8 节是验证要求。它与 [对话体验设计指引](agent-conversation.md) 互补：那份文档管运行过程和右侧面板，本文管起始页、输入框、资料引用和权限入口。界面取值以 [DESIGN.md](../DESIGN.md) 为准。
 
@@ -113,7 +113,7 @@
 - 列表在每次打开弹层时实时获取。只有一个模型时，仍然可以打开弹层查看，但不能选其他模型。
 - 选择结果保存在 `useAgentSession`，以组织、用户和助手为键，和 `sapSystemId` 的做法相同。发送消息时带上 `modelId`。
 - 服务端校验：模型属于本组织、未删除、有密钥，否则返回 422（`code: MODEL_UNAVAILABLE`）“所选模型不可用，请改用默认模型”，前端随即清除记忆的选择。没有传 `modelId` 时用组织默认模型。`claimTurn` 已经记录了每一轮使用的模型，审计无需改动。
-- 兼容性：不按厂商过滤（遵守模型兼容要求）。
+- 兼容性：不按厂商过滤（遵守模型兼容要求）。助手的工具调用（`models/chat.mjs` 的 `streamChat`）支持 OpenAI Chat 兼容（`openai_chat`）与 Anthropic Messages（`anthropic_messages`）两种协议：后者由 `anthropicPayload` 把同一份 OpenAI 形状的历史转成 tool_use / tool_result 块，流里的 thinking 记为推理文本；未设输出上限时由传输层读取模型信息接口的最大输出。`openai_responses` 协议暂不支持工具调用，选中时返回 409（`MODEL_PROTOCOL_UNSUPPORTED`）。
 
 ### 4.4 底栏布局
 
